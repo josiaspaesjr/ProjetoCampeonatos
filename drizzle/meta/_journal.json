@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1783528050940,
+      "tag": "0000_tiresome_gamma_corps",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783531681262,
+      "tag": "0001_dapper_sage",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783532478201,
+      "tag": "0002_wakeful_bushwacker",
+      "breakpoints": true
+    }
+  ]
+}

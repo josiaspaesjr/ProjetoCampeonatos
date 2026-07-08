@@ -1,0 +1,337 @@
+import {
+  boolean,
+  date,
+  integer,
+  jsonb,
+  numeric,
+  pgEnum,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+  uniqueIndex,
+  uuid,
+} from "drizzle-orm/pg-core";
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+export const sexoEnum = pgEnum("sexo", ["masculino", "feminino"]);
+
+export const faixaEnum = pgEnum("faixa", [
+  "branca",
+  "cinza",
+  "amarela",
+  "laranja",
+  "verde",
+  "azul",
+  "roxa",
+  "marrom",
+  "preta",
+]);
+
+export const eventoStatusEnum = pgEnum("evento_status", [
+  "rascunho",
+  "publicado",
+  "inscricoes_encerradas",
+  "em_andamento",
+  "finalizado",
+]);
+
+export const categoriaTipoEnum = pgEnum("categoria_tipo", [
+  "peso",
+  "absoluto",
+  "custom",
+]);
+
+export const categoriaStatusEnum = pgEnum("categoria_status", [
+  "aberta",
+  "fechada",
+  "fundida",
+]);
+
+export const inscricaoStatusEnum = pgEnum("inscricao_status", [
+  "pendente_pagamento",
+  "confirmada",
+  "cancelada",
+  "reembolsada",
+]);
+
+export const pagamentoMetodoEnum = pgEnum("pagamento_metodo", [
+  "pix",
+  "cartao",
+]);
+
+export const pagamentoStatusEnum = pgEnum("pagamento_status", [
+  "criado",
+  "pago",
+  "expirado",
+  "estornado",
+]);
+
+export const cupomTipoEnum = pgEnum("cupom_tipo", ["percentual", "valor_fixo"]);
+
+export const chaveFormatoEnum = pgEnum("chave_formato", [
+  "eliminacao_simples",
+  "eliminacao_dupla",
+  "round_robin",
+]);
+
+export const chaveStatusEnum = pgEnum("chave_status", [
+  "rascunho",
+  "publicada",
+  "em_andamento",
+  "concluida",
+]);
+
+export const lutaMetodoEnum = pgEnum("luta_metodo", [
+  "pontos",
+  "vantagens",
+  "finalizacao",
+  "decisao",
+  "wo",
+  "dq",
+]);
+
+// ---------------------------------------------------------------------------
+// Tabelas
+// ---------------------------------------------------------------------------
+
+export const academias = pgTable("academias", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  nome: text("nome").notNull(),
+  cidade: text("cidade"),
+  uf: text("uf"),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const usuarios = pgTable("usuarios", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  // id do provedor de auth (Supabase Auth); nulo para contas criadas manualmente
+  authId: text("auth_id").unique(),
+  nome: text("nome").notNull(),
+  email: text("email").notNull().unique(),
+  telefone: text("telefone"),
+  dataNascimento: date("data_nascimento"),
+  sexo: sexoEnum("sexo"),
+  faixaAtual: faixaEnum("faixa_atual"),
+  academiaId: uuid("academia_id").references(() => academias.id),
+  ehOrganizador: boolean("eh_organizador").notNull().default(false),
+  ehAdmin: boolean("eh_admin").notNull().default(false),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const eventos = pgTable("eventos", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  organizadorId: uuid("organizador_id")
+    .notNull()
+    .references(() => usuarios.id),
+  nome: text("nome").notNull(),
+  slug: text("slug").notNull().unique(),
+  bannerUrl: text("banner_url"),
+  descricao: text("descricao"),
+  endereco: text("endereco"),
+  cidade: text("cidade"),
+  uf: text("uf"),
+  dataInicio: date("data_inicio").notNull(),
+  dataFim: date("data_fim"),
+  inscricoesAbrem: timestamp("inscricoes_abrem", { withTimezone: true }),
+  inscricoesFecham: timestamp("inscricoes_fecham", { withTimezone: true }),
+  // data-limite para o atleta trocar de categoria ou cancelar
+  limiteAlteracoes: timestamp("limite_alteracoes", { withTimezone: true }),
+  status: eventoStatusEnum("status").notNull().default("rascunho"),
+  // define a trilha de pagamento: BRL → gateway nacional (Pix), demais → internacional
+  moeda: text("moeda").notNull().default("BRL"),
+  politicaReembolso: text("politica_reembolso"),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const lotes = pgTable("lotes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  eventoId: uuid("evento_id")
+    .notNull()
+    .references(() => eventos.id),
+  nome: text("nome").notNull(),
+  precoCentavos: integer("preco_centavos").notNull(),
+  // preço da 2ª inscrição do mesmo atleta (ex.: absoluto); nulo = mesmo preço
+  precoSegundaInscricaoCentavos: integer("preco_segunda_inscricao_centavos"),
+  inicio: timestamp("inicio", { withTimezone: true }).notNull(),
+  fim: timestamp("fim", { withTimezone: true }).notNull(),
+});
+
+export const cupons = pgTable(
+  "cupons",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventoId: uuid("evento_id")
+      .notNull()
+      .references(() => eventos.id),
+    codigo: text("codigo").notNull(),
+    tipo: cupomTipoEnum("tipo").notNull(),
+    // percentual: 0–100; valor_fixo: centavos
+    valor: integer("valor").notNull(),
+    limiteUsos: integer("limite_usos"),
+    usos: integer("usos").notNull().default(0),
+    validade: timestamp("validade", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("cupons_evento_codigo_idx").on(t.eventoId, t.codigo)],
+);
+
+export const areas = pgTable("areas", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  eventoId: uuid("evento_id")
+    .notNull()
+    .references(() => eventos.id),
+  nome: text("nome").notNull(),
+  ordem: integer("ordem").notNull().default(0),
+  // âncora do cronograma estimado da área
+  horaInicio: timestamp("hora_inicio", { withTimezone: true }),
+});
+
+export const categorias = pgTable("categorias", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  eventoId: uuid("evento_id")
+    .notNull()
+    .references(() => eventos.id),
+  nome: text("nome").notNull(),
+  tipo: categoriaTipoEnum("tipo").notNull().default("peso"),
+  sexo: sexoEnum("sexo").notNull(),
+  faixa: faixaEnum("faixa"),
+  // classe de idade CBJJ: kids1..kids3, juvenil, adulto, master1..master7
+  classeIdade: text("classe_idade").notNull(),
+  idadeMin: integer("idade_min"),
+  idadeMax: integer("idade_max"),
+  limitePesoKg: numeric("limite_peso_kg", { precision: 5, scale: 2 }),
+  minInscritos: integer("min_inscritos").notNull().default(2),
+  status: categoriaStatusEnum("status").notNull().default("aberta"),
+  fundidaEmId: uuid("fundida_em_id"),
+  // dia do evento: categorias correm em sequência dentro de uma área
+  areaId: uuid("area_id"),
+  ordemNaArea: integer("ordem_na_area"),
+});
+
+export const inscricoes = pgTable(
+  "inscricoes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    usuarioId: uuid("usuario_id")
+      .notNull()
+      .references(() => usuarios.id),
+    eventoId: uuid("evento_id")
+      .notNull()
+      .references(() => eventos.id),
+    categoriaId: uuid("categoria_id")
+      .notNull()
+      .references(() => categorias.id),
+    status: inscricaoStatusEnum("status").notNull().default("pendente_pagamento"),
+    // snapshot no momento da inscrição — histórico imune a edição de perfil
+    nomeAtleta: text("nome_atleta").notNull(),
+    faixa: faixaEnum("faixa").notNull(),
+    dataNascimento: date("data_nascimento").notNull(),
+    academiaId: uuid("academia_id").references(() => academias.id),
+    academiaNome: text("academia_nome"),
+    // check-in / pesagem no dia do evento
+    checkinEm: timestamp("checkin_em", { withTimezone: true }),
+    pesoAferidoKg: numeric("peso_aferido_kg", { precision: 5, scale: 2 }),
+    foraDoPeso: boolean("fora_do_peso").notNull().default(false),
+    criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+    atualizadoEm: timestamp("atualizado_em", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    // um atleta não se inscreve duas vezes na mesma categoria
+    uniqueIndex("inscricoes_usuario_categoria_idx").on(t.usuarioId, t.categoriaId),
+  ],
+);
+
+export const pagamentos = pgTable("pagamentos", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  eventoId: uuid("evento_id")
+    .notNull()
+    .references(() => eventos.id),
+  usuarioId: uuid("usuario_id")
+    .notNull()
+    .references(() => usuarios.id),
+  gateway: text("gateway").notNull(),
+  gatewayCobrancaId: text("gateway_cobranca_id"),
+  metodo: pagamentoMetodoEnum("metodo").notNull(),
+  cupomId: uuid("cupom_id").references(() => cupons.id),
+  valorBrutoCentavos: integer("valor_bruto_centavos").notNull(),
+  descontoCentavos: integer("desconto_centavos").notNull().default(0),
+  taxaPlataformaCentavos: integer("taxa_plataforma_centavos").notNull().default(0),
+  taxaGatewayCentavos: integer("taxa_gateway_centavos").notNull().default(0),
+  valorLiquidoOrganizadorCentavos: integer(
+    "valor_liquido_organizador_centavos",
+  ).notNull(),
+  status: pagamentoStatusEnum("status").notNull().default("criado"),
+  expiraEm: timestamp("expira_em", { withTimezone: true }),
+  pagoEm: timestamp("pago_em", { withTimezone: true }),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// um checkout pode conter várias inscrições do mesmo atleta (peso + absoluto)
+export const pagamentoInscricoes = pgTable(
+  "pagamento_inscricoes",
+  {
+    pagamentoId: uuid("pagamento_id")
+      .notNull()
+      .references(() => pagamentos.id),
+    inscricaoId: uuid("inscricao_id")
+      .notNull()
+      .references(() => inscricoes.id),
+  },
+  (t) => [primaryKey({ columns: [t.pagamentoId, t.inscricaoId] })],
+);
+
+export const chaves = pgTable("chaves", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  categoriaId: uuid("categoria_id")
+    .notNull()
+    .unique()
+    .references(() => categorias.id),
+  formato: chaveFormatoEnum("formato").notNull().default("eliminacao_simples"),
+  status: chaveStatusEnum("status").notNull().default("rascunho"),
+  // seed do sorteio — torna a geração reproduzível e auditável
+  seedSorteio: text("seed_sorteio").notNull(),
+  geradaEm: timestamp("gerada_em", { withTimezone: true }).notNull().defaultNow(),
+  publicadaEm: timestamp("publicada_em", { withTimezone: true }),
+});
+
+export const lutas = pgTable("lutas", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  chaveId: uuid("chave_id")
+    .notNull()
+    .references(() => chaves.id),
+  rodada: integer("rodada").notNull(),
+  posicao: integer("posicao").notNull(),
+  atleta1InscricaoId: uuid("atleta1_inscricao_id").references(() => inscricoes.id),
+  atleta2InscricaoId: uuid("atleta2_inscricao_id").references(() => inscricoes.id),
+  proximaLutaId: uuid("proxima_luta_id"),
+  // em qual slot da próxima luta o vencedor entra: 1 ou 2
+  proximaLutaSlot: integer("proxima_luta_slot"),
+  vencedorInscricaoId: uuid("vencedor_inscricao_id").references(() => inscricoes.id),
+  metodo: lutaMetodoEnum("metodo"),
+  pontos1: integer("pontos1").notNull().default(0),
+  vantagens1: integer("vantagens1").notNull().default(0),
+  punicoes1: integer("punicoes1").notNull().default(0),
+  pontos2: integer("pontos2").notNull().default(0),
+  vantagens2: integer("vantagens2").notNull().default(0),
+  punicoes2: integer("punicoes2").notNull().default(0),
+  nomeFinalizacao: text("nome_finalizacao"),
+  encerradaEm: timestamp("encerrada_em", { withTimezone: true }),
+});
+
+// toda mutação sensível (troca de categoria, correção de resultado,
+// regeneração de chave) fica registrada aqui
+export const auditoria = pgTable("auditoria", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  usuarioId: uuid("usuario_id").references(() => usuarios.id),
+  entidade: text("entidade").notNull(),
+  entidadeId: uuid("entidade_id").notNull(),
+  acao: text("acao").notNull(),
+  dadosAnteriores: jsonb("dados_anteriores"),
+  dadosNovos: jsonb("dados_novos"),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
