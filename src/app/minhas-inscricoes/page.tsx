@@ -8,14 +8,15 @@ import {
   pagamentoInscricoes,
 } from "@/db/schema";
 import { PublicShell } from "@/components/public-shell";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { codigoCurto, gerarQrDataUrl, urlCheckin } from "@/lib/checkin/qr";
 import { getAtletaAtual } from "@/lib/sessao";
 
-const rotuloStatus: Record<string, [string, string]> = {
-  pendente_pagamento: ["Aguardando pagamento", "text-amber-600"],
-  confirmada: ["Confirmada", "text-emerald-600"],
-  cancelada: ["Cancelada", "text-zinc-400"],
-  reembolsada: ["Reembolsada", "text-zinc-400"],
+const rotuloStatus: Record<string, [string, BadgeProps["variant"]]> = {
+  pendente_pagamento: ["Aguardando pagamento", "warning"],
+  confirmada: ["Confirmada", "success"],
+  cancelada: ["Cancelada", "secondary"],
+  reembolsada: ["Reembolsada", "secondary"],
 };
 
 export default async function MinhasInscricoes() {
@@ -24,7 +25,7 @@ export default async function MinhasInscricoes() {
   if (!atleta) {
     return (
       <PublicShell>
-        <p className="text-zinc-500">
+        <p className="text-muted-foreground">
           Você ainda não tem inscrições —{" "}
           <Link href="/" className="underline">
             encontre um evento
@@ -79,14 +80,14 @@ export default async function MinhasInscricoes() {
   return (
     <PublicShell>
       <h1 className="text-2xl font-bold">Minhas inscrições</h1>
-      <p className="mt-1 text-sm text-zinc-500">
+      <p className="mt-1 text-sm text-muted-foreground">
         {atleta.nome} · {atleta.email}
       </p>
 
-      <ul className="mt-6 divide-y divide-zinc-200 rounded-xl border border-zinc-200 bg-white">
+      <ul className="mt-6 divide-y divide-border rounded-xl border bg-card">
         {minhas.map((i) => {
           const evento = eventoPorId.get(i.eventoId);
-          const [rotulo, cor] = rotuloStatus[i.status] ?? [i.status, ""];
+          const [rotulo, variante] = rotuloStatus[i.status] ?? [i.status, "outline" as const];
           return (
             <li key={i.id} className="flex items-center justify-between px-5 py-4">
               <div className="flex items-center gap-4">
@@ -95,16 +96,16 @@ export default async function MinhasInscricoes() {
                   <img
                     src={qrPorInscricao.get(i.id)}
                     alt="QR de check-in"
-                    className="h-20 w-20 shrink-0 rounded-lg border border-zinc-200"
+                    className="h-20 w-20 shrink-0 rounded-lg border"
                   />
                 )}
                 <div>
                   <p className="font-medium">{evento?.nome}</p>
-                  <p className="text-sm text-zinc-500">
+                  <p className="text-sm text-muted-foreground">
                     {nomeCategoria.get(i.categoriaId)}
                   </p>
                   {qrPorInscricao.has(i.id) && (
-                    <p className="mt-1 text-xs text-zinc-400">
+                    <p className="mt-1 text-xs text-muted-foreground">
                       Check-in: mostre o QR na pesagem · código{" "}
                       <span className="font-mono">{codigoCurto(i.id)}</span>
                     </p>
@@ -112,22 +113,24 @@ export default async function MinhasInscricoes() {
                 </div>
               </div>
               <div className="text-right">
-                <p className={`text-sm font-medium ${cor}`}>{rotulo}</p>
+                <Badge variant={variante}>{rotulo}</Badge>
                 {i.status === "pendente_pagamento" &&
                   pagamentoPorInscricao.has(i.id) && (
-                    <Link
-                      href={`/checkout/${pagamentoPorInscricao.get(i.id)}`}
-                      className="text-xs text-zinc-500 underline"
-                    >
-                      pagar agora
-                    </Link>
+                    <p className="mt-1">
+                      <Link
+                        href={`/checkout/${pagamentoPorInscricao.get(i.id)}`}
+                        className="text-xs text-muted-foreground underline"
+                      >
+                        pagar agora
+                      </Link>
+                    </p>
                   )}
               </div>
             </li>
           );
         })}
         {minhas.length === 0 && (
-          <li className="px-5 py-8 text-center text-zinc-500">
+          <li className="px-5 py-8 text-center text-muted-foreground">
             Nenhuma inscrição ainda.
           </li>
         )}

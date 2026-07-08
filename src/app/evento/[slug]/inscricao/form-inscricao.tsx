@@ -1,13 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import {
   categoriaCompativel,
   idadeNoAnoDoEvento,
 } from "@/lib/categorias/elegibilidade";
-
-const inputCls =
-  "mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none";
 
 export interface CategoriaOpcao {
   id: string;
@@ -58,88 +58,98 @@ export function FormInscricao({ dataEvento, categorias, acao, perfil }: Props) {
       className="mt-8 space-y-5"
     >
       {erro && (
-        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>
+        <p className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {erro}
+        </p>
       )}
 
       <div className="grid grid-cols-2 gap-4">
         <label className="block">
           <span className="text-sm font-medium">Nome completo *</span>
-          <input name="nome" required defaultValue={perfil?.nome} className={inputCls} />
+          <Input name="nome" required defaultValue={perfil?.nome} className="mt-1" />
         </label>
         <label className="block">
           <span className="text-sm font-medium">E-mail *</span>
-          <input name="email" type="email" required defaultValue={perfil?.email} className={inputCls} />
+          <Input name="email" type="email" required defaultValue={perfil?.email} className="mt-1" />
         </label>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
         <label className="block">
           <span className="text-sm font-medium">Nascimento *</span>
-          <input
+          <Input
             name="dataNascimento"
             type="date"
             required
             value={nascimento}
             onChange={(e) => setNascimento(e.target.value)}
-            className={inputCls}
+            className="mt-1"
           />
         </label>
         <label className="block">
           <span className="text-sm font-medium">Sexo *</span>
-          <select name="sexo" required value={sexo} onChange={(e) => setSexo(e.target.value)} className={inputCls}>
+          <NativeSelect
+            name="sexo"
+            required
+            value={sexo}
+            onChange={(e) => setSexo(e.target.value)}
+            className="mt-1"
+          >
             <option value="">Selecione</option>
             <option value="masculino">Masculino</option>
             <option value="feminino">Feminino</option>
-          </select>
+          </NativeSelect>
         </label>
         <label className="block">
           <span className="text-sm font-medium">Faixa *</span>
-          <select name="faixa" required value={faixa} onChange={(e) => setFaixa(e.target.value)} className={inputCls}>
+          <NativeSelect
+            name="faixa"
+            required
+            value={faixa}
+            onChange={(e) => setFaixa(e.target.value)}
+            className="mt-1"
+          >
             <option value="">Selecione</option>
             {["branca", "azul", "roxa", "marrom", "preta"].map((f) => (
-              <option key={f} value={f} className="capitalize">
+              <option key={f} value={f}>
                 {f.charAt(0).toUpperCase() + f.slice(1)}
               </option>
             ))}
-          </select>
+          </NativeSelect>
         </label>
       </div>
 
       <label className="block">
         <span className="text-sm font-medium">Academia / equipe</span>
-        <input name="academia" placeholder="Nome da sua academia" className={inputCls} />
+        <Input name="academia" placeholder="Nome da sua academia" className="mt-1" />
       </label>
 
       <label className="block">
         <span className="text-sm font-medium">Categoria *</span>
         {sexo && faixa && nascimento ? (
           compativeis.length ? (
-            <select name="categoriaId" required className={inputCls}>
+            <NativeSelect name="categoriaId" required className="mt-1">
               {compativeis.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.nome}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
           ) : (
-            <p className="mt-1 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            <p className="mt-1 rounded-md bg-warning/15 px-4 py-3 text-sm text-warning-foreground">
               Nenhuma categoria compatível com seu perfil neste evento.
             </p>
           )
         ) : (
-          <p className="mt-1 text-sm text-zinc-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             Preencha nascimento, sexo e faixa para ver suas categorias.
           </p>
         )}
       </label>
 
-      <button
-        type="submit"
-        disabled={!compativeis.length}
-        className="rounded-lg bg-emerald-600 px-6 py-3 font-medium text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-zinc-300"
-      >
+      <Button variant="success" size="lg" disabled={!compativeis.length}>
         Continuar para o pagamento
-      </button>
+      </Button>
     </form>
   );
 }

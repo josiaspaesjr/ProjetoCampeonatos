@@ -4,6 +4,9 @@ import { and, asc, eq, inArray, ne } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, chaves, eventos, inscricoes, lotes } from "@/db/schema";
 import { PublicShell } from "@/components/public-shell";
+import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function PaginaPublicaEvento({
   params,
@@ -60,71 +63,76 @@ export default async function PaginaPublicaEvento({
 
   return (
     <PublicShell>
-      <div className="rounded-2xl border border-zinc-200 bg-white p-8">
-        <h1 className="text-3xl font-bold">{evento.nome}</h1>
-        <p className="mt-2 text-zinc-500">
-          {new Date(`${evento.dataInicio}T12:00:00`).toLocaleDateString("pt-BR", {
-            weekday: "long",
-            day: "2-digit",
-            month: "long",
-            year: "numeric",
-          })}
-          {evento.cidade ? ` · ${evento.cidade}/${evento.uf ?? ""}` : ""}
-        </p>
-        {evento.endereco && <p className="text-sm text-zinc-500">{evento.endereco}</p>}
-        {evento.descricao && <p className="mt-4 whitespace-pre-line">{evento.descricao}</p>}
-
-        <div className="mt-4">
-          <Link
-            href={`/evento/${evento.slug}/cronograma`}
-            className="text-sm font-medium text-emerald-700 underline"
-          >
-            Cronograma ao vivo →
-          </Link>
-        </div>
-
-        <div className="mt-6 flex items-center gap-4">
-          {inscricoesAbertas ? (
-            <>
-              <Link
-                href={`/evento/${evento.slug}/inscricao`}
-                className="rounded-lg bg-emerald-600 px-6 py-3 font-medium text-white hover:bg-emerald-500"
-              >
-                Inscrever-se — {fmt.format(loteVigente.precoCentavos / 100)}
-              </Link>
-              <div className="text-sm text-zinc-500">
-                <p>{loteVigente.nome}</p>
-                {loteVigente.precoSegundaInscricaoCentavos != null && (
-                  <p>
-                    2ª inscrição (absoluto):{" "}
-                    {fmt.format(loteVigente.precoSegundaInscricaoCentavos / 100)}
-                  </p>
-                )}
-              </div>
-            </>
-          ) : (
-            <span className="rounded-lg bg-zinc-100 px-4 py-2 text-sm text-zinc-500">
-              Inscrições encerradas
-            </span>
+      <Card className="rounded-2xl">
+        <CardContent className="p-8">
+          <h1 className="text-3xl font-bold">{evento.nome}</h1>
+          <p className="mt-2 text-muted-foreground">
+            {new Date(`${evento.dataInicio}T12:00:00`).toLocaleDateString("pt-BR", {
+              weekday: "long",
+              day: "2-digit",
+              month: "long",
+              year: "numeric",
+            })}
+            {evento.cidade ? ` · ${evento.cidade}/${evento.uf ?? ""}` : ""}
+          </p>
+          {evento.endereco && (
+            <p className="text-sm text-muted-foreground">{evento.endereco}</p>
           )}
-        </div>
-      </div>
+          {evento.descricao && <p className="mt-4 whitespace-pre-line">{evento.descricao}</p>}
+
+          <div className="mt-4">
+            <Link
+              href={`/evento/${evento.slug}/cronograma`}
+              className="text-sm font-medium text-success underline"
+            >
+              Cronograma ao vivo →
+            </Link>
+          </div>
+
+          <div className="mt-6 flex items-center gap-4">
+            {inscricoesAbertas ? (
+              <>
+                <Link
+                  href={`/evento/${evento.slug}/inscricao`}
+                  className={buttonVariants({ variant: "success", size: "lg" })}
+                >
+                  Inscrever-se — {fmt.format(loteVigente.precoCentavos / 100)}
+                </Link>
+                <div className="text-sm text-muted-foreground">
+                  <p>{loteVigente.nome}</p>
+                  {loteVigente.precoSegundaInscricaoCentavos != null && (
+                    <p>
+                      2ª inscrição (absoluto):{" "}
+                      {fmt.format(loteVigente.precoSegundaInscricaoCentavos / 100)}
+                    </p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <Badge variant="secondary" className="px-4 py-2 text-sm">
+                Inscrições encerradas
+              </Badge>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="mt-8 grid grid-cols-3 gap-6">
         <section className="col-span-2">
           <h2 className="text-lg font-bold">
-            Categorias <span className="font-normal text-zinc-400">({cats.length})</span>
+            Categorias{" "}
+            <span className="font-normal text-muted-foreground">({cats.length})</span>
           </h2>
-          <ul className="mt-3 divide-y divide-zinc-100 rounded-xl border border-zinc-200 bg-white px-4 text-sm">
+          <ul className="mt-3 divide-y divide-border rounded-xl border bg-card px-4 text-sm">
             {cats.map((c) => (
               <li key={c.id} className="flex items-center justify-between py-2">
                 <span>{c.nome}</span>
-                <span className="flex items-center gap-3 text-zinc-400">
+                <span className="flex items-center gap-3 text-muted-foreground">
                   {porCategoria.get(c.id) ?? 0} inscrito(s)
                   {chavePorCategoria.has(c.id) && (
                     <Link
                       href={`/evento/${evento.slug}/chaves/${c.id}`}
-                      className="font-medium text-emerald-700 underline"
+                      className="font-medium text-success underline"
                     >
                       chave
                     </Link>
@@ -137,19 +145,23 @@ export default async function PaginaPublicaEvento({
 
         <section>
           <h2 className="text-lg font-bold">
-            Equipes <span className="font-normal text-zinc-400">({porAcademia.size})</span>
+            Equipes{" "}
+            <span className="font-normal text-muted-foreground">({porAcademia.size})</span>
           </h2>
-          <ul className="mt-3 rounded-xl border border-zinc-200 bg-white px-4 text-sm">
+          <ul className="mt-3 rounded-xl border bg-card px-4 text-sm">
             {[...porAcademia.entries()]
               .sort((a, b) => b[1] - a[1])
               .map(([nome, qtd]) => (
-                <li key={nome} className="flex items-center justify-between border-b border-zinc-100 py-2 last:border-0">
+                <li
+                  key={nome}
+                  className="flex items-center justify-between border-b border-border py-2 last:border-0"
+                >
                   <span>{nome}</span>
-                  <span className="text-zinc-400">{qtd}</span>
+                  <span className="text-muted-foreground">{qtd}</span>
                 </li>
               ))}
             {porAcademia.size === 0 && (
-              <li className="py-3 text-zinc-400">Seja o primeiro a se inscrever!</li>
+              <li className="py-3 text-muted-foreground">Seja o primeiro a se inscrever!</li>
             )}
           </ul>
         </section>

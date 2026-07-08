@@ -5,6 +5,7 @@ import { getDb } from "@/db";
 import { eventos } from "@/db/schema";
 import { montarFilasDoEvento, type FilaDaArea } from "@/lib/cronograma/fila";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { buttonVariants } from "@/components/ui/button";
 
 const hora = (d: Date) =>
   d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -21,14 +22,14 @@ function ColunaArea({ fila, tv }: { fila: FilaDaArea; tv: boolean }) {
     id ? (fila.atletas[id]?.nome ?? "?") : "aguardando";
 
   return (
-    <div className={`rounded-2xl ${tv ? "bg-zinc-900 p-6" : "border border-zinc-200 bg-white p-5"}`}>
+    <div className={`rounded-2xl ${tv ? "bg-zinc-900 p-6" : "border bg-card p-5"}`}>
       <p className={`font-bold ${tv ? "text-2xl text-white" : "text-lg"}`}>
         {fila.area.nome}
       </p>
 
       {emAndamento && (
-        <div className={`mt-3 rounded-xl p-4 ${tv ? "bg-emerald-900/60" : "bg-emerald-50"}`}>
-          <p className={`text-xs font-semibold uppercase tracking-wide ${tv ? "text-emerald-300" : "text-emerald-700"}`}>
+        <div className={`mt-3 rounded-xl p-4 ${tv ? "bg-emerald-900/60" : "bg-success/10"}`}>
+          <p className={`text-xs font-semibold uppercase tracking-wide ${tv ? "text-emerald-300" : "text-success"}`}>
             No tatame · {emAndamento.categoria.nome.split(" / ").slice(-2).join(" ")}
           </p>
           <div className={`mt-2 space-y-1 ${tv ? "text-xl text-white" : "text-sm"}`}>
@@ -50,7 +51,7 @@ function ColunaArea({ fila, tv }: { fila: FilaDaArea; tv: boolean }) {
           .slice(0, tv ? 6 : 10)
           .map((i) => (
             <li key={i.luta.id} className="flex items-center gap-2">
-              <span className={`font-mono text-xs ${tv ? "text-zinc-400" : "text-zinc-400"}`}>
+              <span className={`font-mono text-xs ${tv ? "text-zinc-400" : "text-muted-foreground"}`}>
                 ~{hora(i.horaEstimada)}
               </span>
               <span className="truncate">
@@ -61,7 +62,7 @@ function ColunaArea({ fila, tv }: { fila: FilaDaArea; tv: boolean }) {
             </li>
           ))}
         {fila.fila.length === 0 && (
-          <li className={tv ? "text-zinc-400" : "text-zinc-500"}>Área concluída ✓</li>
+          <li className={tv ? "text-zinc-400" : "text-muted-foreground"}>Área concluída ✓</li>
         )}
       </ul>
     </div>
@@ -95,14 +96,14 @@ export default async function CronogramaPublico({
           <h1 className={`font-bold ${tv ? "text-4xl text-white" : "text-2xl"}`}>
             {evento.nome}
           </h1>
-          <p className={tv ? "text-zinc-400" : "text-sm text-zinc-500"}>
+          <p className={tv ? "text-zinc-400" : "text-sm text-muted-foreground"}>
             Cronograma ao vivo — horários estimados, atualiza sozinho
           </p>
         </div>
         {!tv && (
           <Link
             href={`/evento/${evento.slug}/cronograma?tv=1`}
-            className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-medium hover:bg-zinc-100"
+            className={buttonVariants({ variant: "outline", size: "sm" })}
           >
             Modo telão
           </Link>
@@ -113,7 +114,7 @@ export default async function CronogramaPublico({
           <ColunaArea key={f.area.id} fila={f} tv={tv} />
         ))}
         {filas.length === 0 && (
-          <p className={tv ? "text-zinc-400" : "text-zinc-500"}>
+          <p className={tv ? "text-zinc-400" : "text-muted-foreground"}>
             O cronograma aparece aqui quando o organizador distribuir as chaves
             pelas áreas.
           </p>
@@ -129,11 +130,11 @@ export default async function CronogramaPublico({
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900">
-      <header className="border-b border-zinc-200 bg-white">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b bg-card">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <Link href="/" className="font-bold tracking-tight">BJJCAMP</Link>
-          <Link href={`/evento/${evento.slug}`} className="text-sm text-zinc-500 hover:text-zinc-900">
+          <Link href={`/evento/${evento.slug}`} className="text-sm text-muted-foreground hover:text-foreground">
             Página do evento
           </Link>
         </div>

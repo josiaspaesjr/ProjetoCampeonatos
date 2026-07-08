@@ -1,4 +1,5 @@
 import type { lutas } from "@/db/schema";
+import { NativeSelect } from "@/components/ui/native-select";
 
 type LutaRow = typeof lutas.$inferSelect;
 
@@ -43,18 +44,18 @@ function LinhaAtleta({
   slotLivre: string;
 }) {
   if (!inscricaoId) {
-    return <p className="truncate text-xs italic text-zinc-400">{slotLivre}</p>;
+    return <p className="truncate text-xs italic text-muted-foreground">{slotLivre}</p>;
   }
   const info = atletas[inscricaoId];
   const ganhou = vencedor === inscricaoId;
   const perdeu = vencedor !== null && !ganhou;
   return (
     <p
-      className={`truncate text-sm ${ganhou ? "font-bold text-emerald-700" : ""} ${perdeu ? "text-zinc-400 line-through" : ""}`}
+      className={`truncate text-sm ${ganhou ? "font-bold text-success" : ""} ${perdeu ? "text-muted-foreground line-through" : ""}`}
     >
       {info?.nome ?? "?"}
       {info?.academia && (
-        <span className="ml-1 text-xs font-normal text-zinc-400">
+        <span className="ml-1 text-xs font-normal text-muted-foreground">
           · {info.academia}
         </span>
       )}
@@ -75,7 +76,7 @@ export function BracketView({ lutas: linhas, atletas, acaoResultado }: Props) {
       <div className="flex gap-6">
         {rodadas.map((lutasDaRodada, i) => (
           <div key={i} className="w-64 shrink-0">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {rotuloRodada(i + 1, totalRodadas)}
             </p>
             <div className="flex h-full flex-col justify-around gap-4">
@@ -91,17 +92,14 @@ export function BracketView({ lutas: linhas, atletas, acaoResultado }: Props) {
                   !luta.vencedorInscricaoId;
 
                 return (
-                  <div
-                    key={luta.id}
-                    className="rounded-lg border border-zinc-200 bg-white p-3"
-                  >
+                  <div key={luta.id} className="rounded-lg border bg-card p-3">
                     <LinhaAtleta
                       inscricaoId={luta.atleta1InscricaoId}
                       atletas={atletas}
                       vencedor={luta.vencedorInscricaoId}
                       slotLivre={bye ? "bye" : "aguardando"}
                     />
-                    <div className="my-1 border-t border-zinc-100" />
+                    <div className="my-1 border-t" />
                     <LinhaAtleta
                       inscricaoId={luta.atleta2InscricaoId}
                       atletas={atletas}
@@ -110,14 +108,17 @@ export function BracketView({ lutas: linhas, atletas, acaoResultado }: Props) {
                     />
 
                     {luta.vencedorInscricaoId && luta.metodo && (
-                      <p className="mt-2 text-xs text-zinc-400">
+                      <p className="mt-2 text-xs text-muted-foreground">
                         {metodos.find(([m]) => m === luta.metodo)?.[1] ?? luta.metodo}
                         {luta.nomeFinalizacao ? ` — ${luta.nomeFinalizacao}` : ""}
                       </p>
                     )}
 
                     {pronta && acaoResultado && (
-                      <form action={acaoResultado} className="mt-3 space-y-2 border-t border-zinc-100 pt-2">
+                      <form
+                        action={acaoResultado}
+                        className="mt-3 space-y-2 border-t pt-2"
+                      >
                         <input type="hidden" name="lutaId" value={luta.id} />
                         <div className="flex flex-col gap-1 text-xs">
                           <label className="flex items-center gap-1.5">
@@ -139,17 +140,14 @@ export function BracketView({ lutas: linhas, atletas, acaoResultado }: Props) {
                           </label>
                         </div>
                         <div className="flex gap-2">
-                          <select
-                            name="metodo"
-                            className="w-full rounded border border-zinc-200 px-1 py-1 text-xs"
-                          >
+                          <NativeSelect name="metodo" className="h-7 px-1 py-0 text-xs">
                             {metodos.map(([valor, rotulo]) => (
                               <option key={valor} value={valor}>
                                 {rotulo}
                               </option>
                             ))}
-                          </select>
-                          <button className="rounded bg-zinc-900 px-2 py-1 text-xs font-medium text-white hover:bg-zinc-700">
+                          </NativeSelect>
+                          <button className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90">
                             OK
                           </button>
                         </div>

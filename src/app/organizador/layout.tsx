@@ -11,19 +11,22 @@ export default async function OrganizadorLayout({
   const usuario = await getUsuarioSessao();
 
   return (
-    <div className="min-h-screen bg-zinc-50 text-zinc-900">
-      <header className="border-b border-zinc-200 bg-white">
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="border-b bg-card">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <Link href="/organizador" className="font-bold tracking-tight">
-            BJJCAMP <span className="font-normal text-zinc-500">· Organizador</span>
+            BJJCAMP{" "}
+            <span className="font-normal text-muted-foreground">· Organizador</span>
           </Link>
           {supabaseConfigurado() && usuario ? (
             <form action={sair} className="flex items-center gap-3 text-sm">
-              <span className="text-zinc-600">{usuario.nome}</span>
-              <button className="text-zinc-400 hover:text-zinc-900">sair</button>
+              <span>{usuario.nome}</span>
+              <button className="text-muted-foreground hover:text-foreground">
+                sair
+              </button>
             </form>
           ) : (
-            <span className="text-sm text-zinc-500">
+            <span className="text-sm text-muted-foreground">
               {usuario?.nome ?? "Organizador Dev"}
             </span>
           )}

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { chaves, eventos } from "@/db/schema";
+import { buttonVariants } from "@/components/ui/button";
 import { getUsuarioAtual } from "@/lib/auth";
 import { duracaoLutaSegundos, montarFilaDaArea } from "@/lib/cronograma/fila";
 import { PlacarTablet } from "./placar-tablet";
@@ -30,12 +31,12 @@ export default async function PaginaPlacar({
     return (
       <div className="mx-auto max-w-lg py-20 text-center">
         <p className="text-2xl font-bold">Nenhuma luta pronta em {fila.area.nome}</p>
-        <p className="mt-2 text-zinc-500">
+        <p className="mt-2 text-muted-foreground">
           A fila está vazia ou aguardando vencedores das lutas anteriores.
         </p>
         <Link
           href={`/organizador/eventos/${id}/areas`}
-          className="mt-6 inline-block rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white"
+          className={`mt-6 inline-block ${buttonVariants()}`}
         >
           Voltar às áreas
         </Link>
@@ -52,10 +53,10 @@ export default async function PaginaPlacar({
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <Link href={`/organizador/eventos/${id}/areas`} className="text-sm text-zinc-500 hover:underline">
+        <Link href={`/organizador/eventos/${id}/areas`} className="text-sm text-muted-foreground hover:underline">
           ← Áreas
         </Link>
-        <p className="text-sm font-medium text-zinc-500">
+        <p className="text-sm font-medium text-muted-foreground">
           {fila.area.nome} · {fila.fila.length} luta(s) na fila
         </p>
       </div>

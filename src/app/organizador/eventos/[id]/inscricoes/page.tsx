@@ -3,6 +3,11 @@ import { notFound } from "next/navigation";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, eventos, inscricoes } from "@/db/schema";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
 import { getUsuarioAtual } from "@/lib/auth";
 import {
   cancelarInscricao,
@@ -12,14 +17,11 @@ import {
   reembolsarInscricao,
 } from "./actions";
 
-const inputCls =
-  "mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none";
-
-const rotuloStatus: Record<string, [string, string]> = {
-  pendente_pagamento: ["Pendente", "bg-amber-100 text-amber-700"],
-  confirmada: ["Confirmada", "bg-emerald-100 text-emerald-700"],
-  cancelada: ["Cancelada", "bg-zinc-100 text-zinc-500"],
-  reembolsada: ["Reembolsada", "bg-zinc-100 text-zinc-500"],
+const rotuloStatus: Record<string, [string, BadgeProps["variant"]]> = {
+  pendente_pagamento: ["Pendente", "warning"],
+  confirmada: ["Confirmada", "success"],
+  cancelada: ["Cancelada", "secondary"],
+  reembolsada: ["Reembolsada", "secondary"],
 };
 
 export default async function PaginaInscricoes({
@@ -59,7 +61,8 @@ export default async function PaginaInscricoes({
     }
   }
   const esvaziadas = abertas.filter(
-    (c) => (ativasPorCategoria.get(c.id) ?? 0) > 0 &&
+    (c) =>
+      (ativasPorCategoria.get(c.id) ?? 0) > 0 &&
       (ativasPorCategoria.get(c.id) ?? 0) < c.minInscritos,
   );
 
@@ -68,21 +71,22 @@ export default async function PaginaInscricoes({
       <div>
         <Link
           href={`/organizador/eventos/${id}`}
-          className="text-sm text-zinc-500 hover:underline"
+          className="text-sm text-muted-foreground hover:underline"
         >
           ← {evento.nome}
         </Link>
         <h1 className="mt-1 text-2xl font-bold">
-          Inscrições <span className="font-normal text-zinc-400">({lista.length})</span>
+          Inscrições{" "}
+          <span className="font-normal text-muted-foreground">({lista.length})</span>
         </h1>
       </div>
 
       {esvaziadas.length > 0 && (
-        <section className="rounded-xl border border-amber-200 bg-amber-50 p-5">
-          <p className="font-semibold text-amber-800">
+        <section className="rounded-xl border border-warning/40 bg-warning/15 p-5">
+          <p className="font-semibold text-warning-foreground">
             Categorias abaixo do mínimo de inscritos
           </p>
-          <p className="mt-1 text-xs text-amber-700">
+          <p className="mt-1 text-xs text-warning-foreground/80">
             Funda em outra categoria (move os atletas e fecha a origem) ou
             reembolse os inscritos.
           </p>
@@ -91,12 +95,15 @@ export default async function PaginaInscricoes({
               <li key={c.id} className="flex items-center justify-between gap-4 text-sm">
                 <span>
                   {c.nome}{" "}
-                  <span className="text-amber-700">
+                  <span className="text-warning-foreground/80">
                     ({ativasPorCategoria.get(c.id)} de {c.minInscritos} mín.)
                   </span>
                 </span>
-                <form action={fundirCategorias.bind(null, id, c.id)} className="flex items-center gap-2">
-                  <select name="destinoId" required className="rounded border border-amber-300 bg-white px-2 py-1 text-xs">
+                <form
+                  action={fundirCategorias.bind(null, id, c.id)}
+                  className="flex items-center gap-2"
+                >
+                  <NativeSelect name="destinoId" required className="h-8 w-auto text-xs">
                     <option value="">Fundir em…</option>
                     {abertas
                       .filter((d) => d.id !== c.id && d.sexo === c.sexo)
@@ -105,10 +112,8 @@ export default async function PaginaInscricoes({
                           {d.nome}
                         </option>
                       ))}
-                  </select>
-                  <button className="rounded bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-500">
-                    Fundir
-                  </button>
+                  </NativeSelect>
+                  <Button size="sm">Fundir</Button>
                 </form>
               </li>
             ))}
@@ -117,33 +122,39 @@ export default async function PaginaInscricoes({
       )}
 
       <section>
-        <ul className="divide-y divide-zinc-200 rounded-xl border border-zinc-200 bg-white">
+        <ul className="divide-y divide-border rounded-xl border bg-card">
           {lista.map((i) => {
-            const [rotulo, cor] = rotuloStatus[i.status] ?? [i.status, ""];
+            const [rotulo, variante] = rotuloStatus[i.status] ?? [i.status, "outline" as const];
             const ativa = i.status === "confirmada" || i.status === "pendente_pagamento";
             return (
               <li key={i.id} className="flex items-center justify-between gap-4 px-5 py-3">
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">
                     {i.nomeAtleta}
-                    <span className="ml-2 font-normal capitalize text-zinc-400">
+                    <span className="ml-2 font-normal capitalize text-muted-foreground">
                       {i.faixa}
                       {i.academiaNome ? ` · ${i.academiaNome}` : ""}
                     </span>
                   </p>
-                  <p className="truncate text-xs text-zinc-500">
+                  <p className="truncate text-xs text-muted-foreground">
                     {nomeCategoria.get(i.categoriaId)}
                   </p>
                 </div>
 
                 <div className="flex shrink-0 items-center gap-3">
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${cor}`}>
-                    {rotulo}
-                  </span>
+                  <Badge variant={variante}>{rotulo}</Badge>
 
                   {ativa && (
-                    <form action={moverInscricao.bind(null, id, i.id)} className="flex items-center gap-1">
-                      <select name="categoriaId" required defaultValue="" className="w-44 rounded border border-zinc-200 px-1.5 py-1 text-xs">
+                    <form
+                      action={moverInscricao.bind(null, id, i.id)}
+                      className="flex items-center gap-1"
+                    >
+                      <NativeSelect
+                        name="categoriaId"
+                        required
+                        defaultValue=""
+                        className="h-8 w-44 text-xs"
+                      >
                         <option value="" disabled>
                           Mover para…
                         </option>
@@ -154,21 +165,25 @@ export default async function PaginaInscricoes({
                               {c.nome}
                             </option>
                           ))}
-                      </select>
-                      <button className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50">
+                      </NativeSelect>
+                      <Button variant="outline" size="sm">
                         OK
-                      </button>
+                      </Button>
                     </form>
                   )}
 
                   {i.status === "pendente_pagamento" && (
                     <form action={cancelarInscricao.bind(null, id, i.id)}>
-                      <button className="text-xs text-red-500 hover:underline">cancelar</button>
+                      <button className="text-xs text-destructive hover:underline">
+                        cancelar
+                      </button>
                     </form>
                   )}
                   {i.status === "confirmada" && (
                     <form action={reembolsarInscricao.bind(null, id, i.id)}>
-                      <button className="text-xs text-red-500 hover:underline">reembolsar</button>
+                      <button className="text-xs text-destructive hover:underline">
+                        reembolsar
+                      </button>
                     </form>
                   )}
                 </div>
@@ -176,7 +191,7 @@ export default async function PaginaInscricoes({
             );
           })}
           {lista.length === 0 && (
-            <li className="px-5 py-8 text-center text-sm text-zinc-500">
+            <li className="px-5 py-8 text-center text-sm text-muted-foreground">
               Nenhuma inscrição ainda.
             </li>
           )}
@@ -185,43 +200,52 @@ export default async function PaginaInscricoes({
 
       <section className="max-w-2xl">
         <h2 className="text-lg font-bold">Inscrição manual</h2>
-        <p className="mt-1 text-xs text-zinc-500">
+        <p className="mt-1 text-xs text-muted-foreground">
           Para atleta que pagou por fora (dinheiro, isenção) — entra direto como
           confirmada e fica registrada na auditoria.
         </p>
-        <form
-          action={inscricaoManual.bind(null, id)}
-          className="mt-4 space-y-4 rounded-xl border border-zinc-200 bg-white p-5"
-        >
-          <div className="grid grid-cols-2 gap-4">
-            <input name="nome" required placeholder="Nome completo" className={inputCls} />
-            <input name="email" type="email" required placeholder="E-mail" className={inputCls} />
-          </div>
-          <div className="grid grid-cols-4 gap-4">
-            <input name="dataNascimento" type="date" required className={inputCls} />
-            <select name="sexo" required defaultValue="" className={inputCls}>
-              <option value="" disabled>Sexo</option>
-              <option value="masculino">Masculino</option>
-              <option value="feminino">Feminino</option>
-            </select>
-            <select name="faixa" required defaultValue="" className={inputCls}>
-              <option value="" disabled>Faixa</option>
-              {["branca", "azul", "roxa", "marrom", "preta"].map((f) => (
-                <option key={f} value={f}>{f}</option>
-              ))}
-            </select>
-            <input name="academia" placeholder="Academia" className={inputCls} />
-          </div>
-          <select name="categoriaId" required defaultValue="" className={inputCls}>
-            <option value="" disabled>Categoria</option>
-            {abertas.map((c) => (
-              <option key={c.id} value={c.id}>{c.nome}</option>
-            ))}
-          </select>
-          <button className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700">
-            Inscrever manualmente
-          </button>
-        </form>
+        <Card className="mt-4">
+          <CardContent className="p-5">
+            <form action={inscricaoManual.bind(null, id)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <Input name="nome" required placeholder="Nome completo" />
+                <Input name="email" type="email" required placeholder="E-mail" />
+              </div>
+              <div className="grid grid-cols-4 gap-4">
+                <Input name="dataNascimento" type="date" required />
+                <NativeSelect name="sexo" required defaultValue="">
+                  <option value="" disabled>
+                    Sexo
+                  </option>
+                  <option value="masculino">Masculino</option>
+                  <option value="feminino">Feminino</option>
+                </NativeSelect>
+                <NativeSelect name="faixa" required defaultValue="">
+                  <option value="" disabled>
+                    Faixa
+                  </option>
+                  {["branca", "azul", "roxa", "marrom", "preta"].map((f) => (
+                    <option key={f} value={f}>
+                      {f}
+                    </option>
+                  ))}
+                </NativeSelect>
+                <Input name="academia" placeholder="Academia" />
+              </div>
+              <NativeSelect name="categoriaId" required defaultValue="">
+                <option value="" disabled>
+                  Categoria
+                </option>
+                {abertas.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
+              </NativeSelect>
+              <Button>Inscrever manualmente</Button>
+            </form>
+          </CardContent>
+        </Card>
       </section>
     </div>
   );

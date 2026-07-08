@@ -3,6 +3,10 @@ import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, eventos, inscricoes } from "@/db/schema";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { getUsuarioAtual } from "@/lib/auth";
 import { codigoCurto } from "@/lib/checkin/qr";
 
@@ -47,11 +51,14 @@ export default async function PaginaCheckin({
 
   return (
     <div>
-      <Link href={`/organizador/eventos/${id}`} className="text-sm text-zinc-500 hover:underline">
+      <Link
+        href={`/organizador/eventos/${id}`}
+        className="text-sm text-muted-foreground hover:underline"
+      >
         ← {evento.nome}
       </Link>
       <h1 className="mt-1 text-2xl font-bold">Check-in & Pesagem</h1>
-      <p className="mt-1 text-sm text-zinc-500">
+      <p className="mt-1 text-sm text-muted-foreground">
         Escaneie o QR do atleta com a câmera do celular (abre direto a tela de
         pesagem) ou busque por nome / código.
       </p>
@@ -62,61 +69,56 @@ export default async function PaginaCheckin({
           ["Check-in feito", feitos],
           ["Fora do peso", foraDoPeso],
         ].map(([rotulo, valor]) => (
-          <div key={rotulo} className="rounded-xl border border-zinc-200 bg-white p-5">
-            <p className="text-sm text-zinc-500">{rotulo}</p>
-            <p className="mt-1 text-3xl font-bold">{valor}</p>
-          </div>
+          <Card key={rotulo}>
+            <CardContent className="p-5">
+              <p className="text-sm text-muted-foreground">{rotulo}</p>
+              <p className="mt-1 text-3xl font-bold">{valor}</p>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
       <form method="GET" className="mt-6 flex gap-2">
-        <input
+        <Input
           name="q"
           defaultValue={q}
           placeholder="Nome do atleta ou código (ex.: A1B2C3D4)"
-          className="w-full rounded-lg border border-zinc-300 bg-white px-4 py-2.5 text-sm focus:border-zinc-900 focus:outline-none"
         />
-        <button className="rounded-lg bg-zinc-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-zinc-700">
-          Buscar
-        </button>
+        <Button>Buscar</Button>
       </form>
 
-      <ul className="mt-4 divide-y divide-zinc-200 rounded-xl border border-zinc-200 bg-white">
+      <ul className="mt-4 divide-y divide-border rounded-xl border bg-card">
         {resultados.map((i) => (
           <li key={i.id}>
             <Link
               href={`/organizador/eventos/${id}/checkin/${i.id}`}
-              className="flex items-center justify-between px-5 py-3 hover:bg-zinc-50"
+              className="flex items-center justify-between px-5 py-3 hover:bg-accent"
             >
               <div>
                 <p className="text-sm font-medium">
                   {i.nomeAtleta}
-                  <span className="ml-2 font-mono text-xs text-zinc-400">
+                  <span className="ml-2 font-mono text-xs text-muted-foreground">
                     {codigoCurto(i.id)}
                   </span>
                 </p>
-                <p className="text-xs text-zinc-500">{nomeCategoria.get(i.categoriaId)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {nomeCategoria.get(i.categoriaId)}
+                </p>
               </div>
               {i.checkinEm ? (
                 i.foraDoPeso ? (
-                  <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
-                    Fora do peso ({i.pesoAferidoKg}kg)
-                  </span>
+                  <Badge variant="destructive">Fora do peso ({i.pesoAferidoKg}kg)</Badge>
                 ) : (
-                  <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700">
-                    OK · {i.pesoAferidoKg}kg
-                  </span>
+                  <Badge variant="success">OK · {i.pesoAferidoKg}kg</Badge>
                 )
               ) : (
-                <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-500">
-                  Aguardando
-                </span>
+                <Badge variant="secondary">Aguardando</Badge>
               )}
             </Link>
           </li>
         ))}
         {resultados.length === 0 && (
-          <li className="px-5 py-8 text-center text-sm text-zinc-500">
+          <li className="px-5 py-8 text-center text-sm text-muted-foreground">
             Nenhum atleta encontrado{termo ? ` para "${q}"` : ""}.
           </li>
         )}

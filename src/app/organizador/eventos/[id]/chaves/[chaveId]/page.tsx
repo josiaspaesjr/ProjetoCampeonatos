@@ -58,21 +58,21 @@ export default async function PaginaChave({
     <div>
       <Link
         href={`/organizador/eventos/${id}/chaves`}
-        className="text-sm text-zinc-500 hover:underline"
+        className="text-sm text-muted-foreground hover:underline"
       >
         ← Todas as chaves
       </Link>
       <div className="mt-2 flex items-center justify-between">
         <h1 className="text-xl font-bold">{categoria?.nome}</h1>
-        <span className="rounded-full bg-zinc-100 px-3 py-1 text-xs font-medium text-zinc-600">
+        <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
           {chave.status} · seed {chave.seedSorteio.slice(0, 8)}
         </span>
       </div>
 
       {podio && (
-        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-5">
-          <p className="font-semibold text-emerald-800">Pódio</p>
-          <ol className="mt-2 space-y-1 text-sm text-emerald-900">
+        <div className="mt-4 rounded-xl border border-success/30 bg-success/10 p-5">
+          <p className="font-semibold text-success">Pódio</p>
+          <ol className="mt-2 space-y-1 text-sm">
             <li>🥇 {podio.primeiro && atletas[podio.primeiro]?.nome}</li>
             <li>🥈 {podio.segundo && atletas[podio.segundo]?.nome}</li>
             {podio.terceiros.map((t) => (
@@ -83,7 +83,7 @@ export default async function PaginaChave({
       )}
 
       {chave.status === "rascunho" && (
-        <p className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
+        <p className="mt-4 rounded-md bg-warning/15 px-4 py-3 text-sm text-warning-foreground">
           Chave em rascunho — publique na lista de chaves para liberar o
           lançamento de resultados.
         </p>

@@ -10,6 +10,8 @@ import {
   pagamentos,
 } from "@/db/schema";
 import { PublicShell } from "@/components/public-shell";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { obterPixQrCodeAsaas } from "@/lib/pagamentos/asaas";
 import { simularPagamentoAprovado } from "./actions";
 
@@ -69,77 +71,79 @@ export default async function PaginaCheckout({
     <PublicShell>
       <div className="mx-auto max-w-lg">
         <h1 className="text-2xl font-bold">Pagamento</h1>
-        <p className="mt-1 text-sm text-zinc-500">{evento?.nome}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{evento?.nome}</p>
 
-        <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-6">
-          <ul className="divide-y divide-zinc-100 text-sm">
-            {minhasInscricoes.map((i) => (
-              <li key={i.id} className="flex items-center justify-between py-2">
-                <span>{nomeCategoria.get(i.categoriaId) ?? "Categoria"}</span>
-                <span
-                  className={
-                    i.status === "confirmada" ? "text-emerald-600" : "text-zinc-400"
-                  }
-                >
-                  {i.status === "confirmada" ? "confirmada" : "aguardando pagamento"}
-                </span>
-              </li>
-            ))}
-          </ul>
+        <Card className="mt-6 rounded-2xl">
+          <CardContent className="p-6">
+            <ul className="divide-y divide-border text-sm">
+              {minhasInscricoes.map((i) => (
+                <li key={i.id} className="flex items-center justify-between py-2">
+                  <span>{nomeCategoria.get(i.categoriaId) ?? "Categoria"}</span>
+                  <span
+                    className={
+                      i.status === "confirmada" ? "text-success" : "text-muted-foreground"
+                    }
+                  >
+                    {i.status === "confirmada" ? "confirmada" : "aguardando pagamento"}
+                  </span>
+                </li>
+              ))}
+            </ul>
 
-          <div className="mt-4 flex items-center justify-between border-t border-zinc-200 pt-4">
-            <span className="font-medium">Total</span>
-            <span className="text-2xl font-bold">
-              {fmt.format(pagamento.valorBrutoCentavos / 100)}
-            </span>
-          </div>
-
-          {pagamento.status === "pago" ? (
-            <div className="mt-6 rounded-xl bg-emerald-50 p-5 text-center">
-              <p className="text-lg font-semibold text-emerald-700">
-                Pagamento confirmado ✓
-              </p>
-              <p className="mt-1 text-sm text-emerald-700">
-                Sua inscrição está garantida. Oss! 👊
-              </p>
-              <Link
-                href={`/evento/${evento?.slug}`}
-                className="mt-4 inline-block text-sm font-medium text-emerald-800 underline"
-              >
-                Voltar para o evento
-              </Link>
+            <div className="mt-4 flex items-center justify-between border-t pt-4">
+              <span className="font-medium">Total</span>
+              <span className="text-2xl font-bold">
+                {fmt.format(pagamento.valorBrutoCentavos / 100)}
+              </span>
             </div>
-          ) : (
-            <div className="mt-6">
-              {pixQr && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={`data:image/png;base64,${pixQr.encodedImage}`}
-                  alt="QR Code Pix"
-                  className="mx-auto h-48 w-48"
-                />
-              )}
-              <p className="text-sm font-medium">Pix copia e cola</p>
-              <code className="mt-2 block break-all rounded-lg bg-zinc-100 p-3 text-xs text-zinc-600">
-                {pixQr?.payload ?? `(cobrança de teste ${pagamento.gatewayCobrancaId})`}
-              </code>
-              {pagamento.expiraEm && (
-                <p className="mt-2 text-xs text-zinc-400">
-                  Expira em {pagamento.expiraEm.toLocaleTimeString("pt-BR")} — após
-                  isso a vaga é liberada.
+
+            {pagamento.status === "pago" ? (
+              <div className="mt-6 rounded-xl bg-success/10 p-5 text-center">
+                <p className="text-lg font-semibold text-success">
+                  Pagamento confirmado ✓
                 </p>
-              )}
+                <p className="mt-1 text-sm text-success">
+                  Sua inscrição está garantida. Oss! 👊
+                </p>
+                <Link
+                  href={`/evento/${evento?.slug}`}
+                  className="mt-4 inline-block text-sm font-medium text-success underline"
+                >
+                  Voltar para o evento
+                </Link>
+              </div>
+            ) : (
+              <div className="mt-6">
+                {pixQr && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`data:image/png;base64,${pixQr.encodedImage}`}
+                    alt="QR Code Pix"
+                    className="mx-auto h-48 w-48"
+                  />
+                )}
+                <p className="text-sm font-medium">Pix copia e cola</p>
+                <code className="mt-2 block break-all rounded-md bg-muted p-3 text-xs text-muted-foreground">
+                  {pixQr?.payload ?? `(cobrança de teste ${pagamento.gatewayCobrancaId})`}
+                </code>
+                {pagamento.expiraEm && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Expira em {pagamento.expiraEm.toLocaleTimeString("pt-BR")} — após
+                    isso a vaga é liberada.
+                  </p>
+                )}
 
-              {gatewayDev && (
-                <form action={simularPagamentoAprovado.bind(null, pagamento.id)}>
-                  <button className="mt-4 w-full rounded-lg bg-zinc-900 px-4 py-3 text-sm font-medium text-white hover:bg-zinc-700">
-                    Simular pagamento aprovado (ambiente de teste)
-                  </button>
-                </form>
-              )}
-            </div>
-          )}
-        </div>
+                {gatewayDev && (
+                  <form action={simularPagamentoAprovado.bind(null, pagamento.id)}>
+                    <Button className="mt-4 w-full">
+                      Simular pagamento aprovado (ambiente de teste)
+                    </Button>
+                  </form>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </PublicShell>
   );

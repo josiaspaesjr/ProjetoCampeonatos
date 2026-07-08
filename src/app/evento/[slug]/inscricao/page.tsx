@@ -34,7 +34,7 @@ export default async function PaginaInscricao({
     <PublicShell>
       <div className="mx-auto max-w-2xl">
         <h1 className="text-2xl font-bold">Inscrição — {evento.nome}</h1>
-        <p className="mt-1 text-sm text-zinc-500">
+        <p className="mt-1 text-sm text-muted-foreground">
           Só mostramos categorias compatíveis com seu perfil. Pagamento na
           próxima etapa.
         </p>
