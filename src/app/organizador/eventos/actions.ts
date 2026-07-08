@@ -27,6 +27,11 @@ function slugify(nome: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+/** validações esperadas viram banner na página do evento (visível em produção) */
+function erroVisivel(eventoId: string, mensagem: string): never {
+  redirect(`/organizador/eventos/${eventoId}?erro=${encodeURIComponent(mensagem)}`);
+}
+
 async function eventoDoOrganizador(eventoId: string) {
   const db = await getDb();
   const usuario = await getUsuarioAtual();
@@ -83,7 +88,9 @@ export async function gerarCategoriasCbjj(eventoId: string, formData: FormData) 
   };
 
   const grade = gerarGrade(selecao);
-  if (!grade.length) throw new Error("Seleção não gera nenhuma categoria");
+  if (!grade.length) {
+    erroVisivel(eventoId, "Seleção não gera nenhuma categoria — marque ao menos uma classe, um sexo e uma faixa.");
+  }
 
   // não duplica categorias com o mesmo nome já existentes no evento
   const existentes = await db.query.categorias.findMany({
@@ -118,8 +125,9 @@ export async function excluirCategoria(eventoId: string, categoriaId: string) {
     where: eq(inscricoes.categoriaId, categoriaId),
   });
   if (inscritos.length) {
-    throw new Error(
-      "Categoria com inscritos não pode ser excluída — mova os atletas antes",
+    erroVisivel(
+      eventoId,
+      "Categoria com inscritos não pode ser excluída — mova os atletas antes.",
     );
   }
 
@@ -141,9 +149,11 @@ export async function criarLote(eventoId: string, formData: FormData) {
   const fim = new Date(String(formData.get("fim")));
 
   if (!nome || !preco || isNaN(inicio.getTime()) || isNaN(fim.getTime())) {
-    throw new Error("Preencha nome, preço e vigência do lote");
+    erroVisivel(eventoId, "Preencha nome, preço e vigência do lote.");
   }
-  if (fim <= inicio) throw new Error("O fim do lote precisa ser depois do início");
+  if (fim <= inicio) {
+    erroVisivel(eventoId, "O fim do lote precisa ser depois do início.");
+  }
 
   await db.insert(lotes).values({
     eventoId,
@@ -167,7 +177,7 @@ export async function excluirLote(eventoId: string, loteId: string) {
 export async function encerrarInscricoes(eventoId: string) {
   const { db, evento } = await eventoDoOrganizador(eventoId);
   if (evento.status !== "publicado") {
-    throw new Error("Só eventos publicados podem ter inscrições encerradas");
+    erroVisivel(eventoId, "Só eventos publicados podem ter inscrições encerradas.");
   }
   await db
     .update(eventos)
@@ -178,7 +188,16 @@ export async function encerrarInscricoes(eventoId: string) {
 
 export async function gerarChave(eventoId: string, categoriaId: string) {
   const { db, usuario } = await eventoDoOrganizador(eventoId);
-  const chave = await gerarChaveParaCategoria(db, categoriaId);
+  let chave;
+  try {
+    chave = await gerarChaveParaCategoria(db, categoriaId);
+  } catch (e) {
+    redirect(
+      `/organizador/eventos/${eventoId}/chaves?erro=${encodeURIComponent(
+        e instanceof Error ? e.message : "Erro ao gerar a chave",
+      )}`,
+    );
+  }
   await db.insert(auditoria).values({
     usuarioId: usuario.id,
     entidade: "chave",
@@ -201,7 +220,11 @@ export async function publicarChaves(eventoId: string) {
     ),
   );
   const rascunhos = todas.filter((c) => c?.status === "rascunho");
-  if (!rascunhos.length) throw new Error("Nenhuma chave em rascunho para publicar");
+  if (!rascunhos.length) {
+    redirect(
+      `/organizador/eventos/${eventoId}/chaves?erro=${encodeURIComponent("Nenhuma chave em rascunho para publicar")}`,
+    );
+  }
 
   for (const chave of rascunhos) {
     await db
@@ -256,7 +279,7 @@ export async function lancarResultado(
 
 export async function publicarEvento(eventoId: string) {
   const { db, evento } = await eventoDoOrganizador(eventoId);
-  if (evento.status !== "rascunho") throw new Error("Evento já publicado");
+  if (evento.status !== "rascunho") erroVisivel(eventoId, "Evento já publicado");
 
   const cats = await db.query.categorias.findMany({
     where: eq(categorias.eventoId, eventoId),
@@ -264,8 +287,14 @@ export async function publicarEvento(eventoId: string) {
   const lts = await db.query.lotes.findMany({
     where: eq(lotes.eventoId, eventoId),
   });
-  if (!cats.length || !lts.length) {
-    throw new Error("Publique apenas com ao menos 1 categoria e 1 lote");
+  if (!cats.length) {
+    erroVisivel(
+      eventoId,
+      "Para publicar, gere ao menos 1 categoria (use o Gerador de grade CBJJ abaixo).",
+    );
+  }
+  if (!lts.length) {
+    erroVisivel(eventoId, "Para publicar, crie ao menos 1 lote de inscrição.");
   }
 
   await db

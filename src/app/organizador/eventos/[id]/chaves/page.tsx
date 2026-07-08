@@ -17,10 +17,13 @@ const rotuloChave: Record<string, [string, BadgeProps["variant"]]> = {
 
 export default async function PaginaChaves({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ erro?: string }>;
 }) {
   const { id } = await params;
+  const { erro } = await searchParams;
   const db = await getDb();
   const usuario = await getUsuarioAtual();
 
@@ -55,6 +58,11 @@ export default async function PaginaChaves({
 
   return (
     <div>
+      {erro && (
+        <p className="mb-4 rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {erro}
+        </p>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Chaves — {evento.nome}</h1>

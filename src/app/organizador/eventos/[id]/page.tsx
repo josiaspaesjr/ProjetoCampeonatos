@@ -29,10 +29,13 @@ function dinheiro(centavos: number, moeda: string) {
 
 export default async function PaginaEvento({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ erro?: string }>;
 }) {
   const { id } = await params;
+  const { erro } = await searchParams;
   const db = await getDb();
   const usuario = await getUsuarioAtual();
 
@@ -54,6 +57,12 @@ export default async function PaginaEvento({
 
   return (
     <div className="space-y-10">
+      {erro && (
+        <p className="rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {erro}
+        </p>
+      )}
+
       {/* cabeçalho */}
       <div className="flex items-start justify-between">
         <div>
