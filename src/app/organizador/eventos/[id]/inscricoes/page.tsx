@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { getUsuarioAtual } from "@/lib/auth";
+import { FAIXAS } from "@/lib/categorias/cbjj";
 import {
   cancelarInscricao,
   fundirCategorias,
@@ -224,7 +225,7 @@ export default async function PaginaInscricoes({
                   <option value="" disabled>
                     Faixa
                   </option>
-                  {["branca", "azul", "roxa", "marrom", "preta"].map((f) => (
+                  {FAIXAS.map((f) => (
                     <option key={f} value={f}>
                       {f}
                     </option>

@@ -8,7 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getUsuarioAtual } from "@/lib/auth";
-import { CLASSES_IDADE } from "@/lib/categorias/cbjj";
+import { CLASSES_IDADE, FAIXAS } from "@/lib/categorias/cbjj";
 import {
   criarLote,
   encerrarInscricoes,
@@ -222,8 +222,9 @@ export default async function PaginaEvento({
               <p className="text-sm font-semibold">Gerador de grade CBJJ</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Marque classes, sexos e faixas — o produto cartesiano com a tabela
-                oficial de pesos vira a grade. Categorias já existentes com o mesmo
-                nome não são duplicadas. Kids: crie manualmente (Fase 1).
+                de pesos vira a grade (cada classe só gera as faixas permitidas
+                para ela). Confira os limites com o regulamento do seu evento —
+                as categorias são editáveis.
               </p>
 
               <div className="mt-4 grid grid-cols-3 gap-6 text-sm">
@@ -267,7 +268,7 @@ export default async function PaginaEvento({
                     Faixas
                   </legend>
                   <div className="mt-2 space-y-1">
-                    {(["branca", "azul", "roxa", "marrom", "preta"] as const).map((f) => (
+                    {FAIXAS.map((f) => (
                       <label key={f} className="flex items-center gap-2 capitalize">
                         <input type="checkbox" name="faixas" value={f} defaultChecked={f === "branca" || f === "azul"} />
                         {f}

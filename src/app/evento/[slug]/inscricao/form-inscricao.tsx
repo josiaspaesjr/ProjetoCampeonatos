@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
+import { FAIXAS } from "@/lib/categorias/cbjj";
 import {
   categoriaCompativel,
   idadeNoAnoDoEvento,
@@ -110,7 +111,7 @@ export function FormInscricao({ dataEvento, categorias, acao, perfil }: Props) {
             className="mt-1"
           >
             <option value="">Selecione</option>
-            {["branca", "azul", "roxa", "marrom", "preta"].map((f) => (
+            {FAIXAS.map((f) => (
               <option key={f} value={f}>
                 {f.charAt(0).toUpperCase() + f.slice(1)}
               </option>

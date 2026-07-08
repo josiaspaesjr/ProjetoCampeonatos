@@ -13,10 +13,20 @@ import { areas, categorias, chaves, inscricoes, lutas } from "@/db/schema";
 
 const TRANSICAO_SEGUNDOS = 60;
 
-/** tempo regulamentar CBJJ adulto por faixa, em segundos */
+/** tempo regulamentar CBJJ por faixa (kids: aproximação por faixa), em segundos */
 export function duracaoLutaSegundos(faixa: string | null): number {
   const minutos =
-    { branca: 5, azul: 6, roxa: 7, marrom: 8, preta: 10 }[faixa ?? ""] ?? 6;
+    {
+      cinza: 3,
+      amarela: 3,
+      laranja: 4,
+      verde: 4,
+      branca: 5,
+      azul: 6,
+      roxa: 7,
+      marrom: 8,
+      preta: 10,
+    }[faixa ?? ""] ?? 6;
   return minutos * 60 + TRANSICAO_SEGUNDOS;
 }
 

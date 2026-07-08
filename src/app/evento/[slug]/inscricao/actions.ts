@@ -13,6 +13,7 @@ import {
   pagamentos,
   usuarios,
 } from "@/db/schema";
+import type { Faixa } from "@/lib/categorias/cbjj";
 import {
   categoriaCompativel,
   idadeNoAnoDoEvento,
@@ -47,8 +48,7 @@ export async function criarInscricao(eventoSlug: string, formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const dataNascimento = String(formData.get("dataNascimento") ?? "");
   const sexo = String(formData.get("sexo") ?? "") as "masculino" | "feminino";
-  const faixa = String(formData.get("faixa") ?? "") as
-    | "branca" | "azul" | "roxa" | "marrom" | "preta";
+  const faixa = String(formData.get("faixa") ?? "") as Faixa;
   const academiaNome = String(formData.get("academia") ?? "").trim();
   const categoriaId = String(formData.get("categoriaId") ?? "");
 

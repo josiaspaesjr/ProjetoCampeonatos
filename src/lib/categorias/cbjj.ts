@@ -1,8 +1,11 @@
 /**
  * Gerador de grade de categorias no padrão CBJJ/IBJJF (com kimono).
  *
- * Cobre Juvenil, Adulto e Masters 1–7. Categorias Kids têm grade própria por
- * ano de idade — na Fase 1 são criadas manualmente como categorias custom.
+ * Cobre Kids (Pré-Mirim a Infanto-Juvenil), Juvenil, Adulto e Masters 1–7.
+ *
+ * Faixas infantis seguem a progressão IBJJF: cinza (4+), amarela (7+),
+ * laranja (10+), verde (13+) — cada classe de idade só aceita as faixas
+ * permitidas para ela.
  *
  * ATENÇÃO: limites de peso conferidos com a tabela oficial vigente devem ser
  * revisados pelo organizador antes de publicar o evento — a tabela é editável.
@@ -12,10 +15,27 @@ export type Sexo = "masculino" | "feminino";
 
 export type Faixa =
   | "branca"
+  | "cinza"
+  | "amarela"
+  | "laranja"
+  | "verde"
   | "azul"
   | "roxa"
   | "marrom"
   | "preta";
+
+/** ordem de exibição nos formulários (kids → adulto) */
+export const FAIXAS: Faixa[] = [
+  "branca",
+  "cinza",
+  "amarela",
+  "laranja",
+  "verde",
+  "azul",
+  "roxa",
+  "marrom",
+  "preta",
+];
 
 export interface ClasseIdade {
   id: string;
@@ -26,6 +46,10 @@ export interface ClasseIdade {
 }
 
 export const CLASSES_IDADE: ClasseIdade[] = [
+  { id: "pre_mirim", nome: "Pré-Mirim", idadeMin: 4, idadeMax: 6, faixas: ["branca", "cinza"] },
+  { id: "mirim", nome: "Mirim", idadeMin: 7, idadeMax: 9, faixas: ["branca", "cinza", "amarela"] },
+  { id: "infantil", nome: "Infantil", idadeMin: 10, idadeMax: 12, faixas: ["branca", "cinza", "amarela", "laranja"] },
+  { id: "infanto_juvenil", nome: "Infanto-Juvenil", idadeMin: 13, idadeMax: 15, faixas: ["branca", "cinza", "amarela", "laranja", "verde"] },
   { id: "juvenil", nome: "Juvenil", idadeMin: 16, idadeMax: 17, faixas: ["branca", "azul"] },
   { id: "adulto", nome: "Adulto", idadeMin: 18, idadeMax: null, faixas: ["branca", "azul", "roxa", "marrom", "preta"] },
   { id: "master1", nome: "Master 1", idadeMin: 30, idadeMax: 35, faixas: ["branca", "azul", "roxa", "marrom", "preta"] },
@@ -93,7 +117,56 @@ const PESOS_JUVENIL_FEMININO: CategoriaPeso[] = [
   { nome: "Super-Pesado", limiteKg: null },
 ];
 
+/**
+ * Kids: tabela única por classe de idade (masculino e feminino), prática
+ * comum em eventos regionais — o organizador ajusta/remove o que não usar.
+ */
+const PESOS_KIDS: Record<string, CategoriaPeso[]> = {
+  pre_mirim: [
+    { nome: "Galo", limiteKg: 18.0 },
+    { nome: "Pluma", limiteKg: 21.0 },
+    { nome: "Pena", limiteKg: 24.0 },
+    { nome: "Leve", limiteKg: 27.0 },
+    { nome: "Médio", limiteKg: 30.0 },
+    { nome: "Pesado", limiteKg: 33.0 },
+    { nome: "Super-Pesado", limiteKg: null },
+  ],
+  mirim: [
+    { nome: "Galo", limiteKg: 24.0 },
+    { nome: "Pluma", limiteKg: 27.0 },
+    { nome: "Pena", limiteKg: 30.0 },
+    { nome: "Leve", limiteKg: 33.0 },
+    { nome: "Médio", limiteKg: 36.0 },
+    { nome: "Meio-Pesado", limiteKg: 39.0 },
+    { nome: "Pesado", limiteKg: 42.0 },
+    { nome: "Super-Pesado", limiteKg: null },
+  ],
+  infantil: [
+    { nome: "Galo", limiteKg: 30.0 },
+    { nome: "Pluma", limiteKg: 33.5 },
+    { nome: "Pena", limiteKg: 37.0 },
+    { nome: "Leve", limiteKg: 40.5 },
+    { nome: "Médio", limiteKg: 44.0 },
+    { nome: "Meio-Pesado", limiteKg: 47.5 },
+    { nome: "Pesado", limiteKg: 51.0 },
+    { nome: "Super-Pesado", limiteKg: 54.5 },
+    { nome: "Pesadíssimo", limiteKg: null },
+  ],
+  infanto_juvenil: [
+    { nome: "Galo", limiteKg: 40.0 },
+    { nome: "Pluma", limiteKg: 44.0 },
+    { nome: "Pena", limiteKg: 48.0 },
+    { nome: "Leve", limiteKg: 52.5 },
+    { nome: "Médio", limiteKg: 57.0 },
+    { nome: "Meio-Pesado", limiteKg: 61.5 },
+    { nome: "Pesado", limiteKg: 66.0 },
+    { nome: "Super-Pesado", limiteKg: 70.5 },
+    { nome: "Pesadíssimo", limiteKg: null },
+  ],
+};
+
 export function tabelaPesos(classeId: string, sexo: Sexo): CategoriaPeso[] {
+  if (PESOS_KIDS[classeId]) return PESOS_KIDS[classeId];
   if (classeId === "juvenil") {
     return sexo === "masculino" ? PESOS_JUVENIL_MASCULINO : PESOS_JUVENIL_FEMININO;
   }

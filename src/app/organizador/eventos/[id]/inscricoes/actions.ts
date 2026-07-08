@@ -13,6 +13,7 @@ import {
   usuarios,
 } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
+import type { Faixa } from "@/lib/categorias/cbjj";
 
 async function contexto(eventoId: string) {
   const db = await getDb();
@@ -136,8 +137,7 @@ export async function inscricaoManual(eventoId: string, formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const dataNascimento = String(formData.get("dataNascimento") ?? "");
   const sexo = String(formData.get("sexo") ?? "") as "masculino" | "feminino";
-  const faixa = String(formData.get("faixa") ?? "") as
-    | "branca" | "azul" | "roxa" | "marrom" | "preta";
+  const faixa = String(formData.get("faixa") ?? "") as Faixa;
   const academiaNome = String(formData.get("academia") ?? "").trim();
   const categoriaId = String(formData.get("categoriaId") ?? "");
 
