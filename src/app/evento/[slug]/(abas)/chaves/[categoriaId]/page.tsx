@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, eq, inArray, ne } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
-import { categorias, chaves, eventos, inscricoes, lutas } from "@/db/schema";
+import { categorias, chaves, inscricoes, lutas } from "@/db/schema";
 import { calcularPodioDaChave } from "@/lib/chaves/persistencia";
+import { getEventoPublico } from "@/lib/evento-publico";
 import { BracketView, type AtletaInfo } from "@/components/bracket-view";
-import { PublicShell } from "@/components/public-shell";
 
 export default async function ChavePublica({
   params,
@@ -13,13 +13,11 @@ export default async function ChavePublica({
   params: Promise<{ slug: string; categoriaId: string }>;
 }) {
   const { slug, categoriaId } = await params;
+  const dados = await getEventoPublico(slug);
+  if (!dados) notFound();
+  const { evento } = dados;
+
   const db = await getDb();
-
-  const evento = await db.query.eventos.findFirst({
-    where: and(eq(eventos.slug, slug), ne(eventos.status, "rascunho")),
-  });
-  if (!evento) notFound();
-
   const categoria = await db.query.categorias.findFirst({
     where: and(eq(categorias.id, categoriaId), eq(categorias.eventoId, evento.id)),
   });
@@ -56,11 +54,14 @@ export default async function ChavePublica({
     chave.status === "concluida" ? calcularPodioDaChave(chave, linhas) : null;
 
   return (
-    <PublicShell>
-      <Link href={`/evento/${evento.slug}`} className="text-sm text-muted-foreground hover:underline">
-        ← {evento.nome}
+    <div className="px-6 pb-20 pt-10 md:px-12">
+      <Link
+        href={`/evento/${evento.slug}/chaves`}
+        className="font-cond text-sm uppercase tracking-[0.05em] text-muted-2 transition-colors hover:text-brand"
+      >
+        ← Todas as chaves
       </Link>
-      <h1 className="mt-2 text-xl font-bold">{categoria.nome}</h1>
+      <h1 className="disp mt-2 text-[40px]">{categoria.nome}</h1>
 
       {podio && (
         <div className="mt-4 rounded-xl border border-success/30 bg-success/10 p-5">
@@ -78,6 +79,6 @@ export default async function ChavePublica({
       <div className="mt-6">
         <BracketView lutas={linhas} atletas={atletas} formato={chave.formato} />
       </div>
-    </PublicShell>
+    </div>
   );
 }
