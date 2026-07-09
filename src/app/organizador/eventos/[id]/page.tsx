@@ -71,6 +71,20 @@ export default async function PaginaEvento({
             {new Date(`${evento.dataInicio}T12:00:00`).toLocaleDateString("pt-BR")}
             {evento.cidade ? ` · ${evento.cidade}/${evento.uf ?? ""}` : ""} · {evento.moeda}
           </p>
+          <p className="mt-2 text-sm">
+            <span className="text-muted-foreground">Página de inscrição: </span>
+            <Link
+              href={`/evento/${evento.slug}`}
+              target="_blank"
+              className="font-medium text-success underline"
+            >
+              {`${process.env.NEXT_PUBLIC_APP_URL ?? ""}/evento/${evento.slug}`.replace(/^https?:\/\//, "") || `/evento/${evento.slug}`}
+              {" ↗"}
+            </Link>
+            <span className="ml-2 text-xs text-muted-foreground">
+              (divulgue este link para os atletas)
+            </span>
+          </p>
         </div>
         <div className="flex items-center gap-3">
           <Badge variant="secondary">{evento.status}</Badge>
