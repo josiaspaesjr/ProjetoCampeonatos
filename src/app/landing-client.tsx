@@ -42,6 +42,7 @@ const DICT = {
     navRanking: "Ranking",
     navAoVivo: "Ao vivo",
     navCriar: "Criar evento",
+    navEntrar: "Entrar",
     heroBadge: "O sistema operacional do jiu-jitsu",
     heroL1: "Toda competição.",
     heroL2pre: "Uma",
@@ -108,6 +109,7 @@ const DICT = {
     navRanking: "Ranking",
     navAoVivo: "Live",
     navCriar: "Create event",
+    navEntrar: "Sign in",
     heroBadge: "The operating system of competitive jiu-jitsu",
     heroL1: "Every competition.",
     heroL2pre: "One",
@@ -173,6 +175,7 @@ const DICT = {
     navRanking: "Ranking",
     navAoVivo: "En vivo",
     navCriar: "Crear evento",
+    navEntrar: "Entrar",
     heroBadge: "El sistema operativo del jiu-jitsu competitivo",
     heroL1: "Toda competición.",
     heroL2pre: "Una",
@@ -327,6 +330,9 @@ export function LandingClient({
               </button>
             ))}
           </div>
+          <Link href="/acesso" className="transition-colors hover:text-brand">
+            {t.navEntrar}
+          </Link>
           <Link href="/organizador" className="-skew-x-9 bg-brand px-5 py-2.5 text-white">
             <SkewTexto>{t.navCriar}</SkewTexto>
           </Link>

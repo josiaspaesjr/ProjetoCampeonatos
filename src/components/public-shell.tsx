@@ -40,12 +40,20 @@ export async function PublicShell({
                 </form>
               ) : (
                 <Link
-                  href="/entrar"
+                  href="/acesso"
                   className="-skew-x-9 bg-brand px-5 py-2 text-white"
                 >
                   <SkewTexto>Entrar</SkewTexto>
                 </Link>
               ))}
+            {comAuth && usuario && (
+              <Link
+                href="/atleta"
+                className="text-muted-2 transition-colors hover:text-brand"
+              >
+                Minha área
+              </Link>
+            )}
           </nav>
         </div>
       </header>
