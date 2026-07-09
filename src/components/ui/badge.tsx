@@ -1,13 +1,14 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+/* Badges v3: chips condensados com fundo/borda skewados em ::before. */
 const variants = {
-  default: "border-gold/45 text-gold-light",
-  secondary: "border-white/14 text-muted-2",
-  destructive: "border-destructive/50 text-destructive",
-  success: "border-success/50 text-success",
-  warning: "border-gold/45 bg-warning/15 text-warning-foreground",
-  outline: "border-white/14 text-foreground",
+  default: "text-white before:bg-brand",
+  secondary: "text-muted-2 before:border before:border-white/14",
+  destructive: "text-white before:bg-brand",
+  success: "text-success before:border before:border-success/50",
+  warning: "text-brand-soft before:border before:border-brand/45",
+  outline: "text-foreground before:border before:border-white/14",
 } as const;
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
@@ -18,7 +19,7 @@ export function Badge({ className, variant = "default", ...props }: BadgeProps) 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2 border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.12em]",
+        "relative isolate inline-flex items-center gap-2 px-3 py-1 font-cond text-xs font-semibold uppercase tracking-[0.08em] before:absolute before:inset-0 before:-z-10 before:-skew-x-9",
         variants[variant],
         className,
       )}

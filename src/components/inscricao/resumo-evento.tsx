@@ -39,21 +39,21 @@ export function ResumoEvento({
             className="absolute inset-0 h-full w-full object-cover"
           />
         ) : (
-          <span className="font-mono text-[11px] text-[#4A473F]">
+          <span className="font-cond text-[11px] text-[#4A473F]">
             [ imagem do evento ]
           </span>
         )}
         {badge && (
-          <div className="absolute left-3 top-3 border border-white/12 bg-ink px-2.5 py-[5px] font-mono text-[10px] uppercase tracking-[0.12em] text-gold">
-            {badge}
+          <div className="absolute left-3 top-3 -skew-x-9 bg-brand px-[11px] py-1 font-cond text-xs font-semibold uppercase tracking-[0.08em] text-white">
+            <span className="inline-block skew-x-9">{badge}</span>
           </div>
         )}
       </div>
 
-      <div className="mb-1.5 font-display text-[26px] font-bold uppercase leading-[1.05]">
-        {nomeEvento}
+      <div className="disp mb-1.5 text-[36px] leading-[0.9]">{nomeEvento}</div>
+      <div className="mb-[26px] font-cond text-sm uppercase tracking-[0.05em] text-muted-2">
+        {meta}
       </div>
-      <div className="mb-7 font-mono text-xs text-muted-2">{meta}</div>
 
       <div className="flex flex-col border-t border-white/8">
         {linhas.map((linha) => (
@@ -61,12 +61,12 @@ export function ResumoEvento({
             key={linha.k}
             className="flex items-center justify-between gap-4 border-b border-white/6 py-3.5"
           >
-            <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted-2">
+            <span className="font-cond text-[13px] uppercase tracking-[0.06em] text-muted-2">
               {linha.k}
             </span>
             <span
-              className={`max-w-[210px] truncate text-right font-display text-[17px] font-semibold uppercase ${
-                linha.v ? (linha.dourado ? "text-gold" : "text-foreground") : "text-muted-3"
+              className={`max-w-[210px] truncate text-right font-cond text-lg font-semibold uppercase ${
+                linha.v ? (linha.dourado ? "text-brand" : "text-foreground") : "text-muted-3"
               }`}
             >
               {linha.v ?? "—"}
@@ -77,15 +77,17 @@ export function ResumoEvento({
 
       <div className="mt-auto pt-8">
         <div className="mb-1.5 flex items-end justify-between">
-          <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted-2">
+          <span className="font-cond text-[13px] uppercase tracking-[0.06em] text-muted-2">
             {precoRotulo}
           </span>
-          <span className="font-display text-[38px] font-extrabold leading-none text-gold">
+          <span className="disp text-[44px] leading-none text-brand">
             {precoValor}
           </span>
         </div>
         {notaRodape && (
-          <div className="font-mono text-[11px] text-muted-3">{notaRodape}</div>
+          <div className="font-cond text-xs uppercase tracking-[0.04em] text-muted-3">
+            {notaRodape}
+          </div>
         )}
       </div>
     </aside>

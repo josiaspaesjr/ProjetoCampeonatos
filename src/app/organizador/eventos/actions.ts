@@ -42,6 +42,17 @@ async function eventoDoOrganizador(eventoId: string) {
   return { db, usuario, evento };
 }
 
+/** "70", "70,00" ou "R$ 70,00" → centavos; nulo se vazio/inválido */
+function precoParaCentavos(bruto: FormDataEntryValue | null): number | null {
+  const limpo = String(bruto ?? "")
+    .replace(/[^\d,.]/g, "")
+    .replace(",", ".");
+  if (!limpo) return null;
+  const reais = Number(limpo);
+  if (!Number.isFinite(reais) || reais <= 0) return null;
+  return Math.round(reais * 100);
+}
+
 export async function criarEvento(formData: FormData) {
   const db = await getDb();
   const usuario = await getUsuarioAtual();
@@ -56,6 +67,12 @@ export async function criarEvento(formData: FormData) {
   });
   const slug = existentes.length ? `${base}-${Date.now().toString(36)}` : base;
 
+  const modalidade = String(formData.get("modalidade") ?? "gi_nogi");
+  const numAreasBruto = Number(formData.get("numAreas"));
+  const inscricoesFecham = formData.get("inscricoesFecham")
+    ? new Date(String(formData.get("inscricoesFecham")))
+    : null;
+
   const [evento] = await db
     .insert(eventos)
     .values({
@@ -64,17 +81,109 @@ export async function criarEvento(formData: FormData) {
       slug,
       dataInicio,
       cidade: String(formData.get("cidade") ?? "") || null,
-      uf: String(formData.get("uf") ?? "") || null,
+      uf: String(formData.get("uf") ?? "").toUpperCase() || null,
       endereco: String(formData.get("endereco") ?? "") || null,
       descricao: String(formData.get("descricao") ?? "") || null,
+      bannerUrl: String(formData.get("bannerUrl") ?? "") || null,
+      circuito: String(formData.get("circuito") ?? "") || null,
+      modalidade: (["gi_nogi", "gi", "nogi"].includes(modalidade)
+        ? modalidade
+        : "gi_nogi") as "gi_nogi" | "gi" | "nogi",
+      numAreas:
+        Number.isFinite(numAreasBruto) && numAreasBruto > 0
+          ? Math.round(numAreasBruto)
+          : null,
+      dataPesagem: String(formData.get("dataPesagem") ?? "") || null,
+      faixaMin: (String(formData.get("faixaMin") ?? "") || null) as
+        | typeof eventos.$inferInsert.faixaMin,
+      faixaMax: (String(formData.get("faixaMax") ?? "") || null) as
+        | typeof eventos.$inferInsert.faixaMax,
+      moeda: String(formData.get("moeda") ?? "BRL"),
+      inscricoesFecham,
+    })
+    .returning();
+
+  // preço informado na criação vira o 1º lote (a regra de preço vive em lotes)
+  const preco = precoParaCentavos(formData.get("preco"));
+  if (preco) {
+    const fimLote =
+      inscricoesFecham ?? new Date(`${dataInicio}T23:59:59`);
+    await db.insert(lotes).values({
+      eventoId: evento.id,
+      nome: "1º lote",
+      precoCentavos: preco,
+      precoSegundaInscricaoCentavos: precoParaCentavos(formData.get("precoSegunda")),
+      inicio: new Date(),
+      fim: fimLote,
+    });
+  }
+
+  redirect(`/organizador/eventos/${evento.id}`);
+}
+
+/**
+ * Edição do cadastro do evento (drawer "Editar evento"). Renomear o evento
+ * regenera o slug da página pública, como no fluxo de criação.
+ */
+export async function editarEvento(eventoId: string, formData: FormData) {
+  const { db, evento } = await eventoDoOrganizador(eventoId);
+
+  const nome = String(formData.get("nome") ?? "").trim();
+  const dataInicio = String(formData.get("dataInicio") ?? "");
+  if (!nome || !dataInicio) {
+    erroVisivel(eventoId, "Nome e data do evento são obrigatórios.");
+  }
+
+  let slug = evento.slug;
+  if (nome !== evento.nome) {
+    const base = slugify(nome);
+    if (base !== evento.slug) {
+      const existentes = await db.query.eventos.findMany({
+        where: eq(eventos.slug, base),
+      });
+      slug =
+        existentes.some((e) => e.id !== eventoId)
+          ? `${base}-${Date.now().toString(36)}`
+          : base;
+    }
+  }
+
+  const modalidade = String(formData.get("modalidade") ?? "gi_nogi");
+  const numAreasBruto = Number(formData.get("numAreas"));
+
+  await db
+    .update(eventos)
+    .set({
+      nome,
+      slug,
+      dataInicio,
+      cidade: String(formData.get("cidade") ?? "") || null,
+      uf: String(formData.get("uf") ?? "").toUpperCase() || null,
+      endereco: String(formData.get("endereco") ?? "") || null,
+      descricao: String(formData.get("descricao") ?? "") || null,
+      bannerUrl: String(formData.get("bannerUrl") ?? "") || null,
+      circuito: String(formData.get("circuito") ?? "") || null,
+      modalidade: (["gi_nogi", "gi", "nogi"].includes(modalidade)
+        ? modalidade
+        : "gi_nogi") as "gi_nogi" | "gi" | "nogi",
+      numAreas:
+        Number.isFinite(numAreasBruto) && numAreasBruto > 0
+          ? Math.round(numAreasBruto)
+          : null,
+      dataPesagem: String(formData.get("dataPesagem") ?? "") || null,
+      faixaMin: (String(formData.get("faixaMin") ?? "") ||
+        null) as typeof eventos.$inferInsert.faixaMin,
+      faixaMax: (String(formData.get("faixaMax") ?? "") ||
+        null) as typeof eventos.$inferInsert.faixaMax,
       moeda: String(formData.get("moeda") ?? "BRL"),
       inscricoesFecham: formData.get("inscricoesFecham")
         ? new Date(String(formData.get("inscricoesFecham")))
         : null,
     })
-    .returning();
+    .where(eq(eventos.id, eventoId));
 
-  redirect(`/organizador/eventos/${evento.id}`);
+  revalidatePath(`/organizador/eventos/${eventoId}`);
+  revalidatePath(`/evento/${slug}`);
 }
 
 export async function gerarCategoriasCbjj(eventoId: string, formData: FormData) {

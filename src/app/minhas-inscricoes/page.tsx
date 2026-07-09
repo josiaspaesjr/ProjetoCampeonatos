@@ -107,7 +107,7 @@ export default async function MinhasInscricoes() {
                   {qrPorInscricao.has(i.id) && (
                     <p className="mt-1 text-xs text-muted-foreground">
                       Check-in: mostre o QR na pesagem · código{" "}
-                      <span className="font-mono">{codigoCurto(i.id)}</span>
+                      <span className="font-cond">{codigoCurto(i.id)}</span>
                     </p>
                   )}
                 </div>

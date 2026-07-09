@@ -67,15 +67,12 @@ export default async function PaginaChaves({
           {erro}
         </p>
       )}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Chaves — {evento.nome}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Categorias sem inscrições confirmadas ficam ocultas. Gere em
-            rascunho, revise e publique — depois de publicada a chave não pode
-            ser regenerada.
-          </p>
-        </div>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-[560px] text-sm text-muted-foreground">
+          Categorias sem inscrições confirmadas ficam ocultas. Gere em
+          rascunho, revise e publique — depois de publicada a chave não pode
+          ser regenerada.
+        </p>
         <div className="flex items-center gap-3">
           {semChave > 0 && (
             <form action={gerarChavesEmLote.bind(null, evento.id)}>

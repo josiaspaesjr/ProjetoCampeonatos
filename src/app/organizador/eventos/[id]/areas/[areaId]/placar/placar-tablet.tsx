@@ -189,7 +189,7 @@ export function PlacarTablet({
       <div className="flex items-center justify-between rounded-2xl bg-zinc-900 px-6 py-4 text-white">
         <p className="truncate text-sm text-zinc-300">{categoriaNome}</p>
         <div className="flex items-center gap-4">
-          <span className={`font-mono text-4xl font-bold tabular-nums ${restante < 0 ? "text-red-400" : ""}`}>
+          <span className={`font-cond text-4xl font-bold tabular-nums ${restante < 0 ? "text-red-400" : ""}`}>
             {fmt(restante)}
           </span>
           <button

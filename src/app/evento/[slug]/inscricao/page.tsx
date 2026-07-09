@@ -49,7 +49,7 @@ export default async function PaginaInscricao({
         <Logo />
         <Link
           href={`/evento/${evento.slug}`}
-          className="font-mono text-xs uppercase tracking-[0.1em] text-muted-2 transition-colors hover:text-foreground"
+          className="font-cond text-xs uppercase tracking-[0.1em] text-muted-2 transition-colors hover:text-foreground"
         >
           ← Voltar ao evento
         </Link>
@@ -92,10 +92,10 @@ export default async function PaginaInscricao({
         />
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6 py-24 text-center">
-          <div className="font-mono text-xs uppercase tracking-[0.2em] text-muted-2">
+          <div className="font-cond text-xs uppercase tracking-[0.2em] text-muted-2">
             {"// Inscrições encerradas"}
           </div>
-          <h1 className="max-w-[700px] font-display text-[clamp(34px,4.6vw,54px)] font-extrabold uppercase leading-[0.95]">
+          <h1 className="max-w-[700px] disp text-[clamp(34px,4.6vw,54px)] font-extrabold uppercase leading-[0.95]">
             {evento.nome}
           </h1>
           <p className="max-w-[480px] text-base text-muted-2">
@@ -103,7 +103,7 @@ export default async function PaginaInscricao({
           </p>
           <Link
             href={`/evento/${evento.slug}`}
-            className="border border-white/20 px-[30px] py-[15px] font-display text-[15px] font-bold uppercase tracking-[0.08em] text-foreground transition-colors hover:border-white/40"
+            className="border border-white/20 px-[30px] py-[15px] disp text-[15px] font-bold uppercase tracking-[0.08em] text-foreground transition-colors hover:border-white/40"
           >
             Voltar ao evento
           </Link>

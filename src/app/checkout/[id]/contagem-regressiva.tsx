@@ -24,7 +24,7 @@ export function ContagemRegressiva({ ate }: { ate: string }) {
 
   // só renderiza no cliente para não divergir do HTML do servidor
   return (
-    <span className="text-gold-light">
+    <span className="text-brand-soft">
       {restante === null ? "--:--:--" : formatar(restante)}
     </span>
   );

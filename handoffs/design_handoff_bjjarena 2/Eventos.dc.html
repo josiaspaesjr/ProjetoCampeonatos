@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: #0C0C0D; color: #F5F3EF; font-family: 'Barlow', sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #F5F3EF; text-decoration: none; }
+  a:hover { color: #EE2E24; }
+  ::selection { background: #EE2E24; color: #fff; }
+  .disp { font-family: 'Teko', sans-serif; font-weight: 600; line-height: 0.82; text-transform: uppercase; }
+  .cond { font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+  input { font-family: 'Barlow', sans-serif; color: #F5F3EF; background: #131314; }
+  input::placeholder { color: #6B6A64; }
+  input:focus { outline: none; border-color: #EE2E24 !important; }
+  @keyframes bjjPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+</style>
+</helmet>
+
+<div style="max-width:100%; overflow-x:hidden; background:#0C0C0D; min-height:100vh;">
+
+  <!-- NAV -->
+  <nav style="position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between; padding:16px 48px; background:rgba(12,12,13,0.9); backdrop-filter:blur(12px); border-bottom:1px solid rgba(255,255,255,0.08);">
+    <a href="BJJArena v3 - Landing.dc.html" style="display:flex; align-items:center; gap:11px; color:#F5F3EF;">
+      <div style="width:34px; height:34px; background:#EE2E24; display:flex; align-items:center; justify-content:center; transform:skewX(-9deg);"><span class="disp" style="font-size:26px; color:#fff; transform:skewX(9deg); line-height:1;">B</span></div>
+      <span class="disp" style="font-size:30px;">BJJ<span style="color:#EE2E24;">ARENA</span></span>
+    </a>
+    <div class="cond" style="display:flex; align-items:center; gap:34px; font-weight:600; font-size:16px; letter-spacing:0.04em;">
+      <a href="BJJArena v3 - Eventos.dc.html" style="color:#EE2E24;">Eventos</a>
+      <a href="BJJArena v3 - Landing.dc.html#ranking">Ranking</a>
+      <a href="BJJArena v3 - Landing.dc.html#aovivo">Ao vivo</a>
+      <a href="BJJArena v3 - Login.dc.html" style="background:#EE2E24; color:#fff; padding:11px 22px 8px; transform:skewX(-9deg);"><span style="display:inline-block; transform:skewX(9deg);">Criar evento</span></a>
+    </div>
+  </nav>
+
+  <!-- HEADER -->
+  <header style="position:relative; padding:56px 48px 40px; border-bottom:1px solid rgba(255,255,255,0.08); overflow:hidden;">
+    <div class="disp" style="position:absolute; right:-30px; top:50%; transform:translateY(-50%); font-size:240px; color:rgba(255,255,255,0.03); white-space:nowrap; pointer-events:none;">CALENDÁRIO</div>
+    <div class="cond" style="position:relative; font-weight:600; font-size:16px; letter-spacing:0.14em; color:#EE2E24; margin-bottom:6px;">Circuito nacional · 2026</div>
+    <h1 class="disp" style="position:relative; font-size:clamp(64px,9vw,132px);">Todos os eventos</h1>
+    <p style="position:relative; font-size:18px; color:#9C9A93; margin-top:8px; max-width:560px; font-weight:500;">Cada etapa publicada na plataforma. Filtre por modalidade, estado ou status e inscreva-se em dois cliques.</p>
+  </header>
+
+  <!-- FILTER BAR -->
+  <div style="position:sticky; top:67px; z-index:40; display:flex; align-items:center; gap:16px; flex-wrap:wrap; padding:18px 48px; background:rgba(12,12,13,0.92); backdrop-filter:blur(12px); border-bottom:1px solid rgba(255,255,255,0.08);">
+    <div style="position:relative; flex:1; min-width:220px; max-width:360px;">
+      <span style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#6B6A64; font-size:15px;">⌕</span>
+      <input value="{{ query }}" onInput="{{ onQuery }}" placeholder="Buscar evento ou cidade" style="width:100%; height:44px; padding:0 14px 0 34px; border:1px solid rgba(255,255,255,0.14); font-size:15px;">
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <sc-for list="{{ filters }}" as="f" hint-placeholder-count="5">
+        <button onClick="{{ f.onClick }}" class="cond" style="height:44px; padding:0 18px 0; background:{{ f.bg }}; border:1px solid {{ f.border }}; color:{{ f.color }}; font-weight:600; font-size:15px; letter-spacing:0.05em; cursor:pointer; transform:skewX(-9deg);"><span style="display:inline-block; transform:skewX(9deg);">{{ f.label }}</span></button>
+      </sc-for>
+    </div>
+    <span class="cond" style="margin-left:auto; font-size:15px; letter-spacing:0.06em; color:#6B6A64;">{{ resultCount }} eventos</span>
+  </div>
+
+  <!-- FEATURED -->
+  <sc-if value="{{ showFeatured }}" hint-placeholder-val="{{ true }}">
+    <section style="padding:44px 48px 8px;">
+      <a href="Arena JJ - Evento.dc.html" style="display:block; position:relative; border:1px solid rgba(255,255,255,0.12); overflow:hidden; background:#111112;">
+        <div style="display:grid; grid-template-columns:1.3fr 1fr;">
+          <div style="position:relative; aspect-ratio:16/9; background:#161617;">
+            <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="v3-evt-feat" shape="rect" fit="cover" placeholder="foto do evento em destaque" hint-size="100%,100%"></x-import>
+            <div style="position:absolute; inset:0; background:linear-gradient(90deg, transparent 40%, rgba(17,17,18,0.6)); pointer-events:none;"></div>
+            <div class="cond" style="position:absolute; top:16px; left:16px; background:#EE2E24; color:#fff; font-weight:600; font-size:13px; letter-spacing:0.08em; padding:6px 13px 4px; transform:skewX(-9deg);"><span style="display:inline-block; transform:skewX(9deg);">◆ Destaque</span></div>
+          </div>
+          <div style="padding:36px 38px; display:flex; flex-direction:column; justify-content:center;">
+            <div class="cond" style="font-size:15px; letter-spacing:0.1em; color:#EE2E24; margin-bottom:8px;">14 MAR 2026 · São Paulo/SP</div>
+            <div class="disp" style="font-size:64px; line-height:0.86; margin-bottom:12px;">Copa Cidade de Jiu-Jitsu 2026</div>
+            <p style="font-size:16px; line-height:1.5; color:#9C9A93; font-weight:500; margin-bottom:22px; max-width:400px;">Etapa 03 do circuito nacional. Gi e No-Gi, faixas branca à preta, 8 áreas simultâneas.</p>
+            <div style="display:flex; align-items:center; gap:20px;">
+              <span class="cond" style="background:#EE2E24; color:#fff; font-weight:700; font-size:17px; letter-spacing:0.04em; padding:13px 26px 10px; transform:skewX(-9deg);"><span style="display:inline-block; transform:skewX(9deg);">Ver evento →</span></span>
+              <span class="cond" style="font-size:15px; letter-spacing:0.06em; color:#9C9A93;">312 vagas restantes</span>
+            </div>
+          </div>
+        </div>
+      </a>
+    </section>
+  </sc-if>
+
+  <!-- GRID -->
+  <section style="padding:32px 48px 90px;">
+    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:20px;">
+      <sc-for list="{{ events }}" as="ev" hint-placeholder-count="6">
+        <a href="Arena JJ - Evento.dc.html" style="border:1px solid rgba(255,255,255,0.1); background:#111112; display:flex; flex-direction:column; color:#F5F3EF;">
+          <div style="position:relative; aspect-ratio:4/3; overflow:hidden; background:#161617;">
+            <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="{{ ev.slotId }}" shape="rect" fit="cover" placeholder="foto" hint-size="100%,100%"></x-import>
+            <div style="position:absolute; inset:0; background:linear-gradient(180deg, transparent 40%, rgba(12,12,13,0.85)); pointer-events:none;"></div>
+            <div class="cond" style="position:absolute; top:12px; left:12px; background:{{ ev.badgeBg }}; color:{{ ev.badgeColor }}; font-weight:600; font-size:12px; letter-spacing:0.08em; padding:5px 11px 3px; transform:skewX(-9deg);"><span style="display:inline-block; transform:skewX(9deg);">{{ ev.status }}</span></div>
+            <div style="position:absolute; bottom:12px; left:14px; pointer-events:none;">
+              <div class="disp" style="font-size:52px; color:#fff; line-height:0.8;">{{ ev.day }}</div>
+              <div class="cond" style="font-size:14px; letter-spacing:0.14em; color:#EE2E24;">{{ ev.monthYear }}</div>
+            </div>
+          </div>
+          <div style="padding:18px 20px; display:flex; flex-direction:column; gap:12px; flex:1;">
+            <div>
+              <div class="disp" style="font-size:32px; line-height:0.9;">{{ ev.name }}</div>
+              <div class="cond" style="font-size:14px; letter-spacing:0.06em; color:#9C9A93; margin-top:4px;">{{ ev.meta }}</div>
+            </div>
+            <div style="margin-top:auto; display:flex; align-items:center; justify-content:space-between; padding-top:14px; border-top:1px solid rgba(255,255,255,0.08);">
+              <span style="font-size:14px; color:#9C9A93; font-weight:500;">{{ ev.slots }}</span>
+              <span class="cond" style="font-weight:700; font-size:15px; letter-spacing:0.06em; color:#EE2E24;">Inscrever →</span>
+            </div>
+          </div>
+        </a>
+      </sc-for>
+    </div>
+
+    <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:70px 20px; text-align:center;">
+        <div class="disp" style="font-size:56px; color:rgba(255,255,255,0.14);">Nenhum evento</div>
+        <p style="font-size:16px; color:#9C9A93; margin-top:6px;">Nenhum evento corresponde a esses filtros. Tente outra busca.</p>
+      </div>
+    </sc-if>
+  </section>
+
+  <!-- FOOTER -->
+  <footer style="padding:34px 48px; border-top:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:space-between;">
+    <span class="disp" style="font-size:26px;">BJJ<span style="color:#EE2E24;">ARENA</span></span>
+    <span class="cond" style="font-size:14px; letter-spacing:0.08em; color:#6B6A64;">© 2026 · Sistema de competições de jiu-jitsu</span>
+  </footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { filter: 'Todos', query: '' };
+
+  renderVals() {
+    const red = '#EE2E24';
+    const dim = 'rgba(255,255,255,0.14)';
+    const all = [
+      { slotId:'v3-e1', day:'14', month:'MAR', name:'Copa Cidade', city:'São Paulo', uf:'SP', modality:'Gi + No-Gi', meta:'São Paulo/SP · Gi + No-Gi', status:'Inscrições abertas', open:true, slots:'312 vagas restantes' },
+      { slotId:'v3-e2', day:'05', month:'ABR', name:'Open Litoral', city:'Santos', uf:'SP', modality:'No-Gi', meta:'Santos/SP · No-Gi', status:'Inscrições abertas', open:true, slots:'180 vagas restantes' },
+      { slotId:'v3-e3', day:'26', month:'ABR', name:'Desafio Sul', city:'Curitiba', uf:'PR', modality:'Gi', meta:'Curitiba/PR · Gi', status:'Em breve', open:false, slots:'Abre em 12 dias' },
+      { slotId:'v3-e4', day:'17', month:'MAI', name:'Grand Prix Rio', city:'Rio de Janeiro', uf:'RJ', modality:'Gi + No-Gi', meta:'Rio de Janeiro/RJ · Gi + No-Gi', status:'Em breve', open:false, slots:'Abre em 26 dias' },
+      { slotId:'v3-e5', day:'07', month:'JUN', name:'Copa Nordeste', city:'Recife', uf:'PE', modality:'Gi', meta:'Recife/PE · Gi', status:'Em breve', open:false, slots:'Abre em 40 dias' },
+      { slotId:'v3-e6', day:'21', month:'JUN', name:'Open Minas', city:'Belo Horizonte', uf:'MG', modality:'No-Gi', meta:'Belo Horizonte/MG · No-Gi', status:'Em breve', open:false, slots:'Abre em 54 dias' },
+      { slotId:'v3-e7', day:'12', month:'JUL', name:'Desafio Faixas-Preta', city:'São Paulo', uf:'SP', modality:'Gi + No-Gi', meta:'São Paulo/SP · Somente preta', status:'Em breve', open:false, slots:'Convidados' },
+      { slotId:'v3-e8', day:'02', month:'AGO', name:'Copa Centro-Oeste', city:'Goiânia', uf:'GO', modality:'Gi', meta:'Goiânia/GO · Gi', status:'Em breve', open:false, slots:'Abre em 96 dias' },
+    ];
+
+    const filterKeys = ['Todos', 'Inscrições abertas', 'Gi', 'No-Gi', 'Em breve'];
+    const fk = this.state.filter;
+    const q = this.state.query.trim().toLowerCase();
+
+    const matches = (e) => {
+      let ok = true;
+      if (fk === 'Inscrições abertas') ok = e.open;
+      else if (fk === 'Em breve') ok = !e.open;
+      else if (fk === 'Gi') ok = e.modality === 'Gi' || e.modality === 'Gi + No-Gi';
+      else if (fk === 'No-Gi') ok = e.modality === 'No-Gi' || e.modality === 'Gi + No-Gi';
+      if (ok && q) ok = (e.name + ' ' + e.city).toLowerCase().includes(q);
+      return ok;
+    };
+    const visible = all.filter(matches).map(e => ({
+      ...e,
+      monthYear: e.month + ' 2026',
+      badgeBg: e.open ? red : 'rgba(255,255,255,0.14)',
+      badgeColor: e.open ? '#fff' : '#F5F3EF',
+    }));
+
+    return {
+      query: this.state.query,
+      onQuery: (e) => this.setState({ query: e.target.value }),
+      filters: filterKeys.map(k => {
+        const sel = fk === k;
+        return {
+          label: k, onClick: () => this.setState({ filter: k }),
+          bg: sel ? red : 'transparent', border: sel ? red : dim, color: sel ? '#fff' : '#C9C6BF',
+        };
+      }),
+      resultCount: visible.length,
+      showFeatured: fk === 'Todos' && !q,
+      events: visible,
+      noResults: visible.length === 0,
+    };
+  }
+}
+</script>
+</body>
+</html>

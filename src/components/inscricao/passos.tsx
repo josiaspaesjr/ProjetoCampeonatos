@@ -6,10 +6,10 @@ const PASSOS = [
   { num: 3, rotulo: "Confirmação" },
 ];
 
-/** Indicador de progresso do fluxo de inscrição (losangos 1/2/3). */
+/** Indicador de progresso do fluxo de inscrição (nós skewados 1/2/3). */
 export function PassosInscricao({ atual }: { atual: 1 | 2 | 3 }) {
   return (
-    <div className="mb-11 flex max-w-[560px] items-center">
+    <div className="mb-10 flex max-w-[560px] items-center">
       {PASSOS.map((p, i) => {
         const ativo = p.num === atual;
         const feito = p.num < atual;
@@ -18,19 +18,19 @@ export function PassosInscricao({ atual }: { atual: 1 | 2 | 3 }) {
             <div className="flex items-center gap-2.5">
               <div
                 className={cn(
-                  "flex h-8 w-8 rotate-45 items-center justify-center border font-display text-sm font-bold",
+                  "disp flex h-[34px] w-[34px] -skew-x-9 items-center justify-center border text-[22px]",
                   ativo
-                    ? "border-gold bg-gold text-ink"
+                    ? "border-brand bg-brand text-white"
                     : feito
-                      ? "border-gold bg-gold/15 text-gold"
-                      : "border-white/18 text-muted-3",
+                      ? "border-brand bg-brand/15 text-brand"
+                      : "border-white/20 text-muted-3",
                 )}
               >
-                <span className="-rotate-45">{feito ? "✓" : p.num}</span>
+                <span className="skew-x-9 pt-[3px]">{feito ? "✓" : p.num}</span>
               </div>
               <span
                 className={cn(
-                  "whitespace-nowrap font-mono text-[11px] uppercase tracking-[0.08em]",
+                  "whitespace-nowrap font-cond text-sm font-semibold uppercase tracking-[0.06em]",
                   ativo ? "text-foreground" : "text-muted-2",
                 )}
               >
@@ -38,7 +38,7 @@ export function PassosInscricao({ atual }: { atual: 1 | 2 | 3 }) {
               </span>
             </div>
             {i < PASSOS.length - 1 && (
-              <div className="mx-3.5 h-px min-w-4 flex-1 bg-white/12" />
+              <div className="mx-3.5 h-px min-w-4 flex-1 bg-white/14" />
             )}
           </div>
         );

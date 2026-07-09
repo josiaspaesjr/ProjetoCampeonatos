@@ -27,7 +27,7 @@ export function CopiarPix({ payload }: { payload: string }) {
         if (timer.current) clearTimeout(timer.current);
         timer.current = setTimeout(() => setCopiado(false), 2000);
       }}
-      className="w-full cursor-pointer border border-gold/50 px-2 py-2.5 font-display text-[13px] font-bold uppercase tracking-[0.08em] text-gold-light transition-colors hover:border-gold"
+      className="w-full cursor-pointer border border-brand/50 px-2 py-2.5 font-cond text-sm font-semibold uppercase tracking-[0.06em] text-brand-soft transition-colors hover:border-brand"
     >
       {copiado ? "Copiado ✓" : "Copiar código"}
     </button>

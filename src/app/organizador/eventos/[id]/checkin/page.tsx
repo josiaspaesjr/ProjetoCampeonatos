@@ -51,14 +51,7 @@ export default async function PaginaCheckin({
 
   return (
     <div>
-      <Link
-        href={`/organizador/eventos/${id}`}
-        className="text-sm text-muted-foreground hover:underline"
-      >
-        ← {evento.nome}
-      </Link>
-      <h1 className="mt-1 text-2xl font-bold">Check-in & Pesagem</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground">
         Escaneie o QR do atleta com a câmera do celular (abre direto a tela de
         pesagem) ou busque por nome / código.
       </p>
@@ -97,7 +90,7 @@ export default async function PaginaCheckin({
               <div>
                 <p className="text-sm font-medium">
                   {i.nomeAtleta}
-                  <span className="ml-2 font-mono text-xs text-muted-foreground">
+                  <span className="ml-2 font-cond text-xs text-muted-foreground">
                     {codigoCurto(i.id)}
                   </span>
                 </p>

@@ -67,10 +67,10 @@ function BotaoContinuar({ habilitado }: { habilitado: boolean }) {
       type="submit"
       disabled={!habilitado || pending}
       className={cn(
-        "flex-1 px-[30px] py-[15px] font-display text-[15px] font-bold uppercase tracking-[0.08em] transition-colors",
+        "flex-1 px-[26px] py-3 font-cond text-lg font-bold uppercase tracking-[0.04em] transition-colors",
         habilitado
-          ? "cursor-pointer bg-gold text-ink hover:bg-gold-light"
-          : "cursor-not-allowed bg-gold/30 text-ink/55",
+          ? "cursor-pointer bg-brand text-white hover:bg-[#d5261d]"
+          : "cursor-not-allowed bg-brand/30 text-white/50",
       )}
     >
       {pending ? "Enviando..." : "Continuar para o pagamento →"}
@@ -118,7 +118,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
     };
 
   const labelCls =
-    "mb-[11px] block font-mono text-[11px] uppercase tracking-[0.12em] text-muted-2";
+    "mb-[9px] block font-cond text-[13px] font-semibold uppercase tracking-[0.08em] text-muted-2";
 
   return (
     <div className="grid flex-1 items-stretch lg:grid-cols-[minmax(0,1fr)_400px]">
@@ -126,13 +126,11 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
       <div className="px-6 py-12 md:px-16">
         <PassosInscricao atual={1} />
 
-        <Eyebrow className="mb-3">{"// Passo 1 · Seus dados"}</Eyebrow>
-        <h1 className="mb-2 font-display text-[clamp(34px,4.6vw,54px)] font-extrabold uppercase leading-[0.95]">
-          Inscrição
-          <br />
-          {evento.nome}
+        <Eyebrow className="mb-2 tracking-[0.14em]">Passo 1 · Seus dados</Eyebrow>
+        <h1 className="disp mb-1.5 text-[clamp(44px,5vw,64px)]">
+          Inscrição · {evento.nome}
         </h1>
-        <p className="mb-9 max-w-[480px] text-base text-muted-2">
+        <p className="mb-[34px] max-w-[480px] text-base font-medium text-muted-2">
           Só mostramos categorias compatíveis com seu perfil. Pagamento na
           próxima etapa.
         </p>
@@ -263,17 +261,17 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
                         type="button"
                         onClick={() => setCategoriaId(c.id)}
                         className={cn(
-                          "flex items-center justify-between border px-[18px] py-3.5 text-left font-display text-[17px] font-semibold uppercase tracking-[0.02em] transition-colors",
+                          "flex items-center justify-between border px-4 py-3 text-left font-cond text-lg font-semibold uppercase tracking-[0.02em] transition-colors",
                           sel
-                            ? "border-gold bg-gold text-ink"
-                            : "border-white/12 bg-raised text-text-2 hover:border-gold/50",
+                            ? "border-brand bg-brand text-white"
+                            : "border-white/12 bg-raised text-text-2 hover:border-brand/50",
                         )}
                       >
                         <span>{c.nome}</span>
                         <span
                           className={cn(
-                            "font-mono text-xs normal-case",
-                            sel ? "text-ink/60" : "text-muted-3",
+                            "font-cond text-[13px] normal-case",
+                            sel ? "text-white/70" : "text-muted-3",
                           )}
                         >
                           {sel
@@ -287,12 +285,12 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
                   })}
                 </div>
               ) : (
-                <p className="border border-dashed border-white/16 p-5 font-mono text-[13px] text-warning-foreground">
+                <p className="border border-dashed border-white/16 p-5 font-cond text-[13px] text-warning-foreground">
                   Nenhuma categoria compatível com seu perfil neste evento.
                 </p>
               )
             ) : (
-              <p className="border border-dashed border-white/16 p-5 font-mono text-[13px] text-muted-3">
+              <p className="border border-dashed border-white/16 p-5 font-cond text-[13px] text-muted-3">
                 Preencha nascimento, sexo e faixa para ver suas categorias.
               </p>
             )}
@@ -302,7 +300,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
           <div className="mt-2 flex gap-4">
             <Link
               href={`/evento/${evento.slug}`}
-              className="border border-white/20 px-[30px] py-[15px] font-display text-[15px] font-bold uppercase tracking-[0.08em] text-foreground transition-colors hover:border-white/40"
+              className="border border-white/18 px-[26px] py-3 font-cond text-[17px] font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-white/40"
             >
               Voltar
             </Link>

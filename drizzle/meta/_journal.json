@@ -36,6 +36,13 @@
       "when": 1783570729073,
       "tag": "0004_clear_starhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1783605592687,
+      "tag": "0005_sloppy_paper_doll",
+      "breakpoints": true
     }
   ]
 }

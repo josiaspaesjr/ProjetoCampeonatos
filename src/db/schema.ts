@@ -39,6 +39,8 @@ export const eventoStatusEnum = pgEnum("evento_status", [
   "finalizado",
 ]);
 
+export const modalidadeEnum = pgEnum("modalidade", ["gi_nogi", "gi", "nogi"]);
+
 export const categoriaTipoEnum = pgEnum("categoria_tipo", [
   "peso",
   "absoluto",
@@ -134,6 +136,15 @@ export const eventos = pgTable("eventos", {
   endereco: text("endereco"),
   cidade: text("cidade"),
   uf: text("uf"),
+  // circuito/temporada a que a etapa pertence (ex.: "Circuito Paulista 2026")
+  circuito: text("circuito"),
+  modalidade: modalidadeEnum("modalidade").notNull().default("gi_nogi"),
+  // nº de áreas planejado no cadastro; as áreas reais vivem na tabela `areas`
+  numAreas: integer("num_areas"),
+  dataPesagem: date("data_pesagem"),
+  // recorte de faixas aceito nas inscrições (ordem do faixaEnum)
+  faixaMin: faixaEnum("faixa_min"),
+  faixaMax: faixaEnum("faixa_max"),
   dataInicio: date("data_inicio").notNull(),
   dataFim: date("data_fim"),
   inscricoesAbrem: timestamp("inscricoes_abrem", { withTimezone: true }),

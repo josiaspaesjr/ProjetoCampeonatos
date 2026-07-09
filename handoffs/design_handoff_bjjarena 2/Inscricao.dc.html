@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0C0C0D; color: #F5F3EF; font-family: 'Barlow', sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #EE2E24; text-decoration: none; }
+  a:hover { color: #F5F3EF; }
+  ::selection { background: #EE2E24; color: #fff; }
+  .disp { font-family: 'Teko', sans-serif; font-weight: 600; line-height: 0.82; text-transform: uppercase; }
+  .cond { font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+  input, select { font-family: 'Barlow', sans-serif; color: #F5F3EF; background: #131314; }
+  input::placeholder { color: #6B6A64; }
+  input:focus, select:focus { outline: none; border-color: #EE2E24 !important; }
+  select option { background: #131314; color: #F5F3EF; }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); cursor: pointer; }
+</style>
+</helmet>
+
+<div style="min-height:100vh; background:#0C0C0D; display:flex; flex-direction:column;">
+
+  <!-- NAV -->
+  <nav style="display:flex; align-items:center; justify-content:space-between; padding:16px 48px; border-bottom:1px solid rgba(255,255,255,0.08);">
+    <a href="Arena JJ - Evento.dc.html" style="display:flex; align-items:center; gap:11px; color:#F5F3EF;">
+      <div style="width:32px; height:32px; background:#EE2E24; display:flex; align-items:center; justify-content:center; transform:skewX(-9deg);"><span class="disp" style="font-size:24px; color:#fff; transform:skewX(9deg); line-height:1;">B</span></div>
+      <span class="disp" style="font-size:28px;">BJJ<span style="color:#EE2E24;">ARENA</span></span>
+    </a>
+    <a href="Arena JJ - Evento.dc.html" class="cond" style="font-size:15px; letter-spacing:0.06em; color:#9C9A93;">← Voltar ao evento</a>
+  </nav>
+
+  <div style="display:grid; grid-template-columns:minmax(0,1fr) 400px; flex:1; align-items:stretch;">
+
+    <!-- LEFT -->
+    <div style="padding:44px 60px;">
+      <!-- STEPS -->
+      <div style="display:flex; align-items:center; gap:0; margin-bottom:40px; max-width:560px;">
+        <sc-for list="{{ steps }}" as="s" hint-placeholder-count="3">
+          <div style="display:flex; align-items:center; flex:1;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div class="disp" style="width:34px; height:34px; border:1px solid {{ s.ringColor }}; background:{{ s.bg }}; color:{{ s.numColor }}; display:flex; align-items:center; justify-content:center; font-size:22px; transform:skewX(-9deg);"><span style="transform:skewX(9deg); padding-top:3px;">{{ s.num }}</span></div>
+              <span class="cond" style="font-size:14px; letter-spacing:0.06em; color:{{ s.labelColor }}; white-space:nowrap;">{{ s.label }}</span>
+            </div>
+            <div style="flex:1; height:1px; background:rgba(255,255,255,0.14); margin:0 14px; min-width:16px; display:{{ s.lineDisplay }};"></div>
+          </div>
+        </sc-for>
+      </div>
+
+      <!-- FORM -->
+      <sc-if value="{{ isForm }}" hint-placeholder-val="{{ true }}">
+        <div class="cond" style="font-weight:600; font-size:15px; letter-spacing:0.14em; color:#EE2E24; margin-bottom:8px;">Passo 1 · Seus dados</div>
+        <h1 class="disp" style="font-size:clamp(44px,5vw,64px); margin-bottom:6px;">Inscrição · {{ ev.name }}</h1>
+        <p style="font-size:16px; color:#9C9A93; margin-bottom:34px; font-weight:500; max-width:480px;">Só mostramos categorias compatíveis com seu perfil. Pagamento na próxima etapa.</p>
+
+        <div style="max-width:640px; display:flex; flex-direction:column; gap:22px;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px;">
+            <div style="display:flex; flex-direction:column; gap:9px;">
+              <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Nome completo *</label>
+              <input value="{{ f.nome }}" onInput="{{ onNome }}" placeholder="Seu nome" style="height:46px; padding:0 14px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:9px;">
+              <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">E-mail *</label>
+              <input type="email" value="{{ f.email }}" onInput="{{ onEmail }}" placeholder="voce@email.com" style="height:46px; padding:0 14px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px;">
+            <div style="display:flex; flex-direction:column; gap:9px;">
+              <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Nascimento *</label>
+              <input type="date" value="{{ f.nascimento }}" onChange="{{ onNascimento }}" style="height:46px; padding:0 13px; border:1px solid rgba(255,255,255,0.14); font-size:15px;">
+            </div>
+            <div style="display:flex; flex-direction:column; gap:9px;">
+              <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Sexo *</label>
+              <select value="{{ f.sexo }}" onChange="{{ onSexo }}" style="height:46px; padding:0 11px; border:1px solid rgba(255,255,255,0.14); font-size:15px; color:{{ sexoColor }};">
+                <option value="">Selecione</option><option value="Masculino">Masculino</option><option value="Feminino">Feminino</option>
+              </select>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:9px;">
+              <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Faixa *</label>
+              <select value="{{ f.faixa }}" onChange="{{ onFaixa }}" style="height:46px; padding:0 11px; border:1px solid rgba(255,255,255,0.14); font-size:15px; color:{{ faixaColor }};">
+                <option value="">Selecione</option><option>Branca</option><option>Azul</option><option>Roxa</option><option>Marrom</option><option>Preta</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:9px;">
+            <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Academia / equipe</label>
+            <input value="{{ f.equipe }}" onInput="{{ onEquipe }}" placeholder="Nome da sua academia" style="height:46px; padding:0 14px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+          </div>
+          <div style="display:flex; flex-direction:column; gap:9px;">
+            <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Categoria *</label>
+            <sc-if value="{{ profileReady }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <sc-for list="{{ catOptions }}" as="c" hint-placeholder-count="4">
+                  <button onClick="{{ c.onClick }}" class="cond" style="display:flex; align-items:center; justify-content:space-between; padding:13px 16px 11px; background:{{ c.bg }}; border:1px solid {{ c.border }}; color:{{ c.color }}; font-weight:600; font-size:18px; letter-spacing:0.02em; cursor:pointer; text-align:left;">
+                    <span>{{ c.label }}</span><span style="font-size:13px; color:{{ c.metaColor }};">{{ c.meta }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ profileIncomplete }}" hint-placeholder-val="{{ false }}">
+              <div class="cond" style="padding:18px; border:1px dashed rgba(255,255,255,0.16); font-size:14px; letter-spacing:0.04em; color:#6B6A64;">Preencha nascimento, sexo e faixa para ver suas categorias.</div>
+            </sc-if>
+          </div>
+          <div style="display:flex; gap:14px; margin-top:6px;">
+            <a href="Arena JJ - Evento.dc.html" class="cond" style="height:48px; display:inline-flex; align-items:center; padding:0 26px; border:1px solid rgba(255,255,255,0.18); color:#F5F3EF; font-weight:600; font-size:17px; letter-spacing:0.04em;">Voltar</a>
+            <button onClick="{{ goPay }}" class="cond" style="flex:1; height:48px; background:{{ payBg }}; border:none; color:{{ payColor }}; font-weight:700; font-size:18px; letter-spacing:0.04em; cursor:{{ payCursor }};">Continuar para o pagamento →</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- PAYMENT -->
+      <sc-if value="{{ isPay }}" hint-placeholder-val="{{ false }}">
+        <div class="cond" style="font-weight:600; font-size:15px; letter-spacing:0.14em; color:#EE2E24; margin-bottom:8px;">Passo 2 · Pagamento</div>
+        <h1 class="disp" style="font-size:clamp(44px,5vw,64px); margin-bottom:6px;">Pague com Pix</h1>
+        <p style="font-size:16px; color:#9C9A93; margin-bottom:34px; font-weight:500; max-width:480px;">A vaga fica reservada enquanto o pagamento estiver pendente. Aprovação em segundos.</p>
+
+        <div style="max-width:560px; border:1px solid rgba(238,46,36,0.4); background:#111112;">
+          <div style="padding:20px 24px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.08);">
+            <span class="cond" style="font-size:18px; font-weight:600;">{{ chosenCat }}</span>
+            <span class="cond" style="font-size:13px; letter-spacing:0.08em; color:#EE9A94;">aguardando pagamento</span>
+          </div>
+          <div style="padding:24px;">
+            <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:22px;">
+              <span class="cond" style="font-size:14px; letter-spacing:0.08em; color:#9C9A93;">Total</span>
+              <span class="disp" style="font-size:56px; color:#EE2E24; line-height:1;">{{ ev.price }}</span>
+            </div>
+            <div style="display:flex; gap:20px; align-items:center; margin-bottom:18px;">
+              <div style="width:112px; height:112px; flex-shrink:0; background:#F5F3EF; padding:8px; display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:repeat(7,1fr); gap:2px;">
+                <sc-for list="{{ qr }}" as="cell" hint-placeholder-count="49"><div style="background:{{ cell }};"></div></sc-for>
+              </div>
+              <div style="flex:1;">
+                <div class="cond" style="font-size:13px; letter-spacing:0.08em; color:#9C9A93; margin-bottom:9px;">Pix copia e cola</div>
+                <div style="padding:11px 13px; background:#0C0C0D; border:1px solid rgba(255,255,255,0.1); font-family:'Barlow',monospace; font-size:11px; color:#9C9A93; word-break:break-all; line-height:1.5; margin-bottom:10px;">{{ pixCode }}</div>
+                <button onClick="{{ copyPix }}" class="cond" style="width:100%; padding:10px 0 8px; background:transparent; border:1px solid rgba(238,46,36,0.5); color:#EE9A94; font-weight:600; font-size:14px; letter-spacing:0.06em; cursor:pointer;">{{ copyLabel }}</button>
+              </div>
+            </div>
+            <div class="cond" style="font-size:14px; letter-spacing:0.04em; color:#9C9A93; margin-bottom:20px;">Expira em <span style="color:#EE9A94;">{{ timer }}</span> — após isso a vaga é liberada.</div>
+            <button onClick="{{ approve }}" class="cond" style="width:100%; height:52px; background:#EE2E24; border:none; color:#fff; font-weight:700; font-size:18px; letter-spacing:0.04em; cursor:pointer;">Simular pagamento aprovado</button>
+          </div>
+        </div>
+        <button onClick="{{ backToForm }}" class="cond" style="margin-top:18px; background:none; border:none; font-size:14px; color:#9C9A93; letter-spacing:0.06em; cursor:pointer;">← Editar dados</button>
+      </sc-if>
+
+      <!-- DONE -->
+      <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:560px; padding-top:16px;">
+          <div class="disp" style="width:64px; height:64px; background:#EE2E24; display:flex; align-items:center; justify-content:center; transform:skewX(-9deg); margin-bottom:26px;"><span style="transform:skewX(9deg); color:#fff; font-size:40px;">✓</span></div>
+          <div class="cond" style="font-weight:600; font-size:15px; letter-spacing:0.14em; color:#EE2E24; margin-bottom:8px;">Inscrição confirmada</div>
+          <h1 class="disp" style="font-size:clamp(48px,6vw,76px); margin-bottom:18px;">Você está no chaveamento</h1>
+          <p style="font-size:17px; line-height:1.55; color:#C9C6BF; margin-bottom:14px; font-weight:500;">Pagamento aprovado. Sua vaga em <strong style="color:#F5F3EF;">{{ chosenCat }}</strong> está confirmada. O comprovante foi enviado para <strong style="color:#F5F3EF;">{{ f.email }}</strong>.</p>
+          <p style="font-size:15px; color:#9C9A93; margin-bottom:34px; font-weight:500;">Você receberá uma notificação antes de cada luta e a chamada de área em tempo real no dia do evento.</p>
+          <div style="display:flex; gap:14px;">
+            <a href="Arena JJ - Evento.dc.html" class="cond" style="height:48px; display:inline-flex; align-items:center; padding:0 28px; background:#EE2E24; color:#fff; font-weight:700; font-size:17px; letter-spacing:0.04em;">Ver cronograma</a>
+            <a href="BJJArena v3 - Landing.dc.html" class="cond" style="height:48px; display:inline-flex; align-items:center; padding:0 28px; border:1px solid rgba(255,255,255,0.18); color:#F5F3EF; font-weight:600; font-size:17px; letter-spacing:0.04em;">Início</a>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside style="background:#0F0F10; border-left:1px solid rgba(255,255,255,0.08); padding:44px 38px; display:flex; flex-direction:column;">
+      <div style="position:relative; aspect-ratio:16/10; overflow:hidden; margin-bottom:22px; background:#161617;">
+        <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="v3insc-img" shape="rect" fit="cover" placeholder="imagem do evento" hint-size="100%,100%"></x-import>
+        <div style="position:absolute; inset:0; background:linear-gradient(180deg, transparent 45%, rgba(12,12,13,0.7)); pointer-events:none;"></div>
+        <div class="cond" style="position:absolute; top:12px; left:12px; background:#EE2E24; color:#fff; font-weight:600; font-size:12px; letter-spacing:0.08em; padding:5px 11px 3px; transform:skewX(-9deg);"><span style="display:inline-block; transform:skewX(9deg);">Etapa 03</span></div>
+      </div>
+      <div class="disp" style="font-size:36px; line-height:0.9; margin-bottom:6px;">{{ ev.name }}</div>
+      <div class="cond" style="font-size:14px; letter-spacing:0.05em; color:#9C9A93; margin-bottom:26px;">14 MAR 2026 · Ginásio do Ibirapuera</div>
+
+      <div style="display:flex; flex-direction:column; border-top:1px solid rgba(255,255,255,0.08);">
+        <sc-for list="{{ summary }}" as="row" hint-placeholder-count="4">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:13px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
+            <span class="cond" style="font-size:13px; letter-spacing:0.06em; color:#9C9A93;">{{ row.k }}</span>
+            <span class="cond" style="font-size:18px; font-weight:600; color:{{ row.color }}; text-align:right; max-width:210px;">{{ row.v }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-top:auto; padding-top:30px;">
+        <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:4px;">
+          <span class="cond" style="font-size:13px; letter-spacing:0.06em; color:#9C9A93;">Taxa de inscrição</span>
+          <span class="disp" style="font-size:44px; color:#EE2E24; line-height:1;">{{ ev.price }}</span>
+        </div>
+        <div class="cond" style="font-size:12px; letter-spacing:0.04em; color:#6B6A64;">Segunda categoria: +R$ 40 · Pix ou cartão</div>
+      </div>
+    </aside>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { step:'form', nome:'', email:'', nascimento:'', sexo:'', faixa:'', equipe:'', categoria:null, remaining: 30*60, copied:false };
+
+  componentDidMount() {
+    this._t = setInterval(() => {
+      if (this.state.step === 'pay' && this.state.remaining > 0) this.setState(s => ({ remaining: s.remaining - 1 }));
+    }, 1000);
+  }
+  componentWillUnmount() { clearInterval(this._t); }
+
+  ageDivision(n) {
+    if (!n) return null;
+    const y = new Date(n).getFullYear(); if (!y) return null;
+    const age = 2026 - y;
+    if (age <= 15) return 'Infantojuvenil'; if (age <= 17) return 'Juvenil';
+    if (age <= 29) return 'Adulto'; if (age <= 35) return 'Master 1'; if (age <= 40) return 'Master 2';
+    return 'Master 3';
+  }
+  weightClasses(s) {
+    if (s === 'Feminino') return ['Galo (até 48.5kg)','Pluma (até 53.5kg)','Pena (até 58.5kg)','Leve (até 64kg)','Médio (até 69kg)','Meio-Pesado (até 74kg)','Pesado (+74kg)','Absoluto'];
+    return ['Galo (até 57.5kg)','Pluma (até 64kg)','Pena (até 70kg)','Leve (até 76kg)','Médio (até 82.3kg)','Meio-Pesado (até 88.3kg)','Pesado (até 94.3kg)','Super-Pesado (+94.3kg)','Absoluto'];
+  }
+  fmtTimer(s) {
+    const h = String(Math.floor(s/3600)).padStart(2,'0'); const m = String(Math.floor((s%3600)/60)).padStart(2,'0'); const sec = String(s%60).padStart(2,'0');
+    return `${h}:${m}:${sec}`;
+  }
+
+  renderVals() {
+    const red = '#EE2E24';
+    const st = this.state;
+    const set = (k) => (e) => this.setState({ [k]: e.target.value, categoria: null });
+    const age = this.ageDivision(st.nascimento);
+    const profileReady = !!(st.nascimento && st.sexo && st.faixa);
+    const chosen = st.categoria ? `${age} / ${st.sexo} / ${st.faixa} / ${st.categoria}` : '—';
+    const ready = profileReady && st.categoria && st.nome && st.email;
+
+    const stepDefs = [{ key:'form', num:'1', label:'Dados' }, { key:'pay', num:'2', label:'Pagamento' }, { key:'done', num:'3', label:'Confirmação' }];
+    const order = { form:0, pay:1, done:2 }; const cur = order[st.step];
+
+    const qr = [];
+    for (let i = 0; i < 49; i++) { const r = Math.floor(i/7), c = i%7; const corner = (r<3&&c<3)||(r<3&&c>3)||(r>3&&c<3); const on = corner ? (r===0||r===2||c===0||c===2||(r===1&&c===1)) : ((i*7+3)%5<2); qr.push(on ? '#0C0C0D' : '#F5F3EF'); }
+
+    return {
+      steps: stepDefs.map((s, i) => {
+        const active = i === cur, done = i < cur;
+        return { num: done ? '✓' : s.num, label: s.label, bg: active ? red : (done ? 'rgba(238,46,36,0.15)' : 'transparent'), ringColor: active || done ? red : 'rgba(255,255,255,0.2)', numColor: active ? '#fff' : (done ? red : '#6B6A64'), labelColor: active ? '#F5F3EF' : '#9C9A93', lineDisplay: i === stepDefs.length - 1 ? 'none' : 'block' };
+      }),
+      ev: { name:'Copa Cidade 2026', price:'R$ 70' },
+      isForm: st.step === 'form', isPay: st.step === 'pay', isDone: st.step === 'done',
+      f: st,
+      onNome:(e)=>this.setState({nome:e.target.value}), onEmail:(e)=>this.setState({email:e.target.value}),
+      onNascimento:set('nascimento'), onSexo:set('sexo'), onFaixa:set('faixa'), onEquipe:(e)=>this.setState({equipe:e.target.value}),
+      sexoColor: st.sexo ? '#F5F3EF' : '#6B6A64', faixaColor: st.faixa ? '#F5F3EF' : '#6B6A64',
+      profileReady, profileIncomplete: !profileReady,
+      catOptions: (profileReady ? this.weightClasses(st.sexo) : []).map(name => {
+        const sel = st.categoria === name;
+        return { label:name, meta: name === 'Absoluto' ? 'todos os pesos' : '', metaColor: sel ? 'rgba(255,255,255,0.7)' : '#6B6A64', onClick: () => this.setState({ categoria:name }), bg: sel ? red : '#131314', border: sel ? red : 'rgba(255,255,255,0.12)', color: sel ? '#fff' : '#C9C6BF' };
+      }),
+      payBg: ready ? red : 'rgba(238,46,36,0.3)', payColor: ready ? '#fff' : 'rgba(255,255,255,0.5)', payCursor: ready ? 'pointer' : 'not-allowed',
+      goPay: () => { if (ready) this.setState({ step:'pay' }); }, backToForm: () => this.setState({ step:'form' }),
+      chosenCat: chosen, qr,
+      pixCode: '00020126580014BR.GOV.BCB.PIX0136arena-jj-copa-2026-inscricao-70brl5204000053039865802BR5920BJJ ARENA COMPETICOES6009SAO PAULO62070503***6304A1B2',
+      copyLabel: st.copied ? 'Copiado ✓' : 'Copiar código', copyPix: () => { this.setState({ copied:true }); setTimeout(() => this.setState({ copied:false }), 2000); },
+      timer: this.fmtTimer(st.remaining), approve: () => this.setState({ step:'done' }),
+      summary: [
+        { k:'Atleta', v: st.nome || '—', color: st.nome ? '#F5F3EF' : '#6B6A64' },
+        { k:'Faixa', v: st.faixa || '—', color: st.faixa ? red : '#6B6A64' },
+        { k:'Divisão', v: age || '—', color: age ? '#F5F3EF' : '#6B6A64' },
+        { k:'Categoria', v: st.categoria || '—', color: st.categoria ? red : '#6B6A64' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

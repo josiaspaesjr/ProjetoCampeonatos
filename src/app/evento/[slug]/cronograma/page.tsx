@@ -32,7 +32,7 @@ function ColunaArea({ fila, tv }: { fila: FilaDaArea; tv: boolean }) {
           {fila.area.nome}
         </p>
         {fila.fila.length > 0 && (
-          <p className={`shrink-0 font-mono text-xs ${tv ? "text-zinc-400" : "text-muted-foreground"}`}>
+          <p className={`shrink-0 font-cond text-xs ${tv ? "text-zinc-400" : "text-muted-foreground"}`}>
             {fila.fila.length} luta(s) · termina ~
             {hora(
               new Date(
@@ -68,7 +68,7 @@ function ColunaArea({ fila, tv }: { fila: FilaDaArea; tv: boolean }) {
           .slice(0, tv ? 6 : 10)
           .map((i) => (
             <li key={i.luta.id} className="flex items-center gap-2">
-              <span className={`font-mono text-xs ${tv ? "text-zinc-400" : "text-muted-foreground"}`}>
+              <span className={`font-cond text-xs ${tv ? "text-zinc-400" : "text-muted-foreground"}`}>
                 ~{hora(i.horaEstimada)}
               </span>
               <span className="truncate">

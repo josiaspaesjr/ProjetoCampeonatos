@@ -24,7 +24,7 @@ export function CardTitle({
   return (
     <div
       className={cn(
-        "font-display font-bold uppercase leading-none tracking-wide",
+        "disp tracking-[0.01em]",
         className,
       )}
       {...props}

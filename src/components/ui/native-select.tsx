@@ -13,7 +13,7 @@ export function NativeSelect({
   return (
     <select
       className={cn(
-        "flex h-11 w-full appearance-none border border-input bg-raised px-4 py-1 text-base transition-colors focus-visible:border-gold focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
+        "flex h-11 w-full appearance-none border border-input bg-raised px-4 py-1 text-base transition-colors focus-visible:border-brand focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50",
         className,
       )}
       {...props}

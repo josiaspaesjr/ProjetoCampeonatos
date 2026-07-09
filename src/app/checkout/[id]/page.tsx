@@ -131,7 +131,7 @@ export default async function PaginaCheckout({
         {evento && (
           <Link
             href={`/evento/${evento.slug}`}
-            className="font-mono text-xs uppercase tracking-[0.1em] text-muted-2 transition-colors hover:text-foreground"
+            className="font-cond text-xs uppercase tracking-[0.1em] text-muted-2 transition-colors hover:text-foreground"
           >
             ← Voltar ao evento
           </Link>
@@ -145,14 +145,14 @@ export default async function PaginaCheckout({
           {pago ? (
             /* ===== PASSO 3 — CONFIRMAÇÃO ===== */
             <div className="max-w-[560px] pt-5">
-              <div className="mb-7 flex h-16 w-16 rotate-45 items-center justify-center border-2 border-gold">
-                <span className="-rotate-45 text-3xl text-gold">✓</span>
+              <div className="mb-[26px] flex h-16 w-16 -skew-x-9 items-center justify-center bg-brand">
+                <span className="disp skew-x-9 text-[40px] text-white">✓</span>
               </div>
-              <Eyebrow className="mb-3">{"// Inscrição confirmada"}</Eyebrow>
-              <h1 className="mb-5 font-display text-[clamp(36px,5vw,60px)] font-extrabold uppercase leading-[0.95]">
-                Você está no
-                <br />
-                chaveamento
+              <Eyebrow className="mb-2 tracking-[0.14em]">
+                Inscrição confirmada
+              </Eyebrow>
+              <h1 className="disp mb-[18px] text-[clamp(48px,6vw,76px)]">
+                Você está no chaveamento
               </h1>
               <p className="mb-4 text-[17px] leading-relaxed text-muted-2">
                 Pagamento aprovado. Sua vaga em{" "}
@@ -174,14 +174,14 @@ export default async function PaginaCheckout({
                 {evento && (
                   <Link
                     href={`/evento/${evento.slug}/cronograma`}
-                    className="bg-gold px-[30px] py-[15px] font-display text-[15px] font-bold uppercase tracking-[0.08em] text-ink transition-colors hover:bg-gold-light"
+                    className="bg-brand px-7 py-3 font-cond text-[17px] font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]"
                   >
                     Ver cronograma
                   </Link>
                 )}
                 <Link
                   href="/minhas-inscricoes"
-                  className="border border-white/20 px-[30px] py-[15px] font-display text-[15px] font-bold uppercase tracking-[0.08em] text-foreground transition-colors hover:border-white/40"
+                  className="border border-white/18 px-7 py-3 font-cond text-[17px] font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-white/40"
                 >
                   Minhas inscrições
                 </Link>
@@ -190,31 +190,32 @@ export default async function PaginaCheckout({
           ) : (
             /* ===== PASSO 2 — PAGAMENTO ===== */
             <div>
-              <Eyebrow className="mb-3">{"// Passo 2 · Pagamento"}</Eyebrow>
-              <h1 className="mb-2 font-display text-[clamp(34px,4.6vw,54px)] font-extrabold uppercase leading-[0.95]">
+              <Eyebrow className="mb-2 tracking-[0.14em]">
+                Passo 2 · Pagamento
+              </Eyebrow>
+              <h1 className="disp mb-1.5 text-[clamp(44px,5vw,64px)]">
                 Pague com Pix
-                <br />e garanta a vaga
               </h1>
-              <p className="mb-9 max-w-[480px] text-base text-muted-2">
+              <p className="mb-[34px] max-w-[480px] text-base font-medium text-muted-2">
                 A vaga fica reservada enquanto o pagamento estiver pendente.
                 Aprovação em segundos.
               </p>
 
-              <div className="max-w-[560px] border border-gold/40 bg-panel-gold">
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/8 px-[26px] py-[22px]">
-                  <span className="font-display text-lg font-semibold uppercase">
+              <div className="max-w-[560px] border border-brand/40 bg-surface">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/8 px-6 py-5">
+                  <span className="font-cond text-lg font-semibold uppercase">
                     {rotuloCategorias || "Inscrição"}
                   </span>
-                  <span className="font-mono text-[11px] uppercase tracking-[0.1em] text-gold-light">
+                  <span className="font-cond text-[13px] uppercase tracking-[0.08em] text-brand-soft">
                     aguardando pagamento
                   </span>
                 </div>
-                <div className="p-[26px]">
-                  <div className="mb-6 flex items-baseline justify-between">
-                    <span className="font-mono text-xs uppercase tracking-[0.1em] text-muted-2">
+                <div className="p-6">
+                  <div className="mb-[22px] flex items-baseline justify-between">
+                    <span className="font-cond text-sm uppercase tracking-[0.08em] text-muted-2">
                       Total
                     </span>
-                    <span className="font-display text-[46px] font-extrabold leading-none text-gold">
+                    <span className="disp tnum text-[56px] leading-none text-brand">
                       {fmt.format(pagamento.valorBrutoCentavos / 100)}
                     </span>
                   </div>
@@ -231,10 +232,10 @@ export default async function PaginaCheckout({
                       <QrPlaceholder />
                     )}
                     <div className="min-w-[200px] flex-1">
-                      <div className="mb-2.5 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-2">
+                      <div className="mb-2.5 font-cond text-[11px] uppercase tracking-[0.1em] text-muted-2">
                         Pix copia e cola
                       </div>
-                      <div className="mb-2.5 break-all border border-white/10 bg-ink px-3.5 py-3 font-mono text-[11px] leading-normal text-muted-2">
+                      <div className="mb-2.5 break-all border border-white/10 bg-ink px-3.5 py-3 font-cond text-[11px] leading-normal text-muted-2">
                         {pixQr?.payload ??
                           `(cobrança de teste ${pagamento.gatewayCobrancaId})`}
                       </div>
@@ -245,14 +246,14 @@ export default async function PaginaCheckout({
                   </div>
 
                   {pagamento.expiraEm && pagamento.status === "criado" && (
-                    <div className="mb-5 font-mono text-xs text-muted-2">
+                    <div className="mb-5 font-cond text-xs text-muted-2">
                       Expira em{" "}
                       <ContagemRegressiva ate={pagamento.expiraEm.toISOString()} />{" "}
                       — após isso a vaga é liberada.
                     </div>
                   )}
                   {pagamento.status === "expirado" && (
-                    <div className="mb-5 border border-destructive/50 bg-destructive/10 px-4 py-3 font-mono text-xs text-destructive">
+                    <div className="mb-5 border border-destructive/50 bg-destructive/10 px-4 py-3 font-cond text-xs text-destructive">
                       Cobrança expirada — refaça a inscrição para gerar um novo
                       Pix.
                     </div>
@@ -260,7 +261,7 @@ export default async function PaginaCheckout({
 
                   {gatewayDev && pagamento.status === "criado" && (
                     <form action={simularPagamentoAprovado.bind(null, pagamento.id)}>
-                      <button className="w-full cursor-pointer bg-gold p-4 font-display text-base font-bold uppercase tracking-[0.06em] text-ink transition-colors hover:bg-gold-light">
+                      <button className="h-[52px] w-full cursor-pointer bg-brand font-cond text-lg font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">
                         Simular pagamento aprovado (teste)
                       </button>
                     </form>
@@ -271,7 +272,7 @@ export default async function PaginaCheckout({
               {evento && (
                 <Link
                   href={`/evento/${evento.slug}/inscricao`}
-                  className="mt-5 inline-block font-mono text-xs uppercase tracking-[0.08em] text-muted-2 transition-colors hover:text-foreground"
+                  className="mt-5 inline-block font-cond text-xs uppercase tracking-[0.08em] text-muted-2 transition-colors hover:text-foreground"
                 >
                   ← Editar dados
                 </Link>

@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0A0A0B; color: #F5F3EF; font-family: 'Barlow', sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #EE2E24; text-decoration: none; }
+  a:hover { color: #F5F3EF; }
+  ::selection { background: #EE2E24; color: #fff; }
+  .disp { font-family: 'Teko', sans-serif; font-weight: 600; line-height: 0.82; text-transform: uppercase; }
+  .cond { font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+  .tnum { font-variant-numeric: tabular-nums; }
+  input, select, textarea { font-family: 'Barlow', sans-serif; color: #F5F3EF; background: #141416; }
+  input::placeholder, textarea::placeholder { color: #6B6A64; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #EE2E24 !important; }
+  select option { background: #141416; color: #F5F3EF; }
+  input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(0.7); cursor: pointer; }
+  @keyframes drawerIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</helmet>
+
+<div style="display:grid; grid-template-columns:248px minmax(0,1fr); min-height:100vh; background:#0A0A0B;">
+
+  <!-- ========== SIDEBAR ========== -->
+  <aside style="position:sticky; top:0; align-self:start; height:100vh; display:flex; flex-direction:column; background:#0C0C0D; border-right:1px solid rgba(255,255,255,0.08);">
+    <a href="BJJArena v3 - Landing.dc.html" style="display:flex; align-items:center; gap:10px; padding:20px 22px; border-bottom:1px solid rgba(255,255,255,0.06); color:#F5F3EF;">
+      <div style="width:30px; height:30px; background:#EE2E24; display:flex; align-items:center; justify-content:center; transform:skewX(-9deg);"><span class="disp" style="font-size:22px; color:#fff; transform:skewX(9deg); line-height:1;">B</span></div>
+      <span class="disp" style="font-size:24px;">BJJ<span style="color:#EE2E24;">ARENA</span></span>
+    </a>
+
+    <!-- event switcher -->
+    <div style="padding:16px 18px; border-bottom:1px solid rgba(255,255,255,0.06);">
+      <div class="cond" style="font-size:11px; letter-spacing:0.14em; color:#6B6A64; margin-bottom:8px;">Evento ativo</div>
+      <button style="width:100%; display:flex; align-items:center; justify-content:space-between; gap:8px; padding:11px 13px; background:#141416; border:1px solid rgba(255,255,255,0.1); cursor:pointer; text-align:left;">
+        <span style="min-width:0;">
+          <span class="cond" style="display:block; font-size:17px; font-weight:600; color:#F5F3EF; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ ev.name }}</span>
+          <span class="cond tnum" style="display:block; font-size:12px; letter-spacing:0.04em; color:#6B6A64;">{{ ev.shortDate }}</span>
+        </span>
+        <span style="color:#6B6A64; font-size:12px; flex-shrink:0;">▾</span>
+      </button>
+    </div>
+
+    <!-- nav -->
+    <nav style="flex:1; padding:14px 12px; display:flex; flex-direction:column; gap:2px; overflow-y:auto;">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="7">
+        <button onClick="{{ n.onClick }}" class="cond" style="display:flex; align-items:center; gap:12px; padding:11px 13px; background:{{ n.bg }}; border:none; border-left:3px solid {{ n.accent }}; color:{{ n.color }}; font-weight:600; font-size:16px; letter-spacing:0.03em; cursor:pointer; text-align:left;">
+          <span style="width:18px; text-align:center; font-size:15px;">{{ n.icon }}</span>
+          <span style="flex:1;">{{ n.label }}</span>
+          <span class="tnum" style="display:{{ n.badgeShow }}; font-size:12px; color:{{ n.badgeColor }}; font-family:'Barlow',sans-serif; font-weight:600;">{{ n.badge }}</span>
+        </button>
+      </sc-for>
+    </nav>
+
+    <!-- user -->
+    <div style="padding:14px 18px; border-top:1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap:10px;">
+      <div class="disp" style="width:34px; height:34px; background:#141416; border:1px solid rgba(255,255,255,0.12); display:flex; align-items:center; justify-content:center; font-size:18px; color:#EE9A94;">J</div>
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">josiaspaesjr</div>
+        <a href="BJJArena v3 - Login.dc.html" class="cond" style="font-size:12px; letter-spacing:0.06em; color:#6B6A64;">Sair</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========== CONTENT ========== -->
+  <div style="min-width:0; display:flex; flex-direction:column;">
+
+    <!-- top bar -->
+    <div style="position:sticky; top:0; z-index:30; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; row-gap:12px; padding:18px 40px; background:rgba(10,10,11,0.9); backdrop-filter:blur(12px); border-bottom:1px solid rgba(255,255,255,0.08);">
+      <div style="display:flex; align-items:center; gap:14px; min-width:0; flex:1;">
+        <h1 class="disp" style="font-size:34px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ section.title }}</h1>
+        <span class="cond" style="display:inline-flex; align-items:center; height:22px; padding:0 10px; background:rgba(238,46,36,0.14); border:1px solid rgba(238,46,36,0.5); font-size:11px; font-weight:600; letter-spacing:0.06em; color:#EE9A94;">{{ ev.status }}</span>
+      </div>
+      <div class="cond" style="display:flex; align-items:center; gap:8px; font-weight:600; font-size:14px; letter-spacing:0.04em; flex-shrink:0;">
+        <a href="Arena JJ - Evento.dc.html" style="display:inline-flex; align-items:center; height:38px; padding:0 14px; border:1px solid rgba(255,255,255,0.16); color:#F5F3EF;">Ver página ↗</a>
+        <button onClick="{{ openEdit }}" style="height:38px; padding:0 14px; background:transparent; border:1px solid rgba(255,255,255,0.2); color:#F5F3EF; cursor:pointer;">✎ Editar evento</button>
+        <button style="height:38px; padding:0 16px 0; background:#EE2E24; border:none; color:#fff; cursor:pointer; transform:skewX(-9deg);"><span style="display:inline-block; transform:skewX(9deg);">Gerar chaves →</span></button>
+      </div>
+    </div>
+
+    <div style="padding:32px 40px 90px; display:flex; flex-direction:column; gap:32px;">
+
+      <!-- ===== VISÃO GERAL ===== -->
+      <sc-if value="{{ isOverview }}" hint-placeholder-val="{{ true }}">
+        <!-- event banner card -->
+        <div style="display:grid; grid-template-columns:300px 1fr; border:1px solid rgba(255,255,255,0.1); background:#111112; overflow:hidden;">
+          <div style="position:relative; min-height:200px; background:#161617;">
+            <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="org-cover" shape="rect" fit="cover" placeholder="capa do evento" hint-size="100%,100%"></x-import>
+            <div style="position:absolute; inset:0; background:linear-gradient(90deg, transparent 55%, rgba(17,17,18,0.9)); pointer-events:none;"></div>
+          </div>
+          <div style="padding:26px 30px; display:flex; flex-direction:column; justify-content:center;">
+            <div class="cond" style="font-size:13px; letter-spacing:0.1em; color:#EE2E24; margin-bottom:6px;">{{ ev.circuito }}</div>
+            <div class="disp" style="font-size:52px; line-height:0.86; margin-bottom:14px;">{{ ev.name }}</div>
+            <div style="display:flex; flex-wrap:wrap; gap:10px;">
+              <sc-for list="{{ chips }}" as="c" hint-placeholder-count="5">
+                <span class="cond" style="display:inline-flex; align-items:center; gap:7px; padding:7px 12px 5px; background:#0C0C0D; border:1px solid rgba(255,255,255,0.1); font-size:13px; letter-spacing:0.04em; color:#C9C6BF;"><span style="color:#EE2E24;">{{ c.icon }}</span>{{ c.v }}</span>
+              </sc-for>
+            </div>
+            <div style="margin-top:18px; font-size:13px; color:#9C9A93; font-weight:500;">Página pública: <a href="Arena JJ - Evento.dc.html" style="color:#EE9A94; font-weight:600;">{{ ev.slug }} ↗</a></div>
+          </div>
+        </div>
+
+        <!-- stats + checklist -->
+        <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:20px; align-items:start;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+            <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+              <div style="position:relative; border:1px solid rgba(255,255,255,0.1); background:#111112; padding:20px 22px; overflow:hidden;">
+                <div style="position:absolute; top:0; left:0; width:4px; height:100%; background:#EE2E24;"></div>
+                <div class="cond" style="font-size:13px; letter-spacing:0.08em; color:#9C9A93; margin-bottom:4px;">{{ s.label }}</div>
+                <div class="disp tnum" style="font-size:56px; color:{{ s.color }};">{{ s.value }}</div>
+                <div class="cond" style="font-size:12px; letter-spacing:0.04em; color:#6B6A64;">{{ s.sub }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <!-- setup checklist -->
+          <div style="border:1px solid rgba(255,255,255,0.1); background:#111112; padding:22px 24px;">
+            <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:4px;">
+              <div class="disp" style="font-size:28px;">Preparação</div>
+              <span class="cond tnum" style="font-size:14px; color:#EE9A94;">{{ setupPct }}%</span>
+            </div>
+            <div style="height:6px; background:#0C0C0D; border:1px solid rgba(255,255,255,0.08); margin:8px 0 18px; overflow:hidden;">
+              <div style="height:100%; width:{{ setupPct }}%; background:#EE2E24;"></div>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0;">
+              <sc-for list="{{ checklist }}" as="ck" hint-placeholder-count="5">
+                <button onClick="{{ ck.onClick }}" style="display:flex; align-items:center; gap:12px; padding:11px 0; border:none; border-top:1px solid rgba(255,255,255,0.06); background:none; cursor:pointer; text-align:left;">
+                  <span class="disp" style="width:22px; height:22px; border:1px solid {{ ck.ring }}; background:{{ ck.fill }}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; flex-shrink:0;">{{ ck.mark }}</span>
+                  <span class="cond" style="flex:1; font-size:17px; font-weight:600; color:{{ ck.textColor }}; letter-spacing:0.02em;">{{ ck.label }}</span>
+                  <span class="cond" style="font-size:13px; letter-spacing:0.04em; color:#6B6A64;">{{ ck.hint }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+
+        <!-- recent registrations -->
+        <div>
+          <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px;">
+            <h2 class="disp" style="font-size:34px;">Inscrições recentes</h2>
+            <span class="cond" style="font-size:14px; letter-spacing:0.05em; color:#6B6A64;">312 confirmadas</span>
+          </div>
+          <div style="border:1px solid rgba(255,255,255,0.1); background:#111112;">
+            <sc-for list="{{ recent }}" as="r" hint-placeholder-count="5">
+              <div style="display:grid; grid-template-columns:1fr 1fr 1fr auto; align-items:center; gap:16px; padding:13px 22px; border-bottom:1px solid rgba(255,255,255,0.06);">
+                <span class="cond" style="font-size:18px; font-weight:600;">{{ r.name }}</span>
+                <span style="font-size:14px; color:#9C9A93;">{{ r.team }}</span>
+                <span class="cond" style="font-size:13px; letter-spacing:0.03em; color:#C9C6BF;">{{ r.cat }}</span>
+                <span class="cond" style="font-size:12px; letter-spacing:0.06em; color:{{ r.stColor }};">{{ r.status }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===== LOTES ===== -->
+      <sc-if value="{{ isLotes }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid; grid-template-columns:1fr 400px; gap:20px; align-items:start;">
+          <div style="border:1px solid rgba(255,255,255,0.1); background:#111112;">
+            <sc-for list="{{ lotes }}" as="l" hint-placeholder-count="2">
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:17px 22px; border-bottom:1px solid rgba(255,255,255,0.06);">
+                <div>
+                  <div style="display:flex; align-items:center; gap:9px;">
+                    <span class="cond" style="font-size:20px; font-weight:600;">{{ l.name }}</span>
+                    <span class="cond" style="display:{{ l.badgeDisplay }}; align-items:center; height:20px; padding:0 8px 0; background:rgba(238,46,36,0.14); border:1px solid rgba(238,46,36,0.5); font-size:11px; font-weight:600; letter-spacing:0.06em; color:#EE9A94;">vigente</span>
+                  </div>
+                  <div class="cond tnum" style="font-size:14px; letter-spacing:0.04em; color:#9C9A93; margin-top:2px;">{{ l.range }}</div>
+                </div>
+                <div style="display:flex; align-items:center; gap:18px;">
+                  <span class="disp tnum" style="font-size:28px;">{{ l.price }}</span>
+                  <button onClick="{{ l.onDelete }}" style="background:none; border:none; font-size:14px; color:#EE2E24; cursor:pointer; font-family:'Barlow',sans-serif; font-weight:500;">excluir</button>
+                </div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ noLotes }}" hint-placeholder-val="{{ false }}">
+              <div class="cond" style="padding:40px 22px; text-align:center; font-size:15px; color:#6B6A64;">Nenhum lote cadastrado.</div>
+            </sc-if>
+          </div>
+          <div style="border:1px solid rgba(255,255,255,0.1); background:#111112; padding:22px;">
+            <div class="disp" style="font-size:26px; margin-bottom:16px;">Novo lote</div>
+            <div style="display:flex; flex-direction:column; gap:13px;">
+              <div style="display:flex; flex-direction:column; gap:7px;">
+                <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.06em; color:#9C9A93;">Nome</label>
+                <input value="{{ nl.name }}" onInput="{{ onNlName }}" placeholder="1º lote / Early bird" style="height:40px; padding:0 12px; border:1px solid rgba(255,255,255,0.14); font-size:14px;">
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div style="display:flex; flex-direction:column; gap:7px;">
+                  <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.06em; color:#9C9A93;">Preço (BRL)</label>
+                  <input value="{{ nl.price }}" onInput="{{ onNlPrice }}" placeholder="70,00" style="height:40px; padding:0 12px; border:1px solid rgba(255,255,255,0.14); font-size:14px;">
+                </div>
+                <div style="display:flex; flex-direction:column; gap:7px;">
+                  <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.06em; color:#9C9A93;">2ª inscrição</label>
+                  <input value="{{ nl.price2 }}" onInput="{{ onNlPrice2 }}" placeholder="opcional" style="height:40px; padding:0 12px; border:1px solid rgba(255,255,255,0.14); font-size:14px;">
+                </div>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div style="display:flex; flex-direction:column; gap:7px;">
+                  <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.06em; color:#9C9A93;">Início</label>
+                  <input value="{{ nl.start }}" onInput="{{ onNlStart }}" placeholder="08/07/2026" style="height:40px; padding:0 12px; border:1px solid rgba(255,255,255,0.14); font-size:14px;">
+                </div>
+                <div style="display:flex; flex-direction:column; gap:7px;">
+                  <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.06em; color:#9C9A93;">Fim</label>
+                  <input value="{{ nl.end }}" onInput="{{ onNlEnd }}" placeholder="30/07/2026" style="height:40px; padding:0 12px; border:1px solid rgba(255,255,255,0.14); font-size:14px;">
+                </div>
+              </div>
+              <button onClick="{{ addLote }}" class="cond" style="height:42px; margin-top:4px; background:#EE2E24; border:none; color:#fff; font-weight:700; font-size:16px; letter-spacing:0.04em; cursor:pointer;">Adicionar lote</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===== CATEGORIAS ===== -->
+      <sc-if value="{{ isCats }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px solid rgba(255,255,255,0.1); background:#111112; padding:24px;">
+          <div class="disp" style="font-size:26px; margin-bottom:4px;">Gerador de grade CBJJ</div>
+          <p style="font-size:14px; color:#9C9A93; line-height:1.5; margin-bottom:22px; max-width:820px; font-weight:500;">Marque classes, sexos e faixas — o produto cartesiano com a tabela de pesos vira a grade. Confira os limites com o regulamento do seu evento.</p>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:32px;">
+            <div>
+              <div class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#6B6A64; margin-bottom:14px;">Classes</div>
+              <div style="display:flex; flex-direction:column; gap:11px;">
+                <sc-for list="{{ classes }}" as="c" hint-placeholder-count="6">
+                  <label style="display:flex; align-items:center; gap:10px; cursor:pointer;" onClick="{{ c.onToggle }}">
+                    <span style="width:18px; height:18px; border:1px solid {{ c.boxBorder }}; background:{{ c.boxBg }}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; flex-shrink:0;">{{ c.check }}</span>
+                    <span style="font-size:14px;">{{ c.label }} <span style="color:#6B6A64;">{{ c.range }}</span></span>
+                  </label>
+                </sc-for>
+              </div>
+            </div>
+            <div>
+              <div class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#6B6A64; margin-bottom:14px;">Sexo</div>
+              <div style="display:flex; flex-direction:column; gap:11px;">
+                <sc-for list="{{ sexos }}" as="c" hint-placeholder-count="2">
+                  <label style="display:flex; align-items:center; gap:10px; cursor:pointer;" onClick="{{ c.onToggle }}">
+                    <span style="width:18px; height:18px; border:1px solid {{ c.boxBorder }}; background:{{ c.boxBg }}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; flex-shrink:0;">{{ c.check }}</span>
+                    <span style="font-size:14px;">{{ c.label }}</span>
+                  </label>
+                </sc-for>
+                <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin-top:8px;" onClick="{{ onToggleAbs }}">
+                  <span style="width:18px; height:18px; border:1px solid {{ absBorder }}; background:{{ absBg }}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; flex-shrink:0;">{{ absCheck }}</span>
+                  <span style="font-size:14px;">Incluir absoluto</span>
+                </label>
+              </div>
+            </div>
+            <div>
+              <div class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#6B6A64; margin-bottom:14px;">Faixas</div>
+              <div style="display:flex; flex-direction:column; gap:11px;">
+                <sc-for list="{{ faixas }}" as="c" hint-placeholder-count="6">
+                  <label style="display:flex; align-items:center; gap:10px; cursor:pointer;" onClick="{{ c.onToggle }}">
+                    <span style="width:18px; height:18px; border:1px solid {{ c.boxBorder }}; background:{{ c.boxBg }}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; flex-shrink:0;">{{ c.check }}</span>
+                    <span style="display:flex; align-items:center; gap:8px; font-size:14px;"><span style="width:9px; height:9px; background:{{ c.swatch }}; transform:skewX(-9deg); border:1px solid rgba(255,255,255,0.2);"></span>{{ c.label }}</span>
+                  </label>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          <button onClick="{{ generate }}" class="cond" style="height:42px; margin-top:24px; padding:0 20px; background:#EE2E24; border:none; color:#fff; font-weight:700; font-size:16px; letter-spacing:0.04em; cursor:pointer;">Gerar categorias</button>
+        </div>
+
+        <div style="border:1px solid rgba(255,255,255,0.1); background:#111112; margin-top:20px;">
+          <div style="display:grid; grid-template-columns:1fr 1fr;">
+            <sc-for list="{{ cats }}" as="c" hint-placeholder-count="8">
+              <div style="display:flex; align-items:center; justify-content:space-between; padding:13px 22px; border-bottom:1px solid rgba(255,255,255,0.06); border-right:{{ c.rightBorder }};">
+                <span style="display:flex; align-items:center; gap:10px; font-size:14px;"><span style="width:8px; height:8px; background:{{ c.swatch }}; transform:skewX(-9deg); border:1px solid rgba(255,255,255,0.2); flex-shrink:0;"></span>{{ c.label }}</span>
+                <button onClick="{{ c.onDelete }}" style="background:none; border:none; font-size:13px; color:#EE2E24; cursor:pointer; font-family:'Barlow',sans-serif; font-weight:500;">excluir</button>
+              </div>
+            </sc-for>
+          </div>
+          <sc-if value="{{ moreCats }}" hint-placeholder-val="{{ false }}">
+            <div class="cond" style="padding:16px 22px; font-size:13px; letter-spacing:0.04em; color:#6B6A64; text-align:center; border-top:1px solid rgba(255,255,255,0.06);">+ {{ moreCount }} categorias adicionais geradas</div>
+          </sc-if>
+          <sc-if value="{{ noCats }}" hint-placeholder-val="{{ true }}">
+            <div class="cond" style="padding:48px 22px; text-align:center; font-size:15px; color:#6B6A64;">Marque classes, sexos e faixas e clique em <strong style="color:#9C9A93;">Gerar categorias</strong>.</div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- ===== PLACEHOLDER (chaves/áreas/checkin) ===== -->
+      <sc-if value="{{ isSoon }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px dashed rgba(255,255,255,0.14); background:#111112; padding:80px 22px; text-align:center;">
+          <div class="disp" style="font-size:72px; color:rgba(255,255,255,0.1);">{{ soonTitle }}</div>
+          <p class="cond" style="font-size:16px; letter-spacing:0.05em; color:#6B6A64; margin-top:6px;">Disponível quando as inscrições forem encerradas.</p>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+
+  <!-- ========== EDIT DRAWER ========== -->
+  <sc-if value="{{ editing }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; z-index:100; background:rgba(0,0,0,0.6); animation:fadeIn 0.2s ease;" onClick="{{ cancelEdit }}"></div>
+    <div style="position:fixed; top:0; right:0; z-index:101; width:min(480px,94vw); height:100vh; background:#0F0F10; border-left:1px solid rgba(255,255,255,0.1); display:flex; flex-direction:column; animation:drawerIn 0.28s cubic-bezier(0.16,1,0.3,1);">
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:22px 26px; border-bottom:1px solid rgba(255,255,255,0.08);">
+        <div>
+          <div class="cond" style="font-size:13px; letter-spacing:0.12em; color:#EE2E24;">Editar cadastro</div>
+          <div class="disp" style="font-size:34px;">Informações do evento</div>
+        </div>
+        <button onClick="{{ cancelEdit }}" style="width:38px; height:38px; background:transparent; border:1px solid rgba(255,255,255,0.16); color:#F5F3EF; font-size:18px; cursor:pointer;">✕</button>
+      </div>
+      <div style="flex:1; overflow-y:auto; padding:24px 26px; display:flex; flex-direction:column; gap:18px;">
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Nome do evento</label>
+          <input value="{{ d.name }}" onInput="{{ onD.name }}" style="height:44px; padding:0 13px; border:1px solid rgba(255,255,255,0.14); font-size:15px;">
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Circuito / temporada</label>
+          <input value="{{ d.circuito }}" onInput="{{ onD.circuito }}" style="height:44px; padding:0 13px; border:1px solid rgba(255,255,255,0.14); font-size:15px;">
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Data do evento</label>
+            <input type="date" value="{{ d.date }}" onChange="{{ onD.date }}" style="height:44px; padding:0 12px; border:1px solid rgba(255,255,255,0.14); font-size:14px;">
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Inscrições fecham</label>
+            <input type="datetime-local" value="{{ d.closeAt }}" onChange="{{ onD.closeAt }}" style="height:44px; padding:0 12px; border:1px solid rgba(255,255,255,0.14); font-size:14px;">
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 80px 130px; gap:14px;">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Cidade</label>
+            <input value="{{ d.city }}" onInput="{{ onD.city }}" style="height:44px; padding:0 13px; border:1px solid rgba(255,255,255,0.14); font-size:15px;">
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">UF</label>
+            <input value="{{ d.uf }}" onInput="{{ onD.uf }}" maxlength="2" style="height:44px; padding:0 13px; border:1px solid rgba(255,255,255,0.14); font-size:15px; text-transform:uppercase;">
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Moeda</label>
+            <select value="{{ d.currency }}" onChange="{{ onD.currency }}" style="height:44px; padding:0 10px; border:1px solid rgba(255,255,255,0.14); font-size:14px;">
+              <option>BRL</option><option>USD</option><option>EUR</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Endereço / ginásio</label>
+          <input value="{{ d.gym }}" onInput="{{ onD.gym }}" style="height:44px; padding:0 13px; border:1px solid rgba(255,255,255,0.14); font-size:15px;">
+        </div>
+        <div class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.1em; color:#EE2E24; margin-top:8px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.08);">Detalhes da competição</div>
+        <div style="display:grid; grid-template-columns:1fr 90px; gap:14px;">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Modalidade</label>
+            <select value="{{ d.modality }}" onChange="{{ onD.modality }}" style="height:44px; padding:0 11px; border:1px solid rgba(255,255,255,0.14); font-size:14px;">
+              <option>Gi + No-Gi</option><option>Gi</option><option>No-Gi</option>
+            </select>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Áreas</label>
+            <input type="number" value="{{ d.areas }}" onInput="{{ onD.areas }}" style="height:44px; padding:0 12px; border:1px solid rgba(255,255,255,0.14); font-size:14px;">
+          </div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Faixa mín</label>
+            <select value="{{ d.beltMin }}" onChange="{{ onD.beltMin }}" style="height:44px; padding:0 10px; border:1px solid rgba(255,255,255,0.14); font-size:14px;">
+              <option>Branca</option><option>Azul</option><option>Roxa</option><option>Marrom</option><option>Preta</option>
+            </select>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Faixa máx</label>
+            <select value="{{ d.beltMax }}" onChange="{{ onD.beltMax }}" style="height:44px; padding:0 10px; border:1px solid rgba(255,255,255,0.14); font-size:14px;">
+              <option>Preta</option><option>Marrom</option><option>Roxa</option><option>Azul</option><option>Branca</option>
+            </select>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Pesagem</label>
+            <input type="date" value="{{ d.weighIn }}" onChange="{{ onD.weighIn }}" style="height:44px; padding:0 11px; border:1px solid rgba(255,255,255,0.14); font-size:13px;">
+          </div>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          <label class="cond" style="font-size:13px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Descrição</label>
+          <textarea value="{{ d.desc }}" onInput="{{ onD.desc }}" rows="5" style="padding:11px 13px; border:1px solid rgba(255,255,255,0.14); font-size:14px; line-height:1.5; resize:vertical;"></textarea>
+        </div>
+      </div>
+      <div style="display:flex; gap:12px; padding:18px 26px; border-top:1px solid rgba(255,255,255,0.08);">
+        <button onClick="{{ cancelEdit }}" class="cond" style="flex:1; height:46px; background:transparent; border:1px solid rgba(255,255,255,0.18); color:#F5F3EF; font-weight:600; font-size:16px; letter-spacing:0.04em; cursor:pointer;">Cancelar</button>
+        <button onClick="{{ saveEdit }}" class="cond" style="flex:2; height:46px; background:#EE2E24; border:none; color:#fff; font-weight:700; font-size:16px; letter-spacing:0.04em; cursor:pointer;">Salvar alterações</button>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    section: 'overview',
+    editing: false, draft: null,
+    ev: {
+      name: 'Copa Cidade 2026', circuito: 'Circuito Nacional', status: 'publicado',
+      date: '2026-03-14', closeAt: '2026-03-10T23:59', city: 'São Paulo', uf: 'SP', currency: 'BRL',
+      gym: 'Ginásio do Ibirapuera', modality: 'Gi + No-Gi', areas: '8',
+      beltMin: 'Branca', beltMax: 'Preta', weighIn: '2026-03-13',
+      slug: 'bjjarena.app/evento/copa-cidade-2026',
+      desc: 'Terceira etapa do Circuito Nacional. Gi e No-Gi, das faixas branca à preta, em oito áreas simultâneas.',
+    },
+    lotes: [
+      { name:'1º lote', start:'08/07/2026', end:'30/07/2026', price:'R$ 70,00', vigente:true },
+      { name:'2º lote', start:'31/07/2026', end:'20/08/2026', price:'R$ 75,00', vigente:false },
+    ],
+    nl: { name:'', price:'', price2:'', start:'', end:'' },
+    classesSel: { 'Adulto': true }, sexosSel: { 'Masculino': true, 'Feminino': true }, faixasSel: { 'Branca': true, 'Azul': true },
+    absoluto: false, cats: [], generated: false,
+  };
+
+  MONTHS = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+  fmtShort(iso) { const dt = new Date(iso + 'T12:00:00'); if (isNaN(dt)) return iso; return `${dt.getDate()} ${this.MONTHS[dt.getMonth()]} ${dt.getFullYear()}`; }
+  fmtMeta(ev) { let s = ev.date; const dt = new Date(ev.date + 'T12:00:00'); if (!isNaN(dt)) s = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`; return `${s} · ${ev.city}/${ev.uf} · ${ev.currency}`; }
+  slugify(s) { return 'bjjarena.app/evento/' + (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
+  weightDivs(s) {
+    if (s === 'Feminino') return ['Galo (até 48.5kg)','Pluma (até 53.5kg)','Pena (até 58.5kg)','Leve (até 64kg)','Médio (até 69kg)','Meio-Pesado (até 74kg)','Pesado (até 79.3kg)','Super-Pesado (+79.3kg)'];
+    return ['Galo (até 57.5kg)','Pluma (até 64kg)','Pena (até 70kg)','Leve (até 76kg)','Médio (até 82.3kg)','Meio-Pesado (até 88.3kg)','Pesado (até 94.3kg)','Super-Pesado (até 100.5kg)','Pesadíssimo (+100.5kg)'];
+  }
+
+  renderVals() {
+    const st = this.state; const ev = st.ev; const red = '#EE2E24';
+    const sec = st.section;
+    const beltSwatch = { Branca:'#F5F3EF', Cinza:'#9CA3AF', Amarela:'#FACC15', Laranja:'#FB923C', Verde:'#22C55E', Azul:'#2563EB', Roxa:'#7C3AED', Marrom:'#78350F', Preta:'#111' };
+    const classDefs = [['Pré-Mirim','(4–6)'],['Mirim','(7–9)'],['Infantil','(10–12)'],['Infanto-Juvenil','(13–15)'],['Juvenil','(16–17)'],['Adulto','(18+)'],['Master 1','(30–35)'],['Master 2','(36–40)'],['Master 3','(41–45)'],['Master 4','(46–50)'],['Master 5','(51–55)'],['Master 6','(56–60)'],['Master 7','(61+)']];
+    const faixaDefs = ['Branca','Cinza','Amarela','Laranja','Verde','Azul','Roxa','Marrom','Preta'];
+    const sexoDefs = ['Masculino','Feminino'];
+    const box = (on) => ({ boxBg: on ? red : 'transparent', boxBorder: on ? red : 'rgba(255,255,255,0.28)', check: on ? '✓' : '' });
+    const totalCat = st.cats.length; const shown = st.cats.slice(0, 40); const catCount = totalCat || 1064;
+
+    const d = st.draft || {}; const bindD = {};
+    ['name','circuito','date','closeAt','city','uf','currency','gym','modality','areas','beltMin','beltMax','weighIn','desc'].forEach(k => { bindD[k] = (e) => this.setState({ draft: { ...this.state.draft, [k]: e.target.value } }); });
+
+    const navDefs = [
+      { id:'overview', label:'Visão geral', icon:'◧' },
+      { id:'inscricoes', label:'Inscrições', icon:'◇', badge:'312' },
+      { id:'cats', label:'Categorias', icon:'▦', badge:String(catCount) },
+      { id:'lotes', label:'Lotes', icon:'❏', badge:String(st.lotes.length) },
+      { id:'areas', label:'Áreas', icon:'⬒', badge:ev.areas },
+      { id:'checkin', label:'Check-in', icon:'✔' },
+      { id:'chaves', label:'Chaves', icon:'⑃' },
+    ];
+    const titles = { overview:'Visão geral', inscricoes:'Inscrições', cats:'Categorias', lotes:'Lotes de inscrição', areas:'Áreas', checkin:'Check-in', chaves:'Chaves' };
+    const soonTitles = { inscricoes:'Inscrições', areas:'Áreas', checkin:'Check-in', chaves:'Chaves' };
+
+    // setup checklist
+    const checkItems = [
+      { label:'Evento publicado', done:true, hint:'ao vivo', go:'overview' },
+      { label:'Lotes de preço', done: st.lotes.length > 0, hint:`${st.lotes.length} lotes`, go:'lotes' },
+      { label:'Grade de categorias', done: totalCat > 0 || true, hint:`${catCount}`, go:'cats' },
+      { label:'Áreas definidas', done:true, hint:`${ev.areas} áreas`, go:'areas' },
+      { label:'Chaves geradas', done:false, hint:'pendente', go:'chaves' },
+    ];
+    const doneCount = checkItems.filter(c => c.done).length;
+    const setupPct = Math.round(doneCount / checkItems.length * 100);
+
+    return {
+      nav: navDefs.map(n => {
+        const on = sec === n.id;
+        return { label:n.label, icon:n.icon, onClick: () => this.setState({ section:n.id }), bg: on ? 'rgba(238,46,36,0.1)' : 'transparent', accent: on ? red : 'transparent', color: on ? '#F5F3EF' : '#9C9A93', badge: n.badge || '', badgeShow: n.badge ? 'inline' : 'none', badgeColor: on ? '#EE9A94' : '#6B6A64' };
+      }),
+      section: { title: titles[sec] || 'Painel' },
+      isOverview: sec === 'overview', isLotes: sec === 'lotes', isCats: sec === 'cats',
+      isSoon: ['inscricoes','areas','checkin','chaves'].includes(sec),
+      soonTitle: soonTitles[sec] || '',
+
+      editing: st.editing,
+      openEdit: () => this.setState({ editing:true, draft:{ ...ev } }),
+      cancelEdit: () => this.setState({ editing:false, draft:null }),
+      saveEdit: () => { const nd = { ...st.draft }; nd.slug = this.slugify(nd.name); this.setState({ ev:nd, editing:false, draft:null }); },
+      d, onD: bindD,
+
+      ev: { name: ev.name, circuito: ev.circuito, status: ev.status, meta: this.fmtMeta(ev), shortDate: this.fmtShort(ev.date), slug: ev.slug },
+      chips: [
+        { icon:'◆', v: this.fmtShort(ev.date) },
+        { icon:'◆', v: `${ev.city}/${ev.uf}` },
+        { icon:'◆', v: ev.modality },
+        { icon:'◆', v: `${ev.areas} áreas` },
+        { icon:'◆', v: `Pesagem ${this.fmtShort(ev.weighIn)}` },
+      ],
+      stats: [
+        { label:'Inscrições', value:'312', sub:'em 24 equipes', color:'#F5F3EF' },
+        { label:'Categorias', value:String(catCount), sub:'grade CBJJ', color:'#F5F3EF' },
+        { label:'Lotes', value:String(st.lotes.length), sub:'1 vigente', color:red },
+        { label:'Receita', value:'21,8k', sub:'R$ estimado', color:'#F5F3EF' },
+      ],
+      setupPct,
+      checklist: checkItems.map(c => ({ label:c.label, hint:c.hint, mark: c.done ? '✓' : '', ring: c.done ? red : 'rgba(255,255,255,0.25)', fill: c.done ? red : 'transparent', textColor: c.done ? '#F5F3EF' : '#9C9A93', onClick: () => this.setState({ section: c.go }) })),
+      recent: [
+        { name:'Rafael Mendes', team:'Atos JJ', cat:'Adulto/Preta/-76kg', status:'Confirmada', stColor:'#7BD88F' },
+        { name:'Bruna Lima', team:'Alliance', cat:'Adulto/Azul/-64kg', status:'Confirmada', stColor:'#7BD88F' },
+        { name:'Thiago Almeida', team:'GF Team', cat:'Master 1/Preta/-82kg', status:'Confirmada', stColor:'#7BD88F' },
+        { name:'Diego Nunes', team:'Dream Art', cat:'Adulto/Roxa/-88kg', status:'Pendente Pix', stColor:'#EE9A94' },
+        { name:'André Costa', team:'Checkmat', cat:'Adulto/Preta/Absoluto', status:'Confirmada', stColor:'#7BD88F' },
+      ],
+
+      lotes: st.lotes.map((l, i) => ({ name:l.name, range:`${l.start} → ${l.end}`, price:l.price, badgeDisplay: l.vigente ? 'inline-flex' : 'none', onDelete: () => this.setState({ lotes: st.lotes.filter((_, j) => j !== i) }) })),
+      noLotes: st.lotes.length === 0,
+      nl: st.nl,
+      onNlName:(e)=>this.setState({nl:{...st.nl,name:e.target.value}}), onNlPrice:(e)=>this.setState({nl:{...st.nl,price:e.target.value}}), onNlPrice2:(e)=>this.setState({nl:{...st.nl,price2:e.target.value}}),
+      onNlStart:(e)=>this.setState({nl:{...st.nl,start:e.target.value}}), onNlEnd:(e)=>this.setState({nl:{...st.nl,end:e.target.value}}),
+      addLote: () => { const n = st.nl; if (!n.name && !n.price) return; const price = n.price ? `R$ ${n.price}` : 'R$ 0,00'; this.setState({ lotes:[...st.lotes, { name:n.name || 'Novo lote', start:n.start || '—', end:n.end || '—', price, vigente:false }], nl:{ name:'', price:'', price2:'', start:'', end:'' } }); },
+
+      classes: classDefs.map(([label, range]) => { const on = !!st.classesSel[label]; return { label, range, ...box(on), onToggle: () => this.setState({ classesSel:{ ...st.classesSel, [label]: !on } }) }; }),
+      sexos: sexoDefs.map(label => { const on = !!st.sexosSel[label]; return { label, ...box(on), onToggle: () => this.setState({ sexosSel:{ ...st.sexosSel, [label]: !on } }) }; }),
+      faixas: faixaDefs.map(label => { const on = !!st.faixasSel[label]; return { label, swatch:beltSwatch[label], ...box(on), onToggle: () => this.setState({ faixasSel:{ ...st.faixasSel, [label]: !on } }) }; }),
+      absBg: st.absoluto ? red : 'transparent', absBorder: st.absoluto ? red : 'rgba(255,255,255,0.28)', absCheck: st.absoluto ? '✓' : '', onToggleAbs: () => this.setState({ absoluto: !st.absoluto }),
+      generate: () => {
+        const cls = Object.keys(st.classesSel).filter(k => st.classesSel[k]);
+        const sex = Object.keys(st.sexosSel).filter(k => st.sexosSel[k]);
+        const fai = faixaDefs.filter(k => st.faixasSel[k]);
+        const out = [];
+        cls.forEach(c => sex.forEach(s => fai.forEach(f => { const divs = [...this.weightDivs(s)]; if (st.absoluto) divs.unshift('Absoluto'); divs.forEach(dd => out.push({ c, s, f, d: dd })); })));
+        this.setState({ cats: out, generated: true });
+      },
+      catCount: String(catCount),
+      cats: shown.map((c, i) => ({ label:`${c.c} / ${c.s} / ${c.f} / ${c.d}`, swatch: beltSwatch[c.f] || '#9CA3AF', rightBorder: i % 2 === 0 ? '1px solid rgba(255,255,255,0.06)' : 'none', onDelete: () => this.setState({ cats: st.cats.filter((x) => x !== st.cats[i]) }) })),
+      noCats: totalCat === 0, moreCats: totalCat > 40, moreCount: totalCat > 40 ? totalCat - 40 : 0,
+    };
+  }
+}
+</script>
+</body>
+</html>

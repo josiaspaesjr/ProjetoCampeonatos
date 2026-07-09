@@ -53,13 +53,13 @@ export function CategoriasFiltro({ categorias }: { categorias: CategoriaLinha[] 
               key={chip.id}
               onClick={() => setFiltro(chip.id)}
               className={cn(
-                "px-4 py-[9px] font-display text-[13px] font-bold uppercase tracking-[0.06em] transition-colors",
+                "-skew-x-9 border px-4 py-2 font-cond text-sm font-semibold uppercase tracking-[0.05em] transition-colors",
                 ativo
-                  ? "border border-gold bg-gold text-ink"
-                  : "border border-white/16 text-muted-2 hover:text-foreground",
+                  ? "border-brand bg-brand text-white"
+                  : "border-white/16 text-text-2 hover:border-white/30",
               )}
             >
-              {chip.rotulo}
+              <span className="inline-block skew-x-9">{chip.rotulo}</span>
             </button>
           );
         })}
@@ -74,24 +74,24 @@ export function CategoriasFiltro({ categorias }: { categorias: CategoriaLinha[] 
               i % 2 === 1 && "bg-white/[0.015]",
             )}
           >
-            <div className="flex min-w-0 items-center gap-3.5">
+            <div className="flex min-w-0 items-center gap-[13px]">
               <span
-                className="h-2 w-2 shrink-0 rotate-45"
+                className="h-[9px] w-[9px] shrink-0 -skew-x-9 border border-white/20"
                 style={{ background: corDaFaixa(c.faixa) }}
               />
-              <span className="truncate font-display text-lg font-semibold uppercase tracking-[0.02em]">
+              <span className="truncate font-cond text-[19px] font-semibold uppercase tracking-[0.02em]">
                 {c.nome}
               </span>
             </div>
-            <div className="flex shrink-0 items-center gap-4 font-mono text-xs">
-              {c.preco && <span className="text-gold-light">{c.preco}</span>}
+            <div className="flex shrink-0 items-center gap-4 font-cond text-sm uppercase tracking-[0.04em]">
+              {c.preco && <span className="text-brand-soft">{c.preco}</span>}
               <span className={c.inscritos > 0 ? "text-muted-2" : "text-muted-3"}>
                 {c.inscritos} inscrito{c.inscritos === 1 ? "" : "s"}
               </span>
               {c.chaveUrl && (
                 <Link
                   href={c.chaveUrl}
-                  className="uppercase tracking-[0.08em] text-gold transition-colors hover:text-gold-light"
+                  className="tracking-[0.08em] text-brand transition-colors hover:text-brand-soft"
                 >
                   Chave →
                 </Link>
@@ -100,12 +100,12 @@ export function CategoriasFiltro({ categorias }: { categorias: CategoriaLinha[] 
           </div>
         ))}
         {visiveis.length === 0 && (
-          <div className="px-5 py-8 font-mono text-sm text-muted-3">
+          <div className="px-5 py-8 font-cond text-sm text-muted-3">
             Nenhuma categoria neste filtro.
           </div>
         )}
       </div>
-      <div className="mt-3.5 font-mono text-xs text-muted-3">
+      <div className="mt-3.5 font-cond text-xs text-muted-3">
         Mostrando {rotuloFiltro} · as categorias compatíveis com seu perfil
         aparecem na tela de inscrição
       </div>

@@ -56,7 +56,7 @@ export default async function PaginaCheckinAtleta({
                 {inscricao.academiaNome ? ` · ${inscricao.academiaNome}` : ""}
               </p>
             </div>
-            <span className="font-mono text-sm text-muted-foreground">
+            <span className="font-cond text-sm text-muted-foreground">
               {codigoCurto(inscricao.id)}
             </span>
           </div>

@@ -1,23 +1,23 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Saira, Saira_Condensed } from "next/font/google";
+import { Barlow, Barlow_Condensed, Teko } from "next/font/google";
 import "./globals.css";
 
-const saira = Saira({
-  variable: "--font-saira",
+const barlow = Barlow({
+  variable: "--font-barlow",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
 });
 
-const sairaCondensed = Saira_Condensed({
-  variable: "--font-saira-condensed",
+const barlowCondensed = Barlow_Condensed({
+  variable: "--font-barlow-condensed",
   subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
+  weight: ["500", "600", "700"],
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains",
+const teko = Teko({
+  variable: "--font-teko",
   subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: ["500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -38,7 +38,7 @@ export default function RootLayout({
     <html
       lang="pt-BR"
       data-scroll-behavior="smooth"
-      className={`${saira.variable} ${sairaCondensed.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${barlow.variable} ${barlowCondensed.variable} ${teko.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

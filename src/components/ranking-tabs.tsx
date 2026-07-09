@@ -16,7 +16,7 @@ export function RankingTabs({ dados }: { dados: RankingGeral }) {
 
   return (
     <div>
-      <div className="mb-6 flex gap-2 font-display text-sm font-bold uppercase tracking-[0.08em]">
+      <div className="mb-6 flex gap-2 disp text-sm font-bold uppercase tracking-[0.08em]">
         {ABAS.map((a) => (
           <button
             key={a.chave}
@@ -24,7 +24,7 @@ export function RankingTabs({ dados }: { dados: RankingGeral }) {
             className={cn(
               "px-4 py-2 transition-colors",
               aba === a.chave
-                ? "bg-gold text-ink"
+                ? "bg-brand text-ink"
                 : "border border-white/15 text-muted-2 hover:text-foreground",
             )}
           >
@@ -34,7 +34,7 @@ export function RankingTabs({ dados }: { dados: RankingGeral }) {
       </div>
 
       <div className="border">
-        <div className="grid grid-cols-[70px_1fr_1fr_120px_110px] bg-[#131315] px-6 py-3.5 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-2 max-md:grid-cols-[50px_1fr_90px]">
+        <div className="grid grid-cols-[70px_1fr_1fr_120px_110px] bg-[#131315] px-6 py-3.5 font-cond text-[11px] uppercase tracking-[0.12em] text-muted-2 max-md:grid-cols-[50px_1fr_90px]">
           <span>#</span>
           <span>Atleta</span>
           <span className="max-md:hidden">Equipe</span>
@@ -42,7 +42,7 @@ export function RankingTabs({ dados }: { dados: RankingGeral }) {
           <span className="text-right">Pontos</span>
         </div>
         {linhas.length === 0 ? (
-          <div className="border-t px-6 py-8 font-mono text-sm text-muted-3">
+          <div className="border-t px-6 py-8 font-cond text-sm text-muted-3">
             Sem resultados nesta divisão ainda — o ranking nasce quando as
             primeiras chaves forem concluídas.
           </div>
@@ -52,25 +52,25 @@ export function RankingTabs({ dados }: { dados: RankingGeral }) {
               key={`${r.nome}-${i}`}
               className={cn(
                 "grid grid-cols-[70px_1fr_1fr_120px_110px] items-center border-t border-white/6 px-6 py-4 max-md:grid-cols-[50px_1fr_90px]",
-                i === 0 && "bg-gold/5",
+                i === 0 && "bg-brand/5",
               )}
             >
               <span
                 className={cn(
-                  "font-display text-[22px] font-extrabold",
-                  i === 0 ? "text-gold" : i < 3 ? "text-foreground" : "text-muted-2",
+                  "disp text-[22px] font-extrabold",
+                  i === 0 ? "text-brand" : i < 3 ? "text-foreground" : "text-muted-2",
                 )}
               >
                 {String(i + 1).padStart(2, "0")}
               </span>
-              <span className="font-display text-lg font-semibold uppercase">
+              <span className="disp text-lg font-semibold uppercase">
                 {r.nome}
               </span>
               <span className="text-sm text-muted-2 max-md:hidden">{r.equipe}</span>
-              <span className="font-mono text-xs capitalize text-text-2 max-md:hidden">
+              <span className="font-cond text-xs capitalize text-text-2 max-md:hidden">
                 {r.faixa}
               </span>
-              <span className="text-right font-mono text-base font-medium text-gold-light">
+              <span className="text-right font-cond text-base font-medium text-brand-soft">
                 {r.pontos.toLocaleString("pt-BR")}
               </span>
             </div>

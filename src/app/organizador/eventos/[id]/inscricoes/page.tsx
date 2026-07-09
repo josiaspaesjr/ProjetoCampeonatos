@@ -69,18 +69,9 @@ export default async function PaginaInscricoes({
 
   return (
     <div className="space-y-10">
-      <div>
-        <Link
-          href={`/organizador/eventos/${id}`}
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          ← {evento.nome}
-        </Link>
-        <h1 className="mt-1 text-2xl font-bold">
-          Inscrições{" "}
-          <span className="font-normal text-muted-foreground">({lista.length})</span>
-        </h1>
-      </div>
+      <p className="font-cond text-[15px] uppercase tracking-[0.05em] text-muted-2">
+        {lista.length} inscriç{lista.length === 1 ? "ão" : "ões"} no total
+      </p>
 
       {esvaziadas.length > 0 && (
         <section className="rounded-xl border border-warning/40 bg-warning/15 p-5">

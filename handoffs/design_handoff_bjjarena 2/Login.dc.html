@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0C0C0D; color: #F5F3EF; font-family: 'Barlow', sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #EE2E24; text-decoration: none; }
+  a:hover { color: #F5F3EF; }
+  ::selection { background: #EE2E24; color: #fff; }
+  .disp { font-family: 'Teko', sans-serif; font-weight: 600; line-height: 0.82; text-transform: uppercase; }
+  .cond { font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+  input { font-family: 'Barlow', sans-serif; color: #F5F3EF; background: #131314; }
+  input::placeholder { color: #6B6A64; }
+  input:focus { outline: none; border-color: #EE2E24 !important; }
+  @keyframes bjjPulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+</style>
+</helmet>
+
+<div style="min-height:100vh; display:grid; grid-template-columns:1.05fr 0.95fr; background:#0C0C0D;">
+
+  <!-- LEFT — brand panel -->
+  <div style="position:relative; overflow:hidden; display:flex; flex-direction:column; justify-content:space-between; padding:44px 48px; border-right:1px solid rgba(255,255,255,0.08);">
+    <div style="position:absolute; inset:0;">
+      <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="v3-login-bg" shape="rect" fit="cover" placeholder="Foto de ação (opcional)" hint-size="100%,100%"></x-import>
+    </div>
+    <div style="position:absolute; inset:0; background:linear-gradient(180deg, rgba(12,12,13,0.82), rgba(12,12,13,0.92)); pointer-events:none;"></div>
+    <div style="position:absolute; right:-60px; bottom:8%; pointer-events:none;">
+      <div class="disp" style="font-size:280px; color:rgba(255,255,255,0.03); white-space:nowrap;">TATAME</div>
+    </div>
+
+    <a href="BJJArena v3 - Landing.dc.html" style="position:relative; display:flex; align-items:center; gap:11px; color:#F5F3EF;">
+      <div style="width:34px; height:34px; background:#EE2E24; display:flex; align-items:center; justify-content:center; transform:skewX(-9deg);">
+        <span class="disp" style="font-size:26px; color:#fff; transform:skewX(9deg); line-height:1;">B</span>
+      </div>
+      <span class="disp" style="font-size:30px;">BJJ<span style="color:#EE2E24;">ARENA</span></span>
+    </a>
+
+    <div style="position:relative;">
+      <div class="cond" style="display:inline-flex; align-items:center; gap:9px; font-weight:600; font-size:15px; letter-spacing:0.12em; color:#EE2E24; margin-bottom:14px;"><span style="width:8px; height:8px; border-radius:50%; background:#EE2E24; animation:bjjPulse 1.5s infinite;"></span>Área do organizador</div>
+      <h1 class="disp" style="font-size:clamp(56px,6vw,96px); max-width:520px;">Rode seu<br>campeonato<br><span style="color:#EE2E24;">de ponta a ponta</span>.</h1>
+      <p style="font-size:17px; line-height:1.5; color:#C9C6BF; max-width:420px; margin-top:18px; font-weight:500;">Entre para criar eventos, publicar inscrições, gerar chaves e acompanhar o ranking oficial.</p>
+    </div>
+
+    <div class="cond" style="position:relative; font-size:14px; letter-spacing:0.08em; color:#6B6A64;">© 2026 · Sistema de competições de jiu-jitsu</div>
+  </div>
+
+  <!-- RIGHT — form -->
+  <div style="display:flex; align-items:center; justify-content:center; padding:44px;">
+    <div style="width:100%; max-width:400px;">
+      <div class="disp" style="font-size:56px; margin-bottom:4px;">Entrar</div>
+      <p style="font-size:15px; color:#9C9A93; margin-bottom:34px; font-weight:500;">Acesse sua conta de organizador para continuar.</p>
+
+      <div style="display:flex; flex-direction:column; gap:20px;">
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <label class="cond" style="font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">E-mail</label>
+          <input type="email" value="{{ email }}" onInput="{{ onEmail }}" placeholder="voce@email.com" style="height:48px; padding:0 15px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+        </div>
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <label class="cond" style="font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Senha</label>
+            <a href="#" style="font-size:13px; color:#9C9A93; font-weight:500;">Esqueci a senha</a>
+          </div>
+          <input type="password" value="{{ senha }}" onInput="{{ onSenha }}" placeholder="••••••••" style="height:48px; padding:0 15px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+        </div>
+
+        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin-top:2px;" onClick="{{ toggleRemember }}">
+          <span style="width:18px; height:18px; border:1px solid {{ remBorder }}; background:{{ remBg }}; display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px;">{{ remCheck }}</span>
+          <span style="font-size:14px; color:#C9C6BF; font-weight:500;">Manter conectado</span>
+        </label>
+
+        <a href="BJJArena v3 - Criar Evento.dc.html" class="cond" style="height:52px; display:flex; align-items:center; justify-content:center; background:#EE2E24; color:#fff; font-weight:700; font-size:20px; letter-spacing:0.04em; transform:skewX(-9deg); margin-top:8px;"><span style="display:inline-block; transform:skewX(9deg); padding-top:3px;">Entrar →</span></a>
+
+        <div style="display:flex; align-items:center; gap:14px; margin:6px 0;">
+          <div style="flex:1; height:1px; background:rgba(255,255,255,0.1);"></div>
+          <span class="cond" style="font-size:13px; letter-spacing:0.1em; color:#6B6A64;">ou</span>
+          <div style="flex:1; height:1px; background:rgba(255,255,255,0.1);"></div>
+        </div>
+
+        <a href="BJJArena v3 - Criar Evento.dc.html" class="cond" style="height:50px; display:flex; align-items:center; justify-content:center; gap:10px; border:1px solid rgba(255,255,255,0.16); color:#F5F3EF; font-weight:600; font-size:17px; letter-spacing:0.04em;">Continuar com Google</a>
+      </div>
+
+      <p style="font-size:14px; color:#9C9A93; margin-top:28px; text-align:center; font-weight:500;">Ainda não tem conta? <a href="BJJArena v3 - Criar Evento.dc.html" style="font-weight:600;">Criar conta de organizador</a></p>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { email: '', senha: '', remember: true };
+  renderVals() {
+    const red = '#EE2E24';
+    return {
+      email: this.state.email,
+      senha: this.state.senha,
+      onEmail: (e) => this.setState({ email: e.target.value }),
+      onSenha: (e) => this.setState({ senha: e.target.value }),
+      remember: this.state.remember,
+      remBg: this.state.remember ? red : 'transparent',
+      remBorder: this.state.remember ? red : 'rgba(255,255,255,0.3)',
+      remCheck: this.state.remember ? '✓' : '',
+      toggleRemember: () => this.setState({ remember: !this.state.remember }),
+    };
+  }
+}
+</script>
+</body>
+</html>

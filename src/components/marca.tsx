@@ -1,26 +1,33 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-/** Diamante da marca: quadrado rotacionado com miolo dourado. */
-export function MarcaDiamante({ tamanho = 30 }: { tamanho?: number }) {
+/** Bloco da marca: "B" branco sobre quadrado vermelho com skew de −9°. */
+export function MarcaBloco({ tamanho = 34 }: { tamanho?: number }) {
   return (
     <span
       aria-hidden
-      className="flex rotate-45 items-center justify-center border-2 border-gold"
+      className="flex -skew-x-9 items-center justify-center bg-brand"
       style={{ width: tamanho, height: tamanho }}
     >
       <span
-        className="block bg-gold"
-        style={{ width: Math.round(tamanho * 0.27), height: Math.round(tamanho * 0.27) }}
-      />
+        className="disp block skew-x-9 leading-none text-white"
+        style={{ fontSize: Math.round(tamanho * 0.76) }}
+      >
+        B
+      </span>
     </span>
   );
 }
 
-/** Logo completa (diamante + wordmark). */
+/** Compat: alias do antigo diamante — hoje renderiza o bloco v3. */
+export function MarcaDiamante({ tamanho = 34 }: { tamanho?: number }) {
+  return <MarcaBloco tamanho={tamanho} />;
+}
+
+/** Logo completa (bloco + wordmark). */
 export function Logo({
   href = "/",
-  tamanho = 30,
+  tamanho = 34,
   className,
 }: {
   href?: string;
@@ -30,20 +37,20 @@ export function Logo({
   return (
     <Link
       href={href}
-      className={cn("flex items-center gap-3 text-foreground", className)}
+      className={cn("flex items-center gap-2.5 text-foreground", className)}
     >
-      <MarcaDiamante tamanho={tamanho} />
+      <MarcaBloco tamanho={tamanho} />
       <span
-        className="font-display font-extrabold uppercase tracking-[0.14em]"
-        style={{ fontSize: Math.round(tamanho * 0.73) }}
+        className="disp tracking-[0.01em]"
+        style={{ fontSize: Math.round(tamanho * 0.88) }}
       >
-        BJJ<span className="text-gold">Arena</span>
+        BJJ<span className="text-brand">ARENA</span>
       </span>
     </Link>
   );
 }
 
-/** Rótulo "eyebrow" em mono dourado: "// Texto". */
+/** Rótulo "eyebrow" condensado em vermelho. */
 export function Eyebrow({
   children,
   className,
@@ -54,7 +61,7 @@ export function Eyebrow({
   return (
     <div
       className={cn(
-        "font-mono text-xs uppercase tracking-[0.2em] text-gold",
+        "font-cond text-[15px] font-semibold uppercase tracking-[0.1em] text-brand",
         className,
       )}
     >
@@ -64,10 +71,26 @@ export function Eyebrow({
 }
 
 /** Ponto pulsante de status ao vivo. */
-export function PontoVivo({ cor = "bg-gold" }: { cor?: string }) {
+export function PontoVivo({ cor = "bg-brand" }: { cor?: string }) {
   return (
-    <span
-      className={cn("h-[7px] w-[7px] rounded-full animate-pulse-dot", cor)}
-    />
+    <span className={cn("h-2 w-2 rounded-full animate-pulse-dot", cor)} />
+  );
+}
+
+/**
+ * Par skew/unskew — assinatura visual do v3: o container inclina −9° e o
+ * conteúdo desinclina +9°. Use em botões, badges e chips.
+ */
+export function SkewTexto({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <span className={cn("inline-flex skew-x-9 items-center gap-2", className)}>
+      {children}
+    </span>
   );
 }

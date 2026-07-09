@@ -65,19 +65,10 @@ export default async function PaginaAreas({
 
   return (
     <div className="space-y-8">
-      <div>
-        <Link
-          href={`/organizador/eventos/${id}`}
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          ← {evento.nome}
-        </Link>
-        <h1 className="mt-1 text-2xl font-bold">Áreas & Cronograma</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Distribua as categorias (com chave gerada) pelas áreas. A fila e os
-          horários estimados se recalculam a cada luta encerrada.
-        </p>
-      </div>
+      <p className="text-sm text-muted-foreground">
+        Distribua as categorias (com chave gerada) pelas áreas. A fila e os
+        horários estimados se recalculam a cada luta encerrada.
+      </p>
 
       <div className="grid grid-cols-3 gap-6">
         <Card>
@@ -197,7 +188,7 @@ export default async function PaginaAreas({
                     {f.fila.slice(0, 8).map((item, idx) => (
                       <li key={item.luta.id} className="flex items-center justify-between gap-2">
                         <span className="truncate">
-                          <span className="mr-2 font-mono text-xs text-muted-foreground">
+                          <span className="mr-2 font-cond text-xs text-muted-foreground">
                             {hora(item.horaEstimada)}
                           </span>
                           {item.pronta

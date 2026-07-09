@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0C0C0D; color: #F5F3EF; font-family: 'Barlow', sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #EE2E24; text-decoration: none; }
+  a:hover { color: #F5F3EF; }
+  ::selection { background: #EE2E24; color: #fff; }
+  .disp { font-family: 'Teko', sans-serif; font-weight: 600; line-height: 0.82; text-transform: uppercase; }
+  .cond { font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; }
+  input, select, textarea { font-family: 'Barlow', sans-serif; color: #F5F3EF; background: #131314; }
+  input::placeholder, textarea::placeholder { color: #6B6A64; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #EE2E24 !important; }
+  select option { background: #131314; color: #F5F3EF; }
+  input[type="date"]::-webkit-calendar-picker-indicator, input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(0.7); cursor: pointer; }
+</style>
+</helmet>
+
+<div style="min-height:100vh; background:#0C0C0D; display:flex; flex-direction:column;">
+
+  <!-- TOPBAR -->
+  <header style="display:flex; align-items:center; justify-content:space-between; padding:16px 48px; border-bottom:1px solid rgba(255,255,255,0.08); position:sticky; top:0; background:rgba(12,12,13,0.9); backdrop-filter:blur(12px); z-index:40;">
+    <a href="BJJArena v3 - Landing.dc.html" style="display:flex; align-items:center; gap:11px; color:#F5F3EF;">
+      <div style="width:32px; height:32px; background:#EE2E24; display:flex; align-items:center; justify-content:center; transform:skewX(-9deg);"><span class="disp" style="font-size:24px; color:#fff; transform:skewX(9deg); line-height:1;">B</span></div>
+      <span class="disp" style="font-size:28px;">BJJ<span style="color:#EE2E24;">ARENA</span></span>
+      <span class="cond" style="font-size:15px; letter-spacing:0.1em; color:#6B6A64; margin-left:6px;">/ Organizador</span>
+    </a>
+    <div class="cond" style="display:flex; align-items:center; gap:20px; font-size:15px; letter-spacing:0.06em; color:#9C9A93;">
+      <span>josiaspaesjr</span>
+      <a href="BJJArena v3 - Login.dc.html" style="color:#9C9A93;">Sair</a>
+    </div>
+  </header>
+
+  <main style="width:100%; max-width:900px; margin:0 auto; padding:44px 48px 90px;">
+    <a href="BJJArena v3 - Login.dc.html" class="cond" style="display:inline-flex; align-items:center; gap:7px; font-size:15px; letter-spacing:0.06em; color:#9C9A93; margin-bottom:26px;">← Voltar</a>
+
+    <div style="position:relative; margin-bottom:40px;">
+      <div class="disp" style="position:absolute; top:-34px; left:-2px; font-size:110px; color:rgba(255,255,255,0.04); pointer-events:none;">NOVO</div>
+      <div class="cond" style="position:relative; font-weight:600; font-size:16px; letter-spacing:0.14em; color:#EE2E24; margin-bottom:4px;">Criar evento</div>
+      <h1 class="disp" style="position:relative; font-size:72px;">Configure sua etapa</h1>
+      <p style="position:relative; font-size:16px; color:#9C9A93; margin-top:6px; font-weight:500; max-width:520px;">Informações básicas do evento. Lotes, categorias, áreas e chaves você configura depois no painel.</p>
+    </div>
+
+    <!-- IMAGE + FORM -->
+    <div style="display:flex; flex-direction:column; gap:26px;">
+
+      <!-- capa -->
+      <div>
+        <label class="cond" style="display:block; font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93; margin-bottom:11px;">Imagem de capa</label>
+        <div style="position:relative; aspect-ratio:24/7; border:1px solid rgba(255,255,255,0.14); overflow:hidden; background:#131314;">
+          <x-import component-from-global-scope="image-slot" from="./image-slot.js" id="v3-create-cover" shape="rect" fit="cover" placeholder="Arraste a imagem de capa do evento (banner)" hint-size="100%,100%"></x-import>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:9px;">
+        <label class="cond" style="font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Nome do evento <span style="color:#EE2E24;">*</span></label>
+        <input value="{{ f.nome }}" onInput="{{ onNome }}" placeholder="Copa Cidade de Jiu-Jitsu 2026" style="height:48px; padding:0 15px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px;">
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <label class="cond" style="font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Data do evento <span style="color:#EE2E24;">*</span></label>
+          <input type="date" value="{{ f.data }}" onChange="{{ onData }}" style="height:48px; padding:0 15px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+        </div>
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <label class="cond" style="font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Inscrições fecham em</label>
+          <input type="datetime-local" value="{{ f.fecha }}" onChange="{{ onFecha }}" style="height:48px; padding:0 15px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 90px 220px; gap:18px;">
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <label class="cond" style="font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Cidade</label>
+          <input value="{{ f.cidade }}" onInput="{{ onCidade }}" placeholder="São Paulo" style="height:48px; padding:0 15px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+        </div>
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <label class="cond" style="font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">UF</label>
+          <input value="{{ f.uf }}" onInput="{{ onUf }}" placeholder="SP" maxlength="2" style="height:48px; padding:0 15px; border:1px solid rgba(255,255,255,0.14); font-size:16px; text-transform:uppercase;">
+        </div>
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <label class="cond" style="font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Moeda</label>
+          <select value="{{ f.moeda }}" onChange="{{ onMoeda }}" style="height:48px; padding:0 12px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+            <option>BRL — Real (Pix)</option>
+            <option>USD — Dólar</option>
+            <option>EUR — Euro</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:9px;">
+        <label class="cond" style="font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Endereço / ginásio</label>
+        <input value="{{ f.local }}" onInput="{{ onLocal }}" placeholder="Ginásio do Ibirapuera — Av. Pedro Álvares Cabral, s/n" style="height:48px; padding:0 15px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:9px;">
+        <label class="cond" style="font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Descrição</label>
+        <textarea value="{{ f.desc }}" onInput="{{ onDesc }}" placeholder="Modalidades, regulamento, cronograma, premiação…" rows="5" style="padding:12px 15px; border:1px solid rgba(255,255,255,0.14); font-size:16px; line-height:1.5; resize:vertical;"></textarea>
+      </div>
+
+      <!-- DETALHES DA COMPETIÇÃO -->
+      <div class="cond" style="font-size:15px; font-weight:600; letter-spacing:0.1em; color:#EE2E24; margin-top:14px; padding-top:22px; border-top:1px solid rgba(255,255,255,0.08);">Detalhes da competição</div>
+
+      <div style="display:flex; flex-direction:column; gap:9px;">
+        <label class="cond" style="font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Circuito / temporada</label>
+        <input value="{{ f.circuito }}" onInput="{{ onCircuito }}" placeholder="Circuito Nacional 2026" style="height:48px; padding:0 15px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 140px 1fr; gap:18px;">
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <label class="cond" style="font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Modalidade</label>
+          <select value="{{ f.modalidade }}" onChange="{{ onModalidade }}" style="height:48px; padding:0 12px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+            <option>Gi + No-Gi</option>
+            <option>Gi</option>
+            <option>No-Gi</option>
+          </select>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <label class="cond" style="font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Nº de áreas</label>
+          <input type="number" value="{{ f.areas }}" onInput="{{ onAreas }}" placeholder="8" style="height:48px; padding:0 15px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+        </div>
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <label class="cond" style="font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Data da pesagem</label>
+          <input type="date" value="{{ f.pesagem }}" onChange="{{ onPesagem }}" style="height:48px; padding:0 15px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px;">
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <label class="cond" style="font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Faixa mínima</label>
+          <select value="{{ f.faixaMin }}" onChange="{{ onFaixaMin }}" style="height:48px; padding:0 12px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+            <option>Branca</option><option>Azul</option><option>Roxa</option><option>Marrom</option><option>Preta</option>
+          </select>
+        </div>
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <label class="cond" style="font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Faixa máxima</label>
+          <select value="{{ f.faixaMax }}" onChange="{{ onFaixaMax }}" style="height:48px; padding:0 12px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+            <option>Preta</option><option>Marrom</option><option>Roxa</option><option>Azul</option><option>Branca</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- INSCRIÇÃO & VALORES -->
+      <div class="cond" style="font-size:15px; font-weight:600; letter-spacing:0.1em; color:#EE2E24; margin-top:14px; padding-top:22px; border-top:1px solid rgba(255,255,255,0.08);">Inscrição &amp; valores</div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:18px;">
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <label class="cond" style="font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">Preço 1ª inscrição <span style="color:#EE2E24;">*</span></label>
+          <input value="{{ f.preco }}" onInput="{{ onPreco }}" placeholder="R$ 70,00" style="height:48px; padding:0 15px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+        </div>
+        <div style="display:flex; flex-direction:column; gap:9px;">
+          <label class="cond" style="font-size:14px; font-weight:600; letter-spacing:0.08em; color:#9C9A93;">2ª categoria (adicional)</label>
+          <input value="{{ f.preco2 }}" onInput="{{ onPreco2 }}" placeholder="+ R$ 40,00" style="height:48px; padding:0 15px; border:1px solid rgba(255,255,255,0.14); font-size:16px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTE -->
+    <div style="display:flex; align-items:flex-start; gap:12px; margin-top:32px; padding:16px 18px; border:1px solid rgba(238,46,36,0.35); background:rgba(238,46,36,0.06);">
+      <span style="width:8px; height:8px; background:#EE2E24; transform:skewX(-9deg); flex-shrink:0; margin-top:6px;"></span>
+      <p style="font-size:15px; line-height:1.5; color:#C9C6BF; font-weight:500;">Configurações avançadas — <strong style="color:#F5F3EF; font-weight:600;">lotes de inscrição, categorias, áreas e chaveamento</strong> — ficam disponíveis no painel do organizador logo após criar o evento.</p>
+    </div>
+
+    <!-- ACTIONS -->
+    <div style="display:flex; justify-content:flex-end; gap:14px; margin-top:24px; padding-top:26px; border-top:1px solid rgba(255,255,255,0.08);">
+      <a href="BJJArena v3 - Landing.dc.html" class="cond" style="height:50px; display:inline-flex; align-items:center; padding:0 26px; border:1px solid rgba(255,255,255,0.18); color:#F5F3EF; font-weight:600; font-size:18px; letter-spacing:0.04em;">Cancelar</a>
+      <a href="BJJArena - Organizador.dc.html" class="cond" style="height:50px; display:inline-flex; align-items:center; padding:0 30px 0; background:#EE2E24; color:#fff; font-weight:700; font-size:19px; letter-spacing:0.04em; transform:skewX(-9deg);"><span style="display:inline-block; transform:skewX(9deg); padding-top:3px;">Criar evento →</span></a>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    nome:'', data:'', fecha:'', cidade:'', uf:'', moeda:'BRL — Real (Pix)', local:'', desc:'',
+    etapa:'', circuito:'', modalidade:'Gi + No-Gi', areas:'', pesagem:'',
+    faixaMin:'Branca', faixaMax:'Preta', preco:'', preco2:'',
+  };
+  renderVals() {
+    const bind = (k) => (e) => this.setState({ [k]: e.target.value });
+    return {
+      f: this.state,
+      onNome: bind('nome'), onData: bind('data'), onFecha: bind('fecha'),
+      onCidade: bind('cidade'), onUf: bind('uf'), onMoeda: bind('moeda'),
+      onLocal: bind('local'), onDesc: bind('desc'),
+      onEtapa: bind('etapa'), onCircuito: bind('circuito'), onModalidade: bind('modalidade'),
+      onAreas: bind('areas'), onPesagem: bind('pesagem'),
+      onFaixaMin: bind('faixaMin'), onFaixaMax: bind('faixaMax'),
+      onPreco: bind('preco'), onPreco2: bind('preco2'),
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,32 +1,32 @@
 @import "tailwindcss";
 
-/* Design system BJJArena — dark premium, dourado,
-   cantos retos, sem sombras. As telas de ginásio (placar, telão) usam
-   cores próprias por cima. */
+/* Design system BJJArena v3 — athletic / fight-club: quase-preto, vermelho
+   #EE2E24, Teko/Barlow, skew de −9°, cantos retos, sem sombras. As telas de
+   ginásio (placar, telão) usam cores próprias por cima. */
 :root {
-  --background: #0b0b0c;
-  --foreground: #f5f1e9;
-  --card: #111113;
-  --card-foreground: #f5f1e9;
-  --popover: #111113;
-  --popover-foreground: #f5f1e9;
-  --primary: #c6a15b;
-  --primary-foreground: #0b0b0c;
-  --secondary: #161618;
-  --secondary-foreground: #d8d2c6;
-  --muted: #161618;
-  --muted-foreground: #8b877d;
-  --accent: #1b1b1e;
-  --accent-foreground: #f5f1e9;
-  --destructive: #e23b3b;
-  --destructive-foreground: #f5f1e9;
-  --success: #4fb07e;
-  --success-foreground: #0b0b0c;
-  --warning: #c6a15b;
-  --warning-foreground: #e4c784;
-  --border: rgba(255, 255, 255, 0.09);
+  --background: #0c0c0d;
+  --foreground: #f5f3ef;
+  --card: #111112;
+  --card-foreground: #f5f3ef;
+  --popover: #111112;
+  --popover-foreground: #f5f3ef;
+  --primary: #ee2e24;
+  --primary-foreground: #ffffff;
+  --secondary: #161617;
+  --secondary-foreground: #c9c6bf;
+  --muted: #161617;
+  --muted-foreground: #9c9a93;
+  --accent: #1b1b1c;
+  --accent-foreground: #f5f3ef;
+  --destructive: #ee2e24;
+  --destructive-foreground: #ffffff;
+  --success: #7bd88f;
+  --success-foreground: #0c0c0d;
+  --warning: #ee9a94;
+  --warning-foreground: #ee9a94;
+  --border: rgba(255, 255, 255, 0.08);
   --input: rgba(255, 255, 255, 0.14);
-  --ring: #c6a15b;
+  --ring: #ee2e24;
   --radius: 0rem;
 }
 
@@ -55,18 +55,19 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* paleta da marca */
-  --color-gold: #c6a15b;
-  --color-gold-light: #e4c784;
-  --color-ink: #0b0b0c;
-  --color-surface: #0e0e10;
-  --color-raised: #111113;
-  --color-hover-row: #161618;
-  --color-live: #e23b3b;
-  --color-text-2: #d8d2c6;
-  --color-text-3: #c8c3b8;
-  --color-muted-2: #8b877d;
-  --color-muted-3: #5c594f;
+  /* paleta da marca (v3) */
+  --color-brand: #ee2e24;
+  --color-brand-soft: #ee9a94;
+  --color-ink: #0c0c0d;
+  --color-paper: #f5f3ef;
+  --color-surface: #111112;
+  --color-raised: #131314;
+  --color-hover-row: #161617;
+  --color-live: #ee2e24;
+  --color-text-2: #c9c6bf;
+  --color-text-3: #c9c6bf;
+  --color-muted-2: #9c9a93;
+  --color-muted-3: #6b6a64;
 
   /* cantos retos em toda a escala (identidade do design) */
   --radius-xs: 0rem;
@@ -78,12 +79,13 @@
   --radius-3xl: 0rem;
   --radius-4xl: 0rem;
 
-  --font-sans: var(--font-saira), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
-  --font-display: var(--font-saira-condensed), ui-sans-serif, sans-serif;
+  --font-sans: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
+  --font-cond: var(--font-barlow-condensed), ui-sans-serif, sans-serif;
+  --font-display: var(--font-teko), ui-sans-serif, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --animate-pulse-dot: pulse-dot 1.6s ease-in-out infinite;
-  --animate-marquee: marquee 28s linear infinite;
+  --animate-pulse-dot: pulse-dot 1.5s ease-in-out infinite;
+  --animate-marquee: marquee 24s linear infinite;
 
   @keyframes pulse-dot {
     0%,
@@ -91,7 +93,7 @@
       opacity: 1;
     }
     50% {
-      opacity: 0.25;
+      opacity: 0.3;
     }
   }
   @keyframes marquee {
@@ -104,7 +106,20 @@
   }
 }
 
-/* texturas da marca */
+/* Título display (Teko): uppercase e line-height 0.82 — assinatura do v3 */
+@utility disp {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 0.82;
+  text-transform: uppercase;
+}
+
+/* Números tabulares (tempos, placares, valores) */
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* texturas neutras para placeholders de foto */
 @utility bg-stripes-hero {
   background-image: repeating-linear-gradient(
     115deg,
@@ -119,22 +134,41 @@
     #101012 2px 16px
   );
 }
-@utility bg-panel-gold {
-  background-image: linear-gradient(180deg, #151412, #0e0e10);
+/* compat: painéis destacados agora são flat (v3 não usa gradiente) */
+@utility bg-panel-brand {
+  background-color: #111112;
 }
-@utility glow-gold-tr {
+@utility glow-brand-tr {
   background-image: radial-gradient(
     120% 90% at 78% 20%,
-    rgba(198, 161, 91, 0.16),
+    rgba(238, 46, 36, 0.1),
     transparent 60%
   );
 }
-@utility glow-gold-b {
+@utility glow-brand-b {
   background-image: radial-gradient(
     90% 120% at 50% 120%,
-    rgba(198, 161, 91, 0.18),
+    rgba(238, 46, 36, 0.12),
     transparent 60%
   );
+}
+
+/* drawer "Editar evento" do console */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
 }
 
 @layer base {
@@ -152,8 +186,8 @@
     -webkit-font-smoothing: antialiased;
   }
   ::selection {
-    background: var(--color-gold);
-    color: var(--color-ink);
+    background: var(--color-brand);
+    color: #fff;
   }
   input::placeholder,
   textarea::placeholder {
@@ -163,7 +197,8 @@
     background: var(--color-raised);
     color: var(--color-foreground);
   }
-  input[type="date"]::-webkit-calendar-picker-indicator {
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="datetime-local"]::-webkit-calendar-picker-indicator {
     filter: invert(0.7);
   }
 }

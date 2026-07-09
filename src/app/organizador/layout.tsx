@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { sair } from "@/app/entrar/actions";
+import { MarcaBloco } from "@/components/marca";
 import { getUsuarioSessao } from "@/lib/auth";
 import { supabaseConfigurado } from "@/lib/supabase/server";
 
@@ -11,28 +12,36 @@ export default async function OrganizadorLayout({
   const usuario = await getUsuarioSessao();
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b bg-card">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-          <Link href="/organizador" className="font-bold tracking-tight">
-            BJJArena{" "}
-            <span className="font-normal text-muted-foreground">· Organizador</span>
+    <div className="min-h-screen bg-[#0A0A0B] text-foreground">
+      <header className="sticky top-0 z-40 border-b border-white/8 bg-ink/90 backdrop-blur-xl">
+        <div className="flex items-center justify-between px-6 py-3.5 md:px-10">
+          <Link href="/organizador" className="flex items-center gap-2.5">
+            <MarcaBloco tamanho={32} />
+            <span className="disp text-[28px]">
+              BJJ<span className="text-brand">ARENA</span>
+            </span>
+            <span className="ml-1.5 font-cond text-[15px] uppercase tracking-[0.1em] text-muted-3">
+              / Organizador
+            </span>
           </Link>
           {supabaseConfigurado() && usuario ? (
-            <form action={sair} className="flex items-center gap-3 text-sm">
+            <form
+              action={sair}
+              className="flex items-center gap-5 font-cond text-[15px] uppercase tracking-[0.06em] text-muted-2"
+            >
               <span>{usuario.nome}</span>
-              <button className="text-muted-foreground hover:text-foreground">
-                sair
+              <button className="uppercase transition-colors hover:text-foreground">
+                Sair
               </button>
             </form>
           ) : (
-            <span className="text-sm text-muted-foreground">
+            <span className="font-cond text-[15px] uppercase tracking-[0.06em] text-muted-2">
               {usuario?.nome ?? "Organizador Dev"}
             </span>
           )}
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-8">{children}</main>
+      <main className="w-full">{children}</main>
     </div>
   );
 }
