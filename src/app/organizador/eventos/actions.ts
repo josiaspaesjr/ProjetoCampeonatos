@@ -331,8 +331,14 @@ export async function criarLote(eventoId: string, formData: FormData) {
   const precoSegunda = formData.get("precoSegunda")
     ? Math.round(Number(formData.get("precoSegunda")) * 100)
     : null;
-  const inicio = new Date(String(formData.get("inicio")));
-  const fim = new Date(String(formData.get("fim")));
+  // datas vêm como dia (yyyy-mm-dd): início às 00:00 e fim às 23:59:59 do dia,
+  // para o lote valer o dia inteiro do "fim" (âncora em horário local)
+  const inicioStr = String(formData.get("inicio") ?? "");
+  const fimStr = String(formData.get("fim") ?? "");
+  const inicio = new Date(
+    inicioStr.includes("T") ? inicioStr : `${inicioStr}T00:00:00`,
+  );
+  const fim = new Date(fimStr.includes("T") ? fimStr : `${fimStr}T23:59:59`);
 
   if (!nome || !preco || isNaN(inicio.getTime()) || isNaN(fim.getTime())) {
     erroVisivel(eventoId, "Preencha nome, preço e vigência do lote.");
