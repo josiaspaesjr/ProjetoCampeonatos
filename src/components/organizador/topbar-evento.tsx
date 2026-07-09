@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
-import { SkewTexto } from "@/components/marca";
 import { CamposDataEvento } from "@/components/organizador/campos-data-evento";
 import { RegulamentoCampos } from "@/components/organizador/regulamento-campos";
 import { Spinner } from "@/components/ui/botao-acao";
@@ -117,12 +116,6 @@ export function TopbarEvento({
           >
             ✎ Editar evento
           </button>
-          <Link
-            href={`/organizador/eventos/${evento.id}/chaves`}
-            className="inline-flex h-[38px] -skew-x-9 items-center bg-brand px-4 text-white"
-          >
-            <SkewTexto>Gerar chaves →</SkewTexto>
-          </Link>
         </div>
       </div>
 
