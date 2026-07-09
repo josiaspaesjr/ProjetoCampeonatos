@@ -58,7 +58,6 @@ export default async function PaginaAreas({
     <EstruturadorAreas
       categorias={categoriasView}
       numAreasInicial={evento.numAreas}
-      estruturado={evento.numAreas != null}
       base={`/organizador/eventos/${id}`}
       areaIds={todasAreas.map((a) => a.id)}
       estruturar={estruturarAreas.bind(null, id)}

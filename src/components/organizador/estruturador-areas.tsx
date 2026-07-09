@@ -45,14 +45,12 @@ function tituloGrupo(g: { classeNome: string; sexo: string; faixa: string }): st
 export function EstruturadorAreas({
   categorias,
   numAreasInicial,
-  estruturado: estruturadoInicial,
   base,
   areaIds,
   estruturar,
 }: {
   categorias: CategoriaView[];
   numAreasInicial: number | null;
-  estruturado: boolean;
   /** caminho base do evento, ex.: `/organizador/eventos/:id` */
   base: string;
   areaIds: string[];
@@ -61,7 +59,9 @@ export function EstruturadorAreas({
   const [areasN, setAreasN] = useState(
     numAreasInicial ? String(numAreasInicial) : "",
   );
-  const [estruturado, setEstruturado] = useState(estruturadoInicial);
+  // número já APLICADO (persistido): a prévia reflete este valor, não o que
+  // está sendo digitado — só muda ao clicar em "Estruturar áreas".
+  const [aplicado, setAplicado] = useState<number | null>(numAreasInicial);
 
   const nInt = Math.floor(Number(areasN));
   const nValido = Number.isFinite(nInt) && nInt >= AREAS_MIN && nInt <= AREAS_MAX;
@@ -72,22 +72,23 @@ export function EstruturadorAreas({
   const gruposTotal = useMemo(() => contarGrupos(categorias), [categorias]);
   const classesDoFunil = useMemo(() => classesEmOrdem(categorias), [categorias]);
 
-  // alocação balanceada por área, recomputada ao vivo com o nº de áreas
+  // alocação balanceada por área — calculada sobre o número APLICADO, não
+  // sobre o que está no input (a prévia só muda ao clicar em Estruturar)
   const porArea = useMemo(
     () =>
-      nValido
-        ? distribuirBalanceado(categorias, nInt).map((cats) => ({
+      aplicado != null
+        ? distribuirBalanceado(categorias, aplicado).map((cats) => ({
             grupos: agruparExibicao(cats),
             totalCats: cats.length,
             lutas: cats.reduce((s, c) => s + c.lutas, 0),
           }))
         : [],
-    [categorias, nInt, nValido],
+    [categorias, aplicado],
   );
 
-  const mostrarPreview = estruturado && nValido && temCategorias;
-  // só liga o placar quando a prévia bate com a estrutura persistida
-  const placarLigado = estruturado && areaIds.length === nInt;
+  const mostrarPreview = aplicado != null && temCategorias;
+  // só liga o placar quando a estrutura aplicada bate com as áreas persistidas
+  const placarLigado = aplicado != null && areaIds.length === aplicado;
 
   // ---- SEM CATEGORIAS: bloqueia com prompt para a seção Categorias ----
   if (!temCategorias) {
@@ -109,7 +110,7 @@ export function EstruturadorAreas({
     );
   }
 
-  const media = mostrarPreview ? Math.round(totalCategorias / nInt) : 0;
+  const media = aplicado ? Math.round(totalCategorias / aplicado) : 0;
 
   return (
     <>
@@ -151,11 +152,18 @@ export function EstruturadorAreas({
           </div>
 
           {/* Estruturar */}
-          <form action={estruturar} className="lg:justify-self-end">
+          <form
+            action={async (fd) => {
+              await estruturar(fd);
+              // aplica a prévia só depois que a estruturação foi persistida
+              const n = Math.floor(Number(fd.get("numAreas")));
+              if (Number.isFinite(n)) setAplicado(n);
+            }}
+            className="lg:justify-self-end"
+          >
             <input type="hidden" name="numAreas" value={nValido ? nInt : ""} />
             <BotaoAcaoBruto
               disabled={!nValido}
-              onClick={() => setEstruturado(true)}
               className="inline-flex -skew-x-9 items-center bg-brand px-6 py-4 font-cond text-lg font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d] disabled:cursor-not-allowed disabled:opacity-40"
             >
               <span className="inline-block skew-x-9">⚙ Estruturar áreas</span>
@@ -211,7 +219,7 @@ export function EstruturadorAreas({
         <>
           {/* RESUMO — 4 STATS */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat rotulo="Áreas" valor={String(nInt)} sub="tatames" destaque />
+            <Stat rotulo="Áreas" valor={String(aplicado ?? 0)} sub="tatames" destaque />
             <Stat
               rotulo="Categorias"
               valor={String(totalCategorias)}
