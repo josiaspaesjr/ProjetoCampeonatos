@@ -100,9 +100,11 @@ export const lutaMetodoEnum = pgEnum("luta_metodo", [
 // Tabelas
 // ---------------------------------------------------------------------------
 
+// catálogo fechado de academias/equipes (base IBJJF). O atleta seleciona uma
+// na inscrição — não há cadastro manual, então `nome` é único.
 export const academias = pgTable("academias", {
   id: uuid("id").primaryKey().defaultRandom(),
-  nome: text("nome").notNull(),
+  nome: text("nome").notNull().unique(),
   cidade: text("cidade"),
   uf: text("uf"),
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),

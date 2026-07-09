@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { categorias, eventos, lotes } from "@/db/schema";
+import { academias, categorias, eventos, lotes } from "@/db/schema";
 import { Logo } from "@/components/marca";
 import { dataCurta } from "@/lib/datas";
 import { getAtletaAtual } from "@/lib/sessao";
@@ -34,6 +34,14 @@ export default async function PaginaInscricao({
     }),
     getAtletaAtual(),
   ]);
+
+  // academia atual do atleta logado, para pré-selecionar no formulário
+  const academiaAtleta = atleta?.academiaId
+    ? await db.query.academias.findFirst({
+        where: eq(academias.id, atleta.academiaId),
+        columns: { nome: true },
+      })
+    : null;
 
   const loteVigente = todosLotes.find((l) => l.inicio <= agora && agora <= l.fim);
   const inscricoesAbertas =
@@ -86,6 +94,8 @@ export default async function PaginaInscricao({
                   dataNascimento: atleta.dataNascimento ?? undefined,
                   sexo: atleta.sexo ?? undefined,
                   faixa: atleta.faixaAtual ?? undefined,
+                  academiaId: atleta.academiaId ?? undefined,
+                  academiaNome: academiaAtleta?.nome ?? undefined,
                 }
               : undefined
           }

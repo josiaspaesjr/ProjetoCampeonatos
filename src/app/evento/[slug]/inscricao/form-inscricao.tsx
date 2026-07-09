@@ -7,6 +7,7 @@ import { Eyebrow } from "@/components/marca";
 import { Spinner } from "@/components/ui/botao-acao";
 import { PassosInscricao } from "@/components/inscricao/passos";
 import { ResumoEvento } from "@/components/inscricao/resumo-evento";
+import { SeletorAcademia } from "@/components/inscricao/seletor-academia";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { CLASSES_IDADE, FAIXAS } from "@/lib/categorias/cbjj";
@@ -49,6 +50,8 @@ interface Props {
     dataNascimento?: string;
     sexo?: string;
     faixa?: string;
+    academiaId?: string;
+    academiaNome?: string;
   };
 }
 
@@ -243,10 +246,11 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
             <label className={labelCls} htmlFor="insc-academia">
               Academia / equipe
             </label>
-            <Input
+            <SeletorAcademia
               id="insc-academia"
-              name="academia"
-              placeholder="Nome da sua academia"
+              name="academiaId"
+              defaultId={perfil?.academiaId}
+              defaultNome={perfil?.academiaNome}
             />
           </div>
 

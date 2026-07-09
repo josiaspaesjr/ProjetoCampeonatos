@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, ilike, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getDb } from "@/db";
 import {
@@ -49,22 +49,23 @@ export async function criarInscricao(eventoSlug: string, formData: FormData) {
   const dataNascimento = String(formData.get("dataNascimento") ?? "");
   const sexo = String(formData.get("sexo") ?? "") as "masculino" | "feminino";
   const faixa = String(formData.get("faixa") ?? "") as Faixa;
-  const academiaNome = String(formData.get("academia") ?? "").trim();
+  const academiaId = String(formData.get("academiaId") ?? "").trim() || null;
   const categoriaId = String(formData.get("categoriaId") ?? "");
 
   if (!nome || !email || !dataNascimento || !sexo || !faixa || !categoriaId) {
     throw new Error("Preencha todos os campos obrigatórios");
   }
 
-  // academia: reutiliza por nome (case-insensitive) ou cria
-  let academiaId: string | null = null;
-  if (academiaNome) {
-    const existente = await db.query.academias.findFirst({
-      where: ilike(academias.nome, academiaNome),
+  // academia: precisa existir no catálogo — o formulário só envia um id
+  // válido (não há cadastro manual). Guardamos o nome como snapshot.
+  let academiaNome: string | null = null;
+  if (academiaId) {
+    const academia = await db.query.academias.findFirst({
+      where: eq(academias.id, academiaId),
+      columns: { nome: true },
     });
-    academiaId =
-      existente?.id ??
-      (await db.insert(academias).values({ nome: academiaNome }).returning())[0].id;
+    if (!academia) throw new Error("Academia inválida — selecione uma da lista");
+    academiaNome = academia.nome;
   }
 
   const dadosPerfil = {

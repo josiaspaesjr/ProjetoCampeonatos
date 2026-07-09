@@ -50,6 +50,13 @@
       "when": 1783622054473,
       "tag": "0006_red_ender_wiggin",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1783638132343,
+      "tag": "0007_seed_academias",
+      "breakpoints": true
     }
   ]
 }

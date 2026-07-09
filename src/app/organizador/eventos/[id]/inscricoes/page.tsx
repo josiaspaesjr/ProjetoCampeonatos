@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, eventos, inscricoes } from "@/db/schema";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { AcaoTexto, BotaoAcao } from "@/components/ui/botao-acao";
+import { SeletorAcademia } from "@/components/inscricao/seletor-academia";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -222,7 +222,7 @@ export default async function PaginaInscricoes({
                     </option>
                   ))}
                 </NativeSelect>
-                <Input name="academia" placeholder="Academia" />
+                <SeletorAcademia name="academiaId" />
               </div>
               <NativeSelect name="categoriaId" required defaultValue="">
                 <option value="" disabled>
