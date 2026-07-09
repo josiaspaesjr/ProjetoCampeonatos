@@ -8,7 +8,7 @@
 export interface Inscrito {
   id: string;
   nome?: string;
-  /** usada para separar atletas da mesma academia na 1ª rodada */
+  /** usada para afastar ao máximo atletas da mesma academia na chave */
   academiaId?: string | null;
 }
 
@@ -49,7 +49,7 @@ export interface Chave {
 export interface OpcoesGeracao {
   /** seed do sorteio; obrigatória para auditabilidade */
   seed: string;
-  /** separar atletas da mesma academia na 1ª rodada (best effort). default: true */
+  /** afastar atletas da mesma academia o máximo possível na chave. default: true */
   separarAcademias?: boolean;
 }
 

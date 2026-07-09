@@ -169,6 +169,76 @@ describe("separação de academias na 1ª rodada", () => {
   });
 });
 
+describe("distância entre atletas da mesma academia", () => {
+  // rodada em que dois atletas se cruzariam se ambos sempre vencessem
+  function rodadaDeEncontro(chave: Chave, id1: string, id2: string): number {
+    const r1 = lutasDaRodada(chave, 1);
+    const posicao = (id: string) =>
+      r1.findIndex((l) => l.atleta1 === id || l.atleta2 === id);
+    const p1 = posicao(id1);
+    const p2 = posicao(id2);
+    let r = 1;
+    while (Math.floor(p1 / 2 ** (r - 1)) !== Math.floor(p2 / 2 ** (r - 1))) r++;
+    return r;
+  }
+
+  function encontroMaisCedo(chave: Chave, ids: string[]): number {
+    let menor = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        menor = Math.min(menor, rodadaDeEncontro(chave, ids[i], ids[j]));
+      }
+    }
+    return menor;
+  }
+
+  it("2 atletas da mesma academia caem em metades opostas (só se cruzam na final)", () => {
+    const academias = ["alpha", "alpha", null, null, null, null, null, null];
+    for (const seed of ["a", "b", "c", "d", "e"]) {
+      const chave = gerarEliminacaoSimples(inscritos(8, academias), { seed });
+      expect(rodadaDeEncontro(chave, "atleta-1", "atleta-2")).toBe(chave.rodadas);
+    }
+  });
+
+  it.each([
+    // [tamanho, atletasNaAcademia] → encontro mais cedo = rodadas - ceil(log2 k) + 1
+    [8, 2, 3],
+    [8, 3, 2],
+    [8, 4, 2],
+    [16, 2, 4],
+    [16, 3, 3],
+    [16, 5, 2],
+    [16, 8, 2],
+  ])(
+    "academia de %i… (chave %i) se cruza o mais tarde possível: rodada %i",
+    (tamanho, k, esperado) => {
+      const academias = Array.from({ length: tamanho }, (_, i) =>
+        i < k ? "alpha" : null,
+      );
+      const idsAlpha = Array.from({ length: k }, (_, i) => `atleta-${i + 1}`);
+      for (const seed of ["s1", "s2", "s3", "s4", "s5"]) {
+        const chave = gerarEliminacaoSimples(inscritos(tamanho, academias), {
+          seed,
+        });
+        expect(encontroMaisCedo(chave, idsAlpha)).toBe(esperado);
+      }
+    },
+  );
+
+  it("duas academias grandes são afastadas simultaneamente", () => {
+    // 4 atletas de cada, intercalados; em chave de 8 o encontro interno mais
+    // cedo possível é a semifinal (rodada 2) para as duas academias
+    const academias = ["alpha", "beta", "alpha", "beta", "alpha", "beta", "alpha", "beta"];
+    const alpha = ["atleta-1", "atleta-3", "atleta-5", "atleta-7"];
+    const beta = ["atleta-2", "atleta-4", "atleta-6", "atleta-8"];
+    for (const seed of ["s1", "s2", "s3"]) {
+      const chave = gerarEliminacaoSimples(inscritos(8, academias), { seed });
+      expect(encontroMaisCedo(chave, alpha)).toBe(2);
+      expect(encontroMaisCedo(chave, beta)).toBe(2);
+    }
+  });
+});
+
 describe("registro de resultados", () => {
   it("vencedor avança para o slot correto e a original não é mutada", () => {
     const chave = gerarEliminacaoSimples(inscritos(4), { seed: "x" });

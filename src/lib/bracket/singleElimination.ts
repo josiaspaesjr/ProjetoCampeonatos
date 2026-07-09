@@ -17,72 +17,79 @@ function idLuta(rodada: number, posicao: number): string {
 }
 
 /**
- * Distribui os inscritos nos slots da 1ª rodada.
+ * Distribui os inscritos nas posições da chave maximizando a distância entre
+ * atletas da mesma academia — bisseção recursiva.
  *
- * - Lutas de bye (capacidade 1) são espalhadas uniformemente pela chave.
- * - Atletas da mesma academia são separados em lutas diferentes (best effort):
- *   grupos maiores são alocados primeiro, cada atleta vai para a luta com
- *   menos colegas de academia e mais capacidade livre.
+ * A chave é uma árvore binária: duas posições só se cruzam na rodada do seu
+ * ancestral comum. A cada nível a chave é dividida em duas metades e cada
+ * academia é repartida o mais igualmente possível entre elas; recursivamente,
+ * colegas de equipe caem em sub-chaves distintas e só podem se encontrar o
+ * mais tarde possível (idealmente na final). Grupos maiores são repartidos
+ * primeiro, enquanto ainda há espaço para separá-los.
+ *
+ * Byes são posições vazias. Como as metades ficam sempre equilibradas
+ * (diferença de no máximo 1 atleta), os byes se espalham uniformemente — no
+ * máximo um por luta.
  */
 function distribuirPrimeiraRodada(
   inscritos: Inscrito[],
   totalLutas: number,
-  byes: number,
   separarAcademias: boolean,
   rng: () => number,
 ): Array<[Inscrito | null, Inscrito | null]> {
-  // capacidade por luta: byes espalhados uniformemente
-  const capacidade = new Array<number>(totalLutas).fill(2);
-  for (let i = 0; i < byes; i++) {
-    capacidade[Math.floor((i * totalLutas) / byes)] = 1;
-  }
-
+  const tamanho = totalLutas * 2;
+  const posicoes = new Array<Inscrito | null>(tamanho).fill(null);
   const sorteados = embaralhar(inscritos, rng);
 
-  let ordemAlocacao: Inscrito[];
-  if (separarAcademias) {
-    // agrupa por academia (sem academia = grupo individual) e aloca os
-    // grupos maiores primeiro, quando ainda há lutas livres para separá-los
-    const grupos = new Map<string, Inscrito[]>();
-    sorteados.forEach((insc, i) => {
-      const chaveGrupo = insc.academiaId ?? `__sem_academia_${i}`;
-      grupos.set(chaveGrupo, [...(grupos.get(chaveGrupo) ?? []), insc]);
-    });
-    ordemAlocacao = [...grupos.values()]
-      .sort((a, b) => b.length - a.length)
-      .flat();
-  } else {
-    ordemAlocacao = sorteados;
-  }
-
-  const lutas: Array<Array<Inscrito | null>> = Array.from(
-    { length: totalLutas },
-    () => [],
-  );
-
-  for (const inscrito of ordemAlocacao) {
-    let melhor = -1;
-    let melhorScore: [number, number] | null = null;
-    for (let i = 0; i < totalLutas; i++) {
-      if (lutas[i].length >= capacidade[i]) continue;
-      const colegas =
-        separarAcademias && inscrito.academiaId
-          ? lutas[i].filter((o) => o?.academiaId === inscrito.academiaId).length
-          : 0;
-      const score: [number, number] = [colegas, lutas[i].length];
-      if (
-        melhorScore === null ||
-        score[0] < melhorScore[0] ||
-        (score[0] === melhorScore[0] && score[1] < melhorScore[1])
-      ) {
-        melhor = i;
-        melhorScore = score;
-      }
+  // Reparte os atletas em duas metades separando cada academia o mais
+  // igualmente possível. Cada grupo é distribuído alternando os lados; grupos
+  // de tamanho ímpar alternam também o lado que recebe o atleta extra, o que
+  // mantém as metades equilibradas (|esquerda| - |direita| ≤ 1).
+  const repartir = (atletas: Inscrito[]): [Inscrito[], Inscrito[]] => {
+    if (!separarAcademias) {
+      const meio = Math.ceil(atletas.length / 2);
+      return [atletas.slice(0, meio), atletas.slice(meio)];
     }
-    lutas[melhor].push(inscrito);
-  }
+    const grupos = new Map<string, Inscrito[]>();
+    atletas.forEach((a, i) => {
+      const grupo = a.academiaId ?? `__sem_academia_${i}`;
+      grupos.set(grupo, [...(grupos.get(grupo) ?? []), a]);
+    });
+    // grupos maiores primeiro, enquanto ainda há espaço para separá-los
+    const ordenados = [...grupos.values()].sort((a, b) => b.length - a.length);
+    const esquerda: Inscrito[] = [];
+    const direita: Inscrito[] = [];
+    let comecaNaEsquerda = true;
+    for (const grupo of ordenados) {
+      let naEsquerda = comecaNaEsquerda;
+      for (const atleta of grupo) {
+        (naEsquerda ? esquerda : direita).push(atleta);
+        naEsquerda = !naEsquerda;
+      }
+      if (grupo.length % 2 === 1) comecaNaEsquerda = !comecaNaEsquerda;
+    }
+    return [esquerda, direita];
+  };
 
-  return lutas.map((l) => [l[0] ?? null, l[1] ?? null]);
+  // Aloca os atletas nas posições [inicio, fim) descendo a árvore da chave.
+  const alocar = (atletas: Inscrito[], inicio: number, fim: number): void => {
+    if (atletas.length === 0) return;
+    if (fim - inicio === 1) {
+      posicoes[inicio] = atletas[0];
+      return;
+    }
+    const meio = (inicio + fim) / 2;
+    const [esquerda, direita] = repartir(atletas);
+    alocar(esquerda, inicio, meio);
+    alocar(direita, meio, fim);
+  };
+
+  alocar(sorteados, 0, tamanho);
+
+  return Array.from({ length: totalLutas }, (_, p) => [
+    posicoes[2 * p] ?? null,
+    posicoes[2 * p + 1] ?? null,
+  ]);
 }
 
 /**
@@ -108,12 +115,10 @@ export function gerarEliminacaoSimples(
 
   const tamanho = proximaPotenciaDe2(inscritos.length);
   const rodadas = Math.log2(tamanho);
-  const byes = tamanho - inscritos.length;
 
   const primeiraRodada = distribuirPrimeiraRodada(
     inscritos,
     tamanho / 2,
-    byes,
     separarAcademias,
     rng,
   );
