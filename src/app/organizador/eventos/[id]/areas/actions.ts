@@ -1,13 +1,20 @@
 "use server";
 
-import { and, asc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/db";
-import { areas, auditoria, categorias, chaves, eventos, lutas } from "@/db/schema";
+import { areas, auditoria, categorias, eventos, lutas } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
-import { duracaoDaCategoria } from "@/lib/cronograma/fila";
+import {
+  agruparEOrdenar,
+  distribuirEmAreas,
+} from "@/lib/categorias/distribuicao-areas";
 import { registrarResultadoNoBanco, type PlacarLuta } from "@/lib/chaves/persistencia";
 import type { MetodoVitoria } from "@/lib/bracket";
+
+const AREAS_MIN = 1;
+const AREAS_MAX = 40;
+const pad2 = (n: number) => String(n).padStart(2, "0");
 
 async function contexto(eventoId: string) {
   const db = await getDb();
@@ -19,175 +26,102 @@ async function contexto(eventoId: string) {
   return { db, usuario, evento };
 }
 
-function recarregar(eventoId: string) {
-  revalidatePath(`/organizador/eventos/${eventoId}/areas`);
-}
-
-export async function criarArea(eventoId: string, formData: FormData) {
-  const { db } = await contexto(eventoId);
-  const nome = String(formData.get("nome") ?? "").trim();
-  if (!nome) throw new Error("Dê um nome à área (ex.: Área 1)");
-
-  const existentes = await db.query.areas.findMany({
-    where: eq(areas.eventoId, eventoId),
-  });
-  const horaInicio = formData.get("horaInicio")
-    ? new Date(String(formData.get("horaInicio")))
-    : null;
-
-  await db.insert(areas).values({
-    eventoId,
-    nome,
-    ordem: existentes.length,
-    horaInicio,
-  });
-  recarregar(eventoId);
-}
-
-export async function excluirArea(eventoId: string, areaId: string) {
-  const { db } = await contexto(eventoId);
-  await db
-    .update(categorias)
-    .set({ areaId: null, ordemNaArea: null })
-    .where(eq(categorias.areaId, areaId));
-  await db
-    .delete(areas)
-    .where(and(eq(areas.id, areaId), eq(areas.eventoId, eventoId)));
-  recarregar(eventoId);
-}
-
-export async function designarCategoria(eventoId: string, formData: FormData) {
-  const { db } = await contexto(eventoId);
-  const categoriaId = String(formData.get("categoriaId") ?? "");
-  const areaId = String(formData.get("areaId") ?? "");
-
-  const [categoria, area] = await Promise.all([
-    db.query.categorias.findFirst({
-      where: and(eq(categorias.id, categoriaId), eq(categorias.eventoId, eventoId)),
-    }),
-    db.query.areas.findFirst({
-      where: and(eq(areas.id, areaId), eq(areas.eventoId, eventoId)),
-    }),
-  ]);
-  if (!categoria || !area) throw new Error("Categoria ou área inválida");
-
-  const naArea = await db.query.categorias.findMany({
-    where: eq(categorias.areaId, areaId),
-    orderBy: asc(categorias.ordemNaArea),
-  });
-  await db
-    .update(categorias)
-    .set({ areaId, ordemNaArea: (naArea.at(-1)?.ordemNaArea ?? -1) + 1 })
-    .where(eq(categorias.id, categoriaId));
-  recarregar(eventoId);
-}
-
 /**
- * Distribuição automática (o "Distribute" do cronograma): espalha as
- * categorias com chave e sem área entre as áreas, equilibrando a carga por
- * tempo estimado (nº de lutas pendentes × duração regulamentar da faixa),
- * para que as áreas terminem em horários próximos. Greedy LPT: maiores
- * blocos primeiro, cada um na área menos carregada.
+ * Estrutura as áreas do evento: grava o nº de áreas, concilia as áreas reais
+ * (Área 01…0N) e distribui a grade de categorias por elas pelo algoritmo de
+ * ondas (extremos → meio). A fila/placar do dia consomem `areaId`/`ordemNaArea`
+ * — por isso a alocação é persistida, não só o número.
  */
-export async function distribuirCategorias(eventoId: string) {
+export async function estruturarAreas(eventoId: string, formData: FormData) {
   const { db, usuario } = await contexto(eventoId);
 
-  const [todasAreas, cats] = await Promise.all([
+  const nAreas = Math.floor(Number(formData.get("numAreas")));
+  if (!Number.isFinite(nAreas) || nAreas < AREAS_MIN || nAreas > AREAS_MAX) {
+    throw new Error("Informe um número de áreas entre 1 e 40");
+  }
+
+  const [cats, existentes] = await Promise.all([
+    db.query.categorias.findMany({ where: eq(categorias.eventoId, eventoId) }),
     db.query.areas.findMany({
       where: eq(areas.eventoId, eventoId),
       orderBy: asc(areas.ordem),
     }),
-    db.query.categorias.findMany({ where: eq(categorias.eventoId, eventoId) }),
   ]);
-  if (!todasAreas.length || !cats.length) return;
+  if (!cats.length) throw new Error("Gere a grade de categorias antes");
 
-  const chavesDoEvento = await db.query.chaves.findMany({
-    where: inArray(chaves.categoriaId, cats.map((c) => c.id)),
-  });
-  const chavePorCategoria = new Map(chavesDoEvento.map((c) => [c.categoriaId, c]));
-  const linhasLutas = chavesDoEvento.length
-    ? await db.query.lutas.findMany({
-        where: and(
-          inArray(lutas.chaveId, chavesDoEvento.map((c) => c.id)),
-          isNull(lutas.vencedorInscricaoId), // byes já têm vencedor — ficam de fora
-        ),
-      })
-    : [];
-  const pendentesPorChave = new Map<string, number>();
-  for (const l of linhasLutas) {
-    pendentesPorChave.set(l.chaveId, (pendentesPorChave.get(l.chaveId) ?? 0) + 1);
+  // nº de áreas planejado (reflete no chip da Visão geral, badge e checklist)
+  await db.update(eventos).set({ numAreas: nAreas }).where(eq(eventos.id, eventoId));
+
+  // concilia as áreas reais a N — reaproveita as existentes (preserva
+  // hora de início e intercalação), cria as que faltam, remove as sobrantes
+  const alvoIds: string[] = [];
+  for (let i = 0; i < nAreas; i++) {
+    const existente = existentes[i];
+    if (existente) {
+      await db
+        .update(areas)
+        .set({ nome: `Área ${pad2(i + 1)}`, ordem: i })
+        .where(eq(areas.id, existente.id));
+      alvoIds.push(existente.id);
+    } else {
+      const [nova] = await db
+        .insert(areas)
+        .values({ eventoId, nome: `Área ${pad2(i + 1)}`, ordem: i })
+        .returning();
+      alvoIds.push(nova.id);
+    }
   }
-
-  const pesoSegundos = (c: (typeof cats)[number]): number => {
-    const chave = chavePorCategoria.get(c.id);
-    if (!chave) return 0;
-    return (pendentesPorChave.get(chave.id) ?? 0) * duracaoDaCategoria(c);
-  };
-
-  // carga atual de cada área (categorias já designadas)
-  const carga = new Map(todasAreas.map((a) => [a.id, 0]));
-  const proximaOrdem = new Map(todasAreas.map((a) => [a.id, 0]));
-  for (const c of cats) {
-    if (!c.areaId || !carga.has(c.areaId)) continue;
-    carga.set(c.areaId, carga.get(c.areaId)! + pesoSegundos(c));
-    proximaOrdem.set(
-      c.areaId,
-      Math.max(proximaOrdem.get(c.areaId)!, (c.ordemNaArea ?? -1) + 1),
-    );
-  }
-
-  const pendentes = cats
-    .filter((c) => !c.areaId && chavePorCategoria.has(c.id) && pesoSegundos(c) > 0)
-    .sort((a, b) => pesoSegundos(b) - pesoSegundos(a));
-  if (!pendentes.length) return;
-
-  for (const categoria of pendentes) {
-    const alvo = todasAreas.reduce((menor, a) =>
-      carga.get(a.id)! < carga.get(menor.id)! ? a : menor,
-    );
+  const extras = existentes.slice(nAreas);
+  if (extras.length) {
+    const idsExtras = extras.map((a) => a.id);
     await db
       .update(categorias)
-      .set({ areaId: alvo.id, ordemNaArea: proximaOrdem.get(alvo.id)! })
-      .where(eq(categorias.id, categoria.id));
-    carga.set(alvo.id, carga.get(alvo.id)! + pesoSegundos(categoria));
-    proximaOrdem.set(alvo.id, proximaOrdem.get(alvo.id)! + 1);
+      .set({ areaId: null, ordemNaArea: null })
+      .where(inArray(categorias.areaId, idsExtras));
+    await db.delete(areas).where(inArray(areas.id, idsExtras));
   }
+
+  // agrupa a grade e distribui os grupos pelas áreas na ordem do dia
+  const grupos = agruparEOrdenar(
+    cats.map((c) => ({
+      id: c.id,
+      classeIdade: c.classeIdade,
+      sexo: c.sexo,
+      faixa: c.faixa,
+      tipo: c.tipo,
+      limitePesoKg: c.limitePesoKg != null ? Number(c.limitePesoKg) : null,
+    })),
+  );
+  const porArea = distribuirEmAreas(grupos, nAreas);
+
+  const alocacoes: { id: string; areaId: string; ordem: number }[] = [];
+  porArea.forEach((gruposDaArea, i) => {
+    let ordem = 0;
+    for (const grupo of gruposDaArea) {
+      for (const categoriaId of grupo.categoriaIds) {
+        alocacoes.push({ id: categoriaId, areaId: alvoIds[i], ordem: ordem++ });
+      }
+    }
+  });
+  await Promise.all(
+    alocacoes.map((a) =>
+      db
+        .update(categorias)
+        .set({ areaId: a.areaId, ordemNaArea: a.ordem })
+        .where(and(eq(categorias.id, a.id), eq(categorias.eventoId, eventoId))),
+    ),
+  );
 
   await db.insert(auditoria).values({
     usuarioId: usuario.id,
     entidade: "evento",
     entidadeId: eventoId,
-    acao: "categorias_distribuidas",
-    dadosNovos: { total: pendentes.length },
+    acao: "areas_estruturadas",
+    dadosNovos: { areas: nAreas, grupos: grupos.length, categorias: cats.length },
   });
-  recarregar(eventoId);
-}
 
-/**
- * Liga/desliga o "slice" da área: com intercalação, a fila alterna as rodadas
- * das categorias (1ª de todas, 2ª de todas…), dando descanso aos atletas
- * entre as próprias lutas.
- */
-export async function alternarIntercalarRodadas(eventoId: string, areaId: string) {
-  const { db } = await contexto(eventoId);
-  const area = await db.query.areas.findFirst({
-    where: and(eq(areas.id, areaId), eq(areas.eventoId, eventoId)),
-  });
-  if (!area) throw new Error("Área não encontrada");
-  await db
-    .update(areas)
-    .set({ intercalarRodadas: !area.intercalarRodadas })
-    .where(eq(areas.id, areaId));
-  recarregar(eventoId);
-}
-
-export async function removerCategoriaDaArea(eventoId: string, categoriaId: string) {
-  const { db } = await contexto(eventoId);
-  await db
-    .update(categorias)
-    .set({ areaId: null, ordemNaArea: null })
-    .where(and(eq(categorias.id, categoriaId), eq(categorias.eventoId, eventoId)));
-  recarregar(eventoId);
+  revalidatePath(`/organizador/eventos/${eventoId}`);
+  revalidatePath(`/organizador/eventos/${eventoId}/areas`);
 }
 
 /** persiste o placar parcial para o público acompanhar (não decide a luta) */
