@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Eyebrow } from "@/components/marca";
+import { Spinner } from "@/components/ui/botao-acao";
 import { PassosInscricao } from "@/components/inscricao/passos";
 import { ResumoEvento } from "@/components/inscricao/resumo-evento";
 import { Input } from "@/components/ui/input";
@@ -67,13 +68,14 @@ function BotaoContinuar({ habilitado }: { habilitado: boolean }) {
       type="submit"
       disabled={!habilitado || pending}
       className={cn(
-        "flex-1 px-[26px] py-3 font-cond text-lg font-bold uppercase tracking-[0.04em] transition-colors",
+        "flex flex-1 items-center justify-center gap-2 px-[26px] py-3 font-cond text-lg font-bold uppercase tracking-[0.04em] transition-colors",
         habilitado
           ? "cursor-pointer bg-brand text-white hover:bg-[#d5261d]"
           : "cursor-not-allowed bg-brand/30 text-white/50",
       )}
     >
-      {pending ? "Enviando..." : "Continuar para o pagamento →"}
+      {pending && <Spinner className="h-4 w-4" />}
+      {pending ? "Enviando…" : "Continuar para o pagamento →"}
     </button>
   );
 }

@@ -4,7 +4,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, chaves, eventos, inscricoes } from "@/db/schema";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { BotaoAcao } from "@/components/ui/botao-acao";
 import { getUsuarioAtual } from "@/lib/auth";
 import { formatoAutomatico } from "@/lib/chaves/persistencia";
 import { gerarChave, gerarChavesEmLote, publicarChaves } from "../../actions";
@@ -76,12 +76,12 @@ export default async function PaginaChaves({
         <div className="flex items-center gap-3">
           {semChave > 0 && (
             <form action={gerarChavesEmLote.bind(null, evento.id)}>
-              <Button>Gerar {semChave} chave(s) em lote</Button>
+              <BotaoAcao>Gerar {semChave} chave(s) em lote</BotaoAcao>
             </form>
           )}
           {rascunhos > 0 && (
             <form action={publicarChaves.bind(null, evento.id)}>
-              <Button variant="success">Publicar {rascunhos} chave(s)</Button>
+              <BotaoAcao variant="success">Publicar {rascunhos} chave(s)</BotaoAcao>
             </form>
           )}
         </div>
@@ -112,9 +112,9 @@ export default async function PaginaChaves({
                 <Badge variant={variante}>{rotulo}</Badge>
                 {qtd >= 2 && (!chave || chave.status === "rascunho") && (
                   <form action={gerarChave.bind(null, evento.id, c.id)}>
-                    <Button variant="outline" size="sm">
+                    <BotaoAcao variant="outline" size="sm">
                       {chave ? "Regenerar" : "Gerar chave"}
-                    </Button>
+                    </BotaoAcao>
                   </form>
                 )}
                 {chave && (

@@ -4,7 +4,7 @@ import { and, asc, desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, eventos, inscricoes } from "@/db/schema";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { AcaoTexto, BotaoAcao } from "@/components/ui/botao-acao";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -105,7 +105,7 @@ export default async function PaginaInscricoes({
                         </option>
                       ))}
                   </NativeSelect>
-                  <Button size="sm">Fundir</Button>
+                  <BotaoAcao size="sm">Fundir</BotaoAcao>
                 </form>
               </li>
             ))}
@@ -158,24 +158,24 @@ export default async function PaginaInscricoes({
                             </option>
                           ))}
                       </NativeSelect>
-                      <Button variant="outline" size="sm">
+                      <BotaoAcao variant="outline" size="sm">
                         OK
-                      </Button>
+                      </BotaoAcao>
                     </form>
                   )}
 
                   {i.status === "pendente_pagamento" && (
                     <form action={cancelarInscricao.bind(null, id, i.id)}>
-                      <button className="text-xs text-destructive hover:underline">
+                      <AcaoTexto className="text-xs text-destructive hover:underline">
                         cancelar
-                      </button>
+                      </AcaoTexto>
                     </form>
                   )}
                   {i.status === "confirmada" && (
                     <form action={reembolsarInscricao.bind(null, id, i.id)}>
-                      <button className="text-xs text-destructive hover:underline">
+                      <AcaoTexto className="text-xs text-destructive hover:underline">
                         reembolsar
-                      </button>
+                      </AcaoTexto>
                     </form>
                   )}
                 </div>
@@ -234,7 +234,7 @@ export default async function PaginaInscricoes({
                   </option>
                 ))}
               </NativeSelect>
-              <Button>Inscrever manualmente</Button>
+              <BotaoAcao>Inscrever manualmente</BotaoAcao>
             </form>
           </CardContent>
         </Card>

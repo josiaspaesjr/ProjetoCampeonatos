@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SkewTexto } from "@/components/marca";
+import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
@@ -291,12 +292,9 @@ export default function NovoEvento() {
           >
             Cancelar
           </Link>
-          <button
-            type="submit"
-            className="inline-flex h-[50px] -skew-x-9 items-center bg-brand px-[30px] font-cond text-[19px] font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]"
-          >
+          <BotaoAcaoBruto className="inline-flex h-[50px] -skew-x-9 items-center bg-brand px-[30px] font-cond text-[19px] font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">
             <SkewTexto>Criar evento →</SkewTexto>
-          </button>
+          </BotaoAcaoBruto>
         </div>
       </form>
     </div>

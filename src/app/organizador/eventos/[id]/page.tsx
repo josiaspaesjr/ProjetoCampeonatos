@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, chaves, eventos, inscricoes, lotes, pagamentos } from "@/db/schema";
-import { Button } from "@/components/ui/button";
+import { BotaoAcao } from "@/components/ui/botao-acao";
 import { getUsuarioAtual } from "@/lib/auth";
 import { dataCurta, diaMes } from "@/lib/datas";
 import { cn } from "@/lib/utils";
@@ -204,16 +204,16 @@ export default async function VisaoGeralEvento({
             </span>
             {evento.status === "rascunho" && (
               <form action={publicarEvento.bind(null, evento.id)}>
-                <Button variant="success" size="sm">
+                <BotaoAcao variant="success" size="sm">
                   Publicar evento
-                </Button>
+                </BotaoAcao>
               </form>
             )}
             {evento.status === "publicado" && (
               <form action={encerrarInscricoes.bind(null, evento.id)}>
-                <Button variant="outline" size="sm">
+                <BotaoAcao variant="outline" size="sm">
                   Encerrar inscrições
-                </Button>
+                </BotaoAcao>
               </form>
             )}
           </div>

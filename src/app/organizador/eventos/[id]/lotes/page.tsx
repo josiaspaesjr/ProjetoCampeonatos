@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { eventos, lotes } from "@/db/schema";
+import { AcaoTexto, BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { Input } from "@/components/ui/input";
 import { getUsuarioAtual } from "@/lib/auth";
 import { criarLote, excluirLote } from "../../actions";
@@ -83,9 +84,9 @@ export default async function LotesEvento({
                       {fmt.format(l.precoCentavos / 100)}
                     </span>
                     <form action={excluirLote.bind(null, evento.id, l.id)}>
-                      <button className="cursor-pointer text-sm font-medium text-brand hover:underline">
+                      <AcaoTexto className="cursor-pointer text-sm font-medium text-brand hover:underline">
                         excluir
-                      </button>
+                      </AcaoTexto>
                     </form>
                   </div>
                 </div>
@@ -170,12 +171,9 @@ export default async function LotesEvento({
                 />
               </div>
             </div>
-            <button
-              type="submit"
-              className="mt-1 h-[42px] cursor-pointer bg-brand font-cond text-base font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]"
-            >
+            <BotaoAcaoBruto className="mt-1 flex h-[42px] cursor-pointer items-center justify-center bg-brand font-cond text-base font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">
               Adicionar lote
-            </button>
+            </BotaoAcaoBruto>
           </form>
         </div>
       </div>

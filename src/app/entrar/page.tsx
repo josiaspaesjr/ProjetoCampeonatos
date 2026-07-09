@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Logo, PontoVivo, SkewTexto } from "@/components/marca";
+import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { Input } from "@/components/ui/input";
 import { supabaseConfigurado } from "@/lib/supabase/server";
 import { cadastrar, entrar } from "./actions";
@@ -118,12 +119,9 @@ export default async function PaginaEntrar({
               />
             </div>
 
-            <button
-              type="submit"
-              className="mt-2 flex h-[52px] -skew-x-9 items-center justify-center bg-brand font-cond text-xl font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]"
-            >
+            <BotaoAcaoBruto className="mt-2 flex h-[52px] -skew-x-9 items-center justify-center bg-brand font-cond text-xl font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">
               <SkewTexto>{cadastro ? "Criar conta →" : "Entrar →"}</SkewTexto>
-            </button>
+            </BotaoAcaoBruto>
           </form>
 
           <div className="my-6 flex items-center gap-3.5">

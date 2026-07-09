@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, eventos } from "@/db/schema";
+import { AcaoTexto, BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { Input } from "@/components/ui/input";
 import { getUsuarioAtual } from "@/lib/auth";
 import { CLASSES_IDADE, FAIXAS } from "@/lib/categorias/cbjj";
@@ -148,12 +149,9 @@ export default async function CategoriasEvento({
             </fieldset>
           </div>
 
-          <button
-            type="submit"
-            className="mt-6 h-[42px] cursor-pointer bg-brand px-5 font-cond text-base font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]"
-          >
+          <BotaoAcaoBruto className="mt-6 inline-flex h-[42px] cursor-pointer items-center bg-brand px-5 font-cond text-base font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">
             Gerar categorias
-          </button>
+          </BotaoAcaoBruto>
         </form>
       </div>
 
@@ -207,14 +205,14 @@ export default async function CategoriasEvento({
                       placeholder="min"
                       className="h-7 w-12 px-2 text-xs"
                     />
-                    <button className="cursor-pointer text-xs text-muted-2 hover:text-foreground hover:underline">
+                    <AcaoTexto className="cursor-pointer text-xs text-muted-2 hover:text-foreground hover:underline">
                       ok
-                    </button>
+                    </AcaoTexto>
                   </form>
                   <form action={excluirCategoria.bind(null, evento.id, c.id)}>
-                    <button className="cursor-pointer text-[13px] font-medium text-brand hover:underline">
+                    <AcaoTexto className="cursor-pointer text-[13px] font-medium text-brand hover:underline">
                       excluir
-                    </button>
+                    </AcaoTexto>
                   </form>
                 </span>
               </div>

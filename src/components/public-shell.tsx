@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { sair } from "@/app/entrar/actions";
 import { Logo, SkewTexto } from "@/components/marca";
+import { AcaoTexto } from "@/components/ui/botao-acao";
 import { getUsuarioSessao } from "@/lib/auth";
 import { supabaseConfigurado } from "@/lib/supabase/server";
 
@@ -33,9 +34,9 @@ export async function PublicShell({
               (usuario ? (
                 <form action={sair} className="flex items-center gap-3">
                   <span className="text-text-2">{usuario.nome}</span>
-                  <button className="uppercase text-muted-2 transition-colors hover:text-foreground">
+                  <AcaoTexto className="uppercase text-muted-2 transition-colors hover:text-foreground">
                     sair
-                  </button>
+                  </AcaoTexto>
                 </form>
               ) : (
                 <Link

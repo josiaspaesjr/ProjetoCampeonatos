@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { getDb } from "@/db";
 import { areas, categorias, chaves, eventos } from "@/db/schema";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
+import { AcaoTexto, BotaoAcao } from "@/components/ui/botao-acao";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -80,7 +81,7 @@ export default async function PaginaAreas({
                 <span className="text-xs text-muted-foreground">Começa às</span>
                 <Input name="horaInicio" type="datetime-local" className="mt-1" />
               </label>
-              <Button className="mt-4">Criar área</Button>
+              <BotaoAcao className="mt-4">Criar área</BotaoAcao>
             </form>
           </CardContent>
         </Card>
@@ -96,7 +97,7 @@ export default async function PaginaAreas({
               </p>
               {designaveis.length > 0 && todasAreas.length > 0 && (
                 <form action={distribuirCategorias.bind(null, id)}>
-                  <Button size="sm">Distribuir automaticamente</Button>
+                  <BotaoAcao size="sm">Distribuir automaticamente</BotaoAcao>
                 </form>
               )}
             </div>
@@ -129,9 +130,9 @@ export default async function PaginaAreas({
                           </option>
                         ))}
                       </NativeSelect>
-                      <Button variant="outline" size="sm">
+                      <BotaoAcao variant="outline" size="sm">
                         Designar
-                      </Button>
+                      </BotaoAcao>
                     </form>
                   </li>
                 ))}
@@ -156,7 +157,7 @@ export default async function PaginaAreas({
                   </p>
                   <div className="flex items-center gap-3">
                     <form action={alternarIntercalarRodadas.bind(null, id, f.area.id)}>
-                      <button
+                      <AcaoTexto
                         title="Intercalar as rodadas das categorias (slice) — dá descanso aos atletas entre as próprias lutas"
                         className={`text-xs hover:underline ${
                           f.area.intercalarRodadas
@@ -165,7 +166,7 @@ export default async function PaginaAreas({
                         }`}
                       >
                         intercalar: {f.area.intercalarRodadas ? "ligado" : "desligado"}
-                      </button>
+                      </AcaoTexto>
                     </form>
                     <Link
                       href={`/organizador/eventos/${id}/areas/${f.area.id}/placar`}
@@ -174,9 +175,9 @@ export default async function PaginaAreas({
                       Operar placar
                     </Link>
                     <form action={excluirArea.bind(null, id, f.area.id)}>
-                      <button className="text-xs text-destructive hover:underline">
+                      <AcaoTexto className="text-xs text-destructive hover:underline">
                         excluir
-                      </button>
+                      </AcaoTexto>
                     </form>
                   </div>
                 </div>
@@ -218,13 +219,13 @@ export default async function PaginaAreas({
                     action={removerCategoriaDaArea.bind(null, id, catId)}
                     className="mt-1 inline-block"
                   >
-                    <button className="mr-3 text-xs text-muted-foreground hover:text-destructive hover:underline">
+                    <AcaoTexto className="mr-3 text-xs text-muted-foreground hover:text-destructive hover:underline">
                       remover{" "}
                       {f.fila
                         .find((i) => i.categoria.id === catId)
                         ?.categoria.nome.split(" / ")
                         .at(-1)}
-                    </button>
+                    </AcaoTexto>
                   </form>
                 ))}
               </CardContent>

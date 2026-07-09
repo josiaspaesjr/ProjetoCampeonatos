@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { SkewTexto } from "@/components/marca";
+import { Spinner } from "@/components/ui/botao-acao";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
@@ -67,8 +68,9 @@ function BotaoSalvar() {
     <button
       type="submit"
       disabled={pending}
-      className="h-[46px] flex-[2] cursor-pointer bg-brand font-cond text-base font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d] disabled:opacity-60"
+      className="flex h-[46px] flex-[2] cursor-pointer items-center justify-center gap-2 bg-brand font-cond text-base font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d] disabled:opacity-60"
     >
+      {pending && <Spinner className="h-3.5 w-3.5" />}
       {pending ? "Salvando…" : "Salvar alterações"}
     </button>
   );

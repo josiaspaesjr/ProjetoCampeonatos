@@ -11,6 +11,7 @@ import {
   usuarios,
 } from "@/db/schema";
 import { AutoRefresh } from "@/components/auto-refresh";
+import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { Eyebrow, Logo } from "@/components/marca";
 import { PassosInscricao } from "@/components/inscricao/passos";
 import { ResumoEvento, type LinhaResumo } from "@/components/inscricao/resumo-evento";
@@ -261,9 +262,9 @@ export default async function PaginaCheckout({
 
                   {gatewayDev && pagamento.status === "criado" && (
                     <form action={simularPagamentoAprovado.bind(null, pagamento.id)}>
-                      <button className="h-[52px] w-full cursor-pointer bg-brand font-cond text-lg font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">
+                      <BotaoAcaoBruto className="flex h-[52px] w-full cursor-pointer items-center justify-center bg-brand font-cond text-lg font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">
                         Simular pagamento aprovado (teste)
-                      </button>
+                      </BotaoAcaoBruto>
                     </form>
                   )}
                 </div>

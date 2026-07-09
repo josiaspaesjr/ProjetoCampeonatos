@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, eventos, inscricoes } from "@/db/schema";
-import { Button } from "@/components/ui/button";
+import { AcaoTexto, BotaoAcao } from "@/components/ui/botao-acao";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getUsuarioAtual } from "@/lib/auth";
@@ -103,9 +103,9 @@ export default async function PaginaCheckinAtleta({
                 action={desfazerCheckin.bind(null, id, inscricao.id)}
                 className="mt-3 text-center"
               >
-                <button className="text-xs text-muted-foreground hover:text-destructive hover:underline">
+                <AcaoTexto className="text-xs text-muted-foreground hover:text-destructive hover:underline">
                   desfazer check-in (registrado na auditoria)
-                </button>
+                </AcaoTexto>
               </form>
             </div>
           ) : (
@@ -124,9 +124,9 @@ export default async function PaginaCheckinAtleta({
                   className="mt-1 h-14 text-2xl font-bold tabular-nums"
                 />
               </label>
-              <Button variant="success" size="lg" className="mt-4 w-full">
+              <BotaoAcao variant="success" size="lg" className="mt-4 w-full">
                 Registrar pesagem
-              </Button>
+              </BotaoAcao>
             </form>
           )}
         </CardContent>

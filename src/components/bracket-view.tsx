@@ -1,4 +1,5 @@
 import type { lutas } from "@/db/schema";
+import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { NativeSelect } from "@/components/ui/native-select";
 
 type LutaRow = typeof lutas.$inferSelect;
@@ -151,9 +152,9 @@ export function BracketView({ lutas: linhas, atletas, formato, acaoResultado }: 
                               </option>
                             ))}
                           </NativeSelect>
-                          <button className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+                          <BotaoAcaoBruto className="bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90">
                             OK
-                          </button>
+                          </BotaoAcaoBruto>
                         </div>
                       </form>
                     )}

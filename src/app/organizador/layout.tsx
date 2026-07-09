@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { sair } from "@/app/entrar/actions";
 import { MarcaBloco } from "@/components/marca";
+import { AcaoTexto } from "@/components/ui/botao-acao";
 import { getUsuarioSessao } from "@/lib/auth";
 import { supabaseConfigurado } from "@/lib/supabase/server";
 
@@ -30,9 +31,9 @@ export default async function OrganizadorLayout({
               className="flex items-center gap-5 font-cond text-[15px] uppercase tracking-[0.06em] text-muted-2"
             >
               <span>{usuario.nome}</span>
-              <button className="uppercase transition-colors hover:text-foreground">
+              <AcaoTexto className="uppercase transition-colors hover:text-foreground">
                 Sair
-              </button>
+              </AcaoTexto>
             </form>
           ) : (
             <span className="font-cond text-[15px] uppercase tracking-[0.06em] text-muted-2">
