@@ -110,7 +110,6 @@ export default async function LayoutConsoleEvento({
     endereco: evento.endereco ?? "",
     bannerUrl: evento.bannerUrl ?? "",
     modalidade: evento.modalidade,
-    numAreas: evento.numAreas ? String(evento.numAreas) : "",
     dataPesagem: evento.dataPesagem ?? "",
     faixaMin: evento.faixaMin ?? "",
     faixaMax: evento.faixaMax ?? "",

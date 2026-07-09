@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq, inArray, ne } from "drizzle-orm";
 import { getDb } from "@/db";
-import { categorias, chaves, eventos, inscricoes, lotes } from "@/db/schema";
+import { areas, categorias, chaves, eventos, inscricoes, lotes } from "@/db/schema";
 import { Logo, SkewTexto } from "@/components/marca";
 import { dataCompleta, dataHora, diaMes } from "@/lib/datas";
 import { secoesPreenchidas } from "@/lib/regulamento";
@@ -41,7 +41,7 @@ export default async function PaginaPublicaEvento({
   if (!evento) notFound();
 
   const agora = new Date();
-  const [cats, todosLotes, confirmadas] = await Promise.all([
+  const [cats, todosLotes, confirmadas, areasDoEvento] = await Promise.all([
     db.query.categorias.findMany({
       where: eq(categorias.eventoId, evento.id),
       orderBy: asc(categorias.nome),
@@ -52,6 +52,10 @@ export default async function PaginaPublicaEvento({
     }),
     db.query.inscricoes.findMany({
       where: and(eq(inscricoes.eventoId, evento.id), eq(inscricoes.status, "confirmada")),
+    }),
+    db.query.areas.findMany({
+      where: eq(areas.eventoId, evento.id),
+      columns: { id: true },
     }),
   ]);
 
@@ -106,7 +110,15 @@ export default async function PaginaPublicaEvento({
 
   const fatos: { k: string; v: string; destaque?: boolean }[] = [
     { k: "Modalidade", v: MODALIDADE_ROTULO[evento.modalidade] ?? "Gi + No-Gi" },
-    { k: "Áreas", v: evento.numAreas ? String(evento.numAreas) : "—" },
+    {
+      k: "Áreas",
+      v:
+        areasDoEvento.length > 0
+          ? String(areasDoEvento.length)
+          : evento.numAreas
+            ? String(evento.numAreas)
+            : "—",
+    },
     { k: "Faixas", v: faixas },
     evento.dataPesagem
       ? { k: "Pesagem", v: diaMes(evento.dataPesagem), destaque: true }

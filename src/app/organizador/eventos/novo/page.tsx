@@ -157,7 +157,7 @@ export default function NovoEvento() {
           />
         </div>
 
-        <div className="grid gap-[18px] sm:grid-cols-[1fr_140px_1fr]">
+        <div className="grid gap-[18px] sm:grid-cols-2">
           <div className="flex flex-col gap-[9px]">
             <label className={labelCls} htmlFor="ev-modalidade">
               Modalidade
@@ -172,19 +172,6 @@ export default function NovoEvento() {
               <option value="gi">Gi</option>
               <option value="nogi">No-Gi</option>
             </NativeSelect>
-          </div>
-          <div className="flex flex-col gap-[9px]">
-            <label className={labelCls} htmlFor="ev-areas">
-              Nº de áreas
-            </label>
-            <Input
-              id="ev-areas"
-              name="numAreas"
-              type="number"
-              min={1}
-              placeholder="8"
-              className="h-12"
-            />
           </div>
           <div className="flex flex-col gap-[9px]">
             <label className={labelCls} htmlFor="ev-pesagem">

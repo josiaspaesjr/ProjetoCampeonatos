@@ -25,7 +25,6 @@ export interface EventoEditavel {
   endereco: string;
   bannerUrl: string;
   modalidade: string;
-  numAreas: string;
   dataPesagem: string;
   faixaMin: string;
   faixaMax: string;
@@ -240,27 +239,16 @@ export function TopbarEvento({
                 <div className="mt-2 border-t border-white/8 pt-4 font-cond text-[13px] font-semibold uppercase tracking-[0.1em] text-brand">
                   Detalhes da competição
                 </div>
-                <div className="grid grid-cols-[1fr_90px] gap-3.5">
-                  <div className="flex flex-col gap-2">
-                    <label className={labelCls}>Modalidade</label>
-                    <NativeSelect
-                      name="modalidade"
-                      defaultValue={evento.modalidade}
-                    >
-                      <option value="gi_nogi">Gi + No-Gi</option>
-                      <option value="gi">Gi</option>
-                      <option value="nogi">No-Gi</option>
-                    </NativeSelect>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className={labelCls}>Áreas</label>
-                    <Input
-                      name="numAreas"
-                      type="number"
-                      min={1}
-                      defaultValue={evento.numAreas}
-                    />
-                  </div>
+                <div className="flex flex-col gap-2">
+                  <label className={labelCls}>Modalidade</label>
+                  <NativeSelect
+                    name="modalidade"
+                    defaultValue={evento.modalidade}
+                  >
+                    <option value="gi_nogi">Gi + No-Gi</option>
+                    <option value="gi">Gi</option>
+                    <option value="nogi">No-Gi</option>
+                  </NativeSelect>
                 </div>
                 <div className="grid grid-cols-3 gap-3.5">
                   <div className="flex flex-col gap-2">

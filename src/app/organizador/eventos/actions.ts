@@ -80,7 +80,6 @@ export async function criarEvento(formData: FormData) {
   const slug = existentes.length ? `${base}-${Date.now().toString(36)}` : base;
 
   const modalidade = String(formData.get("modalidade") ?? "gi_nogi");
-  const numAreasBruto = Number(formData.get("numAreas"));
   const inscricoesFecham = formData.get("inscricoesFecham")
     ? new Date(String(formData.get("inscricoesFecham")))
     : null;
@@ -101,10 +100,7 @@ export async function criarEvento(formData: FormData) {
       modalidade: (["gi_nogi", "gi", "nogi"].includes(modalidade)
         ? modalidade
         : "gi_nogi") as "gi_nogi" | "gi" | "nogi",
-      numAreas:
-        Number.isFinite(numAreasBruto) && numAreasBruto > 0
-          ? Math.round(numAreasBruto)
-          : null,
+      // nº de áreas vem da seção Áreas (tabela areas), não do cadastro
       dataPesagem: String(formData.get("dataPesagem") ?? "") || null,
       faixaMin: (String(formData.get("faixaMin") ?? "") || null) as
         | typeof eventos.$inferInsert.faixaMin,
@@ -224,7 +220,6 @@ export async function editarEvento(eventoId: string, formData: FormData) {
   }
 
   const modalidade = String(formData.get("modalidade") ?? "gi_nogi");
-  const numAreasBruto = Number(formData.get("numAreas"));
 
   await db
     .update(eventos)
@@ -241,10 +236,7 @@ export async function editarEvento(eventoId: string, formData: FormData) {
       modalidade: (["gi_nogi", "gi", "nogi"].includes(modalidade)
         ? modalidade
         : "gi_nogi") as "gi_nogi" | "gi" | "nogi",
-      numAreas:
-        Number.isFinite(numAreasBruto) && numAreasBruto > 0
-          ? Math.round(numAreasBruto)
-          : null,
+      // numAreas não é editado aqui — as áreas vivem na seção Áreas
       dataPesagem: String(formData.get("dataPesagem") ?? "") || null,
       faixaMin: (String(formData.get("faixaMin") ?? "") ||
         null) as typeof eventos.$inferInsert.faixaMin,
