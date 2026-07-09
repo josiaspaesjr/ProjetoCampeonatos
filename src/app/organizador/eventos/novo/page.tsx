@@ -238,39 +238,6 @@ export default function NovoEvento() {
           </div>
         </div>
 
-        {/* INSCRIÇÃO & VALORES */}
-        <div className="mt-3.5 border-t border-white/8 pt-[22px] font-cond text-[15px] font-semibold uppercase tracking-[0.1em] text-brand">
-          Inscrição &amp; valores
-        </div>
-
-        <div className="grid gap-[18px] sm:grid-cols-2">
-          <div className="flex flex-col gap-[9px]">
-            <label className={labelCls} htmlFor="ev-preco">
-              Preço 1ª inscrição <Obrigatorio />
-            </label>
-            <Input
-              id="ev-preco"
-              name="preco"
-              required
-              inputMode="decimal"
-              placeholder="R$ 70,00"
-              className="h-12"
-            />
-          </div>
-          <div className="flex flex-col gap-[9px]">
-            <label className={labelCls} htmlFor="ev-preco2">
-              2ª categoria (adicional)
-            </label>
-            <Input
-              id="ev-preco2"
-              name="precoSegunda"
-              inputMode="decimal"
-              placeholder="+ R$ 40,00"
-              className="h-12"
-            />
-          </div>
-        </div>
-
         {/* AVISO */}
         <div className="mt-1.5 flex items-start gap-3 border border-brand/35 bg-brand/6 px-[18px] py-4">
           <span className="mt-1.5 h-2 w-2 shrink-0 -skew-x-9 bg-brand" />
