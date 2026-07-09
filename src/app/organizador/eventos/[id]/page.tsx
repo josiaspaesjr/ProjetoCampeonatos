@@ -4,10 +4,11 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, chaves, eventos, inscricoes, lotes, pagamentos } from "@/db/schema";
 import { BotaoAcao } from "@/components/ui/botao-acao";
+import { ExcluirEvento } from "@/components/organizador/excluir-evento";
 import { getUsuarioAtual } from "@/lib/auth";
 import { dataCurta, diaMes } from "@/lib/datas";
 import { cn } from "@/lib/utils";
-import { encerrarInscricoes, publicarEvento } from "../actions";
+import { encerrarInscricoes, excluirEvento, publicarEvento } from "../actions";
 
 const MODALIDADE_ROTULO: Record<string, string> = {
   gi_nogi: "Gi + No-Gi",
@@ -203,11 +204,14 @@ export default async function VisaoGeralEvento({
               </Link>
             </span>
             {evento.status === "rascunho" && (
-              <form action={publicarEvento.bind(null, evento.id)}>
-                <BotaoAcao variant="success" size="sm">
-                  Publicar evento
-                </BotaoAcao>
-              </form>
+              <>
+                <form action={publicarEvento.bind(null, evento.id)}>
+                  <BotaoAcao variant="success" size="sm">
+                    Publicar evento
+                  </BotaoAcao>
+                </form>
+                <ExcluirEvento excluir={excluirEvento.bind(null, evento.id)} />
+              </>
             )}
             {evento.status === "publicado" && (
               <form action={encerrarInscricoes.bind(null, evento.id)}>

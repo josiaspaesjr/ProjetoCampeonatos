@@ -4,7 +4,18 @@ import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb } from "@/db";
-import { auditoria, categorias, chaves, eventos, inscricoes, lotes } from "@/db/schema";
+import {
+  areas,
+  auditoria,
+  categorias,
+  chaves,
+  cupons,
+  eventos,
+  inscricoes,
+  lotes,
+  lutas,
+  pagamentos,
+} from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
 import {
   gerarChaveParaCategoria,
@@ -119,6 +130,68 @@ export async function criarEvento(formData: FormData) {
   }
 
   redirect(`/organizador/eventos/${evento.id}`);
+}
+
+/**
+ * Exclusão definitiva de um evento — só rascunhos, e só se ninguém se
+ * inscreveu nem pagou nada. Eventos publicados não podem ser apagados
+ * (encerre as inscrições em vez disso); a exclusão fica na auditoria.
+ */
+export async function excluirEvento(eventoId: string) {
+  const { db, usuario, evento } = await eventoDoOrganizador(eventoId);
+
+  if (evento.status !== "rascunho") {
+    erroVisivel(
+      eventoId,
+      "Só eventos em rascunho podem ser excluídos — este já foi publicado.",
+    );
+  }
+
+  const [inscritos, pagos] = await Promise.all([
+    db.query.inscricoes.findMany({ where: eq(inscricoes.eventoId, eventoId) }),
+    db.query.pagamentos.findMany({ where: eq(pagamentos.eventoId, eventoId) }),
+  ]);
+  if (inscritos.length || pagos.length) {
+    erroVisivel(
+      eventoId,
+      "Este evento já tem inscrições ou pagamentos registrados e não pode ser excluído.",
+    );
+  }
+
+  // filhos primeiro (sem cascade no schema): chaves/lutas de categorias,
+  // depois categorias, lotes, cupons e áreas
+  const cats = await db.query.categorias.findMany({
+    where: eq(categorias.eventoId, eventoId),
+  });
+  if (cats.length) {
+    const chavesDoEvento = await db.query.chaves.findMany({
+      where: inArray(chaves.categoriaId, cats.map((c) => c.id)),
+    });
+    if (chavesDoEvento.length) {
+      await db.delete(lutas).where(
+        inArray(lutas.chaveId, chavesDoEvento.map((c) => c.id)),
+      );
+      await db.delete(chaves).where(
+        inArray(chaves.id, chavesDoEvento.map((c) => c.id)),
+      );
+    }
+    await db.delete(categorias).where(eq(categorias.eventoId, eventoId));
+  }
+  await db.delete(lotes).where(eq(lotes.eventoId, eventoId));
+  await db.delete(cupons).where(eq(cupons.eventoId, eventoId));
+  await db.delete(areas).where(eq(areas.eventoId, eventoId));
+  await db.delete(eventos).where(eq(eventos.id, eventoId));
+
+  await db.insert(auditoria).values({
+    usuarioId: usuario.id,
+    entidade: "evento",
+    entidadeId: eventoId,
+    acao: "evento_excluido",
+    dadosAnteriores: { nome: evento.nome, slug: evento.slug },
+  });
+
+  revalidatePath("/organizador");
+  redirect("/organizador");
 }
 
 /**
