@@ -4,6 +4,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 
+/** valor sentinela da opção "criar novo evento" no seletor de evento ativo */
+const NOVO_EVENTO = "__novo__";
+
 export interface EventoSwitcher {
   id: string;
   nome: string;
@@ -42,9 +45,14 @@ export function SidebarOrganizador({
         <div className="relative">
           <select
             value={eventoId}
-            onChange={(e) =>
-              router.push(`/organizador/eventos/${e.target.value}`)
-            }
+            onChange={(e) => {
+              const v = e.target.value;
+              router.push(
+                v === NOVO_EVENTO
+                  ? "/organizador/eventos/novo"
+                  : `/organizador/eventos/${v}`,
+              );
+            }}
             className="w-full appearance-none border border-white/10 bg-raised px-[13px] py-2.5 pr-8 font-cond text-[17px] font-semibold uppercase text-foreground focus:border-brand focus:outline-none"
           >
             {eventos.map((e) => (
@@ -52,6 +60,8 @@ export function SidebarOrganizador({
                 {e.nome}
               </option>
             ))}
+            <option disabled>──────────</option>
+            <option value={NOVO_EVENTO}>+ Novo evento</option>
           </select>
           <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-3">
             ▾
@@ -62,6 +72,12 @@ export function SidebarOrganizador({
             {ativo.dataCurta}
           </div>
         )}
+        <Link
+          href="/organizador/eventos/novo"
+          className="mt-2.5 flex items-center gap-1.5 font-cond text-xs font-semibold uppercase tracking-[0.06em] text-brand transition-colors hover:text-brand-soft"
+        >
+          + Criar novo evento
+        </Link>
       </div>
 
       {/* menu */}
