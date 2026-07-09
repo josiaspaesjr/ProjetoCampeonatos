@@ -1,19 +1,52 @@
 import { notFound } from "next/navigation";
-import { and, asc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, eventos } from "@/db/schema";
-import { AcaoTexto, BotaoAcaoBruto } from "@/components/ui/botao-acao";
-import { Input } from "@/components/ui/input";
+import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { getUsuarioAtual } from "@/lib/auth";
 import { CLASSES_IDADE, FAIXAS } from "@/lib/categorias/cbjj";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
-import {
-  configurarCategoria,
-  excluirCategoria,
-  gerarCategoriasCbjj,
-} from "../../actions";
+import { excluirCategoria, gerarCategoriasCbjj } from "../../actions";
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+const ROTULO_SEXO: Record<string, string> = {
+  masculino: "Masculino",
+  feminino: "Feminino",
+};
+
+// ordens canônicas do gerador (classe → sexo → faixa → peso)
+const ORDEM_CLASSE = new Map(CLASSES_IDADE.map((c, i) => [c.id, i]));
+const ORDEM_FAIXA = new Map(FAIXAS.map((f, i) => [f as string, i]));
+const CLASSE_POR_ID = new Map(CLASSES_IDADE.map((c) => [c.id, c]));
+
+type Categoria = typeof categorias.$inferSelect;
+
+/** peso vira número ordenável: leves→pesados, pesadíssimo, e absoluto por último */
+function rankPeso(c: Categoria): number {
+  if (c.tipo === "absoluto") return 1_000_000;
+  if (c.limitePesoKg == null) return 999_999;
+  return Number(c.limitePesoKg);
+}
+
+/** último trecho do nome ("… / Leve (até 76kg)" → "Leve · 76kg") */
+function rotuloPeso(nome: string): string {
+  return (nome.split(" / ").pop() ?? nome)
+    .replace(" (até ", " · ")
+    .replace("kg)", "kg");
+}
+
+/** agrupa uma lista já ordenada em blocos consecutivos por chave */
+function agrupar<T>(itens: T[], chave: (t: T) => string): { chave: string; itens: T[] }[] {
+  const grupos: { chave: string; itens: T[] }[] = [];
+  for (const it of itens) {
+    const ult = grupos.at(-1);
+    const k = chave(it);
+    if (ult && ult.chave === k) ult.itens.push(it);
+    else grupos.push({ chave: k, itens: [it] });
+  }
+  return grupos;
+}
 
 export default async function CategoriasEvento({
   params,
@@ -34,8 +67,21 @@ export default async function CategoriasEvento({
 
   const cats = await db.query.categorias.findMany({
     where: eq(categorias.eventoId, id),
-    orderBy: asc(categorias.nome),
   });
+
+  // ordena na mesma sequência em que o gerador apresenta acima
+  const ordenadas = [...cats].sort(
+    (a, b) =>
+      (ORDEM_CLASSE.get(a.classeIdade) ?? 999) -
+        (ORDEM_CLASSE.get(b.classeIdade) ?? 999) ||
+      (a.sexo === b.sexo ? 0 : a.sexo === "masculino" ? -1 : 1) ||
+      (ORDEM_FAIXA.get(a.faixa ?? "") ?? 999) -
+        (ORDEM_FAIXA.get(b.faixa ?? "") ?? 999) ||
+      rankPeso(a) - rankPeso(b),
+  );
+
+  // nível 1: blocos por classe + sexo
+  const blocos = agrupar(ordenadas, (c) => `${c.classeIdade}|${c.sexo}`);
 
   const grupoCls =
     "mb-3.5 font-cond text-[13px] font-semibold uppercase tracking-[0.08em] text-muted-3";
@@ -156,67 +202,92 @@ export default async function CategoriasEvento({
       </div>
 
       {/* GRADE GERADA */}
-      <div className="border border-white/10 bg-surface">
+      <div>
+        <div className="mb-3.5 flex items-baseline gap-2.5">
+          <span className="disp text-[22px]">Grade gerada</span>
+          {cats.length > 0 && (
+            <span className="font-cond text-[13px] uppercase tracking-[0.06em] text-muted-3">
+              {cats.length} categoria{cats.length === 1 ? "" : "s"}
+            </span>
+          )}
+        </div>
+
         {cats.length === 0 ? (
-          <div className="px-[22px] py-12 text-center font-cond text-[15px] uppercase text-muted-3">
+          <div className="border border-white/10 bg-surface px-[22px] py-12 text-center font-cond text-[15px] uppercase text-muted-3">
             Marque classes, sexos e faixas e clique em{" "}
             <strong className="text-muted-2">Gerar categorias</strong>.
           </div>
         ) : (
-          <div className="grid md:grid-cols-2">
-            {cats.map((c, i) => (
-              <div
-                key={c.id}
-                className={`flex items-center justify-between gap-3 border-b border-white/6 px-[22px] py-[11px] ${
-                  i % 2 === 0 ? "md:border-r" : ""
-                }`}
-              >
-                <span className="flex min-w-0 items-center gap-2.5 text-sm">
-                  <span
-                    className="h-2 w-2 shrink-0 -skew-x-9 border border-white/20"
-                    style={{ background: corDaFaixa(c.faixa) }}
-                  />
-                  <span className="truncate">{c.nome}</span>
-                </span>
-                <span className="flex shrink-0 items-center gap-3">
-                  <form
-                    action={configurarCategoria.bind(null, evento.id, c.id)}
-                    className="flex items-center gap-1"
-                    title="Preço próprio (vazio = lote vigente) e minutos por luta (vazio = tabela CBJJ da faixa)"
-                  >
-                    <span className="text-xs text-muted-3">R$</span>
-                    <Input
-                      name="preco"
-                      defaultValue={
-                        c.precoCentavos != null
-                          ? (c.precoCentavos / 100).toFixed(0)
-                          : ""
-                      }
-                      placeholder="lote"
-                      className="h-7 w-16 px-2 text-xs"
-                    />
-                    <Input
-                      name="duracaoMin"
-                      defaultValue={
-                        c.duracaoLutaSegundos != null
-                          ? String(Math.round(c.duracaoLutaSegundos / 60))
-                          : ""
-                      }
-                      placeholder="min"
-                      className="h-7 w-12 px-2 text-xs"
-                    />
-                    <AcaoTexto className="cursor-pointer text-xs text-muted-2 hover:text-foreground hover:underline">
-                      ok
-                    </AcaoTexto>
-                  </form>
-                  <form action={excluirCategoria.bind(null, evento.id, c.id)}>
-                    <AcaoTexto className="cursor-pointer text-[13px] font-medium text-brand hover:underline">
-                      excluir
-                    </AcaoTexto>
-                  </form>
-                </span>
-              </div>
-            ))}
+          <div className="flex flex-col gap-3">
+            {blocos.map((bloco) => {
+              const [classeId, sexo] = bloco.chave.split("|");
+              const classe = CLASSE_POR_ID.get(classeId);
+              const faixas = agrupar(bloco.itens, (c) => c.faixa ?? "");
+              return (
+                <section
+                  key={bloco.chave}
+                  className="overflow-hidden border border-white/10 bg-surface"
+                >
+                  <header className="flex items-baseline gap-2.5 border-b border-white/10 bg-white/[0.03] px-4 py-2.5">
+                    <span className="font-cond text-[15px] font-semibold uppercase tracking-[0.04em]">
+                      {classe?.nome ?? classeId} · {ROTULO_SEXO[sexo] ?? sexo}
+                    </span>
+                    {classe && (
+                      <span className="font-cond text-xs text-muted-3">
+                        {classe.idadeMin}
+                        {classe.idadeMax ? `–${classe.idadeMax}` : "+"} anos
+                      </span>
+                    )}
+                    <span className="ml-auto font-cond text-xs tabular-nums text-muted-3">
+                      {bloco.itens.length}
+                    </span>
+                  </header>
+
+                  <div className="flex flex-col">
+                    {faixas.map((fg) => (
+                      <div
+                        key={fg.chave}
+                        className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-white/6 px-4 py-3 last:border-b-0"
+                      >
+                        <span className="flex w-[104px] shrink-0 items-center gap-2 font-cond text-sm font-semibold uppercase tracking-[0.03em]">
+                          <span
+                            className="h-2.5 w-2.5 shrink-0 -skew-x-9 border border-white/25"
+                            style={{ background: corDaFaixa(fg.chave || null) }}
+                          />
+                          {fg.chave ? cap(fg.chave) : "—"}
+                        </span>
+                        <div className="flex flex-1 flex-wrap gap-1.5">
+                          {fg.itens.map((c) => (
+                            <span
+                              key={c.id}
+                              className="group/chip inline-flex items-center gap-1.5 border border-white/12 bg-background py-1 pl-2.5 pr-1.5 font-cond text-xs uppercase tracking-[0.02em] text-text-2 transition-colors hover:border-brand/40"
+                            >
+                              {rotuloPeso(c.nome)}
+                              <form
+                                action={excluirCategoria.bind(
+                                  null,
+                                  evento.id,
+                                  c.id,
+                                )}
+                                className="flex"
+                              >
+                                <button
+                                  type="submit"
+                                  title="Excluir categoria"
+                                  className="flex h-4 w-4 cursor-pointer items-center justify-center text-sm leading-none text-muted-3 transition-colors hover:text-brand"
+                                >
+                                  ×
+                                </button>
+                              </form>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         )}
       </div>
