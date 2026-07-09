@@ -4,9 +4,12 @@ import { chaves, inscricoes, lutas } from "@/db/schema";
 import {
   calcularPodio,
   gerarEliminacaoSimples,
+  gerarRoundRobin,
+  podioRoundRobin,
   registrarResultado,
+  registrarResultadoRoundRobin,
 } from "@/lib/bracket";
-import type { Chave as ChaveEngine, MetodoVitoria } from "@/lib/bracket";
+import type { Chave as ChaveEngine, MetodoVitoria, Podio } from "@/lib/bracket";
 
 /**
  * Ponte entre o motor de chaveamento (puro, testado) e o banco.
@@ -17,7 +20,21 @@ import type { Chave as ChaveEngine, MetodoVitoria } from "@/lib/bracket";
  * (validações e avanço) e o diff volta para as linhas afetadas.
  */
 
-export async function gerarChaveParaCategoria(db: Db, categoriaId: string) {
+export type FormatoChave = "eliminacao_simples" | "round_robin";
+
+/**
+ * Regra automática de formato por tamanho da divisão (padrão CBJJ):
+ * até 3 atletas → todos contra todos; 4+ → eliminação simples.
+ */
+export function formatoAutomatico(qtdInscritos: number): FormatoChave {
+  return qtdInscritos <= 3 ? "round_robin" : "eliminacao_simples";
+}
+
+export async function gerarChaveParaCategoria(
+  db: Db,
+  categoriaId: string,
+  formato: FormatoChave | "auto" = "auto",
+) {
   const confirmadas = await db.query.inscricoes.findMany({
     where: and(
       eq(inscricoes.categoriaId, categoriaId),
@@ -40,19 +57,23 @@ export async function gerarChaveParaCategoria(db: Db, categoriaId: string) {
     await db.delete(chaves).where(eq(chaves.id, existente.id));
   }
 
+  const formatoFinal =
+    formato === "auto" ? formatoAutomatico(confirmadas.length) : formato;
+
   const seed = crypto.randomUUID();
-  const engine = gerarEliminacaoSimples(
-    confirmadas.map((i) => ({
-      id: i.id,
-      nome: i.nomeAtleta,
-      academiaId: i.academiaId,
-    })),
-    { seed },
-  );
+  const participantes = confirmadas.map((i) => ({
+    id: i.id,
+    nome: i.nomeAtleta,
+    academiaId: i.academiaId,
+  }));
+  const engine =
+    formatoFinal === "round_robin"
+      ? gerarRoundRobin(participantes, { seed })
+      : gerarEliminacaoSimples(participantes, { seed });
 
   const [chave] = await db
     .insert(chaves)
-    .values({ categoriaId, seedSorteio: seed })
+    .values({ categoriaId, formato: formatoFinal, seedSorteio: seed })
     .returning();
 
   // uuid por luta antes do insert para remapear o encadeamento
@@ -76,20 +97,24 @@ export async function gerarChaveParaCategoria(db: Db, categoriaId: string) {
 }
 
 type LutaRow = typeof lutas.$inferSelect;
+type ChaveRow = { seedSorteio: string; formato: string };
 
-function ehBye(l: LutaRow): boolean {
+function ehBye(formato: FormatoChave, l: LutaRow): boolean {
   return (
+    formato === "eliminacao_simples" &&
     l.rodada === 1 &&
     (l.atleta1InscricaoId === null) !== (l.atleta2InscricaoId === null)
   );
 }
 
-export function montarChaveEngine(
-  chave: { seedSorteio: string },
-  linhas: LutaRow[],
-): ChaveEngine {
+function formatoDaChave(chave: ChaveRow): FormatoChave {
+  return chave.formato === "round_robin" ? "round_robin" : "eliminacao_simples";
+}
+
+export function montarChaveEngine(chave: ChaveRow, linhas: LutaRow[]): ChaveEngine {
+  const formato = formatoDaChave(chave);
   return {
-    formato: "eliminacao_simples",
+    formato,
     seed: chave.seedSorteio,
     rodadas: Math.max(...linhas.map((l) => l.rodada)),
     lutas: linhas.map((l) => ({
@@ -102,9 +127,17 @@ export function montarChaveEngine(
       proximaLutaSlot: (l.proximaLutaSlot ?? null) as 1 | 2 | null,
       vencedor: l.vencedorInscricaoId,
       metodo: l.metodo,
-      bye: ehBye(l),
+      bye: ehBye(formato, l),
     })),
   };
+}
+
+/** Pódio de uma chave concluída, respeitando o formato. */
+export function calcularPodioDaChave(chave: ChaveRow, linhas: LutaRow[]): Podio {
+  const engine = montarChaveEngine(chave, linhas);
+  return engine.formato === "round_robin"
+    ? podioRoundRobin(engine)
+    : calcularPodio(engine);
 }
 
 export interface PlacarLuta {
@@ -135,7 +168,10 @@ export async function registrarResultadoNoBanco(
   const antes = montarChaveEngine(chave, linhas);
 
   // o motor valida (vencedor pertence à luta, correção bloqueada etc.) e avança
-  const depois = registrarResultado(antes, lutaId, vencedorId, metodo);
+  const depois =
+    antes.formato === "round_robin"
+      ? registrarResultadoRoundRobin(antes, lutaId, vencedorId, metodo)
+      : registrarResultado(antes, lutaId, vencedorId, metodo);
 
   const lutaDecidida = depois.lutas.find((l) => l.id === lutaId)!;
   await db
@@ -165,11 +201,19 @@ export async function registrarResultadoNoBanco(
       .where(eq(lutas.id, proxima.id));
   }
 
-  const final = depois.lutas.find((l) => l.rodada === depois.rodadas)!;
-  const novoStatus = final.vencedor ? "concluida" : "em_andamento";
+  const concluida =
+    depois.formato === "round_robin"
+      ? depois.lutas.every((l) => l.vencedor !== null)
+      : depois.lutas.find((l) => l.rodada === depois.rodadas)!.vencedor !== null;
+  const novoStatus = concluida ? "concluida" : "em_andamento";
   if (novoStatus !== chave.status) {
     await db.update(chaves).set({ status: novoStatus }).where(eq(chaves.id, chaveId));
   }
 
-  return { podio: final.vencedor ? calcularPodio(depois) : null };
+  const podio = concluida
+    ? depois.formato === "round_robin"
+      ? podioRoundRobin(depois)
+      : calcularPodio(depois)
+    : null;
+  return { podio };
 }

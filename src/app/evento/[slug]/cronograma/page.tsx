@@ -3,7 +3,11 @@ import { notFound } from "next/navigation";
 import { and, eq, ne } from "drizzle-orm";
 import { getDb } from "@/db";
 import { eventos } from "@/db/schema";
-import { montarFilasDoEvento, type FilaDaArea } from "@/lib/cronograma/fila";
+import {
+  duracaoDaCategoria,
+  montarFilasDoEvento,
+  type FilaDaArea,
+} from "@/lib/cronograma/fila";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -23,9 +27,22 @@ function ColunaArea({ fila, tv }: { fila: FilaDaArea; tv: boolean }) {
 
   return (
     <div className={`rounded-2xl ${tv ? "bg-zinc-900 p-6" : "border bg-card p-5"}`}>
-      <p className={`font-bold ${tv ? "text-2xl text-white" : "text-lg"}`}>
-        {fila.area.nome}
-      </p>
+      <div className="flex items-baseline justify-between gap-2">
+        <p className={`font-bold ${tv ? "text-2xl text-white" : "text-lg"}`}>
+          {fila.area.nome}
+        </p>
+        {fila.fila.length > 0 && (
+          <p className={`shrink-0 font-mono text-xs ${tv ? "text-zinc-400" : "text-muted-foreground"}`}>
+            {fila.fila.length} luta(s) · termina ~
+            {hora(
+              new Date(
+                fila.fila.at(-1)!.horaEstimada.getTime() +
+                  duracaoDaCategoria(fila.fila.at(-1)!.categoria) * 1000,
+              ),
+            )}
+          </p>
+        )}
+      </div>
 
       {emAndamento && (
         <div className={`mt-3 rounded-xl p-4 ${tv ? "bg-emerald-900/60" : "bg-success/10"}`}>
@@ -133,7 +150,7 @@ export default async function CronogramaPublico({
     <div className="min-h-screen bg-background text-foreground">
       <header className="border-b bg-card">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link href="/" className="font-bold tracking-tight">BJJCAMP</Link>
+          <Link href="/" className="font-bold tracking-tight">BJJArena</Link>
           <Link href={`/evento/${evento.slug}`} className="text-sm text-muted-foreground hover:text-foreground">
             Página do evento
           </Link>

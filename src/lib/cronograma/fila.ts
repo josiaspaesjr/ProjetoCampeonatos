@@ -30,6 +30,35 @@ export function duracaoLutaSegundos(faixa: string | null): number {
   return minutos * 60 + TRANSICAO_SEGUNDOS;
 }
 
+/**
+ * Duração estimada por luta da categoria: o organizador pode definir um valor
+ * próprio (equivalente ao "estimated time per match" do scoreboard); nulo cai
+ * na tabela regulamentar da faixa.
+ */
+export function duracaoDaCategoria(categoria: {
+  faixa: string | null;
+  duracaoLutaSegundos: number | null;
+}): number {
+  return categoria.duracaoLutaSegundos ?? duracaoLutaSegundos(categoria.faixa);
+}
+
+/**
+ * "Slice": intercala as rodadas das categorias (1ª rodada de todas, depois a
+ * 2ª de todas…) em vez de correr cada categoria inteira. Entre duas lutas do
+ * mesmo atleta passam a existir as rodadas das outras categorias — é o que
+ * garante descanso em divisões pequenas, onde a rodada seguinte vem logo.
+ */
+export function intercalarPorRodada<T>(gruposPorCategoria: T[][][]): T[] {
+  const resultado: T[] = [];
+  const maisRodadas = Math.max(0, ...gruposPorCategoria.map((g) => g.length));
+  for (let rodada = 0; rodada < maisRodadas; rodada++) {
+    for (const grupos of gruposPorCategoria) {
+      if (grupos[rodada]) resultado.push(...grupos[rodada]);
+    }
+  }
+  return resultado;
+}
+
 type LutaRow = typeof lutas.$inferSelect;
 type CategoriaRow = typeof categorias.$inferSelect;
 
@@ -67,11 +96,8 @@ export async function montarFilaDaArea(
     orderBy: asc(categorias.ordemNaArea),
   });
 
-  const fila: LutaNaFila[] = [];
-  let cursor = new Date(
-    Math.max(agora.getTime(), area.horaInicio?.getTime() ?? 0),
-  );
-
+  // lutas pendentes de cada categoria, agrupadas por rodada (ordem da chave)
+  const gruposPorCategoria: { luta: LutaRow; categoria: CategoriaRow }[][][] = [];
   for (const categoria of cats) {
     const chave = await db.query.chaves.findFirst({
       where: eq(chaves.categoriaId, categoria.id),
@@ -85,17 +111,37 @@ export async function montarFilaDaArea(
       orderBy: [asc(lutas.rodada), asc(lutas.posicao)],
     });
 
+    const rodadas = new Map<number, { luta: LutaRow; categoria: CategoriaRow }[]>();
     for (const luta of linhas) {
       if (luta.vencedorInscricaoId || ehBye(luta)) continue;
-      const horaEstimada = new Date(cursor);
-      cursor = new Date(cursor.getTime() + duracaoLutaSegundos(categoria.faixa) * 1000);
-      fila.push({
-        luta,
-        categoria,
-        horaEstimada,
-        pronta: Boolean(luta.atleta1InscricaoId && luta.atleta2InscricaoId),
-      });
+      const grupo = rodadas.get(luta.rodada) ?? [];
+      grupo.push({ luta, categoria });
+      rodadas.set(luta.rodada, grupo);
     }
+    if (rodadas.size) {
+      gruposPorCategoria.push(
+        [...rodadas.entries()].sort((a, b) => a[0] - b[0]).map(([, g]) => g),
+      );
+    }
+  }
+
+  const ordenadas = area.intercalarRodadas
+    ? intercalarPorRodada(gruposPorCategoria)
+    : gruposPorCategoria.flat(2);
+
+  const fila: LutaNaFila[] = [];
+  let cursor = new Date(
+    Math.max(agora.getTime(), area.horaInicio?.getTime() ?? 0),
+  );
+  for (const { luta, categoria } of ordenadas) {
+    const horaEstimada = new Date(cursor);
+    cursor = new Date(cursor.getTime() + duracaoDaCategoria(categoria) * 1000);
+    fila.push({
+      luta,
+      categoria,
+      horaEstimada,
+      pronta: Boolean(luta.atleta1InscricaoId && luta.atleta2InscricaoId),
+    });
   }
 
   const idsInscricoes = [

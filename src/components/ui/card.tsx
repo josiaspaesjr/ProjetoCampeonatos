@@ -6,10 +6,7 @@ export function Card({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div
-      className={cn("rounded-xl border bg-card text-card-foreground shadow-xs", className)}
-      {...props}
-    />
+    <div className={cn("border bg-card text-card-foreground", className)} {...props} />
   );
 }
 
@@ -25,7 +22,13 @@ export function CardTitle({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("font-semibold leading-none tracking-tight", className)} {...props} />
+    <div
+      className={cn(
+        "font-display font-bold uppercase leading-none tracking-wide",
+        className,
+      )}
+      {...props}
+    />
   );
 }
 

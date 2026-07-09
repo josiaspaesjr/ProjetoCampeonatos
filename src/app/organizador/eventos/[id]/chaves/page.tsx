@@ -6,7 +6,8 @@ import { categorias, chaves, eventos, inscricoes } from "@/db/schema";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getUsuarioAtual } from "@/lib/auth";
-import { gerarChave, publicarChaves } from "../../actions";
+import { formatoAutomatico } from "@/lib/chaves/persistencia";
+import { gerarChave, gerarChavesEmLote, publicarChaves } from "../../actions";
 
 const rotuloChave: Record<string, [string, BadgeProps["variant"]]> = {
   rascunho: ["Rascunho", "warning"],
@@ -55,6 +56,9 @@ export default async function PaginaChaves({
 
   const comInscritos = cats.filter((c) => (contagem.get(c.id) ?? 0) > 0);
   const rascunhos = todasChaves.filter((c) => c.status === "rascunho").length;
+  const semChave = comInscritos.filter(
+    (c) => (contagem.get(c.id) ?? 0) >= 2 && !chavePorCategoria.has(c.id),
+  ).length;
 
   return (
     <div>
@@ -72,11 +76,18 @@ export default async function PaginaChaves({
             ser regenerada.
           </p>
         </div>
-        {rascunhos > 0 && (
-          <form action={publicarChaves.bind(null, evento.id)}>
-            <Button variant="success">Publicar {rascunhos} chave(s)</Button>
-          </form>
-        )}
+        <div className="flex items-center gap-3">
+          {semChave > 0 && (
+            <form action={gerarChavesEmLote.bind(null, evento.id)}>
+              <Button>Gerar {semChave} chave(s) em lote</Button>
+            </form>
+          )}
+          {rascunhos > 0 && (
+            <form action={publicarChaves.bind(null, evento.id)}>
+              <Button variant="success">Publicar {rascunhos} chave(s)</Button>
+            </form>
+          )}
+        </div>
       </div>
 
       <ul className="mt-6 divide-y divide-border rounded-xl border bg-card">
@@ -94,6 +105,10 @@ export default async function PaginaChaves({
                 <p className="text-xs text-muted-foreground">
                   {qtd} confirmado(s)
                   {qtd === 1 && " — insuficiente para gerar chave"}
+                  {chave
+                    ? ` · ${chave.formato === "round_robin" ? "todos contra todos" : "eliminação simples"}`
+                    : qtd >= 2 &&
+                      ` · formato sugerido: ${formatoAutomatico(qtd) === "round_robin" ? "todos contra todos" : "eliminação simples"}`}
                 </p>
               </div>
               <div className="flex items-center gap-3">

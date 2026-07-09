@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800&family=Saira:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0B0B0C; color: #F5F1E9; font-family: 'Saira', sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #E4C784; text-decoration: none; }
+  a:hover { color: #F5F1E9; }
+  ::selection { background: #C6A15B; color: #0B0B0C; }
+  input, select { font-family: 'Saira', sans-serif; }
+  input:focus, select:focus { outline: none; border-color: #C6A15B !important; }
+  input::placeholder { color: #5C594F; }
+  select option { background: #111113; color: #F5F1E9; }
+  input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.7); }
+</style>
+</helmet>
+
+<div style="min-height:100vh; background:#0B0B0C; display:flex; flex-direction:column;">
+
+  <!-- NAV -->
+  <nav style="display:flex; align-items:center; justify-content:space-between; padding:18px 48px; border-bottom:1px solid rgba(255,255,255,0.07);">
+    <a href="Arena JJ - Evento.dc.html" style="display:flex; align-items:center; gap:12px; color:#F5F1E9;">
+      <div style="width:30px; height:30px; border:2px solid #C6A15B; transform:rotate(45deg); display:flex; align-items:center; justify-content:center;"><div style="width:8px; height:8px; background:#C6A15B;"></div></div>
+      <span style="font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:22px; letter-spacing:0.14em; text-transform:uppercase;">BJJ<span style="color:#C6A15B;">Arena</span></span>
+    </a>
+    <a href="Arena JJ - Evento.dc.html" style="font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.1em; color:#8B877D; text-transform:uppercase;">← Voltar ao evento</a>
+  </nav>
+
+  <div style="display:grid; grid-template-columns:minmax(0,1fr) 400px; flex:1; align-items:stretch;">
+
+    <!-- LEFT -->
+    <div style="padding:48px 64px;">
+      <!-- STEP PROGRESS -->
+      <div style="display:flex; align-items:center; gap:0; margin-bottom:44px; max-width:560px;">
+        <sc-for list="{{ steps }}" as="s" hint-placeholder-count="3">
+          <div style="display:flex; align-items:center; flex:1;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:32px; height:32px; border:1px solid {{ s.ringColor }}; background:{{ s.bg }}; color:{{ s.numColor }}; display:flex; align-items:center; justify-content:center; font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:14px; transform:rotate(45deg);"><span style="transform:rotate(-45deg);">{{ s.num }}</span></div>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:{{ s.labelColor }}; white-space:nowrap;">{{ s.label }}</span>
+            </div>
+            <div style="flex:1; height:1px; background:rgba(255,255,255,0.12); margin:0 14px; min-width:16px; display:{{ s.lineDisplay }};"></div>
+          </div>
+        </sc-for>
+      </div>
+
+      <!-- ===== FORM STEP ===== -->
+      <sc-if value="{{ isForm }}" hint-placeholder-val="{{ true }}">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.2em; color:#C6A15B; text-transform:uppercase; margin-bottom:12px;">// Passo 1 · Seus dados</div>
+        <h1 style="font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:clamp(34px,4.6vw,54px); line-height:0.95; text-transform:uppercase; margin-bottom:8px;">Inscrição<br>{{ ev.name }}</h1>
+        <p style="font-size:16px; color:#8B877D; margin-bottom:38px; max-width:480px;">Só mostramos categorias compatíveis com seu perfil. Pagamento na próxima etapa.</p>
+
+        <div style="max-width:640px; display:flex; flex-direction:column; gap:26px;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+            <div>
+              <label style="display:block; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#8B877D; margin-bottom:11px;">Nome completo *</label>
+              <input value="{{ f.nome }}" onInput="{{ onNome }}" placeholder="Seu nome" style="width:100%; padding:14px 16px; background:#111113; border:1px solid rgba(255,255,255,0.14); color:#F5F1E9; font-size:16px;">
+            </div>
+            <div>
+              <label style="display:block; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#8B877D; margin-bottom:11px;">E-mail *</label>
+              <input type="email" value="{{ f.email }}" onInput="{{ onEmail }}" placeholder="voce@email.com" style="width:100%; padding:14px 16px; background:#111113; border:1px solid rgba(255,255,255,0.14); color:#F5F1E9; font-size:16px;">
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:20px;">
+            <div>
+              <label style="display:block; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#8B877D; margin-bottom:11px;">Nascimento *</label>
+              <input type="date" value="{{ f.nascimento }}" onChange="{{ onNascimento }}" style="width:100%; padding:13px 14px; background:#111113; border:1px solid rgba(255,255,255,0.14); color:#F5F1E9; font-size:15px;">
+            </div>
+            <div>
+              <label style="display:block; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#8B877D; margin-bottom:11px;">Sexo *</label>
+              <select value="{{ f.sexo }}" onChange="{{ onSexo }}" style="width:100%; padding:14px 12px; background:#111113; border:1px solid rgba(255,255,255,0.14); color:{{ sexoColor }}; font-size:15px;">
+                <option value="">Selecione</option>
+                <option value="Masculino">Masculino</option>
+                <option value="Feminino">Feminino</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#8B877D; margin-bottom:11px;">Faixa *</label>
+              <select value="{{ f.faixa }}" onChange="{{ onFaixa }}" style="width:100%; padding:14px 12px; background:#111113; border:1px solid rgba(255,255,255,0.14); color:{{ faixaColor }}; font-size:15px;">
+                <option value="">Selecione</option>
+                <option value="Branca">Branca</option>
+                <option value="Azul">Azul</option>
+                <option value="Roxa">Roxa</option>
+                <option value="Marrom">Marrom</option>
+                <option value="Preta">Preta</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label style="display:block; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#8B877D; margin-bottom:11px;">Academia / equipe</label>
+            <input value="{{ f.equipe }}" onInput="{{ onEquipe }}" placeholder="Nome da sua academia" style="width:100%; padding:14px 16px; background:#111113; border:1px solid rgba(255,255,255,0.14); color:#F5F1E9; font-size:16px;">
+          </div>
+
+          <div>
+            <label style="display:block; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:#8B877D; margin-bottom:11px;">Categoria *</label>
+            <sc-if value="{{ profileReady }}" hint-placeholder-val="{{ true }}">
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <sc-for list="{{ catOptions }}" as="c" hint-placeholder-count="4">
+                  <button onClick="{{ c.onClick }}" style="display:flex; align-items:center; justify-content:space-between; padding:14px 18px; background:{{ c.bg }}; border:1px solid {{ c.border }}; color:{{ c.color }}; font-family:'Saira Condensed',sans-serif; font-weight:600; font-size:17px; letter-spacing:0.02em; text-transform:uppercase; cursor:pointer; text-align:left;">
+                    <span>{{ c.label }}</span>
+                    <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:{{ c.metaColor }};">{{ c.meta }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ profileIncomplete }}" hint-placeholder-val="{{ false }}">
+              <div style="padding:20px; border:1px dashed rgba(255,255,255,0.16); font-family:'JetBrains Mono',monospace; font-size:13px; color:#5C594F;">Preencha nascimento, sexo e faixa para ver suas categorias.</div>
+            </sc-if>
+          </div>
+
+          <div style="display:flex; gap:16px; margin-top:8px;">
+            <a href="Arena JJ - Evento.dc.html" style="padding:15px 30px; border:1px solid rgba(255,255,255,0.2); color:#F5F1E9; font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:0.08em; text-transform:uppercase;">Voltar</a>
+            <button onClick="{{ goPay }}" disabled="{{ payDisabled }}" style="flex:1; padding:15px 30px; background:{{ payBg }}; border:none; color:{{ payColor }}; font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:0.08em; text-transform:uppercase; cursor:{{ payCursor }};">Continuar para o pagamento →</button>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===== PAYMENT STEP ===== -->
+      <sc-if value="{{ isPay }}" hint-placeholder-val="{{ false }}">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.2em; color:#C6A15B; text-transform:uppercase; margin-bottom:12px;">// Passo 2 · Pagamento</div>
+        <h1 style="font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:clamp(34px,4.6vw,54px); line-height:0.95; text-transform:uppercase; margin-bottom:8px;">Pague com Pix<br>e garanta a vaga</h1>
+        <p style="font-size:16px; color:#8B877D; margin-bottom:38px; max-width:480px;">A vaga fica reservada enquanto o pagamento estiver pendente. Aprovação em segundos.</p>
+
+        <div style="max-width:560px; border:1px solid rgba(198,161,91,0.4); background:linear-gradient(180deg,#151412,#0E0E10);">
+          <div style="padding:22px 26px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.08);">
+            <span style="font-family:'Saira Condensed',sans-serif; font-weight:600; font-size:18px; text-transform:uppercase;">{{ chosenCat }}</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; color:#E4C784; text-transform:uppercase;">aguardando pagamento</span>
+          </div>
+          <div style="padding:26px;">
+            <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:24px;">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.1em; color:#8B877D; text-transform:uppercase;">Total</span>
+              <span style="font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:46px; color:#C6A15B; line-height:1;">{{ ev.price }}</span>
+            </div>
+            <div style="display:flex; gap:20px; align-items:center; margin-bottom:20px;">
+              <div style="width:112px; height:112px; flex-shrink:0; background:#F5F1E9; padding:8px; display:grid; grid-template-columns:repeat(7,1fr); grid-template-rows:repeat(7,1fr); gap:2px;">
+                <sc-for list="{{ qr }}" as="cell" hint-placeholder-count="49">
+                  <div style="background:{{ cell }};"></div>
+                </sc-for>
+              </div>
+              <div style="flex:1;">
+                <div style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; color:#8B877D; text-transform:uppercase; margin-bottom:10px;">Pix copia e cola</div>
+                <div style="padding:12px 14px; background:#0B0B0C; border:1px solid rgba(255,255,255,0.1); font-family:'JetBrains Mono',monospace; font-size:11px; color:#8B877D; word-break:break-all; line-height:1.5; margin-bottom:10px;">{{ pixCode }}</div>
+                <button onClick="{{ copyPix }}" style="width:100%; padding:10px; background:transparent; border:1px solid rgba(198,161,91,0.5); color:#E4C784; font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer;">{{ copyLabel }}</button>
+              </div>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#8B877D; margin-bottom:22px;">Expira em <span style="color:#E4C784;">{{ timer }}</span> — após isso a vaga é liberada.</div>
+            <button onClick="{{ approve }}" style="width:100%; padding:16px; background:#C6A15B; border:none; color:#0B0B0C; font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:16px; letter-spacing:0.06em; text-transform:uppercase; cursor:pointer;">Simular pagamento aprovado</button>
+          </div>
+        </div>
+        <button onClick="{{ backToForm }}" style="margin-top:20px; background:none; border:none; font-family:'JetBrains Mono',monospace; font-size:12px; color:#8B877D; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer;">← Editar dados</button>
+      </sc-if>
+
+      <!-- ===== DONE STEP ===== -->
+      <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+        <div style="max-width:560px; padding-top:20px;">
+          <div style="width:64px; height:64px; border:2px solid #C6A15B; transform:rotate(45deg); display:flex; align-items:center; justify-content:center; margin-bottom:28px;"><span style="transform:rotate(-45deg); color:#C6A15B; font-size:30px;">✓</span></div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.2em; color:#C6A15B; text-transform:uppercase; margin-bottom:12px;">// Inscrição confirmada</div>
+          <h1 style="font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:clamp(36px,5vw,60px); line-height:0.95; text-transform:uppercase; margin-bottom:20px;">Você está no<br>chaveamento</h1>
+          <p style="font-size:17px; line-height:1.55; color:#B9B4A8; margin-bottom:16px;">Pagamento aprovado. Sua vaga em <strong style="color:#F5F1E9;">{{ chosenCat }}</strong> está confirmada. O comprovante foi enviado para <strong style="color:#F5F1E9;">{{ f.email }}</strong>.</p>
+          <p style="font-size:15px; color:#8B877D; margin-bottom:36px;">Você receberá uma notificação antes de cada luta e a chamada de área em tempo real no dia do evento.</p>
+          <div style="display:flex; gap:16px;">
+            <a href="Arena JJ - Evento.dc.html" style="padding:15px 30px; background:#C6A15B; color:#0B0B0C; font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:0.08em; text-transform:uppercase;">Ver cronograma</a>
+            <a href="Arena JJ - Landing.dc.html" style="padding:15px 30px; border:1px solid rgba(255,255,255,0.2); color:#F5F1E9; font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:0.08em; text-transform:uppercase;">Início</a>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <!-- SUMMARY SIDEBAR -->
+    <aside style="background:#0E0E10; border-left:1px solid rgba(255,255,255,0.07); padding:48px 40px; display:flex; flex-direction:column;">
+      <div style="position:relative; aspect-ratio:16/10; background:repeating-linear-gradient(45deg,#17171A 0 2px,#101012 2px 16px); display:flex; align-items:center; justify-content:center; margin-bottom:24px;">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#4A473F;">[ imagem do evento ]</span>
+        <div style="position:absolute; top:12px; left:12px; padding:5px 10px; background:#0B0B0C; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.12em; color:#C6A15B; text-transform:uppercase; border:1px solid rgba(255,255,255,0.12);">Etapa 03</div>
+      </div>
+
+      <div style="font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:26px; line-height:1.05; text-transform:uppercase; margin-bottom:6px;">{{ ev.name }}</div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#8B877D; margin-bottom:28px;">14 MAR 2026 · Ginásio do Ibirapuera</div>
+
+      <div style="display:flex; flex-direction:column; gap:0; border-top:1px solid rgba(255,255,255,0.08);">
+        <sc-for list="{{ summary }}" as="row" hint-placeholder-count="4">
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:14px 0; border-bottom:1px solid rgba(255,255,255,0.06);">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:#8B877D;">{{ row.k }}</span>
+            <span style="font-family:'Saira Condensed',sans-serif; font-weight:600; font-size:17px; color:{{ row.color }}; text-transform:uppercase; text-align:right; max-width:210px;">{{ row.v }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="margin-top:auto; padding-top:32px;">
+        <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:6px;">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; text-transform:uppercase; color:#8B877D;">Taxa de inscrição</span>
+          <span style="font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:38px; color:#C6A15B; line-height:1;">{{ ev.price }}</span>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#5C594F;">Segunda categoria: +R$ 40 · Pix ou cartão</div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    step: 'form',
+    nome: '', email: '', nascimento: '', sexo: '', faixa: '', equipe: '',
+    categoria: null,
+    remaining: 30 * 60,
+    copied: false,
+  };
+
+  componentDidMount() {
+    this._t = setInterval(() => {
+      if (this.state.step === 'pay' && this.state.remaining > 0) {
+        this.setState(s => ({ remaining: s.remaining - 1 }));
+      }
+    }, 1000);
+  }
+  componentWillUnmount() { clearInterval(this._t); }
+
+  ageDivision(nascimento) {
+    if (!nascimento) return null;
+    const y = new Date(nascimento).getFullYear();
+    if (!y) return null;
+    const age = 2026 - y;
+    if (age <= 15) return 'Infantojuvenil';
+    if (age <= 17) return 'Juvenil';
+    if (age <= 29) return 'Adulto';
+    if (age <= 35) return 'Master 1';
+    if (age <= 40) return 'Master 2';
+    return 'Master 3';
+  }
+
+  weightClasses(sexo) {
+    if (sexo === 'Feminino') return ['Galo (até 48.5kg)', 'Pluma (até 53.5kg)', 'Pena (até 58.5kg)', 'Leve (até 64kg)', 'Médio (até 69kg)', 'Meio-Pesado (até 74kg)', 'Pesado (+74kg)', 'Absoluto'];
+    return ['Galo (até 57.5kg)', 'Pluma (até 64kg)', 'Pena (até 70kg)', 'Leve (até 76kg)', 'Médio (até 82.3kg)', 'Meio-Pesado (até 88.3kg)', 'Pesado (até 94.3kg)', 'Super-Pesado (+94.3kg)', 'Absoluto'];
+  }
+
+  fmtTimer(s) {
+    const h = String(Math.floor(s / 3600)).padStart(2, '0');
+    const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+    const sec = String(s % 60).padStart(2, '0');
+    return `${h}:${m}:${sec}`;
+  }
+
+  renderVals() {
+    const gold = '#C6A15B';
+    const st = this.state;
+    const set = (k) => (e) => this.setState({ [k]: e.target.value, categoria: null });
+
+    const age = this.ageDivision(st.nascimento);
+    const profileReady = !!(st.nascimento && st.sexo && st.faixa);
+    const chosenCatLabel = st.categoria ? `${age} / ${st.sexo} / ${st.faixa} / ${st.categoria}` : '—';
+
+    const stepDefs = [
+      { key: 'form', num: '1', label: 'Dados' },
+      { key: 'pay', num: '2', label: 'Pagamento' },
+      { key: 'done', num: '3', label: 'Confirmação' },
+    ];
+    const order = { form: 0, pay: 1, done: 2 };
+    const cur = order[st.step];
+
+    // deterministic QR-ish pattern
+    const qr = [];
+    for (let i = 0; i < 49; i++) {
+      const r = Math.floor(i / 7), c = i % 7;
+      const corner = (r < 3 && c < 3) || (r < 3 && c > 3) || (r > 3 && c < 3);
+      const on = corner ? ((r === 0 || r === 2 || c === 0 || c === 2 || (r === 1 && c === 1)) || (r >= 4 && r <= 6 && c <= 2 && (r === 4 || r === 6 || c === 0 || c === 2 || (r === 5 && c === 1)))) : ((i * 7 + 3) % 5 < 2);
+      qr.push(on ? '#0B0B0C' : '#F5F1E9');
+    }
+
+    return {
+      steps: stepDefs.map((s, i) => {
+        const active = i === cur, done = i < cur;
+        return {
+          num: done ? '✓' : s.num, label: s.label,
+          bg: active ? gold : (done ? 'rgba(198,161,91,0.15)' : 'transparent'),
+          ringColor: active || done ? gold : 'rgba(255,255,255,0.18)',
+          numColor: active ? '#0B0B0C' : (done ? gold : '#5C594F'),
+          labelColor: active ? '#F5F1E9' : '#8B877D',
+          lineDisplay: i === stepDefs.length - 1 ? 'none' : 'block',
+        };
+      }),
+
+      ev: { name: 'Copa Cidade de Jiu-Jitsu 2026', price: 'R$ 70' },
+
+      isForm: st.step === 'form',
+      isPay: st.step === 'pay',
+      isDone: st.step === 'done',
+
+      f: st,
+      onNome: (e) => this.setState({ nome: e.target.value }),
+      onEmail: (e) => this.setState({ email: e.target.value }),
+      onNascimento: set('nascimento'),
+      onSexo: set('sexo'),
+      onFaixa: set('faixa'),
+      onEquipe: (e) => this.setState({ equipe: e.target.value }),
+      sexoColor: st.sexo ? '#F5F1E9' : '#5C594F',
+      faixaColor: st.faixa ? '#F5F1E9' : '#5C594F',
+
+      profileReady,
+      profileIncomplete: !profileReady,
+      catOptions: (profileReady ? this.weightClasses(st.sexo) : []).map(name => {
+        const sel = st.categoria === name;
+        return {
+          label: name,
+          meta: name === 'Absoluto' ? 'todos os pesos' : '',
+          metaColor: sel ? 'rgba(11,11,12,0.6)' : '#5C594F',
+          onClick: () => this.setState({ categoria: name }),
+          bg: sel ? gold : '#111113',
+          border: sel ? gold : 'rgba(255,255,255,0.12)',
+          color: sel ? '#0B0B0C' : '#D8D2C6',
+        };
+      }),
+
+      payDisabled: !(profileReady && st.categoria && st.nome && st.email),
+      payBg: (profileReady && st.categoria && st.nome && st.email) ? gold : 'rgba(198,161,91,0.3)',
+      payColor: (profileReady && st.categoria && st.nome && st.email) ? '#0B0B0C' : 'rgba(11,11,12,0.55)',
+      payCursor: (profileReady && st.categoria && st.nome && st.email) ? 'pointer' : 'not-allowed',
+      goPay: () => { if (profileReady && st.categoria && st.nome && st.email) this.setState({ step: 'pay' }); },
+      backToForm: () => this.setState({ step: 'form' }),
+
+      chosenCat: chosenCatLabel,
+      qr,
+      pixCode: '00020126580014BR.GOV.BCB.PIX0136arena-jj-copa-2026-inscricao-70brl5204000053039865802BR5920BJJ ARENA COMPETICOES6009SAO PAULO62070503***6304A1B2',
+      copyLabel: st.copied ? 'Copiado ✓' : 'Copiar código',
+      copyPix: () => { this.setState({ copied: true }); setTimeout(() => this.setState({ copied: false }), 2000); },
+      timer: this.fmtTimer(st.remaining),
+      approve: () => this.setState({ step: 'done' }),
+
+      summary: [
+        { k: 'Atleta', v: st.nome || '—', color: st.nome ? '#F5F1E9' : '#5C594F' },
+        { k: 'Faixa', v: st.faixa || '—', color: st.faixa ? gold : '#5C594F' },
+        { k: 'Divisão', v: age || '—', color: age ? '#F5F1E9' : '#5C594F' },
+        { k: 'Categoria', v: st.categoria || '—', color: st.categoria ? gold : '#5C594F' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

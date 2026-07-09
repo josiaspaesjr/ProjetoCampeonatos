@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700;800&family=Saira:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { background: #0B0B0C; color: #F5F1E9; font-family: 'Saira', sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #E4C784; text-decoration: none; }
+  a:hover { color: #F5F1E9; }
+  ::selection { background: #C6A15B; color: #0B0B0C; }
+  @keyframes pulseDot { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+</style>
+</helmet>
+
+<div style="max-width:100%; overflow-x:hidden; background:#0B0B0C;">
+
+  <!-- NAV -->
+  <nav style="position:sticky; top:0; z-index:50; display:flex; align-items:center; justify-content:space-between; padding:18px 48px; background:rgba(11,11,12,0.82); backdrop-filter:blur(14px); border-bottom:1px solid rgba(255,255,255,0.07);">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div style="width:30px; height:30px; border:2px solid #C6A15B; transform:rotate(45deg); display:flex; align-items:center; justify-content:center;">
+        <div style="width:8px; height:8px; background:#C6A15B;"></div>
+      </div>
+      <span style="font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:22px; letter-spacing:0.14em; text-transform:uppercase;">BJJ<span style="color:#C6A15B;">Arena</span></span>
+    </div>
+    <div style="display:flex; align-items:center; gap:38px; font-size:13px; letter-spacing:0.1em; text-transform:uppercase; font-weight:500;">
+      <a href="#formato" style="color:#B9B4A8;">Recursos</a>
+      <a href="#chaveamento" style="color:#B9B4A8;">Ao vivo</a>
+      <a href="#ranking" style="color:#B9B4A8;">Ranking</a>
+      <a href="#eventos" style="color:#B9B4A8;">Eventos</a>
+    </div>
+    <a href="#inscricao" style="display:inline-flex; align-items:center; gap:8px; padding:11px 22px; background:#C6A15B; color:#0B0B0C; font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:0.1em; text-transform:uppercase;">Começar grátis</a>
+  </nav>
+
+  <!-- HERO -->
+  <header style="position:relative; min-height:88vh; display:flex; flex-direction:column; justify-content:flex-end; padding:64px 48px 56px; overflow:hidden;">
+    <div style="position:absolute; inset:0; background:repeating-linear-gradient(115deg, #131315 0 2px, #0E0E10 2px 26px);"></div>
+    <div style="position:absolute; inset:0; background:radial-gradient(120% 90% at 78% 20%, rgba(198,161,91,0.16), transparent 60%);"></div>
+    <div style="position:absolute; top:38%; right:6%; font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:12px; letter-spacing:0.3em; color:rgba(198,161,91,0.5); writing-mode:vertical-rl; text-transform:uppercase;">Plataforma de competições · JJ</div>
+
+    <div style="position:relative; z-index:2; max-width:1040px;">
+      <div style="display:inline-flex; align-items:center; gap:10px; padding:7px 14px; border:1px solid rgba(198,161,91,0.4); font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.16em; color:#E4C784; text-transform:uppercase; margin-bottom:26px;">
+        <span style="width:7px; height:7px; border-radius:50%; background:#C6A15B; animation:pulseDot 1.6s infinite;"></span>
+        O sistema operacional do jiu-jitsu competitivo
+      </div>
+      <h1 style="font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:clamp(52px,8.4vw,124px); line-height:0.9; letter-spacing:-0.01em; text-transform:uppercase;">
+        Toda competição,<br><span style="color:#C6A15B;">uma plataforma</span>
+      </h1>
+      <div style="display:flex; flex-wrap:wrap; gap:40px; margin-top:36px; align-items:flex-end;">
+        <div style="max-width:480px; font-size:17px; line-height:1.5; color:#B9B4A8;">
+          Inscrições, pesagem, chaveamento ao vivo, arbitragem e ranking oficial — a BJJArena dá às federações e academias tudo para rodar um campeonato de ponta a ponta, sem planilha nenhuma.
+        </div>
+        <div style="display:flex; gap:38px; font-family:'JetBrains Mono',monospace;">
+          <div>
+            <div style="font-size:11px; letter-spacing:0.14em; color:#8B877D; text-transform:uppercase; margin-bottom:6px;">Eventos</div>
+            <div style="font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:26px;">340+</div>
+          </div>
+          <div>
+            <div style="font-size:11px; letter-spacing:0.14em; color:#8B877D; text-transform:uppercase; margin-bottom:6px;">Atletas</div>
+            <div style="font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:26px;">58 mil</div>
+          </div>
+          <div>
+            <div style="font-size:11px; letter-spacing:0.14em; color:#8B877D; text-transform:uppercase; margin-bottom:6px;">Federações</div>
+            <div style="font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:26px; color:#C6A15B;">27</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex; gap:16px; margin-top:40px;">
+        <a href="#inscricao" style="padding:15px 34px; background:#C6A15B; color:#0B0B0C; font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:16px; letter-spacing:0.08em; text-transform:uppercase;">Começar grátis</a>
+        <a href="#chaveamento" style="padding:15px 34px; border:1px solid rgba(255,255,255,0.2); color:#F5F1E9; font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:16px; letter-spacing:0.08em; text-transform:uppercase;">Ver demonstração</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- MARQUEE -->
+  <div style="border-top:1px solid rgba(255,255,255,0.08); border-bottom:1px solid rgba(255,255,255,0.08); overflow:hidden; background:#0E0E10; padding:14px 0;">
+    <div style="display:flex; width:max-content; animation:marquee 28s linear infinite; font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:16px; letter-spacing:0.18em; text-transform:uppercase; color:#5C594F;">
+      <span style="padding:0 26px;">Gi & No-Gi</span><span style="color:#C6A15B;">◆</span><span style="padding:0 26px;">Chaveamento ao vivo</span><span style="color:#C6A15B;">◆</span><span style="padding:0 26px;">Ranking oficial IBJJF-style</span><span style="color:#C6A15B;">◆</span><span style="padding:0 26px;">Arbitragem certificada</span><span style="color:#C6A15B;">◆</span>
+      <span style="padding:0 26px;">Gi & No-Gi</span><span style="color:#C6A15B;">◆</span><span style="padding:0 26px;">Chaveamento ao vivo</span><span style="color:#C6A15B;">◆</span><span style="padding:0 26px;">Ranking oficial IBJJF-style</span><span style="color:#C6A15B;">◆</span><span style="padding:0 26px;">Arbitragem certificada</span><span style="color:#C6A15B;">◆</span>
+    </div>
+  </div>
+
+  <!-- EVENTOS -->
+  <section id="eventos" style="padding:96px 48px;">
+    <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:48px; flex-wrap:wrap; gap:20px;">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.2em; color:#C6A15B; text-transform:uppercase; margin-bottom:12px;">// Rodando na plataforma</div>
+        <h2 style="font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:clamp(38px,5.5vw,68px); line-height:0.95; text-transform:uppercase;">Eventos ao<br>vivo agora</h2>
+      </div>
+      <div style="font-size:15px; color:#8B877D; max-width:320px;">Cada federação publica suas etapas na BJJArena. Página, inscrições e ranking gerados automaticamente pelo sistema.</div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:20px;">
+      <sc-for list="{{ events }}" as="ev" hint-placeholder-count="4">
+        <div style="border:1px solid rgba(255,255,255,0.09); background:#111113; display:flex; flex-direction:column; transition:border-color .2s;" style-hover="border-color:rgba(198,161,91,0.55);">
+          <div style="position:relative; aspect-ratio:16/10; background:repeating-linear-gradient(45deg,#17171A 0 2px,#101012 2px 16px); display:flex; align-items:center; justify-content:center; overflow:hidden;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#4A473F; letter-spacing:0.1em;">[ foto do evento ]</span>
+            <div style="position:absolute; top:12px; left:12px; padding:5px 10px; background:#0B0B0C; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.12em; color:{{ ev.statusColor }}; text-transform:uppercase; border:1px solid rgba(255,255,255,0.12);">{{ ev.status }}</div>
+            <div style="position:absolute; bottom:12px; right:12px; font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:34px; line-height:1; color:rgba(255,255,255,0.9);">{{ ev.day }}<span style="display:block; font-size:12px; letter-spacing:0.2em; color:#C6A15B;">{{ ev.month }}</span></div>
+          </div>
+          <div style="padding:20px 20px 22px; display:flex; flex-direction:column; gap:14px; flex:1;">
+            <div style="font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:24px; line-height:1.05; text-transform:uppercase;">{{ ev.name }}</div>
+            <div style="display:flex; gap:16px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#8B877D; letter-spacing:0.06em;">
+              <span>{{ ev.city }}</span><span style="color:#3A3833;">/</span><span>{{ ev.type }}</span>
+            </div>
+            <div style="margin-top:auto; display:flex; align-items:center; justify-content:space-between; padding-top:14px; border-top:1px solid rgba(255,255,255,0.07);">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#B9B4A8;">{{ ev.slots }}</span>
+              <a href="#inscricao" style="font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:0.12em; text-transform:uppercase; color:#C6A15B;">Inscrever →</a>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- FORMATO -->
+  <section id="formato" style="padding:88px 48px; background:#0E0E10; border-top:1px solid rgba(255,255,255,0.07); border-bottom:1px solid rgba(255,255,255,0.07);">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.2em; color:#C6A15B; text-transform:uppercase; margin-bottom:12px;">// Como funciona</div>
+    <h2 style="font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:clamp(38px,5.5vw,68px); line-height:0.95; text-transform:uppercase; margin-bottom:56px; max-width:800px;">Da inscrição ao pódio, em uma plataforma só</h2>
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:1px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.08);">
+      <sc-for list="{{ steps }}" as="st" hint-placeholder-count="4">
+        <div style="background:#0E0E10; padding:34px 28px; display:flex; flex-direction:column; gap:16px; min-height:230px;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#C6A15B;">{{ st.num }}</div>
+          <div style="font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:26px; line-height:1; text-transform:uppercase;">{{ st.title }}</div>
+          <div style="font-size:15px; line-height:1.5; color:#8B877D;">{{ st.desc }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- CHAVEAMENTO AO VIVO -->
+  <section id="chaveamento" style="padding:96px 48px;">
+    <div style="display:grid; grid-template-columns:minmax(0,0.9fr) minmax(0,1.1fr); gap:56px; align-items:center;">
+      <div>
+        <div style="display:inline-flex; align-items:center; gap:8px; font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.16em; color:#E4C784; text-transform:uppercase; margin-bottom:18px;">
+          <span style="width:7px; height:7px; border-radius:50%; background:#E23B3B; animation:pulseDot 1.6s infinite;"></span> Ao vivo agora
+        </div>
+        <h2 style="font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:clamp(38px,5vw,64px); line-height:0.95; text-transform:uppercase; margin-bottom:22px;">Chaveamento e resultados em tempo real</h2>
+        <p style="font-size:17px; line-height:1.55; color:#B9B4A8; max-width:440px; margin-bottom:30px;">Acompanhe cada chave, atualizações de placar e chamadas de área ao vivo. Atletas e treinadores recebem notificação antes de cada luta.</p>
+        <a href="#" style="display:inline-flex; padding:14px 30px; border:1px solid #C6A15B; color:#C6A15B; font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:15px; letter-spacing:0.08em; text-transform:uppercase;">Abrir chaveamento</a>
+      </div>
+
+      <div style="border:1px solid rgba(255,255,255,0.1); background:#111113; padding:24px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.1em; color:#8B877D; text-transform:uppercase;">
+          <span>Adulto · Faixa-Preta · -76kg</span><span style="color:#E23B3B;">● Área 3</span>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 40px 1fr; align-items:center; gap:8px;">
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <sc-for list="{{ bracketLeft }}" as="m" hint-placeholder-count="2">
+              <div style="border:1px solid {{ m.border }}; background:#161618; padding:12px 14px; display:flex; align-items:center; justify-content:space-between;">
+                <span style="font-family:'Saira Condensed',sans-serif; font-weight:600; font-size:16px; color:{{ m.color }};">{{ m.name }}</span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#C6A15B;">{{ m.score }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex; align-items:center; justify-content:center; font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:14px; color:#5C594F;">VS</div>
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <sc-for list="{{ bracketRight }}" as="m" hint-placeholder-count="2">
+              <div style="border:1px solid {{ m.border }}; background:#161618; padding:12px 14px; display:flex; align-items:center; justify-content:space-between;">
+                <span style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#C6A15B;">{{ m.score }}</span>
+                <span style="font-family:'Saira Condensed',sans-serif; font-weight:600; font-size:16px; color:{{ m.color }};">{{ m.name }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="margin-top:20px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.07); display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:11px; color:#8B877D;">
+          <span>Próxima chamada: FINAL</span><span style="color:#E4C784;">02:14 restantes</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RANKING -->
+  <section id="ranking" style="padding:88px 48px; background:#0E0E10; border-top:1px solid rgba(255,255,255,0.07);">
+    <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:40px; flex-wrap:wrap; gap:20px;">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.2em; color:#C6A15B; text-transform:uppercase; margin-bottom:12px;">// Ranking nacional</div>
+        <h2 style="font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:clamp(38px,5.5vw,68px); line-height:0.95; text-transform:uppercase;">Os melhores do circuito</h2>
+      </div>
+      <div style="display:flex; gap:8px; font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:0.08em; text-transform:uppercase;">
+        <span style="padding:8px 16px; background:#C6A15B; color:#0B0B0C;">Adulto</span>
+        <span style="padding:8px 16px; border:1px solid rgba(255,255,255,0.15); color:#B9B4A8;">Master</span>
+        <span style="padding:8px 16px; border:1px solid rgba(255,255,255,0.15); color:#B9B4A8;">Feminino</span>
+      </div>
+    </div>
+
+    <div style="border:1px solid rgba(255,255,255,0.09);">
+      <div style="display:grid; grid-template-columns:70px 1fr 1fr 120px 110px; padding:14px 24px; background:#131315; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.12em; color:#8B877D; text-transform:uppercase;">
+        <span>#</span><span>Atleta</span><span>Equipe</span><span>Faixa</span><span style="text-align:right;">Pontos</span>
+      </div>
+      <sc-for list="{{ ranking }}" as="r" hint-placeholder-count="6">
+        <div style="display:grid; grid-template-columns:70px 1fr 1fr 120px 110px; padding:18px 24px; align-items:center; border-top:1px solid rgba(255,255,255,0.06); background:{{ r.rowBg }};">
+          <span style="font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:22px; color:{{ r.rankColor }};">{{ r.rank }}</span>
+          <span style="font-family:'Saira Condensed',sans-serif; font-weight:600; font-size:19px; text-transform:uppercase;">{{ r.name }}</span>
+          <span style="font-size:14px; color:#8B877D;">{{ r.team }}</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#B9B4A8;">{{ r.belt }}</span>
+          <span style="text-align:right; font-family:'JetBrains Mono',monospace; font-size:16px; font-weight:500; color:#E4C784;">{{ r.points }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- INSCRICAO CTA -->
+  <section id="inscricao" style="position:relative; padding:120px 48px; overflow:hidden;">
+    <div style="position:absolute; inset:0; background:repeating-linear-gradient(115deg,#131315 0 2px,#0E0E10 2px 26px);"></div>
+    <div style="position:absolute; inset:0; background:radial-gradient(90% 120% at 50% 120%, rgba(198,161,91,0.18), transparent 60%);"></div>
+    <div style="position:relative; z-index:2; text-align:center; max-width:820px; margin:0 auto;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.22em; color:#C6A15B; text-transform:uppercase; margin-bottom:20px;">Comece a rodar seus eventos hoje</div>
+      <h2 style="font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:clamp(46px,8vw,104px); line-height:0.9; text-transform:uppercase; margin-bottom:28px;">O tatame,<br><span style="color:#C6A15B;">organizado</span></h2>
+      <p style="font-size:18px; line-height:1.5; color:#B9B4A8; margin-bottom:40px; max-width:540px; margin-left:auto; margin-right:auto;">Federações e academias montam um campeonato completo em minutos. Atletas se inscrevem em qualquer etapa com dois cliques. Tudo em um sistema só.</p>
+      <div style="display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
+        <a href="#" style="padding:17px 42px; background:#C6A15B; color:#0B0B0C; font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:0.08em; text-transform:uppercase;">Criar meu evento</a>
+        <a href="Arena JJ - Inscricao.dc.html" style="padding:17px 42px; border:1px solid rgba(255,255,255,0.25); color:#F5F1E9; font-family:'Saira Condensed',sans-serif; font-weight:700; font-size:17px; letter-spacing:0.08em; text-transform:uppercase;">Sou atleta</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer style="padding:48px; border-top:1px solid rgba(255,255,255,0.08); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:24px;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div style="width:26px; height:26px; border:2px solid #C6A15B; transform:rotate(45deg); display:flex; align-items:center; justify-content:center;"><div style="width:6px; height:6px; background:#C6A15B;"></div></div>
+      <span style="font-family:'Saira Condensed',sans-serif; font-weight:800; font-size:18px; letter-spacing:0.14em; text-transform:uppercase;">BJJ<span style="color:#C6A15B;">Arena</span></span>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#5C594F; letter-spacing:0.08em;">© 2026 BJJArena · Sistema de competições de jiu-jitsu</div>
+  </footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const gold = '#C6A15B';
+    return {
+      featured: {
+        etapa: '03',
+        title: 'Grand Prix',
+        subtitle: 'São Paulo',
+        blurb: 'A etapa mais disputada do circuito nacional de jiu-jitsu. Gi e No-Gi, das faixas branca à preta, em oito áreas simultâneas.',
+        date: '14 MAR',
+        city: 'São Paulo',
+        athletes: '1.240+',
+      },
+      events: [
+        { name: 'Grand Prix São Paulo', city: 'São Paulo · SP', type: 'Gi + No-Gi', day: '14', month: 'MAR', status: 'Inscrições abertas', statusColor: gold, slots: '312 vagas restantes' },
+        { name: 'Copa Litoral', city: 'Santos · SP', type: 'No-Gi', day: '05', month: 'ABR', status: 'Inscrições abertas', statusColor: gold, slots: '180 vagas restantes' },
+        { name: 'Open Sul', city: 'Curitiba · PR', type: 'Gi', day: '26', month: 'ABR', status: 'Em breve', statusColor: '#8B877D', slots: 'Abre em 12 dias' },
+        { name: 'Desafio das Faixas-Preta', city: 'Rio de Janeiro · RJ', type: 'Gi + No-Gi', day: '17', month: 'MAI', status: 'Em breve', statusColor: '#8B877D', slots: 'Somente convidados' },
+      ],
+      steps: [
+        { num: '01', title: 'Crie seu perfil', desc: 'Cadastro único com faixa, peso, equipe e histórico. Reutilizável em todas as etapas do circuito.' },
+        { num: '02', title: 'Inscreva-se', desc: 'Escolha a categoria, confirme a pesagem e pague. Tudo validado automaticamente pelo sistema.' },
+        { num: '03', title: 'Acompanhe a chave', desc: 'Chaveamento gerado ao vivo com notificação antes de cada luta e chamada de área em tempo real.' },
+        { num: '04', title: 'Suba no ranking', desc: 'Cada resultado alimenta o ranking nacional oficial por faixa, idade e peso, atualizado na hora.' },
+      ],
+      bracketLeft: [
+        { name: 'R. Mendes', score: '6', border: 'rgba(198,161,91,0.6)', color: '#F5F1E9' },
+        { name: 'L. Costa', score: '2', border: 'rgba(255,255,255,0.08)', color: '#8B877D' },
+      ],
+      bracketRight: [
+        { name: 'T. Almeida', score: '4', border: 'rgba(255,255,255,0.08)', color: '#8B877D' },
+        { name: 'B. Rocha', score: '11', border: 'rgba(198,161,91,0.6)', color: '#F5F1E9' },
+      ],
+      ranking: [
+        { rank: '01', name: 'Rafael Mendes', team: 'Atos JJ', belt: 'Preta', points: '4.820', rankColor: gold, rowBg: 'rgba(198,161,91,0.05)' },
+        { rank: '02', name: 'Bruno Rocha', team: 'Alliance', belt: 'Preta', points: '4.310', rankColor: '#F5F1E9', rowBg: 'transparent' },
+        { rank: '03', name: 'Thiago Almeida', team: 'GF Team', belt: 'Preta', points: '3.975', rankColor: '#F5F1E9', rowBg: 'transparent' },
+        { rank: '04', name: 'Lucas Costa', team: 'Checkmat', belt: 'Preta', points: '3.640', rankColor: '#8B877D', rowBg: 'transparent' },
+        { rank: '05', name: 'Diego Nunes', team: 'Dream Art', belt: 'Preta', points: '3.410', rankColor: '#8B877D', rowBg: 'transparent' },
+        { rank: '06', name: 'André Lima', team: 'PSLPB', belt: 'Preta', points: '3.180', rankColor: '#8B877D', rowBg: 'transparent' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

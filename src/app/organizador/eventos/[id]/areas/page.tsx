@@ -8,13 +8,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { getUsuarioAtual } from "@/lib/auth";
-import { montarFilaDaArea } from "@/lib/cronograma/fila";
+import { duracaoDaCategoria, montarFilaDaArea, type FilaDaArea } from "@/lib/cronograma/fila";
 import {
+  alternarIntercalarRodadas,
   criarArea,
   designarCategoria,
+  distribuirCategorias,
   excluirArea,
   removerCategoriaDaArea,
 } from "./actions";
+
+/** término estimado da área = hora da última luta + sua duração */
+function fimEstimado(fila: FilaDaArea["fila"]): Date | null {
+  const ultima = fila.at(-1);
+  if (!ultima) return null;
+  return new Date(
+    ultima.horaEstimada.getTime() + duracaoDaCategoria(ultima.categoria) * 1000,
+  );
+}
 
 const hora = (d: Date) =>
   d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -85,12 +96,19 @@ export default async function PaginaAreas({
 
         <Card className="col-span-2">
           <CardContent className="p-5">
-            <p className="text-sm font-semibold">
-              Categorias sem área{" "}
-              <span className="font-normal text-muted-foreground">
-                ({designaveis.length} com chave gerada)
-              </span>
-            </p>
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-sm font-semibold">
+                Categorias sem área{" "}
+                <span className="font-normal text-muted-foreground">
+                  ({designaveis.length} com chave gerada)
+                </span>
+              </p>
+              {designaveis.length > 0 && todasAreas.length > 0 && (
+                <form action={distribuirCategorias.bind(null, id)}>
+                  <Button size="sm">Distribuir automaticamente</Button>
+                </form>
+              )}
+            </div>
             {designaveis.length === 0 ? (
               <p className="mt-2 text-sm text-muted-foreground">
                 Nada para distribuir — gere as chaves primeiro.
@@ -138,8 +156,26 @@ export default async function PaginaAreas({
             <Card key={f.area.id}>
               <CardContent className="p-5">
                 <div className="flex items-center justify-between">
-                  <p className="font-bold">{f.area.nome}</p>
+                  <p className="font-bold">
+                    {f.area.nome}
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">
+                      {f.fila.length > 0 &&
+                        `${f.fila.length} luta(s) · termina ~${hora(fimEstimado(f.fila)!)}`}
+                    </span>
+                  </p>
                   <div className="flex items-center gap-3">
+                    <form action={alternarIntercalarRodadas.bind(null, id, f.area.id)}>
+                      <button
+                        title="Intercalar as rodadas das categorias (slice) — dá descanso aos atletas entre as próprias lutas"
+                        className={`text-xs hover:underline ${
+                          f.area.intercalarRodadas
+                            ? "font-medium text-success"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        intercalar: {f.area.intercalarRodadas ? "ligado" : "desligado"}
+                      </button>
+                    </form>
                     <Link
                       href={`/organizador/eventos/${id}/areas/${f.area.id}/placar`}
                       className={buttonVariants({ variant: "success", size: "sm" })}

@@ -3,8 +3,7 @@ import { notFound } from "next/navigation";
 import { and, eq, inArray, ne } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, chaves, eventos, inscricoes, lutas } from "@/db/schema";
-import { calcularPodio } from "@/lib/bracket";
-import { montarChaveEngine } from "@/lib/chaves/persistencia";
+import { calcularPodioDaChave } from "@/lib/chaves/persistencia";
 import { BracketView, type AtletaInfo } from "@/components/bracket-view";
 import { PublicShell } from "@/components/public-shell";
 
@@ -54,9 +53,7 @@ export default async function ChavePublica({
   );
 
   const podio =
-    chave.status === "concluida"
-      ? calcularPodio(montarChaveEngine(chave, linhas))
-      : null;
+    chave.status === "concluida" ? calcularPodioDaChave(chave, linhas) : null;
 
   return (
     <PublicShell>
@@ -79,7 +76,7 @@ export default async function ChavePublica({
       )}
 
       <div className="mt-6">
-        <BracketView lutas={linhas} atletas={atletas} />
+        <BracketView lutas={linhas} atletas={atletas} formato={chave.formato} />
       </div>
     </PublicShell>
   );

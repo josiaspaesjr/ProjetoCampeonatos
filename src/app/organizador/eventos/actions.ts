@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb } from "@/db";
@@ -118,6 +118,45 @@ export async function gerarCategoriasCbjj(eventoId: string, formData: FormData) 
   revalidatePath(`/organizador/eventos/${eventoId}`);
 }
 
+/**
+ * Configuração comercial/operacional da categoria: preço próprio (entry, ex.:
+ * absoluto) e duração estimada por luta (minutos, para o cronograma). Campos
+ * vazios ou zero voltam ao padrão (lote vigente / tabela CBJJ da faixa).
+ */
+export async function configurarCategoria(
+  eventoId: string,
+  categoriaId: string,
+  formData: FormData,
+) {
+  const { db } = await eventoDoOrganizador(eventoId);
+
+  const brutoPreco = String(formData.get("preco") ?? "").trim().replace(",", ".");
+  let precoCentavos: number | null = null;
+  if (brutoPreco) {
+    const reais = Number(brutoPreco);
+    if (!Number.isFinite(reais) || reais < 0) {
+      erroVisivel(eventoId, "Preço inválido — use um valor em reais, ex.: 90 ou 90,00");
+    }
+    precoCentavos = reais > 0 ? Math.round(reais * 100) : null;
+  }
+
+  const brutoDuracao = String(formData.get("duracaoMin") ?? "").trim().replace(",", ".");
+  let duracaoLutaSegundos: number | null = null;
+  if (brutoDuracao) {
+    const minutos = Number(brutoDuracao);
+    if (!Number.isFinite(minutos) || minutos < 0 || minutos > 60) {
+      erroVisivel(eventoId, "Duração inválida — minutos por luta, ex.: 6");
+    }
+    duracaoLutaSegundos = minutos > 0 ? Math.round(minutos * 60) : null;
+  }
+
+  await db
+    .update(categorias)
+    .set({ precoCentavos, duracaoLutaSegundos })
+    .where(and(eq(categorias.id, categoriaId), eq(categorias.eventoId, eventoId)));
+  revalidatePath(`/organizador/eventos/${eventoId}`);
+}
+
 export async function excluirCategoria(eventoId: string, categoriaId: string) {
   const { db } = await eventoDoOrganizador(eventoId);
 
@@ -206,6 +245,76 @@ export async function gerarChave(eventoId: string, categoriaId: string) {
     dadosNovos: { categoriaId, seed: chave.seedSorteio },
   });
   revalidatePath(`/organizador/eventos/${eventoId}/chaves`);
+}
+
+/**
+ * Gera em lote as chaves de todas as categorias com 2+ confirmados que ainda
+ * não têm chave. Formato automático por tamanho: até 3 atletas → round robin
+ * (todos contra todos), 4+ → eliminação simples. Rascunhos existentes são
+ * preservados — regenere individualmente se quiser trocar o sorteio.
+ */
+export async function gerarChavesEmLote(eventoId: string) {
+  const { db, usuario } = await eventoDoOrganizador(eventoId);
+
+  const [cats, confirmadas] = await Promise.all([
+    db.query.categorias.findMany({ where: eq(categorias.eventoId, eventoId) }),
+    db.query.inscricoes.findMany({
+      where: and(
+        eq(inscricoes.eventoId, eventoId),
+        eq(inscricoes.status, "confirmada"),
+      ),
+    }),
+  ]);
+  const contagem = new Map<string, number>();
+  for (const i of confirmadas) {
+    contagem.set(i.categoriaId, (contagem.get(i.categoriaId) ?? 0) + 1);
+  }
+
+  const existentes = new Set(
+    cats.length
+      ? (
+          await db.query.chaves.findMany({
+            where: inArray(chaves.categoriaId, cats.map((c) => c.id)),
+          })
+        ).map((c) => c.categoriaId)
+      : [],
+  );
+
+  const pendentes = cats.filter(
+    (c) => (contagem.get(c.id) ?? 0) >= 2 && !existentes.has(c.id),
+  );
+  if (!pendentes.length) {
+    redirect(
+      `/organizador/eventos/${eventoId}/chaves?erro=${encodeURIComponent(
+        "Nenhuma categoria aguardando chave (2+ confirmados e sem chave gerada)",
+      )}`,
+    );
+  }
+
+  const falhas: string[] = [];
+  for (const cat of pendentes) {
+    try {
+      const chave = await gerarChaveParaCategoria(db, cat.id, "auto");
+      await db.insert(auditoria).values({
+        usuarioId: usuario.id,
+        entidade: "chave",
+        entidadeId: chave.id,
+        acao: "chave_gerada_em_lote",
+        dadosNovos: { categoriaId: cat.id, formato: chave.formato, seed: chave.seedSorteio },
+      });
+    } catch (e) {
+      falhas.push(`${cat.nome}: ${e instanceof Error ? e.message : "erro"}`);
+    }
+  }
+
+  revalidatePath(`/organizador/eventos/${eventoId}/chaves`);
+  if (falhas.length) {
+    redirect(
+      `/organizador/eventos/${eventoId}/chaves?erro=${encodeURIComponent(
+        `Geradas ${pendentes.length - falhas.length} chave(s); falhas — ${falhas.join(" · ")}`,
+      )}`,
+    );
+  }
 }
 
 export async function publicarChaves(eventoId: string) {

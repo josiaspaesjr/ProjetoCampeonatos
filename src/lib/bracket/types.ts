@@ -38,7 +38,7 @@ export interface Luta {
 }
 
 export interface Chave {
-  formato: "eliminacao_simples";
+  formato: "eliminacao_simples" | "round_robin";
   /** seed usada no sorteio — mesma seed + mesmos inscritos = mesma chave */
   seed: string;
   /** total de rodadas (log2 do tamanho da chave) */

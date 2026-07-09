@@ -187,6 +187,9 @@ export const areas = pgTable("areas", {
   ordem: integer("ordem").notNull().default(0),
   // âncora do cronograma estimado da área
   horaInicio: timestamp("hora_inicio", { withTimezone: true }),
+  // "slice": alterna as rodadas das categorias em vez de correr cada uma
+  // inteira — reduz a espera dos atletas entre as próprias lutas
+  intercalarRodadas: boolean("intercalar_rodadas").notNull().default(false),
 });
 
 export const categorias = pgTable("categorias", {
@@ -203,6 +206,10 @@ export const categorias = pgTable("categorias", {
   idadeMin: integer("idade_min"),
   idadeMax: integer("idade_max"),
   limitePesoKg: numeric("limite_peso_kg", { precision: 5, scale: 2 }),
+  // preço específico desta categoria (ex.: absoluto); nulo = preço do lote vigente
+  precoCentavos: integer("preco_centavos"),
+  // duração estimada por luta (com transição); nulo = tabela CBJJ da faixa
+  duracaoLutaSegundos: integer("duracao_luta_segundos"),
   minInscritos: integer("min_inscritos").notNull().default(2),
   status: categoriaStatusEnum("status").notNull().default("aberta"),
   fundidaEmId: uuid("fundida_em_id"),

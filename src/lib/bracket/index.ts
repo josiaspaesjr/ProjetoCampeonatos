@@ -4,3 +4,9 @@ export {
   registrarResultado,
   calcularPodio,
 } from "./singleElimination";
+export {
+  gerarRoundRobin,
+  registrarResultadoRoundRobin,
+  classificacaoRoundRobin,
+  podioRoundRobin,
+} from "./roundRobin";

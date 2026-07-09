@@ -4,8 +4,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, chaves, eventos, inscricoes, lutas } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
-import { calcularPodio } from "@/lib/bracket";
-import { montarChaveEngine } from "@/lib/chaves/persistencia";
+import { calcularPodioDaChave } from "@/lib/chaves/persistencia";
 import { BracketView, type AtletaInfo } from "@/components/bracket-view";
 import { lancarResultado } from "../../../actions";
 
@@ -50,9 +49,7 @@ export default async function PaginaChave({
   );
 
   const podio =
-    chave.status === "concluida"
-      ? calcularPodio(montarChaveEngine(chave, linhas))
-      : null;
+    chave.status === "concluida" ? calcularPodioDaChave(chave, linhas) : null;
 
   return (
     <div>
@@ -93,6 +90,7 @@ export default async function PaginaChave({
         <BracketView
           lutas={linhas}
           atletas={atletas}
+          formato={chave.formato}
           acaoResultado={
             chave.status === "publicada" || chave.status === "em_andamento"
               ? lancarResultado.bind(null, evento.id, chave.id)

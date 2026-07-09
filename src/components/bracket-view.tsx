@@ -11,11 +11,14 @@ export interface AtletaInfo {
 interface Props {
   lutas: LutaRow[];
   atletas: Record<string, AtletaInfo>;
+  /** formato da chave — round robin não tem "final", só rodadas */
+  formato?: string;
   /** quando presente, lutas prontas exibem formulário de resultado */
   acaoResultado?: (formData: FormData) => Promise<void>;
 }
 
-const rotuloRodada = (rodada: number, total: number): string => {
+const rotuloRodada = (rodada: number, total: number, formato?: string): string => {
+  if (formato === "round_robin") return `${rodada}ª rodada`;
   const doFim = total - rodada;
   if (doFim === 0) return "Final";
   if (doFim === 1) return "Semifinal";
@@ -63,7 +66,7 @@ function LinhaAtleta({
   );
 }
 
-export function BracketView({ lutas: linhas, atletas, acaoResultado }: Props) {
+export function BracketView({ lutas: linhas, atletas, formato, acaoResultado }: Props) {
   const totalRodadas = Math.max(...linhas.map((l) => l.rodada));
   const rodadas = Array.from({ length: totalRodadas }, (_, i) =>
     linhas
@@ -77,11 +80,12 @@ export function BracketView({ lutas: linhas, atletas, acaoResultado }: Props) {
         {rodadas.map((lutasDaRodada, i) => (
           <div key={i} className="w-64 shrink-0">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {rotuloRodada(i + 1, totalRodadas)}
+              {rotuloRodada(i + 1, totalRodadas, formato)}
             </p>
             <div className="flex h-full flex-col justify-around gap-4">
               {lutasDaRodada.map((luta) => {
                 const bye =
+                  formato !== "round_robin" &&
                   luta.rodada === 1 &&
                   (luta.atleta1InscricaoId === null) !==
                     (luta.atleta2InscricaoId === null);

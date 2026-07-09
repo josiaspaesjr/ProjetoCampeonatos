@@ -127,12 +127,14 @@ export async function criarInscricao(eventoSlug: string, formData: FormData) {
     throw new Error("Você já tem inscrição nesta categoria");
   }
 
-  // --- preço: 2ª inscrição do mesmo atleta pode ter preço próprio ---------
+  // --- preço: categoria com preço próprio (entry) vence; senão o lote,
+  // com desconto de 2ª inscrição quando definido ---------------------------
   const ehSegundaInscricao = minhasInscricoes.length > 0;
   const valorCentavos =
-    ehSegundaInscricao && lote.precoSegundaInscricaoCentavos != null
+    categoria.precoCentavos ??
+    (ehSegundaInscricao && lote.precoSegundaInscricaoCentavos != null
       ? lote.precoSegundaInscricaoCentavos
-      : lote.precoCentavos;
+      : lote.precoCentavos);
 
   // --- inscrição + cobrança ----------------------------------------------
   const [inscricao] = await db

@@ -15,7 +15,7 @@ export default async function OrganizadorLayout({
       <header className="border-b bg-card">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <Link href="/organizador" className="font-bold tracking-tight">
-            BJJCAMP{" "}
+            BJJArena{" "}
             <span className="font-normal text-muted-foreground">· Organizador</span>
           </Link>
           {supabaseConfigurado() && usuario ? (

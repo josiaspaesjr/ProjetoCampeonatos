@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { getUsuarioAtual } from "@/lib/auth";
 import { CLASSES_IDADE, FAIXAS } from "@/lib/categorias/cbjj";
 import {
+  configurarCategoria,
   criarLote,
   encerrarInscricoes,
   excluirCategoria,
@@ -300,11 +301,39 @@ export default async function PaginaEvento({
         {cats.length > 0 && (
           <ul className="mt-4 grid grid-cols-2 gap-x-6 gap-y-1 rounded-xl border bg-card p-5 text-sm">
             {cats.map((c) => (
-              <li key={c.id} className="flex items-center justify-between border-b border-border py-1.5">
-                <span>{c.nome}</span>
-                <form action={excluirCategoria.bind(null, evento.id, c.id)}>
-                  <button className="text-xs text-destructive hover:underline">excluir</button>
-                </form>
+              <li key={c.id} className="flex items-center justify-between gap-3 border-b border-border py-1.5">
+                <span className="truncate">{c.nome}</span>
+                <span className="flex shrink-0 items-center gap-3">
+                  <form
+                    action={configurarCategoria.bind(null, evento.id, c.id)}
+                    className="flex items-center gap-1"
+                    title="Preço próprio (vazio = lote vigente) e minutos por luta (vazio = tabela CBJJ da faixa)"
+                  >
+                    <span className="text-xs text-muted-foreground">R$</span>
+                    <Input
+                      name="preco"
+                      defaultValue={c.precoCentavos != null ? (c.precoCentavos / 100).toFixed(0) : ""}
+                      placeholder="lote"
+                      className="h-7 w-16 px-2 text-xs"
+                    />
+                    <Input
+                      name="duracaoMin"
+                      defaultValue={
+                        c.duracaoLutaSegundos != null
+                          ? String(Math.round(c.duracaoLutaSegundos / 60))
+                          : ""
+                      }
+                      placeholder="min"
+                      className="h-7 w-12 px-2 text-xs"
+                    />
+                    <button className="text-xs text-muted-foreground hover:text-foreground hover:underline">
+                      ok
+                    </button>
+                  </form>
+                  <form action={excluirCategoria.bind(null, evento.id, c.id)}>
+                    <button className="text-xs text-destructive hover:underline">excluir</button>
+                  </form>
+                </span>
               </li>
             ))}
           </ul>
