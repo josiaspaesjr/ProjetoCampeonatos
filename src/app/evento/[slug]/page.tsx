@@ -14,7 +14,7 @@ const MODALIDADE_ROTULO: Record<string, string> = {
   nogi: "No-Gi",
 };
 
-// abreviação de faixa para o fato "Faixas" (ex.: "Bca→Pta")
+// abreviação de faixa para o fato "Faixas" (ex.: "Bca→Pta"), na ordem CBJJ
 const FAIXA_ABREV: Record<string, string> = {
   branca: "Bca",
   cinza: "Cza",
@@ -26,6 +26,20 @@ const FAIXA_ABREV: Record<string, string> = {
   marrom: "Mrm",
   preta: "Pta",
 };
+const ORDEM_FAIXAS = Object.keys(FAIXA_ABREV);
+
+/** Faixa mín→máx a partir das faixas presentes nas categorias do evento. */
+function faixasDasCategorias(faixas: (string | null)[]): string | null {
+  const idx = faixas
+    .filter((f): f is string => !!f && f in FAIXA_ABREV)
+    .map((f) => ORDEM_FAIXAS.indexOf(f));
+  if (!idx.length) return null;
+  const min = Math.min(...idx);
+  const max = Math.max(...idx);
+  return min === max
+    ? FAIXA_ABREV[ORDEM_FAIXAS[min]]
+    : `${FAIXA_ABREV[ORDEM_FAIXAS[min]]}→${FAIXA_ABREV[ORDEM_FAIXAS[max]]}`;
+}
 
 export default async function PaginaPublicaEvento({
   params,
@@ -101,10 +115,12 @@ export default async function PaginaPublicaEvento({
           ? { rotulo: "Evento finalizado", vivo: false }
           : { rotulo: "Inscrições encerradas", vivo: false };
 
+  // faixas derivam das categorias geradas; fallback ao recorte antigo do evento
   const faixas =
-    evento.faixaMin || evento.faixaMax
+    faixasDasCategorias(cats.map((c) => c.faixa)) ??
+    (evento.faixaMin || evento.faixaMax
       ? `${FAIXA_ABREV[evento.faixaMin ?? "branca"]}→${FAIXA_ABREV[evento.faixaMax ?? "preta"]}`
-      : "Bca→Pta";
+      : "Bca→Pta");
 
   const regulamento = secoesPreenchidas(evento.regulamento);
 

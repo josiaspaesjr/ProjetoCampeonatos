@@ -26,8 +26,6 @@ export interface EventoEditavel {
   bannerUrl: string;
   modalidade: string;
   dataPesagem: string;
-  faixaMin: string;
-  faixaMax: string;
   descricao: string;
   regulamento: Record<string, string>;
 }
@@ -49,19 +47,6 @@ const ROTULO_STATUS: Record<string, string> = {
   finalizado: "Finalizado",
 };
 
-const FAIXAS_OPCOES = [
-  "branca",
-  "cinza",
-  "amarela",
-  "laranja",
-  "verde",
-  "azul",
-  "roxa",
-  "marrom",
-  "preta",
-];
-
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 function BotaoSalvar() {
   const { pending } = useFormStatus();
@@ -250,37 +235,13 @@ export function TopbarEvento({
                     <option value="nogi">No-Gi</option>
                   </NativeSelect>
                 </div>
-                <div className="grid grid-cols-3 gap-3.5">
-                  <div className="flex flex-col gap-2">
-                    <label className={labelCls}>Faixa mín</label>
-                    <NativeSelect name="faixaMin" defaultValue={evento.faixaMin}>
-                      <option value="">—</option>
-                      {FAIXAS_OPCOES.map((f) => (
-                        <option key={f} value={f}>
-                          {cap(f)}
-                        </option>
-                      ))}
-                    </NativeSelect>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className={labelCls}>Faixa máx</label>
-                    <NativeSelect name="faixaMax" defaultValue={evento.faixaMax}>
-                      <option value="">—</option>
-                      {FAIXAS_OPCOES.map((f) => (
-                        <option key={f} value={f}>
-                          {cap(f)}
-                        </option>
-                      ))}
-                    </NativeSelect>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className={labelCls}>Pesagem</label>
-                    <Input
-                      name="dataPesagem"
-                      type="date"
-                      defaultValue={evento.dataPesagem}
-                    />
-                  </div>
+                <div className="flex flex-col gap-2">
+                  <label className={labelCls}>Data da pesagem</label>
+                  <Input
+                    name="dataPesagem"
+                    type="date"
+                    defaultValue={evento.dataPesagem}
+                  />
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className={labelCls}>Descrição</label>

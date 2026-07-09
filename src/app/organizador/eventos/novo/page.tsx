@@ -181,51 +181,6 @@ export default function NovoEvento() {
           </div>
         </div>
 
-        <div className="grid gap-[18px] sm:grid-cols-2">
-          <div className="flex flex-col gap-[9px]">
-            <label className={labelCls} htmlFor="ev-faixa-min">
-              Faixa mínima
-            </label>
-            <NativeSelect
-              id="ev-faixa-min"
-              name="faixaMin"
-              defaultValue="branca"
-              className="h-12"
-            >
-              <option value="branca">Branca</option>
-              <option value="cinza">Cinza</option>
-              <option value="amarela">Amarela</option>
-              <option value="laranja">Laranja</option>
-              <option value="verde">Verde</option>
-              <option value="azul">Azul</option>
-              <option value="roxa">Roxa</option>
-              <option value="marrom">Marrom</option>
-              <option value="preta">Preta</option>
-            </NativeSelect>
-          </div>
-          <div className="flex flex-col gap-[9px]">
-            <label className={labelCls} htmlFor="ev-faixa-max">
-              Faixa máxima
-            </label>
-            <NativeSelect
-              id="ev-faixa-max"
-              name="faixaMax"
-              defaultValue="preta"
-              className="h-12"
-            >
-              <option value="preta">Preta</option>
-              <option value="marrom">Marrom</option>
-              <option value="roxa">Roxa</option>
-              <option value="azul">Azul</option>
-              <option value="verde">Verde</option>
-              <option value="laranja">Laranja</option>
-              <option value="amarela">Amarela</option>
-              <option value="cinza">Cinza</option>
-              <option value="branca">Branca</option>
-            </NativeSelect>
-          </div>
-        </div>
-
         {/* REGULAMENTO */}
         <div className="mt-3.5 border-t border-white/8 pt-[22px]">
           <div className="font-cond text-[15px] font-semibold uppercase tracking-[0.1em] text-brand">

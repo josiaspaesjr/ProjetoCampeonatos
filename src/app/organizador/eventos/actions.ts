@@ -100,12 +100,8 @@ export async function criarEvento(formData: FormData) {
       modalidade: (["gi_nogi", "gi", "nogi"].includes(modalidade)
         ? modalidade
         : "gi_nogi") as "gi_nogi" | "gi" | "nogi",
-      // nº de áreas vem da seção Áreas (tabela areas), não do cadastro
+      // nº de áreas e faixas vêm de outras partes (Áreas e grade de categorias)
       dataPesagem: String(formData.get("dataPesagem") ?? "") || null,
-      faixaMin: (String(formData.get("faixaMin") ?? "") || null) as
-        | typeof eventos.$inferInsert.faixaMin,
-      faixaMax: (String(formData.get("faixaMax") ?? "") || null) as
-        | typeof eventos.$inferInsert.faixaMax,
       moeda: String(formData.get("moeda") ?? "BRL"),
       inscricoesFecham,
       regulamento: lerRegulamentoDoForm(formData),
@@ -236,12 +232,9 @@ export async function editarEvento(eventoId: string, formData: FormData) {
       modalidade: (["gi_nogi", "gi", "nogi"].includes(modalidade)
         ? modalidade
         : "gi_nogi") as "gi_nogi" | "gi" | "nogi",
-      // numAreas não é editado aqui — as áreas vivem na seção Áreas
+      // numAreas e faixas não são editados aqui — vivem na seção Áreas e na
+      // grade de categorias
       dataPesagem: String(formData.get("dataPesagem") ?? "") || null,
-      faixaMin: (String(formData.get("faixaMin") ?? "") ||
-        null) as typeof eventos.$inferInsert.faixaMin,
-      faixaMax: (String(formData.get("faixaMax") ?? "") ||
-        null) as typeof eventos.$inferInsert.faixaMax,
       moeda: String(formData.get("moeda") ?? "BRL"),
       inscricoesFecham: formData.get("inscricoesFecham")
         ? new Date(String(formData.get("inscricoesFecham")))

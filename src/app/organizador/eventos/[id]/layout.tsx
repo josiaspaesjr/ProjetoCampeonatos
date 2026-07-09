@@ -111,8 +111,6 @@ export default async function LayoutConsoleEvento({
     bannerUrl: evento.bannerUrl ?? "",
     modalidade: evento.modalidade,
     dataPesagem: evento.dataPesagem ?? "",
-    faixaMin: evento.faixaMin ?? "",
-    faixaMax: evento.faixaMax ?? "",
     descricao: evento.descricao ?? "",
     regulamento: evento.regulamento ?? {},
   };
