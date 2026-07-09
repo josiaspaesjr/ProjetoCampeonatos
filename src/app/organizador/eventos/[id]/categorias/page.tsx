@@ -2,10 +2,10 @@ import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, eventos } from "@/db/schema";
-import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { getUsuarioAtual } from "@/lib/auth";
 import { CLASSES_IDADE, FAIXAS } from "@/lib/categorias/cbjj";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { GeradorGrade } from "@/components/organizador/gerador-grade";
 import { excluirCategoria, gerarCategoriasCbjj } from "../../actions";
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -69,7 +69,7 @@ export default async function CategoriasEvento({
     where: eq(categorias.eventoId, id),
   });
 
-  // ordena na mesma sequência em que o gerador apresenta acima
+  // ordena na mesma sequência em que o gerador apresenta
   const ordenadas = [...cats].sort(
     (a, b) =>
       (ORDEM_CLASSE.get(a.classeIdade) ?? 999) -
@@ -83,11 +83,6 @@ export default async function CategoriasEvento({
   // nível 1: blocos por classe + sexo
   const blocos = agrupar(ordenadas, (c) => `${c.classeIdade}|${c.sexo}`);
 
-  const grupoCls =
-    "mb-3.5 font-cond text-[13px] font-semibold uppercase tracking-[0.08em] text-muted-3";
-  const checkCls =
-    "h-[18px] w-[18px] shrink-0 cursor-pointer appearance-none border border-white/28 bg-transparent align-middle checked:border-brand checked:bg-brand";
-
   return (
     <>
       {erro && (
@@ -97,109 +92,7 @@ export default async function CategoriasEvento({
       )}
 
       {/* GERADOR CBJJ */}
-      <div className="border border-white/10 bg-surface p-6">
-        <div className="disp mb-1 text-[26px]">Gerador de grade CBJJ</div>
-        <p className="mb-[22px] max-w-[820px] text-sm font-medium leading-normal text-muted-2">
-          Marque classes, sexos e faixas — o produto cartesiano com a tabela de
-          pesos vira a grade (cada classe só gera as faixas permitidas para
-          ela). Confira os limites com o regulamento do seu evento — as
-          categorias são editáveis.
-        </p>
-
-        <form action={gerarCategoriasCbjj.bind(null, evento.id)}>
-          <div className="grid gap-8 text-sm md:grid-cols-3">
-            <fieldset>
-              <legend className={grupoCls}>Classes</legend>
-              <div className="flex flex-col gap-[11px]">
-                {CLASSES_IDADE.map((c) => (
-                  <label
-                    key={c.id}
-                    className="flex cursor-pointer items-center gap-2.5"
-                  >
-                    <input
-                      type="checkbox"
-                      name="classes"
-                      value={c.id}
-                      defaultChecked={c.id === "adulto"}
-                      className={checkCls}
-                    />
-                    {c.nome}{" "}
-                    <span className="text-muted-3">
-                      ({c.idadeMin}
-                      {c.idadeMax ? `–${c.idadeMax}` : "+"})
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend className={grupoCls}>Sexo</legend>
-              <div className="flex flex-col gap-[11px]">
-                <label className="flex cursor-pointer items-center gap-2.5">
-                  <input
-                    type="checkbox"
-                    name="sexos"
-                    value="masculino"
-                    defaultChecked
-                    className={checkCls}
-                  />
-                  Masculino
-                </label>
-                <label className="flex cursor-pointer items-center gap-2.5">
-                  <input
-                    type="checkbox"
-                    name="sexos"
-                    value="feminino"
-                    defaultChecked
-                    className={checkCls}
-                  />
-                  Feminino
-                </label>
-                <label className="mt-2 flex cursor-pointer items-center gap-2.5 font-medium">
-                  <input
-                    type="checkbox"
-                    name="incluirAbsoluto"
-                    className={checkCls}
-                  />
-                  Incluir absoluto
-                </label>
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend className={grupoCls}>Faixas</legend>
-              <div className="flex flex-col gap-[11px]">
-                {FAIXAS.map((f) => (
-                  <label
-                    key={f}
-                    className="flex cursor-pointer items-center gap-2.5"
-                  >
-                    <input
-                      type="checkbox"
-                      name="faixas"
-                      value={f}
-                      defaultChecked={f === "branca" || f === "azul"}
-                      className={checkCls}
-                    />
-                    <span className="flex items-center gap-2">
-                      <span
-                        className="h-[9px] w-[9px] -skew-x-9 border border-white/20"
-                        style={{ background: corDaFaixa(f) }}
-                      />
-                      {cap(f)}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-          </div>
-
-          <BotaoAcaoBruto className="mt-6 inline-flex h-[42px] cursor-pointer items-center bg-brand px-5 font-cond text-base font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">
-            Gerar categorias
-          </BotaoAcaoBruto>
-        </form>
-      </div>
+      <GeradorGrade gerar={gerarCategoriasCbjj.bind(null, evento.id)} />
 
       {/* GRADE GERADA */}
       <div>
@@ -214,7 +107,7 @@ export default async function CategoriasEvento({
 
         {cats.length === 0 ? (
           <div className="border border-white/10 bg-surface px-[22px] py-12 text-center font-cond text-[15px] uppercase text-muted-3">
-            Marque classes, sexos e faixas e clique em{" "}
+            Monte a grade acima e clique em{" "}
             <strong className="text-muted-2">Gerar categorias</strong>.
           </div>
         ) : (
