@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
-  agruparEOrdenar,
+  agruparExibicao,
+  classesEmOrdem,
+  contarGrupos,
   corDaOnda,
-  distribuirEmAreas,
+  distribuirBalanceado,
   ondaDaClasse,
-  type CategoriaParaAgrupar,
+  ordenarCategorias,
+  type CategoriaComCarga,
+  type CategoriaOrdenavel,
 } from "./distribuicao-areas";
+
+type Cat = CategoriaOrdenavel & CategoriaComCarga & { id: string; lutas?: number };
 
 /** fábrica enxuta de categorias para os testes */
 function cat(
@@ -13,9 +19,18 @@ function cat(
   classeIdade: string,
   faixa: string | null,
   sexo = "masculino",
-  extra: Partial<CategoriaParaAgrupar> = {},
-): CategoriaParaAgrupar {
-  return { id, classeIdade, sexo, faixa, tipo: "peso", limitePesoKg: 70, ...extra };
+  extra: Partial<Cat> = {},
+): Cat {
+  return {
+    id,
+    classeIdade,
+    sexo,
+    faixa,
+    tipo: "peso",
+    limitePesoKg: 70,
+    carga: 300,
+    ...extra,
+  };
 }
 
 describe("ondaDaClasse", () => {
@@ -26,7 +41,6 @@ describe("ondaDaClasse", () => {
 
   it("o miolo corre por último (onda máxima em Master 1)", () => {
     expect(ondaDaClasse("master1")).toBe(6);
-    // Adulto fica logo antes do centro
     expect(ondaDaClasse("adulto")).toBe(5);
   });
 
@@ -36,72 +50,115 @@ describe("ondaDaClasse", () => {
   });
 });
 
-describe("agruparEOrdenar", () => {
-  it("agrupa por classe·sexo·faixa e conta os pesos", () => {
-    const grupos = agruparEOrdenar([
-      cat("a", "adulto", "preta"),
-      cat("b", "adulto", "preta"),
-      cat("c", "adulto", "azul"),
-    ]);
-    const preta = grupos.find((g) => g.faixa === "preta")!;
-    expect(preta.pesos).toBe(2);
-    expect(preta.categoriaIds).toEqual(["a", "b"]);
-    expect(grupos.find((g) => g.faixa === "azul")!.pesos).toBe(1);
-  });
-
+describe("ordenarCategorias", () => {
   it("ordena a onda ascendente: extremos antes do miolo", () => {
-    const grupos = agruparEOrdenar([
+    const cats = ordenarCategorias([
       cat("adulto", "adulto", "branca"),
       cat("kid", "pre_mirim", "branca"),
       cat("master", "master7", "branca"),
     ]);
-    // pre_mirim e master7 (onda 0) vêm antes de adulto (onda 5)
-    expect(grupos.at(-1)!.classeId).toBe("adulto");
-    expect(grupos.slice(0, 2).map((g) => g.classeId).sort()).toEqual([
+    expect(cats.at(-1)!.classeIdade).toBe("adulto");
+    expect(cats.slice(0, 2).map((c) => c.classeIdade).sort()).toEqual([
       "master7",
       "pre_mirim",
     ]);
   });
 
   it("dentro da mesma onda, ordena por faixa (branca→preta)", () => {
-    const grupos = agruparEOrdenar([
+    const cats = ordenarCategorias([
       cat("p", "adulto", "preta"),
       cat("b", "adulto", "branca"),
       cat("a", "adulto", "azul"),
     ]);
-    expect(grupos.map((g) => g.faixa)).toEqual(["branca", "azul", "preta"]);
+    expect(cats.map((c) => c.faixa)).toEqual(["branca", "azul", "preta"]);
   });
 
-  it("absoluto e pesadíssimo (sem limite) vão ao fim do grupo", () => {
-    const grupos = agruparEOrdenar([
+  it("dentro do grupo, ordena leve→pesado→pesadíssimo→absoluto", () => {
+    const cats = ordenarCategorias([
       cat("abs", "adulto", "preta", "masculino", { tipo: "absoluto", limitePesoKg: null }),
       cat("pesadissimo", "adulto", "preta", "masculino", { limitePesoKg: null }),
+      cat("pesado", "adulto", "preta", "masculino", { limitePesoKg: 94 }),
       cat("leve", "adulto", "preta", "masculino", { limitePesoKg: 76 }),
     ]);
-    expect(grupos[0].categoriaIds).toEqual(["leve", "pesadissimo", "abs"]);
+    expect(cats.map((c) => c.id)).toEqual(["leve", "pesado", "pesadissimo", "abs"]);
   });
 });
 
-describe("distribuirEmAreas", () => {
-  it("faz round-robin dos grupos nas N áreas", () => {
-    const areas = distribuirEmAreas(["g0", "g1", "g2", "g3", "g4"], 2);
-    expect(areas).toEqual([["g0", "g2", "g4"], ["g1", "g3"]]);
+describe("distribuirBalanceado", () => {
+  it("preenche todas as áreas mesmo com poucos grupos (bug das áreas vazias)", () => {
+    // 6 categorias de UM único grupo → 3 áreas, todas devem receber
+    const grade = Array.from({ length: 6 }, (_, i) =>
+      cat(`c${i}`, "adulto", "preta", "masculino", { limitePesoKg: 60 + i }),
+    );
+    const areas = distribuirBalanceado(grade, 3);
+    expect(areas).toHaveLength(3);
+    expect(areas.every((a) => a.length > 0)).toBe(true);
+    expect(areas.reduce((s, a) => s + a.length, 0)).toBe(6);
   });
 
-  it("toda área começa pelo mesmo início da ordem (extremos)", () => {
-    const grupos = agruparEOrdenar([
-      cat("k1", "pre_mirim", "branca"),
-      cat("k2", "mirim", "branca"),
-      cat("ad", "adulto", "preta"),
-      cat("m1", "master1", "preta"),
+  it("equilibra a carga: a categoria pesada não empilha com as leves", () => {
+    const grade = [
+      cat("pesada", "adulto", "preta", "masculino", { carga: 3000 }),
+      cat("l1", "adulto", "preta", "masculino", { carga: 300 }),
+      cat("l2", "adulto", "preta", "masculino", { carga: 300 }),
+      cat("l3", "adulto", "preta", "masculino", { carga: 300 }),
+    ];
+    const [a0, a1] = distribuirBalanceado(grade, 2);
+    // a área que pegou a categoria pesada recebe menos categorias no total
+    const cargaDe = (a: typeof grade) => a.reduce((s, c) => s + c.carga, 0);
+    expect(Math.abs(cargaDe(a0) - cargaDe(a1))).toBeLessThan(3000);
+  });
+
+  it("cada área preserva a ordem do dia recebida", () => {
+    const grade = ordenarCategorias([
+      cat("k", "pre_mirim", "branca"),
+      cat("m", "master1", "preta"),
+      cat("ad1", "adulto", "azul"),
+      cat("ad2", "adulto", "preta"),
     ]);
-    const [area0, area1] = distribuirEmAreas(grupos, 2);
-    // grupo de menor onda cai na área 0; o segundo menor na área 1
-    expect(area0[0].onda).toBeLessThanOrEqual(area1[0]?.onda ?? Infinity);
+    for (const area of distribuirBalanceado(grade, 2)) {
+      const ondas = area.map((c) => ondaDaClasse(c.classeIdade));
+      expect(ondas).toEqual([...ondas].sort((a, b) => a - b));
+    }
   });
 
   it("nunca gera menos de uma área", () => {
-    expect(distribuirEmAreas(["a"], 0)).toHaveLength(1);
+    expect(distribuirBalanceado([cat("a", "adulto", "preta")], 0)).toHaveLength(1);
+  });
+});
+
+describe("agruparExibicao", () => {
+  it("reagrupa por classe·sexo·faixa contando os pesos", () => {
+    const grupos = agruparExibicao([
+      cat("a", "adulto", "preta"),
+      cat("b", "adulto", "preta"),
+      cat("c", "adulto", "azul"),
+    ]);
+    expect(grupos.find((g) => g.faixa === "preta")!.pesos).toBe(2);
+    expect(grupos.find((g) => g.faixa === "azul")!.pesos).toBe(1);
+  });
+});
+
+describe("classesEmOrdem / contarGrupos", () => {
+  it("lista as classes distintas na ordem recebida", () => {
+    const cats = ordenarCategorias([
+      cat("a", "adulto", "preta"),
+      cat("k", "pre_mirim", "branca"),
+    ]);
+    expect(classesEmOrdem(cats).map((c) => c.nome)).toEqual([
+      "Pré-Mirim",
+      "Adulto",
+    ]);
+  });
+
+  it("conta os grupos distintos da grade", () => {
+    expect(
+      contarGrupos([
+        cat("a", "adulto", "preta"),
+        cat("b", "adulto", "preta"),
+        cat("c", "adulto", "azul", "feminino"),
+      ]),
+    ).toBe(2);
   });
 });
 

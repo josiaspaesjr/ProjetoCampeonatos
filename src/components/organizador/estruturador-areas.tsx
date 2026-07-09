@@ -5,7 +5,14 @@ import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
-import { corDaOnda, distribuirEmAreas } from "@/lib/categorias/distribuicao-areas";
+import {
+  agruparExibicao,
+  classesEmOrdem,
+  contarGrupos,
+  corDaOnda,
+  distribuirBalanceado,
+  maiorOndaDeCats,
+} from "@/lib/categorias/distribuicao-areas";
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -17,34 +24,33 @@ const ROTULO_SEXO: Record<string, string> = {
 const AREAS_MIN = 1;
 const AREAS_MAX = 40;
 
-/** grupo (classe·sexo·faixa) na forma leve enviada ao cliente */
-export interface GrupoView {
-  chave: string;
-  classeNome: string;
-  onda: number;
+/** categoria enxuta enviada ao cliente, já na ordem do dia */
+export interface CategoriaView {
+  classeIdade: string;
   sexo: string;
-  faixa: string;
-  pesos: number;
+  faixa: string | null;
+  /** carga estimada (segundos) para o balanceamento */
+  carga: number;
+  /** lutas estimadas, só para exibir a carga por área */
+  lutas: number;
 }
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
-function tituloGrupo(g: GrupoView): string {
+function tituloGrupo(g: { classeNome: string; sexo: string; faixa: string }): string {
   const base = `${g.classeNome} · ${ROTULO_SEXO[g.sexo] ?? cap(g.sexo)}`;
   return g.faixa ? `${base} · ${cap(g.faixa)}` : base;
 }
 
 export function EstruturadorAreas({
-  grupos,
-  totalCategorias,
+  categorias,
   numAreasInicial,
   estruturado: estruturadoInicial,
   base,
   areaIds,
   estruturar,
 }: {
-  grupos: GrupoView[];
-  totalCategorias: number;
+  categorias: CategoriaView[];
   numAreasInicial: number | null;
   estruturado: boolean;
   /** caminho base do evento, ex.: `/organizador/eventos/:id` */
@@ -59,34 +65,32 @@ export function EstruturadorAreas({
 
   const nInt = Math.floor(Number(areasN));
   const nValido = Number.isFinite(nInt) && nInt >= AREAS_MIN && nInt <= AREAS_MAX;
-  const temGrupos = grupos.length > 0;
+  const totalCategorias = categorias.length;
+  const temCategorias = totalCategorias > 0;
 
-  const maiorOndaValor = useMemo(
-    () => Math.max(1, ...grupos.map((g) => g.onda)),
-    [grupos],
-  );
+  const maiorOndaValor = useMemo(() => maiorOndaDeCats(categorias), [categorias]);
+  const gruposTotal = useMemo(() => contarGrupos(categorias), [categorias]);
+  const classesDoFunil = useMemo(() => classesEmOrdem(categorias), [categorias]);
 
-  // classes distintas na ordem do dia (para a legenda do funil)
-  const classesDoFunil = useMemo(() => {
-    const vistas = new Map<string, number>();
-    for (const g of grupos) {
-      if (!vistas.has(g.classeNome)) vistas.set(g.classeNome, g.onda);
-    }
-    return [...vistas].map(([nome, onda]) => ({ nome, onda }));
-  }, [grupos]);
-
-  // alocação por área (round-robin), recomputada ao vivo com o nº de áreas
+  // alocação balanceada por área, recomputada ao vivo com o nº de áreas
   const porArea = useMemo(
-    () => (nValido ? distribuirEmAreas(grupos, nInt) : []),
-    [grupos, nInt, nValido],
+    () =>
+      nValido
+        ? distribuirBalanceado(categorias, nInt).map((cats) => ({
+            grupos: agruparExibicao(cats),
+            totalCats: cats.length,
+            lutas: cats.reduce((s, c) => s + c.lutas, 0),
+          }))
+        : [],
+    [categorias, nInt, nValido],
   );
 
-  const mostrarPreview = estruturado && nValido && temGrupos;
+  const mostrarPreview = estruturado && nValido && temCategorias;
   // só liga o placar quando a prévia bate com a estrutura persistida
   const placarLigado = estruturado && areaIds.length === nInt;
 
   // ---- SEM CATEGORIAS: bloqueia com prompt para a seção Categorias ----
-  if (!temGrupos) {
+  if (!temCategorias) {
     return (
       <div className="relative border border-white/10 bg-surface px-[22px] py-12 text-center">
         <span className="absolute inset-y-0 left-0 w-[3px] bg-brand" />
@@ -142,7 +146,7 @@ export function EstruturadorAreas({
               {totalCategorias}
             </div>
             <div className="mt-1.5 font-cond text-[13px] uppercase tracking-[0.04em] text-muted-2">
-              em {grupos.length} grupo{grupos.length === 1 ? "" : "s"}
+              em {gruposTotal} grupo{gruposTotal === 1 ? "" : "s"}
             </div>
           </div>
 
@@ -160,10 +164,10 @@ export function EstruturadorAreas({
         </div>
 
         <p className="border-t border-white/10 px-6 py-3.5 font-cond text-[13px] uppercase leading-relaxed tracking-[0.03em] text-muted-3">
-          O sistema agrupa a grade por classe · sexo · faixa e distribui os
-          grupos pelas áreas numa ordem que vai dos extremos ao meio — kids e
-          masters mais velhos liberam cedo, o miolo (Adulto / Master 1) corre
-          por último.
+          O sistema ordena a grade dos extremos ao meio (kids e masters mais
+          velhos liberam cedo, o miolo — Adulto / Master 1 — corre por último) e
+          espalha as categorias pelas áreas equilibrando a carga, sem deixar
+          nenhuma área vazia.
         </p>
       </div>
 
@@ -216,17 +220,16 @@ export function EstruturadorAreas({
             <Stat rotulo="Média / área" valor={String(media)} sub="categorias" />
             <Stat
               rotulo="Grupos"
-              valor={String(grupos.length)}
+              valor={String(gruposTotal)}
               sub="classe · sexo · faixa"
             />
           </div>
 
           {/* CARDS POR ÁREA */}
           <div className="grid gap-4 md:grid-cols-2">
-            {porArea.map((gruposDaArea, i) => {
-              const totalCats = gruposDaArea.reduce((s, g) => s + g.pesos, 0);
-              const visiveis = gruposDaArea.slice(0, 6);
-              const ocultos = gruposDaArea.length - visiveis.length;
+            {porArea.map((area, i) => {
+              const visiveis = area.grupos.slice(0, 6);
+              const ocultos = area.grupos.length - visiveis.length;
               return (
                 <div
                   key={i}
@@ -239,21 +242,28 @@ export function EstruturadorAreas({
                         Área {pad2(i + 1)}
                       </span>
                       <span className="font-cond text-[13px] uppercase tracking-[0.04em] text-muted-3">
-                        {gruposDaArea.length} grupo
-                        {gruposDaArea.length === 1 ? "" : "s"}
+                        {area.grupos.length} grupo
+                        {area.grupos.length === 1 ? "" : "s"}
                       </span>
                     </div>
                     <div className="text-right">
-                      <span className="disp tnum text-[28px] leading-none text-brand">
-                        {totalCats}
-                      </span>
-                      <span className="ml-1.5 font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
-                        cat.
-                      </span>
+                      <div>
+                        <span className="disp tnum text-[28px] leading-none text-brand">
+                          {area.totalCats}
+                        </span>
+                        <span className="ml-1.5 font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
+                          cat.
+                        </span>
+                      </div>
+                      {area.lutas > 0 && (
+                        <div className="tnum font-cond text-[11px] uppercase tracking-[0.04em] text-muted-3">
+                          ~{area.lutas} lutas
+                        </div>
+                      )}
                     </div>
                   </div>
 
-                  {gruposDaArea.length === 0 ? (
+                  {area.grupos.length === 0 ? (
                     <div className="px-5 py-6 text-center font-cond text-[13px] uppercase tracking-[0.04em] text-muted-3">
                       Sem grupos nesta área
                     </div>
@@ -316,7 +326,7 @@ export function EstruturadorAreas({
           <p className="mx-auto mt-2 max-w-md font-cond text-[15px] uppercase tracking-[0.03em] text-muted-3">
             Informe o número de áreas e clique em{" "}
             <span className="text-brand-soft">Estruturar áreas</span> para
-            distribuir os {grupos.length} grupos.
+            distribuir as {totalCategorias} categorias.
           </p>
         </div>
       )}

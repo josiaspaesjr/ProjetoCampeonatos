@@ -3,10 +3,11 @@ import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { areas, categorias, eventos } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
-import { agruparEOrdenar } from "@/lib/categorias/distribuicao-areas";
+import { ordenarCategorias } from "@/lib/categorias/distribuicao-areas";
+import { estimarCargaCategorias } from "@/lib/cronograma/carga-areas";
 import {
   EstruturadorAreas,
-  type GrupoView,
+  type CategoriaView,
 } from "@/components/organizador/estruturador-areas";
 import { estruturarAreas } from "./actions";
 
@@ -32,29 +33,30 @@ export default async function PaginaAreas({
     }),
   ]);
 
-  // grupos na ordem do dia (extremos → meio), enviados enxutos ao cliente
-  const grupos: GrupoView[] = agruparEOrdenar(
+  const cargas = await estimarCargaCategorias(db, id, cats);
+
+  // categorias já na ordem do dia (extremos → meio), enxutas para o cliente
+  const categoriasView: CategoriaView[] = ordenarCategorias(
     cats.map((c) => ({
-      id: c.id,
       classeIdade: c.classeIdade,
       sexo: c.sexo,
       faixa: c.faixa,
       tipo: c.tipo,
       limitePesoKg: c.limitePesoKg != null ? Number(c.limitePesoKg) : null,
+      carga: cargas.get(c.id)?.carga ?? 1,
+      lutas: cargas.get(c.id)?.lutas ?? 0,
     })),
-  ).map((g) => ({
-    chave: g.chave,
-    classeNome: g.classeNome,
-    onda: g.onda,
-    sexo: g.sexo,
-    faixa: g.faixa,
-    pesos: g.pesos,
+  ).map((c) => ({
+    classeIdade: c.classeIdade,
+    sexo: c.sexo,
+    faixa: c.faixa,
+    carga: c.carga,
+    lutas: c.lutas,
   }));
 
   return (
     <EstruturadorAreas
-      grupos={grupos}
-      totalCategorias={cats.length}
+      categorias={categoriasView}
       numAreasInicial={evento.numAreas}
       estruturado={evento.numAreas != null}
       base={`/organizador/eventos/${id}`}

@@ -6,9 +6,10 @@ import { getDb } from "@/db";
 import { areas, auditoria, categorias, eventos, lutas } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
 import {
-  agruparEOrdenar,
-  distribuirEmAreas,
+  distribuirBalanceado,
+  ordenarCategorias,
 } from "@/lib/categorias/distribuicao-areas";
+import { estimarCargaCategorias } from "@/lib/cronograma/carga-areas";
 import { registrarResultadoNoBanco, type PlacarLuta } from "@/lib/chaves/persistencia";
 import type { MetodoVitoria } from "@/lib/bracket";
 
@@ -81,8 +82,9 @@ export async function estruturarAreas(eventoId: string, formData: FormData) {
     await db.delete(areas).where(inArray(areas.id, idsExtras));
   }
 
-  // agrupa a grade e distribui os grupos pelas áreas na ordem do dia
-  const grupos = agruparEOrdenar(
+  // ordena a grade na ordem do dia e distribui as categorias por menor carga
+  const cargas = await estimarCargaCategorias(db, eventoId, cats);
+  const ordenadas = ordenarCategorias(
     cats.map((c) => ({
       id: c.id,
       classeIdade: c.classeIdade,
@@ -90,18 +92,16 @@ export async function estruturarAreas(eventoId: string, formData: FormData) {
       faixa: c.faixa,
       tipo: c.tipo,
       limitePesoKg: c.limitePesoKg != null ? Number(c.limitePesoKg) : null,
+      carga: cargas.get(c.id)?.carga ?? 1,
     })),
   );
-  const porArea = distribuirEmAreas(grupos, nAreas);
+  const porArea = distribuirBalanceado(ordenadas, nAreas);
 
   const alocacoes: { id: string; areaId: string; ordem: number }[] = [];
-  porArea.forEach((gruposDaArea, i) => {
-    let ordem = 0;
-    for (const grupo of gruposDaArea) {
-      for (const categoriaId of grupo.categoriaIds) {
-        alocacoes.push({ id: categoriaId, areaId: alvoIds[i], ordem: ordem++ });
-      }
-    }
+  porArea.forEach((catsDaArea, i) => {
+    catsDaArea.forEach((c, ordem) => {
+      alocacoes.push({ id: c.id, areaId: alvoIds[i], ordem });
+    });
   });
   await Promise.all(
     alocacoes.map((a) =>
@@ -117,7 +117,7 @@ export async function estruturarAreas(eventoId: string, formData: FormData) {
     entidade: "evento",
     entidadeId: eventoId,
     acao: "areas_estruturadas",
-    dadosNovos: { areas: nAreas, grupos: grupos.length, categorias: cats.length },
+    dadosNovos: { areas: nAreas, categorias: cats.length },
   });
 
   revalidatePath(`/organizador/eventos/${eventoId}`);
