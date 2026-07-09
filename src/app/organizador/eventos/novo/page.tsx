@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SkewTexto } from "@/components/marca";
+import { CamposDataEvento } from "@/components/organizador/campos-data-evento";
 import { RegulamentoCampos } from "@/components/organizador/regulamento-campos";
 import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { Input } from "@/components/ui/input";
@@ -65,25 +66,13 @@ export default function NovoEvento() {
           />
         </div>
 
-        <div className="grid gap-[18px] sm:grid-cols-2">
-          <div className="flex flex-col gap-[9px]">
-            <label className={labelCls} htmlFor="ev-data">
-              Data do evento <Obrigatorio />
-            </label>
-            <Input id="ev-data" type="date" name="dataInicio" required className="h-12" />
-          </div>
-          <div className="flex flex-col gap-[9px]">
-            <label className={labelCls} htmlFor="ev-fecham">
-              Inscrições fecham em
-            </label>
-            <Input
-              id="ev-fecham"
-              type="datetime-local"
-              name="inscricoesFecham"
-              className="h-12"
-            />
-          </div>
-        </div>
+        <CamposDataEvento
+          gridClassName="grid gap-[18px] sm:grid-cols-2"
+          labelCls={labelCls}
+          inputClassName="h-12"
+          fechamLabel="Inscrições fecham em"
+          obrigatorio
+        />
 
         <div className="grid gap-[18px] sm:grid-cols-[1fr_90px_220px]">
           <div className="flex flex-col gap-[9px]">

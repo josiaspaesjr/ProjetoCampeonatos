@@ -65,6 +65,15 @@ function precoParaCentavos(bruto: FormDataEntryValue | null): number | null {
   return Math.round(reais * 100);
 }
 
+/** inscrições não podem fechar depois do dia do evento */
+function inscricoesFechamValidas(
+  inscricoesFecham: Date | null,
+  dataInicio: string,
+): boolean {
+  if (!inscricoesFecham) return true;
+  return inscricoesFecham <= new Date(`${dataInicio}T23:59:59`);
+}
+
 export async function criarEvento(formData: FormData) {
   const db = await getDb();
   const usuario = await getUsuarioAtual();
@@ -83,6 +92,9 @@ export async function criarEvento(formData: FormData) {
   const inscricoesFecham = formData.get("inscricoesFecham")
     ? new Date(String(formData.get("inscricoesFecham")))
     : null;
+  if (!inscricoesFechamValidas(inscricoesFecham, dataInicio)) {
+    throw new Error("As inscrições devem fechar até a data do evento.");
+  }
 
   const [evento] = await db
     .insert(eventos)
@@ -216,6 +228,12 @@ export async function editarEvento(eventoId: string, formData: FormData) {
   }
 
   const modalidade = String(formData.get("modalidade") ?? "gi_nogi");
+  const inscricoesFecham = formData.get("inscricoesFecham")
+    ? new Date(String(formData.get("inscricoesFecham")))
+    : null;
+  if (!inscricoesFechamValidas(inscricoesFecham, dataInicio)) {
+    erroVisivel(eventoId, "As inscrições devem fechar até a data do evento.");
+  }
 
   await db
     .update(eventos)
@@ -236,9 +254,7 @@ export async function editarEvento(eventoId: string, formData: FormData) {
       // grade de categorias
       dataPesagem: String(formData.get("dataPesagem") ?? "") || null,
       moeda: String(formData.get("moeda") ?? "BRL"),
-      inscricoesFecham: formData.get("inscricoesFecham")
-        ? new Date(String(formData.get("inscricoesFecham")))
-        : null,
+      inscricoesFecham,
       regulamento: lerRegulamentoDoForm(formData),
     })
     .where(eq(eventos.id, eventoId));

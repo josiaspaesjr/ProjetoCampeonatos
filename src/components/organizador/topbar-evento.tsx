@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { SkewTexto } from "@/components/marca";
+import { CamposDataEvento } from "@/components/organizador/campos-data-evento";
 import { RegulamentoCampos } from "@/components/organizador/regulamento-campos";
 import { Spinner } from "@/components/ui/botao-acao";
 import { Input } from "@/components/ui/input";
@@ -166,25 +167,13 @@ export function TopbarEvento({
                   <label className={labelCls}>Circuito / temporada</label>
                   <Input name="circuito" defaultValue={evento.circuito} />
                 </div>
-                <div className="grid grid-cols-2 gap-3.5">
-                  <div className="flex flex-col gap-2">
-                    <label className={labelCls}>Data do evento</label>
-                    <Input
-                      name="dataInicio"
-                      type="date"
-                      required
-                      defaultValue={evento.dataInicio}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className={labelCls}>Inscrições fecham</label>
-                    <Input
-                      name="inscricoesFecham"
-                      type="datetime-local"
-                      defaultValue={evento.inscricoesFecham}
-                    />
-                  </div>
-                </div>
+                <CamposDataEvento
+                  gridClassName="grid grid-cols-2 gap-3.5"
+                  labelCls={labelCls}
+                  fechamLabel="Inscrições fecham"
+                  defaultDataInicio={evento.dataInicio}
+                  defaultInscricoesFecham={evento.inscricoesFecham}
+                />
                 <div className="grid grid-cols-[1fr_80px_130px] gap-3.5">
                   <div className="flex flex-col gap-2">
                     <label className={labelCls}>Cidade</label>
