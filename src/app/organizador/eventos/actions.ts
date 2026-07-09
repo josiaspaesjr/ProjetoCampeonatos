@@ -304,45 +304,6 @@ export async function gerarCategoriasCbjj(eventoId: string, formData: FormData) 
   revalidatePath(`/organizador/eventos/${eventoId}`);
 }
 
-/**
- * Configuração comercial/operacional da categoria: preço próprio (entry, ex.:
- * absoluto) e duração estimada por luta (minutos, para o cronograma). Campos
- * vazios ou zero voltam ao padrão (lote vigente / tabela CBJJ da faixa).
- */
-export async function configurarCategoria(
-  eventoId: string,
-  categoriaId: string,
-  formData: FormData,
-) {
-  const { db } = await eventoDoOrganizador(eventoId);
-
-  const brutoPreco = String(formData.get("preco") ?? "").trim().replace(",", ".");
-  let precoCentavos: number | null = null;
-  if (brutoPreco) {
-    const reais = Number(brutoPreco);
-    if (!Number.isFinite(reais) || reais < 0) {
-      erroVisivel(eventoId, "Preço inválido — use um valor em reais, ex.: 90 ou 90,00");
-    }
-    precoCentavos = reais > 0 ? Math.round(reais * 100) : null;
-  }
-
-  const brutoDuracao = String(formData.get("duracaoMin") ?? "").trim().replace(",", ".");
-  let duracaoLutaSegundos: number | null = null;
-  if (brutoDuracao) {
-    const minutos = Number(brutoDuracao);
-    if (!Number.isFinite(minutos) || minutos < 0 || minutos > 60) {
-      erroVisivel(eventoId, "Duração inválida — minutos por luta, ex.: 6");
-    }
-    duracaoLutaSegundos = minutos > 0 ? Math.round(minutos * 60) : null;
-  }
-
-  await db
-    .update(categorias)
-    .set({ precoCentavos, duracaoLutaSegundos })
-    .where(and(eq(categorias.id, categoriaId), eq(categorias.eventoId, eventoId)));
-  revalidatePath(`/organizador/eventos/${eventoId}`);
-}
-
 export async function excluirCategoria(eventoId: string, categoriaId: string) {
   const { db } = await eventoDoOrganizador(eventoId);
 
