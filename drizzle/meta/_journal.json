@@ -43,6 +43,13 @@
       "when": 1783605592687,
       "tag": "0005_sloppy_paper_doll",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783622054473,
+      "tag": "0006_red_ender_wiggin",
+      "breakpoints": true
     }
   ]
 }

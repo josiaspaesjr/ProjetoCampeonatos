@@ -28,6 +28,7 @@ import {
   type SelecaoGrade,
   type Sexo,
 } from "@/lib/categorias/cbjj";
+import { lerRegulamentoDoForm } from "@/lib/regulamento";
 
 function slugify(nome: string): string {
   return nome
@@ -111,6 +112,7 @@ export async function criarEvento(formData: FormData) {
         | typeof eventos.$inferInsert.faixaMax,
       moeda: String(formData.get("moeda") ?? "BRL"),
       inscricoesFecham,
+      regulamento: lerRegulamentoDoForm(formData),
     })
     .returning();
 
@@ -252,6 +254,7 @@ export async function editarEvento(eventoId: string, formData: FormData) {
       inscricoesFecham: formData.get("inscricoesFecham")
         ? new Date(String(formData.get("inscricoesFecham")))
         : null,
+      regulamento: lerRegulamentoDoForm(formData),
     })
     .where(eq(eventos.id, eventoId));
 

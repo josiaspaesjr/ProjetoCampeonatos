@@ -115,6 +115,7 @@ export default async function LayoutConsoleEvento({
     faixaMin: evento.faixaMin ?? "",
     faixaMax: evento.faixaMax ?? "",
     descricao: evento.descricao ?? "",
+    regulamento: evento.regulamento ?? {},
   };
 
   return (

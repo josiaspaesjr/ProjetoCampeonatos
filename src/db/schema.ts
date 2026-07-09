@@ -155,6 +155,8 @@ export const eventos = pgTable("eventos", {
   // define a trilha de pagamento: BRL → gateway nacional (Pix), demais → internacional
   moeda: text("moeda").notNull().default("BRL"),
   politicaReembolso: text("politica_reembolso"),
+  // seções do regulamento (chave → texto); só as preenchidas ficam salvas
+  regulamento: jsonb("regulamento").$type<Record<string, string>>(),
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
 });
 

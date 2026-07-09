@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { SkewTexto } from "@/components/marca";
+import { RegulamentoCampos } from "@/components/organizador/regulamento-campos";
 import { Spinner } from "@/components/ui/botao-acao";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -29,6 +30,7 @@ export interface EventoEditavel {
   faixaMin: string;
   faixaMax: string;
   descricao: string;
+  regulamento: Record<string, string>;
 }
 
 const TITULOS: [string, string][] = [
@@ -299,6 +301,13 @@ export function TopbarEvento({
                     rows={5}
                     defaultValue={evento.descricao}
                   />
+                </div>
+
+                <div className="mt-2 border-t border-white/8 pt-4">
+                  <div className="mb-3 font-cond text-[13px] font-semibold uppercase tracking-[0.1em] text-brand">
+                    Regulamento
+                  </div>
+                  <RegulamentoCampos valores={evento.regulamento} />
                 </div>
               </div>
 

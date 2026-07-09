@@ -5,6 +5,7 @@ import { getDb } from "@/db";
 import { categorias, chaves, eventos, inscricoes, lotes } from "@/db/schema";
 import { Logo, SkewTexto } from "@/components/marca";
 import { dataCompleta, dataHora, diaMes } from "@/lib/datas";
+import { secoesPreenchidas } from "@/lib/regulamento";
 import { CategoriasFiltro } from "./categorias-filtro";
 
 const MODALIDADE_ROTULO: Record<string, string> = {
@@ -100,6 +101,8 @@ export default async function PaginaPublicaEvento({
     evento.faixaMin || evento.faixaMax
       ? `${FAIXA_ABREV[evento.faixaMin ?? "branca"]}→${FAIXA_ABREV[evento.faixaMax ?? "preta"]}`
       : "Bca→Pta";
+
+  const regulamento = secoesPreenchidas(evento.regulamento);
 
   const fatos: { k: string; v: string; destaque?: boolean }[] = [
     { k: "Modalidade", v: MODALIDADE_ROTULO[evento.modalidade] ?? "Gi + No-Gi" },
@@ -233,6 +236,36 @@ export default async function PaginaPublicaEvento({
               ))}
             </div>
           </section>
+
+          {/* REGULAMENTO */}
+          {regulamento.length > 0 && (
+            <section>
+              <div className="mb-5 font-cond text-[15px] font-semibold uppercase tracking-[0.14em] text-brand">
+                Regulamento
+              </div>
+              <div className="flex flex-col gap-px border border-white/10 bg-white/10">
+                {regulamento.map((s) => (
+                  <details
+                    key={s.titulo}
+                    className="group bg-background [&_summary::-webkit-details-marker]:hidden"
+                  >
+                    <summary className="flex cursor-pointer items-center gap-3 px-5 py-4 select-none">
+                      <span className="h-2 w-2 shrink-0 -skew-x-9 bg-brand" />
+                      <span className="flex-1 font-cond text-[19px] font-semibold uppercase tracking-[0.02em]">
+                        {s.titulo}
+                      </span>
+                      <span className="font-cond text-xs text-muted-3 transition-transform group-open:rotate-180">
+                        ▾
+                      </span>
+                    </summary>
+                    <p className="whitespace-pre-line border-t border-white/8 px-5 py-4 text-[15px] font-medium leading-relaxed text-text-2">
+                      {s.texto}
+                    </p>
+                  </details>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* CATEGORIAS */}
           <section id="categorias" className="scroll-mt-24">

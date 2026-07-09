@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SkewTexto } from "@/components/marca";
+import { RegulamentoCampos } from "@/components/organizador/regulamento-campos";
 import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -236,6 +237,19 @@ export default function NovoEvento() {
               <option value="branca">Branca</option>
             </NativeSelect>
           </div>
+        </div>
+
+        {/* REGULAMENTO */}
+        <div className="mt-3.5 border-t border-white/8 pt-[22px]">
+          <div className="font-cond text-[15px] font-semibold uppercase tracking-[0.1em] text-brand">
+            Regulamento
+          </div>
+          <p className="mt-1 mb-4 max-w-[560px] text-sm font-medium text-muted-2">
+            Seções opcionais que aparecem na página pública do evento. Cada uma
+            começa vazia — use “Inserir texto padrão” para partir de um modelo e
+            editar como quiser.
+          </p>
+          <RegulamentoCampos />
         </div>
 
         {/* AVISO */}
