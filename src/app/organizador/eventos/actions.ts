@@ -29,7 +29,7 @@ import {
   type Sexo,
 } from "@/lib/categorias/cbjj";
 import { lerRegulamentoDoForm } from "@/lib/regulamento";
-import type { LoteVariacao } from "@/lib/lotes/preco";
+import { GRUPOS_PRECO_PRESETS, type LoteVariacao } from "@/lib/lotes/preco";
 
 function slugify(nome: string): string {
   return nome
@@ -337,6 +337,9 @@ export async function definirGrupoPreco(eventoId: string, formData: FormData) {
   if (!classeIdade || (sexo !== "masculino" && sexo !== "feminino")) {
     erroVisivel(eventoId, "Bloco de categorias inválido para definir grupo de preço.");
   }
+  if (grupo && !(GRUPOS_PRECO_PRESETS as readonly string[]).includes(grupo)) {
+    erroVisivel(eventoId, "Grupo de preço inválido.");
+  }
 
   await db
     .update(categorias)
@@ -385,10 +388,13 @@ export async function criarLote(eventoId: string, formData: FormData) {
     const centavos = precoParaCentavos(varPrecos[i] ?? null);
     if (!nomeVar && centavos == null) continue; // linha em branco
     if (!nomeVar || centavos == null) {
-      erroVisivel(eventoId, "Cada pacote de preço precisa de nome e valor.");
+      erroVisivel(eventoId, "Cada pacote de preço precisa de grupo e valor.");
     }
-    if (variacoes.some((v) => v.nome.toLowerCase() === nomeVar.toLowerCase())) {
-      erroVisivel(eventoId, `Pacote de preço repetido no lote: "${nomeVar}".`);
+    if (!(GRUPOS_PRECO_PRESETS as readonly string[]).includes(nomeVar)) {
+      erroVisivel(eventoId, `Grupo de preço inválido: "${nomeVar}".`);
+    }
+    if (variacoes.some((v) => v.nome === nomeVar)) {
+      erroVisivel(eventoId, `Grupo de preço repetido no lote: "${nomeVar}".`);
     }
     variacoes.push({ nome: nomeVar, precoCentavos: centavos });
   }

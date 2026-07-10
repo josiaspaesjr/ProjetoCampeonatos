@@ -1,11 +1,11 @@
 import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { categorias, eventos, lotes } from "@/db/schema";
+import { categorias, eventos } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
 import { CLASSES_IDADE, FAIXAS } from "@/lib/categorias/cbjj";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
-import { gruposDePreco } from "@/lib/lotes/preco";
+import { GRUPOS_PRECO_PRESETS } from "@/lib/lotes/preco";
 import { GeradorGrade } from "@/components/organizador/gerador-grade";
 import { SeletorGrupoPreco } from "@/components/organizador/seletor-grupo-preco";
 import {
@@ -75,11 +75,8 @@ export default async function CategoriasEvento({
     where: eq(categorias.eventoId, id),
   });
 
-  // nomes de grupo disponíveis vêm das variações dos lotes do evento
-  const lts = await db.query.lotes.findMany({
-    where: eq(lotes.eventoId, id),
-  });
-  const grupos = gruposDePreco(lts);
+  // grupos de preço: presets fixos (mesma lista do select de variação do lote)
+  const grupos = [...GRUPOS_PRECO_PRESETS];
 
   // ordena na mesma sequência em que o gerador apresenta
   const ordenadas = [...cats].sort(

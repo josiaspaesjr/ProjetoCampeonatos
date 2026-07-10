@@ -129,8 +129,8 @@ export async function criarInscricao(eventoSlug: string, formData: FormData) {
     throw new Error("Você já tem inscrição nesta categoria");
   }
 
-  // --- preço: categoria com preço próprio (entry) > grupo de preço da
-  // categoria no lote > desconto de 2ª inscrição > preço base do lote -------
+  // --- preço: categoria com preço próprio (entry) > desconto de 2ª inscrição
+  // (garantido quando habilitado) > grupo de preço da categoria > base ------
   const ehSegundaInscricao = minhasInscricoes.length > 0;
   const valorCentavos = precoInscricaoCentavos({
     categoriaPrecoCentavos: categoria.precoCentavos,

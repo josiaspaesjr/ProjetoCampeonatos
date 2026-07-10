@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { Input } from "@/components/ui/input";
+import { NativeSelect } from "@/components/ui/native-select";
+import { GRUPOS_PRECO_PRESETS } from "@/lib/lotes/preco";
 
 const p2 = (n: number) => String(n).padStart(2, "0");
 
@@ -155,27 +157,38 @@ export function NovoLote({
           <button
             type="button"
             onClick={addVariacao}
-            className="cursor-pointer border border-white/16 px-2.5 py-1 font-cond text-[12px] font-semibold uppercase tracking-[0.04em] text-text-2 transition-colors hover:border-white/35 hover:text-foreground"
+            disabled={variacoes.length >= GRUPOS_PRECO_PRESETS.length}
+            className="cursor-pointer border border-white/16 px-2.5 py-1 font-cond text-[12px] font-semibold uppercase tracking-[0.04em] text-text-2 transition-colors hover:border-white/35 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
           >
             + variação
           </button>
         </div>
         {variacoes.length === 0 ? (
           <p className="font-cond text-[12px] leading-snug text-muted-3">
-            Preços diferentes por grupo (ex.: kids, adulto, feminino). Depois marque
-            as categorias de cada grupo na aba Categorias.
+            Preços diferentes por grupo (Kids, Adulto, Feminino…). Depois marque as
+            categorias de cada grupo na aba Categorias.
           </p>
         ) : (
           <div className="flex flex-col gap-2">
             {variacoes.map((v, i) => (
               <div key={i} className="flex items-center gap-2">
-                <Input
+                <NativeSelect
                   name="varNome"
                   value={v.nome}
                   onChange={(e) => setVariacao(i, "nome", e.target.value)}
-                  placeholder="kids"
-                  className="h-9 flex-1 text-sm"
-                />
+                  className={`h-9 flex-1 text-sm ${v.nome ? "" : "text-muted-3"}`}
+                >
+                  <option value="">Grupo…</option>
+                  {GRUPOS_PRECO_PRESETS.filter(
+                    (p) =>
+                      p === v.nome ||
+                      !variacoes.some((x, j) => j !== i && x.nome === p),
+                  ).map((p) => (
+                    <option key={p} value={p}>
+                      {p}
+                    </option>
+                  ))}
+                </NativeSelect>
                 <Input
                   name="varPreco"
                   type="number"

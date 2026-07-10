@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  gruposDePreco,
   precoDoGrupoCentavos,
   precoInscricaoCentavos,
   type LoteVariacao,
@@ -61,12 +60,17 @@ describe("precoInscricaoCentavos — precedência", () => {
     expect(precoInscricaoCentavos(args({ grupoPreco: "kids" }))).toBe(10000);
   });
 
-  it("2 vence 3) grupo manda mesmo na 2ª inscrição", () => {
+  it("2 vence 3) 2ª inscrição habilitada é garantida, mesmo com grupo", () => {
     expect(
       precoInscricaoCentavos(
         args({ grupoPreco: "feminino", ehSegundaInscricao: true }),
       ),
-    ).toBe(4000);
+    ).toBe(SEGUNDA);
+  });
+
+  it("grupo vale na 1ª inscrição mesmo com preço de 2ª definido no lote", () => {
+    // ehSegundaInscricao=false por padrão em args()
+    expect(precoInscricaoCentavos(args({ grupoPreco: "feminino" }))).toBe(4000);
   });
 
   it("3) desconto de 2ª inscrição quando não há grupo", () => {
@@ -94,32 +98,5 @@ describe("precoInscricaoCentavos — precedência", () => {
         args({ ehSegundaInscricao: true, lotePrecoSegundaCentavos: null }),
       ),
     ).toBe(BASE);
-  });
-});
-
-describe("gruposDePreco", () => {
-  it("une os nomes das variações de todos os lotes, sem repetir", () => {
-    const lotes = [
-      { variacoes: VARIACOES },
-      { variacoes: [{ nome: "adulto", precoCentavos: 15000 }] },
-      { variacoes: null },
-    ];
-    expect(gruposDePreco(lotes)).toEqual([
-      "kids",
-      "senior",
-      "adulto",
-      "feminino",
-    ]);
-  });
-
-  it("ignora nomes vazios/em branco", () => {
-    const lotes = [
-      { variacoes: [{ nome: "  ", precoCentavos: 100 }, { nome: "kids", precoCentavos: 100 }] },
-    ];
-    expect(gruposDePreco(lotes)).toEqual(["kids"]);
-  });
-
-  it("sem variações, retorna lista vazia", () => {
-    expect(gruposDePreco([{ variacoes: null }, { variacoes: [] }])).toEqual([]);
   });
 });
