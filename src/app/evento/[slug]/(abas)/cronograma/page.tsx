@@ -2,8 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDb } from "@/db";
 import { getEventoPublico } from "@/lib/evento-publico";
-import { montarFilasDoEvento } from "@/lib/cronograma/fila";
-import { CronogramaGrade } from "@/components/cronograma-grade";
+import { montarCronogramaDoEvento } from "@/lib/cronograma/cronograma-areas";
+import { CronogramaAreasPublico } from "@/components/evento/cronograma-areas-publico";
 
 export default async function AbaCronograma({
   params,
@@ -16,7 +16,7 @@ export default async function AbaCronograma({
   const { evento } = dados;
 
   const db = await getDb();
-  const filas = await montarFilasDoEvento(db, evento.id);
+  const cronograma = await montarCronogramaDoEvento(db, evento.id, evento.dataInicio);
 
   return (
     <div className="px-6 pb-20 pt-10 md:px-12">
@@ -34,7 +34,7 @@ export default async function AbaCronograma({
           Modo telão
         </Link>
       </div>
-      <CronogramaGrade filas={filas} />
+      <CronogramaAreasPublico cronograma={cronograma} />
     </div>
   );
 }

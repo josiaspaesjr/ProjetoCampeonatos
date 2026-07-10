@@ -22,16 +22,16 @@ export default async function Telao({
   const filas = await montarFilasDoEvento(db, evento.id);
 
   return (
-    <div className="min-h-screen bg-black px-8 py-6">
-      <div>
-        <h1 className="text-4xl font-bold text-white">{evento.nome}</h1>
-        <p className="text-zinc-400">
-          Cronograma ao vivo — horários estimados, atualiza sozinho
+    <div className="min-h-screen bg-background px-8 py-6">
+      <div className="mb-6">
+        <h1 className="disp text-[46px] leading-none text-foreground">
+          {evento.nome}
+        </h1>
+        <p className="mt-1.5 font-cond text-sm uppercase tracking-[0.05em] text-muted-2">
+          Cronograma ao vivo · horários estimados · atualiza sozinho
         </p>
       </div>
-      <div className="mt-6">
-        <CronogramaGrade filas={filas} tv />
-      </div>
+      <CronogramaGrade filas={filas} />
     </div>
   );
 }
