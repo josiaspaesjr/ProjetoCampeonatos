@@ -12,6 +12,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import type { LoteVariacao } from "@/lib/lotes/preco";
 
 // ---------------------------------------------------------------------------
 // Enums
@@ -168,9 +169,13 @@ export const lotes = pgTable("lotes", {
     .notNull()
     .references(() => eventos.id),
   nome: text("nome").notNull(),
+  // preço base (fallback): vale para categorias sem grupo de preço
   precoCentavos: integer("preco_centavos").notNull(),
   // preço da 2ª inscrição do mesmo atleta (ex.: absoluto); nulo = mesmo preço
   precoSegundaInscricaoCentavos: integer("preco_segunda_inscricao_centavos"),
+  // pacotes de preço nomeados deste lote (ex.: kids/adulto/feminino). O nome
+  // liga à categoria via `categorias.grupoPreco`; nulo/vazio = só preço base
+  variacoes: jsonb("variacoes").$type<LoteVariacao[]>(),
   inicio: timestamp("inicio", { withTimezone: true }).notNull(),
   fim: timestamp("fim", { withTimezone: true }).notNull(),
 });
@@ -223,6 +228,9 @@ export const categorias = pgTable("categorias", {
   limitePesoKg: numeric("limite_peso_kg", { precision: 5, scale: 2 }),
   // preço específico desta categoria (ex.: absoluto); nulo = preço do lote vigente
   precoCentavos: integer("preco_centavos"),
+  // grupo de preço: casa com o `nome` de uma variação do lote (kids/adulto/…);
+  // nulo = usa o preço base do lote vigente
+  grupoPreco: text("grupo_preco"),
   // duração estimada por luta (com transição); nulo = tabela CBJJ da faixa
   duracaoLutaSegundos: integer("duracao_luta_segundos"),
   minInscritos: integer("min_inscritos").notNull().default(2),

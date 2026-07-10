@@ -74,6 +74,7 @@ export default async function PaginaInscricao({
             idadeMin: c.idadeMin,
             idadeMax: c.idadeMax,
             precoCentavos: c.precoCentavos,
+            grupoPreco: c.grupoPreco,
           }))}
           evento={{
             nome: evento.nome,
@@ -83,6 +84,7 @@ export default async function PaginaInscricao({
             bannerUrl: evento.bannerUrl,
             precoCentavos: loteVigente.precoCentavos,
             precoSegundaCentavos: loteVigente.precoSegundaInscricaoCentavos,
+            variacoes: loteVigente.variacoes,
             moeda: evento.moeda,
           }}
           acao={acao}

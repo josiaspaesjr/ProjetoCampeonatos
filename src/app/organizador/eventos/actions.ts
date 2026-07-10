@@ -29,6 +29,7 @@ import {
   type Sexo,
 } from "@/lib/categorias/cbjj";
 import { lerRegulamentoDoForm } from "@/lib/regulamento";
+import type { LoteVariacao } from "@/lib/lotes/preco";
 
 function slugify(nome: string): string {
   return nome
@@ -323,6 +324,33 @@ export async function excluirCategoria(eventoId: string, categoriaId: string) {
   revalidatePath(`/organizador/eventos/${eventoId}`);
 }
 
+/**
+ * Define o grupo de preço de um bloco de categorias (mesma classe de idade +
+ * sexo). O grupo casa com o `nome` de uma variação do lote; string vazia limpa.
+ */
+export async function definirGrupoPreco(eventoId: string, formData: FormData) {
+  const { db } = await eventoDoOrganizador(eventoId);
+
+  const classeIdade = String(formData.get("classeIdade") ?? "");
+  const sexo = String(formData.get("sexo") ?? "");
+  const grupo = String(formData.get("grupo") ?? "").trim() || null;
+  if (!classeIdade || (sexo !== "masculino" && sexo !== "feminino")) {
+    erroVisivel(eventoId, "Bloco de categorias inválido para definir grupo de preço.");
+  }
+
+  await db
+    .update(categorias)
+    .set({ grupoPreco: grupo })
+    .where(
+      and(
+        eq(categorias.eventoId, eventoId),
+        eq(categorias.classeIdade, classeIdade),
+        eq(categorias.sexo, sexo as "masculino" | "feminino"),
+      ),
+    );
+  revalidatePath(`/organizador/eventos/${eventoId}/categorias`);
+}
+
 export async function criarLote(eventoId: string, formData: FormData) {
   const { db } = await eventoDoOrganizador(eventoId);
 
@@ -347,11 +375,30 @@ export async function criarLote(eventoId: string, formData: FormData) {
     erroVisivel(eventoId, "O fim do lote precisa ser depois do início.");
   }
 
+  // pacotes de preço nomeados (opcional): linhas varNome/varPreco pareadas por
+  // índice — o formulário sempre emite os dois campos por linha
+  const varNomes = formData.getAll("varNome").map((v) => String(v).trim());
+  const varPrecos = formData.getAll("varPreco");
+  const variacoes: LoteVariacao[] = [];
+  for (let i = 0; i < varNomes.length; i++) {
+    const nomeVar = varNomes[i];
+    const centavos = precoParaCentavos(varPrecos[i] ?? null);
+    if (!nomeVar && centavos == null) continue; // linha em branco
+    if (!nomeVar || centavos == null) {
+      erroVisivel(eventoId, "Cada pacote de preço precisa de nome e valor.");
+    }
+    if (variacoes.some((v) => v.nome.toLowerCase() === nomeVar.toLowerCase())) {
+      erroVisivel(eventoId, `Pacote de preço repetido no lote: "${nomeVar}".`);
+    }
+    variacoes.push({ nome: nomeVar, precoCentavos: centavos });
+  }
+
   await db.insert(lotes).values({
     eventoId,
     nome,
     precoCentavos: preco,
     precoSegundaInscricaoCentavos: precoSegunda,
+    variacoes: variacoes.length ? variacoes : null,
     inicio,
     fim,
   });

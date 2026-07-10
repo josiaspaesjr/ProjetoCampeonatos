@@ -15,6 +15,7 @@ import {
   categoriaCompativel,
   idadeNoAnoDoEvento,
 } from "@/lib/categorias/elegibilidade";
+import { precoDoGrupoCentavos, type LoteVariacao } from "@/lib/lotes/preco";
 import { cn } from "@/lib/utils";
 
 export interface CategoriaOpcao {
@@ -26,6 +27,8 @@ export interface CategoriaOpcao {
   idadeMax: number | null;
   /** preço próprio da categoria em centavos; nulo = preço do lote */
   precoCentavos: number | null;
+  /** grupo de preço (casa com uma variação do lote); nulo = preço base */
+  grupoPreco: string | null;
 }
 
 export interface EventoResumo {
@@ -36,6 +39,8 @@ export interface EventoResumo {
   bannerUrl: string | null;
   precoCentavos: number;
   precoSegundaCentavos: number | null;
+  /** pacotes de preço nomeados do lote vigente */
+  variacoes: LoteVariacao[] | null;
   moeda: string;
 }
 
@@ -111,9 +116,12 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
     currency: evento.moeda,
     maximumFractionDigits: 0,
   });
-  // preço exibido acompanha a categoria escolhida (entry com preço próprio)
+  // preço próprio (entry) ou preço do grupo da categoria; senão o base do lote
+  const precoDaCategoria = (c: CategoriaOpcao): number | null =>
+    c.precoCentavos ?? precoDoGrupoCentavos(evento.variacoes, c.grupoPreco);
   const precoExibido =
-    categoriaEscolhida?.precoCentavos ?? evento.precoCentavos;
+    (categoriaEscolhida && precoDaCategoria(categoriaEscolhida)) ??
+    evento.precoCentavos;
 
   const aoMudarPerfil =
     <T,>(setter: (v: T) => void) =>
@@ -261,6 +269,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
                 <div className="flex flex-col gap-2">
                   {compativeis.map((c) => {
                     const sel = c.id === categoriaId;
+                    const precoCat = precoDaCategoria(c);
                     return (
                       <button
                         key={c.id}
@@ -282,8 +291,8 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
                         >
                           {sel
                             ? "selecionada"
-                            : c.precoCentavos != null
-                              ? fmt.format(c.precoCentavos / 100)
+                            : precoCat != null
+                              ? fmt.format(precoCat / 100)
                               : ""}
                         </span>
                       </button>

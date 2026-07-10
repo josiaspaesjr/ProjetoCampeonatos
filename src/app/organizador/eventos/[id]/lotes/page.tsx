@@ -268,6 +268,21 @@ export default async function LotesEvento({
                         {fmtData(lote.inicio)} → {fmtData(lote.fim)}
                         <span className="text-muted-3"> · {dias} dia{dias === 1 ? "" : "s"}</span>
                       </div>
+                      {lote.variacoes && lote.variacoes.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {lote.variacoes.map((v, vi) => (
+                            <span
+                              key={vi}
+                              className="tnum inline-flex items-center gap-1 border border-white/10 bg-background px-2 py-0.5 font-cond text-[11px] uppercase tracking-[0.03em] text-text-2"
+                            >
+                              {v.nome}
+                              <span className="text-brand-soft">
+                                {fmt.format(v.precoCentavos / 100)}
+                              </span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* preço + 2ª inscrição */}

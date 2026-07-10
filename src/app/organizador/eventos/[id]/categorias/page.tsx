@@ -1,12 +1,18 @@
 import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { categorias, eventos } from "@/db/schema";
+import { categorias, eventos, lotes } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
 import { CLASSES_IDADE, FAIXAS } from "@/lib/categorias/cbjj";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { gruposDePreco } from "@/lib/lotes/preco";
 import { GeradorGrade } from "@/components/organizador/gerador-grade";
-import { excluirCategoria, gerarCategoriasCbjj } from "../../actions";
+import { SeletorGrupoPreco } from "@/components/organizador/seletor-grupo-preco";
+import {
+  definirGrupoPreco,
+  excluirCategoria,
+  gerarCategoriasCbjj,
+} from "../../actions";
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -69,6 +75,12 @@ export default async function CategoriasEvento({
     where: eq(categorias.eventoId, id),
   });
 
+  // nomes de grupo disponíveis vêm das variações dos lotes do evento
+  const lts = await db.query.lotes.findMany({
+    where: eq(lotes.eventoId, id),
+  });
+  const grupos = gruposDePreco(lts);
+
   // ordena na mesma sequência em que o gerador apresenta
   const ordenadas = [...cats].sort(
     (a, b) =>
@@ -116,12 +128,18 @@ export default async function CategoriasEvento({
               const [classeId, sexo] = bloco.chave.split("|");
               const classe = CLASSE_POR_ID.get(classeId);
               const faixas = agrupar(bloco.itens, (c) => c.faixa ?? "");
+              // grupo do bloco: uniforme entre as categorias, ou vazio se misto
+              const gruposDoBloco = new Set(
+                bloco.itens.map((c) => c.grupoPreco ?? ""),
+              );
+              const grupoDoBloco =
+                gruposDoBloco.size === 1 ? [...gruposDoBloco][0] : "";
               return (
                 <section
                   key={bloco.chave}
                   className="overflow-hidden border border-white/10 bg-surface"
                 >
-                  <header className="flex items-baseline gap-2.5 border-b border-white/10 bg-white/[0.03] px-4 py-2.5">
+                  <header className="flex flex-wrap items-center gap-x-2.5 gap-y-2 border-b border-white/10 bg-white/[0.03] px-4 py-2.5">
                     <span className="font-cond text-[15px] font-semibold uppercase tracking-[0.04em]">
                       {classe?.nome ?? classeId} · {ROTULO_SEXO[sexo] ?? sexo}
                     </span>
@@ -131,9 +149,20 @@ export default async function CategoriasEvento({
                         {classe.idadeMax ? `–${classe.idadeMax}` : "+"} anos
                       </span>
                     )}
-                    <span className="ml-auto font-cond text-xs tabular-nums text-muted-3">
-                      {bloco.itens.length}
-                    </span>
+                    <div className="ml-auto flex items-center gap-2.5">
+                      {grupos.length > 0 && (
+                        <SeletorGrupoPreco
+                          classeIdade={classeId}
+                          sexo={sexo}
+                          grupoAtual={grupoDoBloco}
+                          grupos={grupos}
+                          definir={definirGrupoPreco.bind(null, evento.id)}
+                        />
+                      )}
+                      <span className="font-cond text-xs tabular-nums text-muted-3">
+                        {bloco.itens.length}
+                      </span>
+                    </div>
                   </header>
 
                   <div className="flex flex-col">

@@ -19,6 +19,7 @@ import {
   idadeNoAnoDoEvento,
 } from "@/lib/categorias/elegibilidade";
 import { getGateway } from "@/lib/pagamentos";
+import { precoInscricaoCentavos } from "@/lib/lotes/preco";
 import { getUsuarioSessao } from "@/lib/auth";
 import { definirSessaoAtleta } from "@/lib/sessao";
 import { supabaseConfigurado } from "@/lib/supabase/server";
@@ -128,14 +129,17 @@ export async function criarInscricao(eventoSlug: string, formData: FormData) {
     throw new Error("Você já tem inscrição nesta categoria");
   }
 
-  // --- preço: categoria com preço próprio (entry) vence; senão o lote,
-  // com desconto de 2ª inscrição quando definido ---------------------------
+  // --- preço: categoria com preço próprio (entry) > grupo de preço da
+  // categoria no lote > desconto de 2ª inscrição > preço base do lote -------
   const ehSegundaInscricao = minhasInscricoes.length > 0;
-  const valorCentavos =
-    categoria.precoCentavos ??
-    (ehSegundaInscricao && lote.precoSegundaInscricaoCentavos != null
-      ? lote.precoSegundaInscricaoCentavos
-      : lote.precoCentavos);
+  const valorCentavos = precoInscricaoCentavos({
+    categoriaPrecoCentavos: categoria.precoCentavos,
+    grupoPreco: categoria.grupoPreco,
+    loteVariacoes: lote.variacoes,
+    lotePrecoCentavos: lote.precoCentavos,
+    lotePrecoSegundaCentavos: lote.precoSegundaInscricaoCentavos,
+    ehSegundaInscricao,
+  });
 
   // --- inscrição + cobrança ----------------------------------------------
   const [inscricao] = await db

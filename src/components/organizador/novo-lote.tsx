@@ -44,16 +44,35 @@ export function NovoLote({
   const [precoSegunda, setPrecoSegunda] = useState("");
   const [inicio, setInicio] = useState("");
   const [fim, setFim] = useState("");
+  const [variacoes, setVariacoes] = useState<{ nome: string; preco: string }[]>([]);
 
   const fmt = new Intl.NumberFormat("pt-BR", { style: "currency", currency: moeda });
   const precoNum = Number(preco);
+
+  // cada linha de variação é "completa" (nome + preço > 0) ou vazia — nada pela metade
+  const variacoesOk = variacoes.every(
+    (v) =>
+      (!v.nome.trim() && !v.preco.trim()) ||
+      (!!v.nome.trim() && Number(v.preco) > 0),
+  );
 
   const valido =
     nome.trim() !== "" &&
     precoNum > 0 &&
     inicio !== "" &&
     fim !== "" &&
-    fim >= inicio; // yyyy-mm-dd compara na ordem cronológica
+    fim >= inicio && // yyyy-mm-dd compara na ordem cronológica
+    variacoesOk;
+
+  const addVariacao = () => setVariacoes((vs) => [...vs, { nome: "", preco: "" }]);
+  const removeVariacao = (i: number) =>
+    setVariacoes((vs) => vs.filter((_, j) => j !== i));
+  const setVariacao = (i: number, campo: "nome" | "preco", valor: string) =>
+    setVariacoes((vs) => vs.map((v, j) => (j === i ? { ...v, [campo]: valor } : v)));
+
+  const variacoesPreview = variacoes.filter(
+    (v) => v.nome.trim() && Number(v.preco) > 0,
+  );
 
   function limpar() {
     setNome("");
@@ -61,6 +80,7 @@ export function NovoLote({
     setPrecoSegunda("");
     setInicio("");
     setFim("");
+    setVariacoes([]);
   }
 
   function aplicarPreset(dias: number) {
@@ -128,6 +148,59 @@ export function NovoLote({
         </div>
       </div>
 
+      {/* PACOTES DE PREÇO (VARIAÇÕES) */}
+      <div className="flex flex-col gap-2.5">
+        <div className="flex items-center justify-between">
+          <label className={labelCls}>Pacotes de preço (opcional)</label>
+          <button
+            type="button"
+            onClick={addVariacao}
+            className="cursor-pointer border border-white/16 px-2.5 py-1 font-cond text-[12px] font-semibold uppercase tracking-[0.04em] text-text-2 transition-colors hover:border-white/35 hover:text-foreground"
+          >
+            + variação
+          </button>
+        </div>
+        {variacoes.length === 0 ? (
+          <p className="font-cond text-[12px] leading-snug text-muted-3">
+            Preços diferentes por grupo (ex.: kids, adulto, feminino). Depois marque
+            as categorias de cada grupo na aba Categorias.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {variacoes.map((v, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <Input
+                  name="varNome"
+                  value={v.nome}
+                  onChange={(e) => setVariacao(i, "nome", e.target.value)}
+                  placeholder="kids"
+                  className="h-9 flex-1 text-sm"
+                />
+                <Input
+                  name="varPreco"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  inputMode="decimal"
+                  value={v.preco}
+                  onChange={(e) => setVariacao(i, "preco", e.target.value)}
+                  placeholder="100,00"
+                  className="h-9 w-24 text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => removeVariacao(i)}
+                  title="Remover variação"
+                  className="flex h-9 w-8 shrink-0 cursor-pointer items-center justify-center border border-white/12 text-muted-3 transition-colors hover:border-brand/40 hover:text-brand"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-[7px]">
           <label className={labelCls} htmlFor="lote-inicio">
@@ -193,6 +266,19 @@ export function NovoLote({
           {Number(precoSegunda) > 0 &&
             ` · 2ª ${fmt.format(Number(precoSegunda))}`}
         </div>
+        {variacoesPreview.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {variacoesPreview.map((v, i) => (
+              <span
+                key={i}
+                className="tnum inline-flex items-center gap-1 border border-white/12 bg-surface px-2 py-0.5 font-cond text-[12px] uppercase tracking-[0.03em] text-text-2"
+              >
+                {v.nome.trim()}
+                <span className="text-brand-soft">{fmt.format(Number(v.preco))}</span>
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <BotaoAcaoBruto
