@@ -12,8 +12,9 @@ import type { AreaCron } from "@/lib/cronograma/cronograma-areas";
 
 /**
  * Cronograma público do evento: a mesma programação por área da seção **Áreas**
- * do organizador, mas com as áreas **empilhadas** (uma embaixo da outra) e sem
- * os controles de edição. Atualiza sozinho e clicar numa luta abre o placar.
+ * do organizador, numa **grade** (até 3 colunas lado a lado — Área 1 · Área 2 ·
+ * Área 3) e sem os controles de edição. Atualiza sozinho e clicar numa luta
+ * abre o placar.
  */
 export function CronogramaAreasPublico({
   cronograma,
@@ -49,7 +50,7 @@ export function CronogramaAreasPublico({
   return (
     <AbrirLutaCtx.Provider value={setLutaSel}>
       <AutoRefresh segundos={10} />
-      <ProgramacaoAreas cronograma={cronograma} layout="empilhado" />
+      <ProgramacaoAreas cronograma={cronograma} layout="grade" />
       <ModalPlacar sel={lutaSel} onFechar={() => setLutaSel(null)} />
     </AbrirLutaCtx.Provider>
   );

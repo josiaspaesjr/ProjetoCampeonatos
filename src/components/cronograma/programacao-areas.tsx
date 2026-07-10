@@ -16,13 +16,14 @@ import type {
  *
  * `layout` decide a disposição das áreas:
  * - `colunas`: lado a lado com scroll lateral e altura travada (organizador).
- * - `empilhado`: uma área embaixo da outra, largura cheia (página pública).
+ * - `grade`: grade responsiva (até 3 colunas) de altura natural (aba pública).
+ * - `empilhado`: uma área embaixo da outra, largura cheia.
  *
  * Clicar numa luta abre o modal de placar (somente leitura). O consumidor provê
  * o `AbrirLutaCtx` e renderiza o `ModalPlacar`, controlando a luta selecionada.
  */
 
-export type LayoutAreas = "colunas" | "empilhado";
+export type LayoutAreas = "colunas" | "grade" | "empilhado";
 
 /** luta escolhida para o modal de placar (com o contexto da categoria) */
 export interface LutaSelecionada {
@@ -51,11 +52,18 @@ export function ProgramacaoAreas({
   full?: boolean;
 }) {
   const colunas = layout === "colunas";
+  const grade = layout === "grade";
   return (
     <div
       className={cn(
-        colunas ? "flex gap-4 overflow-x-auto pb-2" : "flex flex-col gap-4",
+        colunas && "flex gap-4 overflow-x-auto pb-2",
         colunas && full && "min-h-0 flex-1",
+        layout === "empilhado" && "flex flex-col gap-4",
+        grade &&
+          cn(
+            "grid grid-cols-1 items-start gap-4 sm:grid-cols-2",
+            cronograma.length > 2 ? "lg:grid-cols-3" : "lg:grid-cols-2",
+          ),
       )}
     >
       {cronograma.map((area) => (
