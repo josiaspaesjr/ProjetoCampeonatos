@@ -263,17 +263,23 @@ function LinhaLuta({
   );
 }
 
-type EstadoAtleta = "vencedor" | "perdedor" | "neutro" | "indefinido";
+export type EstadoAtleta = "vencedor" | "perdedor" | "neutro" | "indefinido";
 
 /** estado de um atleta na luta: decide destaque do nome e da caixa de placar */
-function estadoAtleta(luta: LutaCron, slot: 1 | 2): EstadoAtleta {
+export function estadoAtleta(luta: LutaCron, slot: 1 | 2): EstadoAtleta {
   const nome = slot === 1 ? luta.a1 : luta.a2;
   if (nome === "A definir") return "indefinido";
   if (!luta.decidida) return "neutro";
   return luta.vencedor === slot ? "vencedor" : "perdedor";
 }
 
-function NomeAtleta({ nome, estado }: { nome: string; estado: EstadoAtleta }) {
+export function NomeAtleta({
+  nome,
+  estado,
+}: {
+  nome: string;
+  estado: EstadoAtleta;
+}) {
   return (
     <span
       className={cn(
@@ -290,7 +296,7 @@ function NomeAtleta({ nome, estado }: { nome: string; estado: EstadoAtleta }) {
 }
 
 /** caixa de resultado: W (vencedor), L (perdedor) ou – (sem resultado ainda) */
-function ResultadoBox({ estado }: { estado: EstadoAtleta }) {
+export function ResultadoBox({ estado }: { estado: EstadoAtleta }) {
   const rotulo =
     estado === "vencedor" ? "W" : estado === "perdedor" ? "L" : "–";
   return (
