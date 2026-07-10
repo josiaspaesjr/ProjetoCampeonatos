@@ -27,6 +27,15 @@ const ROTULO_SEXO: Record<string, string> = {
   feminino: "Feminino",
 };
 
+const ROTULO_METODO: Record<string, string> = {
+  pontos: "Pontos",
+  vantagens: "Vantagens",
+  finalizacao: "Finalização",
+  decisao: "Decisão",
+  wo: "W.O.",
+  dq: "Desqualificação",
+};
+
 /** início do dia: 09:00 (segundos desde a meia-noite) */
 const INICIO_DIA_SEGUNDOS = 9 * 3600;
 
@@ -65,10 +74,20 @@ export interface LutaCron {
   /** pontos do placar (0 quando a luta ainda não começou) */
   score1: number;
   score2: number;
+  /** vantagens do placar */
+  vantagens1: number;
+  vantagens2: number;
+  /** punições do placar */
+  punicoes1: number;
+  punicoes2: number;
   /** vencedor: 1 = atleta 1, 2 = atleta 2, 0 = indefinido */
   vencedor: 0 | 1 | 2;
   /** true quando a luta já tem vencedor */
   decidida: boolean;
+  /** método da vitória já formatado ("Finalização", "Pontos"…) ou null */
+  metodo: string | null;
+  /** nome da finalização quando houver ("Armlock") ou null */
+  finalizacao: string | null;
 }
 
 /** uma categoria (bloco) dentro da coluna da área */
@@ -238,8 +257,14 @@ export async function montarCronogramaDoEvento(
             a2,
             score1: l.pontos1,
             score2: l.pontos2,
+            vantagens1: l.vantagens1,
+            vantagens2: l.vantagens2,
+            punicoes1: l.punicoes1,
+            punicoes2: l.punicoes2,
             vencedor,
             decidida: Boolean(l.vencedorInscricaoId),
+            metodo: l.metodo ? (ROTULO_METODO[l.metodo] ?? l.metodo) : null,
+            finalizacao: l.nomeFinalizacao,
           };
         });
       } else {
