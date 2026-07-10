@@ -66,6 +66,13 @@ export default async function LayoutConsoleEvento({
       badge: confirmadas.length ? String(confirmadas.length) : undefined,
     },
     {
+      id: "lotes",
+      rotulo: "Lotes",
+      icone: "❏",
+      href: `${base}/lotes`,
+      badge: lts.length ? String(lts.length) : undefined,
+    },
+    {
       id: "categorias",
       rotulo: "Categorias",
       icone: "▦",
@@ -73,11 +80,11 @@ export default async function LayoutConsoleEvento({
       badge: cats.length ? String(cats.length) : undefined,
     },
     {
-      id: "lotes",
-      rotulo: "Lotes",
-      icone: "❏",
-      href: `${base}/lotes`,
-      badge: lts.length ? String(lts.length) : undefined,
+      id: "chaves",
+      rotulo: "Chaves",
+      icone: "⑃",
+      href: `${base}/chaves`,
+      badge: chavesGeradas.length ? String(chavesGeradas.length) : undefined,
     },
     {
       id: "areas",
@@ -87,13 +94,6 @@ export default async function LayoutConsoleEvento({
       badge: ars.length ? String(ars.length) : undefined,
     },
     { id: "checkin", rotulo: "Check-in", icone: "✔", href: `${base}/checkin` },
-    {
-      id: "chaves",
-      rotulo: "Chaves",
-      icone: "⑃",
-      href: `${base}/chaves`,
-      badge: chavesGeradas.length ? String(chavesGeradas.length) : undefined,
-    },
   ];
 
   const editavel: EventoEditavel = {
