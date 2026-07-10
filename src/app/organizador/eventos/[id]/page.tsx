@@ -210,7 +210,10 @@ export default async function VisaoGeralEvento({
                     Publicar evento
                   </BotaoAcao>
                 </form>
-                <ExcluirEvento excluir={excluirEvento.bind(null, evento.id)} />
+                <ExcluirEvento
+                  excluir={excluirEvento.bind(null, evento.id)}
+                  nome={evento.nome}
+                />
               </>
             )}
             {evento.status === "publicado" && (

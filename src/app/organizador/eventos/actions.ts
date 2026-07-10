@@ -30,6 +30,7 @@ import {
 } from "@/lib/categorias/cbjj";
 import { lerRegulamentoDoForm } from "@/lib/regulamento";
 import { GRUPOS_PRECO_PRESETS, type LoteVariacao } from "@/lib/lotes/preco";
+import { diaLocalYmd, loteConflitante, ymdParaBR } from "@/lib/lotes/vigencia";
 
 function slugify(nome: string): string {
   return nome
@@ -43,6 +44,13 @@ function slugify(nome: string): string {
 /** validações esperadas viram banner na página do evento (visível em produção) */
 function erroVisivel(eventoId: string, mensagem: string): never {
   redirect(`/organizador/eventos/${eventoId}?erro=${encodeURIComponent(mensagem)}`);
+}
+
+/** erros do formulário de lotes voltam para a própria página de Lotes */
+function erroLote(eventoId: string, mensagem: string): never {
+  redirect(
+    `/organizador/eventos/${eventoId}/lotes?erro=${encodeURIComponent(mensagem)}`,
+  );
 }
 
 async function eventoDoOrganizador(eventoId: string) {
@@ -372,10 +380,30 @@ export async function criarLote(eventoId: string, formData: FormData) {
   const fim = new Date(fimStr.includes("T") ? fimStr : `${fimStr}T23:59:59`);
 
   if (!nome || !preco || isNaN(inicio.getTime()) || isNaN(fim.getTime())) {
-    erroVisivel(eventoId, "Preencha nome, preço e vigência do lote.");
+    erroLote(eventoId, "Preencha nome, preço e vigência do lote.");
   }
   if (fim <= inicio) {
-    erroVisivel(eventoId, "O fim do lote precisa ser depois do início.");
+    erroLote(eventoId, "O fim do lote precisa ser depois do início.");
+  }
+
+  // o período não pode cair dentro (nem cruzar) o de outro lote: cada dia
+  // pertence a no máximo um lote, senão o preço vigente por data fica ambíguo
+  const existentes = await db.query.lotes.findMany({
+    where: eq(lotes.eventoId, eventoId),
+  });
+  const conflito = loteConflitante(
+    { inicio: inicioStr, fim: fimStr },
+    existentes.map((l) => ({
+      nome: l.nome,
+      inicio: diaLocalYmd(l.inicio),
+      fim: diaLocalYmd(l.fim),
+    })),
+  );
+  if (conflito) {
+    erroLote(
+      eventoId,
+      `As datas se sobrepõem ao lote "${conflito.nome}" (${ymdParaBR(conflito.inicio)} → ${ymdParaBR(conflito.fim)}). Cada lote precisa de um período separado dos demais.`,
+    );
   }
 
   // pacotes de preço nomeados (opcional): linhas varNome/varPreco pareadas por
@@ -388,13 +416,13 @@ export async function criarLote(eventoId: string, formData: FormData) {
     const centavos = precoParaCentavos(varPrecos[i] ?? null);
     if (!nomeVar && centavos == null) continue; // linha em branco
     if (!nomeVar || centavos == null) {
-      erroVisivel(eventoId, "Cada pacote de preço precisa de grupo e valor.");
+      erroLote(eventoId, "Cada pacote de preço precisa de grupo e valor.");
     }
     if (!(GRUPOS_PRECO_PRESETS as readonly string[]).includes(nomeVar)) {
-      erroVisivel(eventoId, `Grupo de preço inválido: "${nomeVar}".`);
+      erroLote(eventoId, `Grupo de preço inválido: "${nomeVar}".`);
     }
     if (variacoes.some((v) => v.nome === nomeVar)) {
-      erroVisivel(eventoId, `Grupo de preço repetido no lote: "${nomeVar}".`);
+      erroLote(eventoId, `Grupo de preço repetido no lote: "${nomeVar}".`);
     }
     variacoes.push({ nome: nomeVar, precoCentavos: centavos });
   }

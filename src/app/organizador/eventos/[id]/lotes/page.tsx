@@ -2,9 +2,10 @@ import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { eventos, lotes } from "@/db/schema";
-import { AcaoTexto } from "@/components/ui/botao-acao";
+import { ConfirmarExclusao } from "@/components/ui/confirmar-exclusao";
 import { NovoLote } from "@/components/organizador/novo-lote";
 import { getUsuarioAtual } from "@/lib/auth";
+import { conflitosNaLista, diaLocalYmd } from "@/lib/lotes/vigencia";
 import { criarLote, excluirLote } from "../../actions";
 
 type StatusLote = "vigente" | "futuro" | "encerrado";
@@ -80,13 +81,23 @@ export default async function LotesEvento({
   });
   const fmtData = (d: Date) => d.toLocaleDateString("pt-BR");
 
+  // janelas de dias (yyyy-mm-dd) — base da detecção de sobreposição, compartilhada
+  // com o formulário (validação de novos lotes) e a sinalização da lista
+  const janelas = lts.map((l) => ({
+    nome: l.nome,
+    inicio: diaLocalYmd(l.inicio),
+    fim: diaLocalYmd(l.fim),
+  }));
+  const conflitos = conflitosNaLista(janelas);
+  const totalComConflito = conflitos.filter((c) => c.length > 0).length;
+
   // ----- derivados (status, resumo, timeline, delta) -----
   const itens = lts.map((l, i) => {
     const status = statusDoLote(l.inicio, l.fim, agora);
     const dias = Math.max(1, Math.round((+l.fim - +l.inicio) / DIA_MS));
     const anterior = lts[i - 1];
     const delta = anterior ? l.precoCentavos - anterior.precoCentavos : 0;
-    return { lote: l, status, dias, delta };
+    return { lote: l, status, dias, delta, conflitos: conflitos[i] };
   });
 
   const vigente = itens.find((x) => x.status === "vigente")?.lote ?? null;
@@ -107,6 +118,14 @@ export default async function LotesEvento({
       {erro && (
         <p className="border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {erro}
+        </p>
+      )}
+
+      {totalComConflito > 0 && (
+        <p className="border border-warning/40 bg-warning/10 px-4 py-3 font-cond text-sm uppercase tracking-[0.03em] text-warning">
+          ⚠ {totalComConflito} lote{totalComConflito === 1 ? "" : "s"} com datas
+          sobrepostas — nesses dias o preço vigente fica ambíguo. Ajuste os períodos
+          (exclua e recrie) para que cada lote ocupe dias distintos.
         </p>
       )}
 
@@ -215,12 +234,15 @@ export default async function LotesEvento({
             </div>
           ) : (
             <div className="flex flex-col gap-3">
-              {itens.map(({ lote, status, dias, delta }, i) => {
+              {itens.map(({ lote, status, dias, delta, conflitos: conflitosDoLote }, i) => {
                 const pill = PILL[status];
+                const temConflito = conflitosDoLote.length > 0;
                 return (
                   <div
                     key={lote.id}
-                    className="relative flex flex-wrap items-center gap-x-5 gap-y-3 border border-white/10 bg-surface py-[17px] pl-6 pr-[22px]"
+                    className={`relative flex flex-wrap items-center gap-x-5 gap-y-3 border bg-surface py-[17px] pl-6 pr-[22px] ${
+                      temConflito ? "border-warning/45" : "border-white/10"
+                    }`}
                   >
                     <span
                       className="absolute inset-y-0 left-0 w-[3px]"
@@ -252,6 +274,11 @@ export default async function LotesEvento({
                         >
                           {pill.rotulo}
                         </span>
+                        {temConflito && (
+                          <span className="inline-flex h-5 items-center border border-warning/50 bg-warning/10 px-2 font-cond text-[11px] font-semibold uppercase tracking-[0.06em] text-warning">
+                            ⚠ Sobreposto
+                          </span>
+                        )}
                         {i > 0 && delta !== 0 && (
                           <span
                             className={`tnum inline-flex h-5 items-center border border-dashed px-2 font-cond text-[11px] font-semibold uppercase tracking-[0.04em] ${
@@ -268,6 +295,11 @@ export default async function LotesEvento({
                         {fmtData(lote.inicio)} → {fmtData(lote.fim)}
                         <span className="text-muted-3"> · {dias} dia{dias === 1 ? "" : "s"}</span>
                       </div>
+                      {temConflito && (
+                        <div className="mt-1 font-cond text-[12px] uppercase tracking-[0.03em] text-warning">
+                          Datas sobrepõem: {conflitosDoLote.join(", ")}
+                        </div>
+                      )}
                       {lote.variacoes && lote.variacoes.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {lote.variacoes.map((v, vi) => (
@@ -302,11 +334,21 @@ export default async function LotesEvento({
                     </div>
 
                     {/* excluir */}
-                    <form action={excluirLote.bind(null, evento.id, lote.id)}>
-                      <AcaoTexto className="cursor-pointer font-cond text-sm font-medium uppercase tracking-[0.04em] text-muted-3 transition-colors hover:text-brand">
-                        excluir
-                      </AcaoTexto>
-                    </form>
+                    <ConfirmarExclusao
+                      acao={excluirLote.bind(null, evento.id, lote.id)}
+                      titulo="Excluir lote?"
+                      descricao={
+                        <>
+                          O lote <b className="text-foreground">{lote.nome}</b> (
+                          {fmtData(lote.inicio)} → {fmtData(lote.fim)}) será
+                          removido. Esta ação não pode ser desfeita.
+                        </>
+                      }
+                      confirmarRotulo="Excluir lote"
+                      rotulo="excluir"
+                      title="Excluir lote"
+                      className="cursor-pointer font-cond text-sm font-medium uppercase tracking-[0.04em] text-muted-3 transition-colors hover:text-brand"
+                    />
                   </div>
                 );
               })}
@@ -316,7 +358,11 @@ export default async function LotesEvento({
 
         {/* CRIADOR (DOM depois → esquerda no desktop) */}
         <div className="w-full lg:sticky lg:top-4 lg:w-[380px] lg:shrink-0">
-          <NovoLote criar={criarLote.bind(null, evento.id)} moeda={evento.moeda} />
+          <NovoLote
+            criar={criarLote.bind(null, evento.id)}
+            moeda={evento.moeda}
+            lotesExistentes={janelas}
+          />
         </div>
       </div>
     </>

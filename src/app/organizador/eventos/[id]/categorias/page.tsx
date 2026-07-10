@@ -8,6 +8,7 @@ import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 import { GRUPOS_PRECO_PRESETS } from "@/lib/lotes/preco";
 import { GeradorGrade } from "@/components/organizador/gerador-grade";
 import { SeletorGrupoPreco } from "@/components/organizador/seletor-grupo-preco";
+import { ConfirmarExclusao } from "@/components/ui/confirmar-exclusao";
 import {
   definirGrupoPreco,
   excluirCategoria,
@@ -182,22 +183,25 @@ export default async function CategoriasEvento({
                               className="group/chip inline-flex items-center gap-1.5 border border-white/12 bg-background py-1 pl-2.5 pr-1.5 font-cond text-xs uppercase tracking-[0.02em] text-text-2 transition-colors hover:border-brand/40"
                             >
                               {rotuloPeso(c.nome)}
-                              <form
-                                action={excluirCategoria.bind(
+                              <ConfirmarExclusao
+                                acao={excluirCategoria.bind(
                                   null,
                                   evento.id,
                                   c.id,
                                 )}
-                                className="flex"
-                              >
-                                <button
-                                  type="submit"
-                                  title="Excluir categoria"
-                                  className="flex h-4 w-4 cursor-pointer items-center justify-center text-sm leading-none text-muted-3 transition-colors hover:text-brand"
-                                >
-                                  ×
-                                </button>
-                              </form>
+                                titulo="Excluir categoria?"
+                                descricao={
+                                  <>
+                                    A categoria{" "}
+                                    <b className="text-foreground">{c.nome}</b>{" "}
+                                    será removida do evento.
+                                  </>
+                                }
+                                confirmarRotulo="Excluir categoria"
+                                rotulo="×"
+                                title="Excluir categoria"
+                                className="flex h-4 w-4 cursor-pointer items-center justify-center text-sm leading-none text-muted-3 transition-colors hover:text-brand"
+                              />
                             </span>
                           ))}
                         </div>

@@ -5,6 +5,7 @@ import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { GRUPOS_PRECO_PRESETS } from "@/lib/lotes/preco";
+import { loteConflitante, ymdParaBR, type JanelaLote } from "@/lib/lotes/vigencia";
 
 const p2 = (n: number) => String(n).padStart(2, "0");
 
@@ -22,12 +23,6 @@ function somaDias(ymd: string, dias: number): string {
   return `${dt.getFullYear()}-${p2(dt.getMonth() + 1)}-${p2(dt.getDate())}`;
 }
 
-/** "yyyy-mm-dd" → "dd/mm/aaaa" (sem passar por Date, evita fuso) */
-function paraBR(ymd: string): string {
-  const [y, m, d] = ymd.split("-");
-  return d && m && y ? `${d}/${m}/${y}` : "—";
-}
-
 const labelCls =
   "font-cond text-[13px] font-semibold uppercase tracking-[0.06em] text-muted-2";
 
@@ -37,9 +32,11 @@ const PRESETS = [7, 15, 30];
 export function NovoLote({
   criar,
   moeda,
+  lotesExistentes,
 }: {
   criar: (formData: FormData) => Promise<void>;
   moeda: string;
+  lotesExistentes: JanelaLote[];
 }) {
   const [nome, setNome] = useState("");
   const [preco, setPreco] = useState("");
@@ -58,12 +55,17 @@ export function NovoLote({
       (!!v.nome.trim() && Number(v.preco) > 0),
   );
 
+  // o período não pode cair dentro do de outro lote (datas se sobrepondo)
+  const conflito = loteConflitante({ inicio, fim }, lotesExistentes);
+  const conflitoVisivel = inicio !== "" && fim !== "" && fim >= inicio && !!conflito;
+
   const valido =
     nome.trim() !== "" &&
     precoNum > 0 &&
     inicio !== "" &&
     fim !== "" &&
     fim >= inicio && // yyyy-mm-dd compara na ordem cronológica
+    !conflito &&
     variacoesOk;
 
   const addVariacao = () => setVariacoes((vs) => [...vs, { nome: "", preco: "" }]);
@@ -244,6 +246,15 @@ export function NovoLote({
         </div>
       </div>
 
+      {conflitoVisivel && conflito && (
+        <p className="border border-brand/50 bg-brand/10 px-3 py-2 font-cond text-[12px] leading-snug text-brand-soft">
+          Este período se sobrepõe ao lote{" "}
+          <span className="font-semibold uppercase">{conflito.nome}</span> (
+          {ymdParaBR(conflito.inicio)} → {ymdParaBR(conflito.fim)}). Escolha datas
+          fora dos outros lotes.
+        </p>
+      )}
+
       {/* PRESETS DE DURAÇÃO */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-cond text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-3">
@@ -275,7 +286,7 @@ export function NovoLote({
           </span>
         </div>
         <div className="tnum mt-0.5 font-cond text-[13px] uppercase tracking-[0.04em] text-muted-2">
-          {paraBR(inicio)} → {paraBR(fim)}
+          {ymdParaBR(inicio)} → {ymdParaBR(fim)}
           {Number(precoSegunda) > 0 &&
             ` · 2ª ${fmt.format(Number(precoSegunda))}`}
         </div>
