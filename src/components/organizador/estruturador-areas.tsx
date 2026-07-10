@@ -1,67 +1,51 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 import {
-  agruparExibicao,
   classesEmOrdem,
   contarGrupos,
   corDaOnda,
-  distribuirBalanceado,
   maiorOndaDeCats,
 } from "@/lib/categorias/distribuicao-areas";
-
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
-const ROTULO_SEXO: Record<string, string> = {
-  masculino: "Masculino",
-  feminino: "Feminino",
-};
+import type {
+  AreaCron,
+  CategoriaCron,
+  LutaCron,
+} from "@/lib/cronograma/cronograma-areas";
 
 const AREAS_MIN = 1;
 const AREAS_MAX = 40;
 
-/** categoria enxuta enviada ao cliente, já na ordem do dia */
+/** categoria enxuta usada só na legenda do funil e no resumo (4 stats) */
 export interface CategoriaView {
   classeIdade: string;
   sexo: string;
   faixa: string | null;
-  /** carga estimada (segundos) para o balanceamento */
-  carga: number;
-  /** lutas estimadas, só para exibir a carga por área */
-  lutas: number;
-}
-
-const pad2 = (n: number) => String(n).padStart(2, "0");
-
-function tituloGrupo(g: { classeNome: string; sexo: string; faixa: string }): string {
-  const base = `${g.classeNome} · ${ROTULO_SEXO[g.sexo] ?? cap(g.sexo)}`;
-  return g.faixa ? `${base} · ${cap(g.faixa)}` : base;
 }
 
 export function EstruturadorAreas({
   categorias,
   numAreasInicial,
   base,
-  areaIds,
+  cronograma,
   estruturar,
 }: {
   categorias: CategoriaView[];
   numAreasInicial: number | null;
   /** caminho base do evento, ex.: `/organizador/eventos/:id` */
   base: string;
-  areaIds: string[];
+  /** cronograma real por área (persistido) — vazio quando não estruturado */
+  cronograma: AreaCron[];
   estruturar: (formData: FormData) => void | Promise<void>;
 }) {
   const [areasN, setAreasN] = useState(
     numAreasInicial ? String(numAreasInicial) : "",
   );
-  // número já APLICADO (persistido): a prévia reflete este valor, não o que
-  // está sendo digitado — só muda ao clicar em "Estruturar áreas".
-  const [aplicado, setAplicado] = useState<number | null>(numAreasInicial);
+  const [areasFull, setAreasFull] = useState(false);
 
   const nInt = Math.floor(Number(areasN));
   const nValido = Number.isFinite(nInt) && nInt >= AREAS_MIN && nInt <= AREAS_MAX;
@@ -72,23 +56,23 @@ export function EstruturadorAreas({
   const gruposTotal = useMemo(() => contarGrupos(categorias), [categorias]);
   const classesDoFunil = useMemo(() => classesEmOrdem(categorias), [categorias]);
 
-  // alocação balanceada por área — calculada sobre o número APLICADO, não
-  // sobre o que está no input (a prévia só muda ao clicar em Estruturar)
-  const porArea = useMemo(
-    () =>
-      aplicado != null
-        ? distribuirBalanceado(categorias, aplicado).map((cats) => ({
-            grupos: agruparExibicao(cats),
-            totalCats: cats.length,
-            lutas: cats.reduce((s, c) => s + c.lutas, 0),
-          }))
-        : [],
-    [categorias, aplicado],
-  );
+  // a estrutura vem persistida do servidor: a prévia só muda ao "Estruturar"
+  const estruturado = cronograma.length > 0;
 
-  const mostrarPreview = aplicado != null && temCategorias;
-  // só liga o placar quando a estrutura aplicada bate com as áreas persistidas
-  const placarLigado = aplicado != null && areaIds.length === aplicado;
+  // tela cheia: trava o scroll do body e fecha com Esc
+  useEffect(() => {
+    if (!areasFull) return;
+    const anterior = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setAreasFull(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = anterior;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [areasFull]);
 
   // ---- SEM CATEGORIAS: bloqueia com prompt para a seção Categorias ----
   if (!temCategorias) {
@@ -110,7 +94,8 @@ export function EstruturadorAreas({
     );
   }
 
-  const media = aplicado ? Math.round(totalCategorias / aplicado) : 0;
+  const areasAtuais = cronograma.length;
+  const media = areasAtuais ? Math.round(totalCategorias / areasAtuais) : 0;
 
   return (
     <>
@@ -152,15 +137,7 @@ export function EstruturadorAreas({
           </div>
 
           {/* Estruturar */}
-          <form
-            action={async (fd) => {
-              await estruturar(fd);
-              // aplica a prévia só depois que a estruturação foi persistida
-              const n = Math.floor(Number(fd.get("numAreas")));
-              if (Number.isFinite(n)) setAplicado(n);
-            }}
-            className="lg:justify-self-end"
-          >
+          <form action={estruturar} className="lg:justify-self-end">
             <input type="hidden" name="numAreas" value={nValido ? nInt : ""} />
             <BotaoAcaoBruto
               disabled={!nValido}
@@ -174,8 +151,8 @@ export function EstruturadorAreas({
         <p className="border-t border-white/10 px-6 py-3.5 font-cond text-[13px] uppercase leading-relaxed tracking-[0.03em] text-muted-3">
           O sistema ordena a grade dos extremos ao meio (kids e masters mais
           velhos liberam cedo, o miolo — Adulto / Master 1 — corre por último) e
-          espalha as categorias pelas áreas equilibrando a carga, sem deixar
-          nenhuma área vazia.
+          espalha as categorias pelas áreas equilibrando a carga, montando o
+          cronograma de lutas com horário previsto por tatame.
         </p>
       </div>
 
@@ -215,16 +192,12 @@ export function EstruturadorAreas({
         </div>
       </div>
 
-      {mostrarPreview ? (
+      {estruturado ? (
         <>
           {/* RESUMO — 4 STATS */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat rotulo="Áreas" valor={String(aplicado ?? 0)} sub="tatames" destaque />
-            <Stat
-              rotulo="Categorias"
-              valor={String(totalCategorias)}
-              sub="na grade"
-            />
+            <Stat rotulo="Áreas" valor={String(areasAtuais)} sub="tatames" destaque />
+            <Stat rotulo="Categorias" valor={String(totalCategorias)} sub="na grade" />
             <Stat rotulo="Média / área" valor={String(media)} sub="categorias" />
             <Stat
               rotulo="Grupos"
@@ -233,97 +206,19 @@ export function EstruturadorAreas({
             />
           </div>
 
-          {/* CARDS POR ÁREA */}
-          <div className="grid gap-4 md:grid-cols-2">
-            {porArea.map((area, i) => {
-              const visiveis = area.grupos.slice(0, 6);
-              const ocultos = area.grupos.length - visiveis.length;
-              return (
-                <div
-                  key={i}
-                  className="relative border border-white/10 bg-surface"
-                >
-                  <span className="absolute inset-y-0 left-0 w-[3px] bg-brand" />
-                  <div className="flex items-center justify-between gap-3 border-b border-white/10 px-5 py-3.5">
-                    <div className="flex items-baseline gap-2.5">
-                      <span className="disp tnum text-[26px] leading-none">
-                        Área {pad2(i + 1)}
-                      </span>
-                      <span className="font-cond text-[13px] uppercase tracking-[0.04em] text-muted-3">
-                        {area.grupos.length} grupo
-                        {area.grupos.length === 1 ? "" : "s"}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <div>
-                        <span className="disp tnum text-[28px] leading-none text-brand">
-                          {area.totalCats}
-                        </span>
-                        <span className="ml-1.5 font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
-                          cat.
-                        </span>
-                      </div>
-                      {area.lutas > 0 && (
-                        <div className="tnum font-cond text-[11px] uppercase tracking-[0.04em] text-muted-3">
-                          ~{area.lutas} lutas
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {area.grupos.length === 0 ? (
-                    <div className="px-5 py-6 text-center font-cond text-[13px] uppercase tracking-[0.04em] text-muted-3">
-                      Sem grupos nesta área
-                    </div>
-                  ) : (
-                    <ul className="flex flex-col">
-                      {visiveis.map((g, j) => (
-                        <li
-                          key={g.chave}
-                          className="flex items-center gap-3 border-b border-white/6 px-5 py-2.5 last:border-b-0"
-                        >
-                          <span className="tnum w-6 shrink-0 font-cond text-[13px] uppercase tracking-[0.04em] text-muted-3">
-                            {pad2(j + 1)}
-                          </span>
-                          <span
-                            className="h-2.5 w-2.5 shrink-0 rounded-full"
-                            title={`onda ${g.onda}`}
-                            style={{ background: corDaOnda(g.onda, maiorOndaValor) }}
-                          />
-                          <span
-                            className="h-3 w-3 shrink-0 -skew-x-9 border border-white/25"
-                            style={{ background: corDaFaixa(g.faixa || null) }}
-                          />
-                          <span className="min-w-0 flex-1 truncate font-cond text-sm font-semibold uppercase tracking-[0.02em]">
-                            {tituloGrupo(g)}
-                          </span>
-                          <span className="tnum shrink-0 font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
-                            {g.pesos} peso{g.pesos === 1 ? "" : "s"}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-
-                  {(ocultos > 0 || placarLigado) && (
-                    <div className="flex items-center justify-between gap-3 border-t border-white/10 px-5 py-2.5">
-                      <span className="font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
-                        {ocultos > 0 ? `+ ${ocultos} grupos nesta área` : ""}
-                      </span>
-                      {placarLigado && areaIds[i] && (
-                        <Link
-                          href={`${base}/areas/${areaIds[i]}/placar`}
-                          className="font-cond text-[12px] font-semibold uppercase tracking-[0.05em] text-muted-3 transition-colors hover:text-brand-soft"
-                        >
-                          Operar placar →
-                        </Link>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+          {/* BARRA DE AÇÃO */}
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={() => setAreasFull(true)}
+              className="inline-flex -skew-x-9 items-center border border-white/14 px-4 py-2 font-cond text-[13px] font-semibold uppercase tracking-[0.04em] text-muted-2 transition-colors hover:border-brand/50 hover:text-brand-soft"
+            >
+              <span className="inline-block skew-x-9">⤢ Expandir para tela cheia</span>
+            </button>
           </div>
+
+          {/* COLUNAS DE ÁREA (lado a lado, scroll lateral) */}
+          <ColunasAreas cronograma={cronograma} base={base} full={false} />
         </>
       ) : (
         // AINDA NÃO ESTRUTURADO
@@ -334,11 +229,252 @@ export function EstruturadorAreas({
           <p className="mx-auto mt-2 max-w-md font-cond text-[15px] uppercase tracking-[0.03em] text-muted-3">
             Informe o número de áreas e clique em{" "}
             <span className="text-brand-soft">Estruturar áreas</span> para
-            distribuir as {totalCategorias} categorias.
+            distribuir as {totalCategorias} categorias e montar o cronograma.
           </p>
         </div>
       )}
+
+      {/* TELA CHEIA */}
+      {areasFull && (
+        <div className="fixed inset-0 z-[200] flex flex-col bg-[#0A0A0B] p-4">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <span className="disp text-[22px]">Cronograma por área</span>
+            <button
+              type="button"
+              onClick={() => setAreasFull(false)}
+              className="inline-flex -skew-x-9 items-center border border-white/14 px-4 py-2 font-cond text-[13px] font-semibold uppercase tracking-[0.04em] text-muted-2 transition-colors hover:border-brand/50 hover:text-brand-soft"
+            >
+              <span className="inline-block skew-x-9">✕ Fechar tela cheia</span>
+            </button>
+          </div>
+          <ColunasAreas cronograma={cronograma} base={base} full />
+        </div>
+      )}
     </>
+  );
+}
+
+/** container flex horizontal das colunas de área */
+function ColunasAreas({
+  cronograma,
+  base,
+  full,
+}: {
+  cronograma: AreaCron[];
+  base: string;
+  full: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex gap-4 overflow-x-auto pb-2",
+        full && "min-h-0 flex-1",
+      )}
+    >
+      {cronograma.map((area) => (
+        <Coluna key={area.id} area={area} base={base} full={full} />
+      ))}
+    </div>
+  );
+}
+
+/** uma coluna = uma área (tatame): header + rodapé fixos, corpo com scroll */
+function Coluna({
+  area,
+  base,
+  full,
+}: {
+  area: AreaCron;
+  base: string;
+  full: boolean;
+}) {
+  return (
+    <div
+      className="relative flex w-[360px] shrink-0 flex-col border border-white/10 bg-surface"
+      style={{ maxHeight: full ? "88vh" : "76vh" }}
+    >
+      <span className="absolute inset-x-0 top-0 z-10 h-[3px] bg-brand" />
+
+      {/* HEADER FIXO */}
+      <div className="shrink-0 border-b border-white/10 px-4 pb-3 pt-4">
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="disp tnum text-[24px] leading-none">{area.nome}</span>
+          <div>
+            <span className="disp tnum text-[24px] leading-none text-brand">
+              {area.totalCats}
+            </span>
+            <span className="ml-1 font-cond text-[11px] uppercase tracking-[0.04em] text-muted-3">
+              cat.
+            </span>
+          </div>
+        </div>
+        <div className="mt-1.5 flex items-center justify-between gap-2 font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
+          <span>
+            {area.totalGrupos} grupo{area.totalGrupos === 1 ? "" : "s"}
+          </span>
+          <span className="tnum">
+            {area.dataLabel} · {area.inicio} → {area.fim}
+          </span>
+        </div>
+      </div>
+
+      {/* CORPO COM SCROLL */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        {area.categorias.length === 0 ? (
+          <div className="px-4 py-8 text-center font-cond text-[13px] uppercase tracking-[0.04em] text-muted-3">
+            Sem categorias nesta área
+          </div>
+        ) : (
+          area.categorias.map((cat, i) => <BlocoCategoria key={i} cat={cat} />)
+        )}
+      </div>
+
+      {/* RODAPÉ FIXO */}
+      <div className="shrink-0 border-t border-white/10 px-4 py-2.5 text-right">
+        <Link
+          href={`${base}/areas/${area.id}/placar`}
+          className="font-cond text-[12px] font-semibold uppercase tracking-[0.05em] text-muted-3 transition-colors hover:text-brand-soft"
+        >
+          Operar placar →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+/** bloco de uma categoria: linha-destaque + suas lutas (ou roster) */
+function BlocoCategoria({ cat }: { cat: CategoriaCron }) {
+  return (
+    <div>
+      {/* LINHA DA CATEGORIA (destaque forte) */}
+      <div className="relative border-b border-[rgba(238,46,36,0.25)] bg-[rgba(238,46,36,0.09)] py-2.5 pl-5 pr-4">
+        <span className="absolute inset-y-0 left-0 w-[3px] bg-brand" />
+        <div className="flex items-start justify-between gap-2.5">
+          <div className="flex min-w-0 items-start gap-2">
+            <span
+              className="mt-[3px] h-3 w-3 shrink-0 -skew-x-9 border border-white/25"
+              style={{ background: corDaFaixa(cat.faixa) }}
+            />
+            <div className="min-w-0">
+              <div className="truncate font-cond text-sm font-bold uppercase tracking-[0.02em] text-white">
+                {cat.titulo}
+              </div>
+              <div className="truncate font-cond text-[12px] uppercase tracking-[0.03em] text-muted-2">
+                {cat.subtitulo}
+              </div>
+            </div>
+          </div>
+          <div className="shrink-0 text-right">
+            <span className="inline-flex -skew-x-9 items-center bg-brand px-2 py-0.5">
+              <span className="disp tnum inline-block skew-x-9 text-[15px] leading-none text-white">
+                {cat.hora}
+              </span>
+            </span>
+            <div className="tnum mt-1 font-cond text-[11px] uppercase tracking-[0.04em] text-muted-3">
+              {cat.nLutas} luta{cat.nLutas === 1 ? "" : "s"}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* LUTAS (ou roster quando a chave ainda não foi gerada) */}
+      {cat.chaveGerada ? (
+        <ul className="flex flex-col">
+          {cat.lutas.map((l, i) => (
+            <LinhaLuta key={i} luta={l} />
+          ))}
+        </ul>
+      ) : (
+        <div className="px-4 py-2">
+          <div className="mb-1 font-cond text-[10px] uppercase tracking-[0.08em] text-muted-3">
+            {cat.atletas.length > 0
+              ? "Chave não gerada · inscritos"
+              : "Sem atletas confirmados"}
+          </div>
+          {cat.atletas.length > 0 && (
+            <ul className="flex flex-col">
+              {cat.atletas.map((nome, i) => (
+                <li
+                  key={i}
+                  className="flex items-center gap-2 py-0.5 font-cond text-[12px] uppercase tracking-[0.01em] text-muted-2"
+                >
+                  <span className="tnum w-5 shrink-0 text-muted-3">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="truncate">{nome}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** uma luta: bloco de tempo · dois nomes · placar (vencedor destacado) */
+function LinhaLuta({ luta }: { luta: LutaCron }) {
+  return (
+    <li className="flex items-stretch gap-2.5 border-b border-white/6 px-4 py-2 last:border-b-0">
+      <div className="w-11 shrink-0 pt-0.5">
+        <div className="disp tnum text-[15px] leading-none">{luta.hora}</div>
+        <div className="mt-1 font-cond text-[10px] uppercase tracking-[0.06em] text-muted-3">
+          {luta.label}
+        </div>
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
+        <NomeAtleta nome={luta.a1} estado={estadoAtleta(luta, 1)} />
+        <NomeAtleta nome={luta.a2} estado={estadoAtleta(luta, 2)} />
+      </div>
+      <div className="flex shrink-0 flex-col justify-center gap-1">
+        <ScoreBox valor={luta.score1} estado={estadoAtleta(luta, 1)} />
+        <ScoreBox valor={luta.score2} estado={estadoAtleta(luta, 2)} />
+      </div>
+    </li>
+  );
+}
+
+type EstadoAtleta = "vencedor" | "perdedor" | "neutro" | "indefinido";
+
+/** estado de um atleta na luta: decide destaque do nome e da caixa de placar */
+function estadoAtleta(luta: LutaCron, slot: 1 | 2): EstadoAtleta {
+  const nome = slot === 1 ? luta.a1 : luta.a2;
+  if (nome === "A definir") return "indefinido";
+  if (!luta.decidida) return "neutro";
+  return luta.vencedor === slot ? "vencedor" : "perdedor";
+}
+
+function NomeAtleta({ nome, estado }: { nome: string; estado: EstadoAtleta }) {
+  return (
+    <span
+      className={cn(
+        "truncate font-cond text-[13px] uppercase tracking-[0.01em]",
+        estado === "vencedor" && "font-semibold text-foreground",
+        estado === "perdedor" && "text-[#6B6A64]",
+        estado === "neutro" && "text-muted-2",
+        estado === "indefinido" && "italic text-muted-3",
+      )}
+    >
+      {nome}
+    </span>
+  );
+}
+
+function ScoreBox({ valor, estado }: { valor: number; estado: EstadoAtleta }) {
+  return (
+    <span
+      className={cn(
+        "disp tnum flex h-6 w-8 items-center justify-center text-[15px] leading-none",
+        estado === "vencedor"
+          ? "bg-brand text-white"
+          : "border border-white/10 bg-background",
+        estado === "perdedor" && "text-[#6B6A64]",
+        estado === "neutro" && "text-muted-2",
+        estado === "indefinido" && "text-muted-3",
+      )}
+    >
+      {estado === "indefinido" ? "–" : valor}
+    </span>
   );
 }
 

@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
-import { and, asc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { areas, categorias, eventos } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
 import { ordenarCategorias } from "@/lib/categorias/distribuicao-areas";
-import { estimarCargaCategorias } from "@/lib/cronograma/carga-areas";
+import { montarCronogramaDoEvento } from "@/lib/cronograma/cronograma-areas";
 import {
   EstruturadorAreas,
   type CategoriaView,
@@ -27,15 +27,10 @@ export default async function PaginaAreas({
 
   const [cats, todasAreas] = await Promise.all([
     db.query.categorias.findMany({ where: eq(categorias.eventoId, id) }),
-    db.query.areas.findMany({
-      where: eq(areas.eventoId, id),
-      orderBy: asc(areas.ordem),
-    }),
+    db.query.areas.findMany({ where: eq(areas.eventoId, id) }),
   ]);
 
-  const cargas = await estimarCargaCategorias(db, id, cats);
-
-  // categorias já na ordem do dia (extremos → meio), enxutas para o cliente
+  // grade na ordem do dia (extremos → meio), enxuta para a legenda/resumo
   const categoriasView: CategoriaView[] = ordenarCategorias(
     cats.map((c) => ({
       classeIdade: c.classeIdade,
@@ -43,23 +38,18 @@ export default async function PaginaAreas({
       faixa: c.faixa,
       tipo: c.tipo,
       limitePesoKg: c.limitePesoKg != null ? Number(c.limitePesoKg) : null,
-      carga: cargas.get(c.id)?.carga ?? 1,
-      lutas: cargas.get(c.id)?.lutas ?? 0,
     })),
-  ).map((c) => ({
-    classeIdade: c.classeIdade,
-    sexo: c.sexo,
-    faixa: c.faixa,
-    carga: c.carga,
-    lutas: c.lutas,
-  }));
+  ).map((c) => ({ classeIdade: c.classeIdade, sexo: c.sexo, faixa: c.faixa }));
+
+  // cronograma real por área (categorias → lutas, horários e placar)
+  const cronograma = await montarCronogramaDoEvento(db, id, evento.dataInicio);
 
   return (
     <EstruturadorAreas
       categorias={categoriasView}
-      numAreasInicial={evento.numAreas}
+      numAreasInicial={evento.numAreas ?? (todasAreas.length || null)}
       base={`/organizador/eventos/${id}`}
-      areaIds={todasAreas.map((a) => a.id)}
+      cronograma={cronograma}
       estruturar={estruturarAreas.bind(null, id)}
     />
   );
