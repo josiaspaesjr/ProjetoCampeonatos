@@ -1,6 +1,7 @@
 import type { lutas } from "@/db/schema";
 import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { NativeSelect } from "@/components/ui/native-select";
+import { idsDeBye } from "@/lib/chaves/byes";
 
 type LutaRow = typeof lutas.$inferSelect;
 
@@ -69,6 +70,10 @@ function LinhaAtleta({
 
 export function BracketView({ lutas: linhas, atletas, formato, acaoResultado }: Props) {
   const totalRodadas = Math.max(...linhas.map((l) => l.rodada));
+  const byes = idsDeBye(
+    linhas,
+    formato === "round_robin" ? "round_robin" : "eliminacao_simples",
+  );
   const rodadas = Array.from({ length: totalRodadas }, (_, i) =>
     linhas
       .filter((l) => l.rodada === i + 1)
@@ -85,11 +90,7 @@ export function BracketView({ lutas: linhas, atletas, formato, acaoResultado }: 
             </p>
             <div className="flex h-full flex-col justify-around gap-4">
               {lutasDaRodada.map((luta) => {
-                const bye =
-                  formato !== "round_robin" &&
-                  luta.rodada === 1 &&
-                  (luta.atleta1InscricaoId === null) !==
-                    (luta.atleta2InscricaoId === null);
+                const bye = byes.has(luta.id);
                 const pronta =
                   !bye &&
                   luta.atleta1InscricaoId &&
@@ -102,9 +103,10 @@ export function BracketView({ lutas: linhas, atletas, formato, acaoResultado }: 
                       inscricaoId={luta.atleta1InscricaoId}
                       atletas={atletas}
                       vencedor={luta.vencedorInscricaoId}
-                      slotLivre={bye ? "bye" : "aguardando"}
+                      slotLivre="aguardando"
                     />
                     <div className="my-1 border-t" />
+                    {/* o slot vazio do bye é sempre o atleta2 */}
                     <LinhaAtleta
                       inscricaoId={luta.atleta2InscricaoId}
                       atletas={atletas}

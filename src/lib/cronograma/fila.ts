@@ -1,6 +1,7 @@
 import { asc, eq, inArray } from "drizzle-orm";
 import type { Db } from "@/db";
 import { areas, categorias, chaves, inscricoes, lutas } from "@/db/schema";
+import { idsDeBye } from "@/lib/chaves/byes";
 
 /**
  * Fila de lutas e cronograma estimado por área.
@@ -76,13 +77,6 @@ export interface FilaDaArea {
   atletas: Record<string, { nome: string; academia: string | null }>;
 }
 
-function ehBye(l: LutaRow): boolean {
-  return (
-    l.rodada === 1 &&
-    (l.atleta1InscricaoId === null) !== (l.atleta2InscricaoId === null)
-  );
-}
-
 export async function montarFilaDaArea(
   db: Db,
   areaId: string,
@@ -110,10 +104,11 @@ export async function montarFilaDaArea(
       where: eq(lutas.chaveId, chave.id),
       orderBy: [asc(lutas.rodada), asc(lutas.posicao)],
     });
+    const byes = idsDeBye(linhas, chave.formato);
 
     const rodadas = new Map<number, { luta: LutaRow; categoria: CategoriaRow }[]>();
     for (const luta of linhas) {
-      if (luta.vencedorInscricaoId || ehBye(luta)) continue;
+      if (luta.vencedorInscricaoId || byes.has(luta.id)) continue;
       const grupo = rodadas.get(luta.rodada) ?? [];
       grupo.push({ luta, categoria });
       rodadas.set(luta.rodada, grupo);

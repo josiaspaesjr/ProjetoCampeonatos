@@ -10,6 +10,7 @@ import {
   registrarResultadoRoundRobin,
 } from "@/lib/bracket";
 import type { Chave as ChaveEngine, MetodoVitoria, Podio } from "@/lib/bracket";
+import { idsDeBye } from "@/lib/chaves/byes";
 
 /**
  * Ponte entre o motor de chaveamento (puro, testado) e o banco.
@@ -88,8 +89,9 @@ export async function gerarChaveParaCategoria(
       atleta2InscricaoId: l.atleta2,
       proximaLutaId: l.proximaLutaId ? uuidPorIdLocal.get(l.proximaLutaId)! : null,
       proximaLutaSlot: l.proximaLutaSlot,
-      vencedorInscricaoId: l.vencedor, // byes já avançados pelo motor
-      encerradaEm: l.bye ? new Date() : null,
+      vencedorInscricaoId: l.vencedor, // bye da 1ª rodada já avançado pelo motor
+      // byes de rodadas seguintes ainda não têm vencedor: encerram só ao avançar
+      encerradaEm: l.vencedor ? new Date() : null,
     })),
   );
 
@@ -99,20 +101,13 @@ export async function gerarChaveParaCategoria(
 type LutaRow = typeof lutas.$inferSelect;
 type ChaveRow = { seedSorteio: string; formato: string };
 
-function ehBye(formato: FormatoChave, l: LutaRow): boolean {
-  return (
-    formato === "eliminacao_simples" &&
-    l.rodada === 1 &&
-    (l.atleta1InscricaoId === null) !== (l.atleta2InscricaoId === null)
-  );
-}
-
 function formatoDaChave(chave: ChaveRow): FormatoChave {
   return chave.formato === "round_robin" ? "round_robin" : "eliminacao_simples";
 }
 
 export function montarChaveEngine(chave: ChaveRow, linhas: LutaRow[]): ChaveEngine {
   const formato = formatoDaChave(chave);
+  const byes = idsDeBye(linhas, formato);
   return {
     formato,
     seed: chave.seedSorteio,
@@ -127,7 +122,7 @@ export function montarChaveEngine(chave: ChaveRow, linhas: LutaRow[]): ChaveEngi
       proximaLutaSlot: (l.proximaLutaSlot ?? null) as 1 | 2 | null,
       vencedor: l.vencedorInscricaoId,
       metodo: l.metodo,
-      bye: ehBye(formato, l),
+      bye: byes.has(l.id),
     })),
   };
 }
@@ -190,15 +185,28 @@ export async function registrarResultadoNoBanco(
     })
     .where(eq(lutas.id, lutaId));
 
-  if (lutaDecidida.proximaLutaId) {
-    const proxima = depois.lutas.find((l) => l.id === lutaDecidida.proximaLutaId)!;
+  // propaga o avanço a todas as lutas que mudaram — inclui a cascata através de
+  // byes de rodadas seguintes (o bye avança sozinho e alimenta a luta adiante)
+  for (const d of depois.lutas) {
+    if (d.id === lutaId) continue;
+    const a = antes.lutas.find((l) => l.id === d.id)!;
+    if (
+      a.atleta1 === d.atleta1 &&
+      a.atleta2 === d.atleta2 &&
+      a.vencedor === d.vencedor
+    ) {
+      continue;
+    }
     await db
       .update(lutas)
       .set({
-        atleta1InscricaoId: proxima.atleta1,
-        atleta2InscricaoId: proxima.atleta2,
+        atleta1InscricaoId: d.atleta1,
+        atleta2InscricaoId: d.atleta2,
+        vencedorInscricaoId: d.vencedor,
+        metodo: d.metodo,
+        encerradaEm: d.vencedor ? new Date() : null,
       })
-      .where(eq(lutas.id, proxima.id));
+      .where(eq(lutas.id, d.id));
   }
 
   const concluida =

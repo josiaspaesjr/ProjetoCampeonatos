@@ -2,6 +2,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import type { Db } from "@/db";
 import { areas, categorias, chaves, inscricoes, lutas } from "@/db/schema";
 import { chaveDoGrupo, nomeDaClasse } from "@/lib/categorias/distribuicao-areas";
+import { idsDeBye } from "@/lib/chaves/byes";
 import { duracaoDaCategoria } from "./fila";
 
 /**
@@ -50,18 +51,6 @@ function rotuloPeso(nome: string, tipo: string): string {
   if (tipo === "absoluto") return "Absoluto";
   const partes = nome.split(" / ");
   return partes.length > 1 ? partes[partes.length - 1].trim() : nome;
-}
-
-/** bye: 1ª rodada com exatamente um atleta — avanço automático, não é luta */
-function ehBye(l: {
-  rodada: number;
-  atleta1InscricaoId: string | null;
-  atleta2InscricaoId: string | null;
-}): boolean {
-  return (
-    l.rodada === 1 &&
-    (l.atleta1InscricaoId === null) !== (l.atleta2InscricaoId === null)
-  );
 }
 
 /** uma luta na coluna da área */
@@ -215,9 +204,11 @@ export async function montarCronogramaDoEvento(
       gruposVistos.add(grupoChave);
 
       const chave = chavePorCat.get(c.id);
-      const visiveis = chave
-        ? (lutasPorChave.get(chave.id) ?? []).filter((l) => !ehBye(l))
-        : [];
+      const lutasDaChave = chave ? (lutasPorChave.get(chave.id) ?? []) : [];
+      const byes = chave
+        ? idsDeBye(lutasDaChave, chave.formato)
+        : new Set<string>();
+      const visiveis = lutasDaChave.filter((l) => !byes.has(l.id));
       const chaveGerada = visiveis.length > 0;
 
       const horaCategoria = horaLabel(cursor);

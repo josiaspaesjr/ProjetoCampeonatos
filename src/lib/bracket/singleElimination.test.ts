@@ -42,29 +42,33 @@ function simularAte0Final(chave: Chave): Chave {
 
 describe("estrutura da chave", () => {
   it.each([
+    // byes mínimos: total − 1 luta real, byes só onde a contagem fica ímpar
     [2, 1, 0],
     [3, 2, 1],
     [4, 2, 0],
-    [5, 3, 3],
+    [5, 3, 2],
+    [6, 3, 1],
     [8, 3, 0],
-    [9, 4, 7],
+    [9, 4, 3],
+    [10, 4, 2],
     [16, 4, 0],
-    [17, 5, 15],
+    [17, 5, 4],
+    [20, 5, 2],
   ])("%i inscritos → %i rodadas e %i byes", (n, rodadas, byes) => {
     const chave = gerarEliminacaoSimples(inscritos(n), { seed: "teste" });
     expect(chave.rodadas).toBe(rodadas);
 
-    const tamanho = 2 ** rodadas;
+    // cada rodada tem ceil(entrando/2) nós (folding); todas as rodadas somam n
+    let entrando = n;
     for (let r = 1; r <= rodadas; r++) {
-      expect(lutasDaRodada(chave, r)).toHaveLength(tamanho / 2 ** r);
+      const nos = Math.ceil(entrando / 2);
+      expect(lutasDaRodada(chave, r)).toHaveLength(nos);
+      entrando = nos;
     }
 
-    const lutasBye = lutasDaRodada(chave, 1).filter((l) => l.bye);
-    expect(lutasBye).toHaveLength(byes);
-    // cada bye em uma luta distinta, com exatamente um atleta
-    for (const l of lutasBye) {
-      expect([l.atleta1, l.atleta2].filter(Boolean)).toHaveLength(1);
-    }
+    expect(chave.lutas.filter((l) => l.bye)).toHaveLength(byes);
+    // nº de lutas reais (não-bye) = n − 1
+    expect(chave.lutas.filter((l) => !l.bye)).toHaveLength(n - 1);
   });
 
   it("todo inscrito aparece exatamente uma vez na 1ª rodada", () => {
@@ -105,6 +109,62 @@ describe("estrutura da chave", () => {
     expect(() => gerarEliminacaoSimples([], { seed: "x" })).toThrow();
     const dup = [...inscritos(2), { id: "atleta-1" }];
     expect(() => gerarEliminacaoSimples(dup, { seed: "x" })).toThrow(/duplicado/);
+  });
+});
+
+describe("byes mínimos — todos lutam o quanto antes", () => {
+  it("total par: ninguém recebe bye na 1ª rodada; todos lutam", () => {
+    for (const n of [4, 6, 10, 12, 20, 50, 100]) {
+      const chave = gerarEliminacaoSimples(inscritos(n), { seed: "x" });
+      const r1 = lutasDaRodada(chave, 1);
+      expect(r1.filter((l) => l.bye)).toHaveLength(0);
+      expect(r1.every((l) => l.atleta1 && l.atleta2)).toBe(true);
+      // os n atletas aparecem, todos, na 1ª rodada
+      expect(atletasNaPrimeiraRodada(chave)).toHaveLength(n);
+      expect(r1).toHaveLength(n / 2);
+    }
+  });
+
+  it("total ímpar: exatamente um bye, e na 1ª rodada", () => {
+    for (const n of [5, 7, 11, 21, 99]) {
+      const chave = gerarEliminacaoSimples(inscritos(n), { seed: "x" });
+      const byesR1 = lutasDaRodada(chave, 1).filter((l) => l.bye);
+      expect(byesR1).toHaveLength(1);
+      // o bye da 1ª rodada tem um único atleta e já avançou
+      expect([byesR1[0].atleta1, byesR1[0].atleta2].filter(Boolean)).toHaveLength(1);
+      expect(byesR1[0].vencedor).not.toBeNull();
+    }
+  });
+
+  it("byes de rodadas seguintes começam vazios (aguardam o alimentador)", () => {
+    const chave = gerarEliminacaoSimples(inscritos(20), { seed: "x" });
+    for (const l of chave.lutas.filter((x) => x.bye && x.rodada > 1)) {
+      expect([l.atleta1, l.atleta2].filter(Boolean)).toHaveLength(0);
+      expect(l.vencedor).toBeNull();
+    }
+  });
+
+  it("ninguém recebe dois byes seguidos: um bye nunca alimenta outro bye", () => {
+    for (const n of [10, 11, 20, 40, 96, 300]) {
+      const chave = gerarEliminacaoSimples(inscritos(n), { seed: "x" });
+      const porId = new Map(chave.lutas.map((l) => [l.id, l]));
+      for (const l of chave.lutas.filter((x) => x.bye)) {
+        if (l.proximaLutaId) {
+          expect(porId.get(l.proximaLutaId)!.bye).toBe(false);
+        }
+      }
+    }
+  });
+
+  it("simulação completa: n − 1 lutas reais e final decidida", () => {
+    for (const n of [6, 10, 12, 20]) {
+      const chave = simularAte0Final(
+        gerarEliminacaoSimples(inscritos(n), { seed: "campeonato" }),
+      );
+      expect(chave.lutas.filter((l) => !l.bye)).toHaveLength(n - 1);
+      const final = chave.lutas.find((l) => l.rodada === chave.rodadas)!;
+      expect(final.vencedor).not.toBeNull();
+    }
   });
 });
 
