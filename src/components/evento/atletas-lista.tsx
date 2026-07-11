@@ -140,7 +140,12 @@ export function AtletasLista({
       ) : (
         <div className="flex flex-col gap-5">
           {visiveis.map((d) => (
-            <Divisao key={d.categoriaId} divisao={d} mostrarPais={mostrarPais} />
+            <Divisao
+              key={d.categoriaId}
+              divisao={d}
+              mostrarPais={mostrarPais}
+              forcarAberto={Boolean(q) || paisFiltro !== null}
+            />
           ))}
         </div>
       )}
@@ -151,19 +156,31 @@ export function AtletasLista({
 function Divisao({
   divisao,
   mostrarPais,
+  forcarAberto,
 }: {
   divisao: DivisaoAtletas;
   mostrarPais: boolean;
+  /** força a divisão aberta (ex.: durante busca/filtro) ignorando o estado local */
+  forcarAberto: boolean;
 }) {
+  const [abertoLocal, setAbertoLocal] = useState(false);
+  const aberto = forcarAberto || abertoLocal;
+
   return (
     <section className="relative border border-white/10 bg-surface">
       <span className="absolute inset-x-0 top-0 z-10 h-[3px] bg-brand" />
 
-      {/* CABEÇALHO DA DIVISÃO */}
-      <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 pb-3 pt-4">
-        <div className="flex min-w-0 items-start gap-2.5">
+      {/* CABEÇALHO DA DIVISÃO — clique alterna o collapse (fechado por padrão) */}
+      <div className="flex items-center justify-between gap-3 px-4 pb-3 pt-4">
+        <button
+          type="button"
+          onClick={() => setAbertoLocal((v) => !v)}
+          aria-expanded={aberto}
+          className="group flex min-w-0 flex-1 items-start gap-2.5 text-left"
+        >
+          <Chevron aberto={aberto} />
           <span
-            className="mt-1 h-3.5 w-3.5 shrink-0 -skew-x-9 border border-white/25"
+            className="mt-0.5 h-3.5 w-3.5 shrink-0 -skew-x-9 border border-white/25"
             style={{ background: corDaFaixa(divisao.faixa) }}
           />
           <div className="min-w-0">
@@ -182,7 +199,7 @@ function Divisao({
               )}
             </div>
           </div>
-        </div>
+        </button>
         {divisao.chaveHref && (
           <Link
             href={divisao.chaveHref}
@@ -194,12 +211,34 @@ function Divisao({
       </div>
 
       {/* CARDS DOS ATLETAS */}
-      <div className="grid grid-cols-1 gap-px bg-white/6 sm:grid-cols-2 lg:grid-cols-3">
-        {divisao.atletas.map((a) => (
-          <CardAtleta key={a.id} atleta={a} mostrarPais={mostrarPais} />
-        ))}
-      </div>
+      {aberto && (
+        <div className="grid grid-cols-1 gap-px border-t border-white/10 bg-white/6 sm:grid-cols-2 lg:grid-cols-3">
+          {divisao.atletas.map((a) => (
+            <CardAtleta key={a.id} atleta={a} mostrarPais={mostrarPais} />
+          ))}
+        </div>
+      )}
     </section>
+  );
+}
+
+/** seta que gira ao expandir (▶ fechado → ▼ aberto) */
+function Chevron({ aberto }: { aberto: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.5}
+      strokeLinecap="square"
+      className={cn(
+        "mt-0.5 h-4 w-4 shrink-0 text-muted-3 transition-transform duration-200 group-hover:text-brand-soft",
+        aberto && "rotate-90",
+      )}
+    >
+      <path d="M9 6l6 6-6 6" />
+    </svg>
   );
 }
 
