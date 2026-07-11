@@ -39,7 +39,7 @@ const norm = (s: string) =>
 
 /**
  * Aba **Atletas** pública: todos os inscritos agrupados por divisão (categoria),
- * com card por atleta e selo **Pago** (confirmada) / **Pendente**
+ * com card por atleta e selo **Confirmado** (confirmada) / **Pendente**
  * (pendente_pagamento) — o atleta se inscreve e paga depois; só os confirmados
  * entram nas áreas e chaves. Tem busca (atleta/academia) e atalho para a chave
  * de cada categoria quando ela já está publicada.
@@ -262,17 +262,19 @@ function ChipPais({
 }
 
 function StatusBadge({ status }: { status: StatusInscrito }) {
-  const pago = status === "confirmada";
+  const confirmado = status === "confirmada";
   return (
     <span
       className={cn(
         "inline-flex shrink-0 -skew-x-9 items-center border px-2 py-0.5 font-cond text-[10px] font-bold uppercase tracking-[0.06em]",
-        pago
+        confirmado
           ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
           : "border-amber-500/40 bg-amber-500/10 text-amber-400",
       )}
     >
-      <span className="inline-block skew-x-9">{pago ? "Pago" : "Pendente"}</span>
+      <span className="inline-block skew-x-9">
+        {confirmado ? "Confirmado" : "Pendente"}
+      </span>
     </span>
   );
 }
