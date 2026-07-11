@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { CamposDataEvento } from "@/components/organizador/campos-data-evento";
 import { RegulamentoCampos } from "@/components/organizador/regulamento-campos";
+import { useNavMobile } from "@/components/organizador/nav-mobile-context";
 import { Spinner } from "@/components/ui/botao-acao";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -74,6 +75,7 @@ export function TopbarEvento({
   const [aberto, setAberto] = useState(false);
   // key força o form a recriar (descarta o rascunho) a cada abertura
   const [geracao, setGeracao] = useState(0);
+  const { setAberto: setMenuAberto } = useNavMobile();
 
   const titulo =
     TITULOS.find(([sufixo]) => pathname.includes(sufixo))?.[1] ?? "Visão geral";
@@ -90,15 +92,25 @@ export function TopbarEvento({
     <>
       <div className="sticky top-[57px] z-30 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-b border-white/8 bg-[#0A0A0B]/90 px-6 py-[18px] backdrop-blur-xl md:px-10">
         <div className="flex min-w-0 flex-1 items-center gap-3.5">
+          <button
+            type="button"
+            onClick={() => setMenuAberto(true)}
+            aria-label="Abrir menu"
+            className="flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-[5px] border border-white/16 transition-colors hover:border-white/35 lg:hidden"
+          >
+            <span className="block h-[2px] w-5 bg-foreground" />
+            <span className="block h-[2px] w-5 bg-foreground" />
+            <span className="block h-[2px] w-5 bg-foreground" />
+          </button>
           {/* line-height maior que o padrão do Teko para não cortar acentos
               dentro do truncate */}
           <h1
-            className="disp truncate whitespace-nowrap text-[34px]"
+            className="disp truncate whitespace-nowrap text-[26px] md:text-[34px]"
             style={{ lineHeight: 1.15 }}
           >
             {titulo}
           </h1>
-          <span className="inline-flex h-[22px] shrink-0 items-center border border-brand/50 bg-brand/14 px-2.5 font-cond text-[11px] font-semibold uppercase tracking-[0.06em] text-brand-soft">
+          <span className="hidden h-[22px] shrink-0 items-center border border-brand/50 bg-brand/14 px-2.5 font-cond text-[11px] font-semibold uppercase tracking-[0.06em] text-brand-soft sm:inline-flex">
             {ROTULO_STATUS[evento.status] ?? evento.status}
           </span>
         </div>
@@ -106,15 +118,15 @@ export function TopbarEvento({
           <Link
             href={`/evento/${evento.slug}`}
             target="_blank"
-            className="inline-flex h-[38px] items-center border border-white/16 px-3.5 transition-colors hover:border-white/35"
+            className="inline-flex h-[38px] items-center border border-white/16 px-3 transition-colors hover:border-white/35 md:px-3.5"
           >
-            Ver página ↗
+            <span className="hidden sm:inline">Ver página&nbsp;</span>↗
           </Link>
           <button
             onClick={abrir}
-            className="h-[38px] cursor-pointer border border-white/20 px-3.5 font-cond text-sm font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-white/40"
+            className="h-[38px] cursor-pointer border border-white/20 px-3 font-cond text-sm font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-white/40 md:px-3.5"
           >
-            ✎ Editar evento
+            ✎<span className="hidden sm:inline">&nbsp;Editar evento</span>
           </button>
         </div>
       </div>
@@ -161,13 +173,13 @@ export function TopbarEvento({
                   <Input name="circuito" defaultValue={evento.circuito} />
                 </div>
                 <CamposDataEvento
-                  gridClassName="grid grid-cols-2 gap-3.5"
+                  gridClassName="grid grid-cols-1 gap-3.5 sm:grid-cols-2"
                   labelCls={labelCls}
                   fechamLabel="Inscrições fecham"
                   defaultDataInicio={evento.dataInicio}
                   defaultInscricoesFecham={evento.inscricoesFecham}
                 />
-                <div className="grid grid-cols-[1fr_80px_130px] gap-3.5">
+                <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-[1fr_80px_130px]">
                   <div className="flex flex-col gap-2">
                     <label className={labelCls}>Cidade</label>
                     <Input name="cidade" defaultValue={evento.cidade} />

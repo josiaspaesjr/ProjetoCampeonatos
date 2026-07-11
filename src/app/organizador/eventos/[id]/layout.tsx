@@ -6,6 +6,7 @@ import {
   SidebarOrganizador,
   type ItemNav,
 } from "@/components/organizador/sidebar";
+import { NavMobileProvider } from "@/components/organizador/nav-mobile-context";
 import {
   TopbarEvento,
   type EventoEditavel,
@@ -116,22 +117,24 @@ export default async function LayoutConsoleEvento({
   };
 
   return (
-    <div className="grid min-h-[calc(100vh-57px)] lg:grid-cols-[248px_minmax(0,1fr)]">
-      <SidebarOrganizador
-        eventoId={evento.id}
-        eventos={meusEventos.map((e) => ({
-          id: e.id,
-          nome: e.nome,
-          dataCurta: dataCurta(e.dataInicio),
-        }))}
-        itens={itens}
-      />
-      <div className="flex min-w-0 flex-col">
-        <TopbarEvento evento={editavel} editar={editarEvento.bind(null, evento.id)} />
-        <div className="flex flex-col gap-8 px-6 pb-[90px] pt-8 md:px-10">
-          {children}
+    <NavMobileProvider>
+      <div className="grid min-h-[calc(100vh-57px)] lg:grid-cols-[248px_minmax(0,1fr)]">
+        <SidebarOrganizador
+          eventoId={evento.id}
+          eventos={meusEventos.map((e) => ({
+            id: e.id,
+            nome: e.nome,
+            dataCurta: dataCurta(e.dataInicio),
+          }))}
+          itens={itens}
+        />
+        <div className="flex min-w-0 flex-col">
+          <TopbarEvento evento={editavel} editar={editarEvento.bind(null, evento.id)} />
+          <div className="flex flex-col gap-8 px-6 pb-[90px] pt-8 md:px-10">
+            {children}
+          </div>
         </div>
       </div>
-    </div>
+    </NavMobileProvider>
   );
 }

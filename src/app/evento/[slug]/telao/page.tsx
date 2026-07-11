@@ -22,9 +22,9 @@ export default async function Telao({
   const filas = await montarFilasDoEvento(db, evento.id);
 
   return (
-    <div className="min-h-screen bg-background px-8 py-6">
+    <div className="min-h-screen bg-background px-4 py-6 md:px-8">
       <div className="mb-6">
-        <h1 className="disp text-[46px] leading-none text-foreground">
+        <h1 className="disp text-[32px] leading-none text-foreground md:text-[46px]">
           {evento.nome}
         </h1>
         <p className="mt-1.5 font-cond text-sm uppercase tracking-[0.05em] text-muted-2">

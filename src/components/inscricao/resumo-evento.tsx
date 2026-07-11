@@ -76,11 +76,11 @@ export function ResumoEvento({
       </div>
 
       <div className="mt-auto pt-8">
-        <div className="mb-1.5 flex items-end justify-between">
+        <div className="mb-1.5 flex items-end justify-between gap-2">
           <span className="font-cond text-[13px] uppercase tracking-[0.06em] text-muted-2">
             {precoRotulo}
           </span>
-          <span className="disp text-[44px] leading-none text-brand">
+          <span className="disp shrink-0 text-[36px] leading-none text-brand md:text-[44px]">
             {precoValor}
           </span>
         </div>

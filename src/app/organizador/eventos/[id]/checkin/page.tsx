@@ -56,16 +56,16 @@ export default async function PaginaCheckin({
         pesagem) ou busque por nome / código.
       </p>
 
-      <div className="mt-6 grid grid-cols-3 gap-4">
+      <div className="mt-6 grid grid-cols-3 gap-2.5 sm:gap-4">
         {[
           ["Confirmados", confirmadas.length],
           ["Check-in feito", feitos],
           ["Fora do peso", foraDoPeso],
         ].map(([rotulo, valor]) => (
           <Card key={rotulo}>
-            <CardContent className="p-5">
-              <p className="text-sm text-muted-foreground">{rotulo}</p>
-              <p className="mt-1 text-3xl font-bold">{valor}</p>
+            <CardContent className="p-3.5 sm:p-5">
+              <p className="text-xs text-muted-foreground sm:text-sm">{rotulo}</p>
+              <p className="mt-1 text-2xl font-bold sm:text-3xl">{valor}</p>
             </CardContent>
           </Card>
         ))}
@@ -85,28 +85,30 @@ export default async function PaginaCheckin({
           <li key={i.id}>
             <Link
               href={`/organizador/eventos/${id}/checkin/${i.id}`}
-              className="flex items-center justify-between px-5 py-3 hover:bg-accent"
+              className="flex items-center justify-between gap-3 px-5 py-3 hover:bg-accent"
             >
-              <div>
-                <p className="text-sm font-medium">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">
                   {i.nomeAtleta}
                   <span className="ml-2 font-cond text-xs text-muted-foreground">
                     {codigoCurto(i.id)}
                   </span>
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="truncate text-xs text-muted-foreground">
                   {nomeCategoria.get(i.categoriaId)}
                 </p>
               </div>
-              {i.checkinEm ? (
-                i.foraDoPeso ? (
-                  <Badge variant="destructive">Fora do peso ({i.pesoAferidoKg}kg)</Badge>
+              <span className="shrink-0">
+                {i.checkinEm ? (
+                  i.foraDoPeso ? (
+                    <Badge variant="destructive">Fora do peso ({i.pesoAferidoKg}kg)</Badge>
+                  ) : (
+                    <Badge variant="success">OK · {i.pesoAferidoKg}kg</Badge>
+                  )
                 ) : (
-                  <Badge variant="success">OK · {i.pesoAferidoKg}kg</Badge>
-                )
-              ) : (
-                <Badge variant="secondary">Aguardando</Badge>
-              )}
+                  <Badge variant="secondary">Aguardando</Badge>
+                )}
+              </span>
             </Link>
           </li>
         ))}

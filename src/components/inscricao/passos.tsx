@@ -30,7 +30,7 @@ export function PassosInscricao({ atual }: { atual: 1 | 2 | 3 }) {
               </div>
               <span
                 className={cn(
-                  "whitespace-nowrap font-cond text-sm font-semibold uppercase tracking-[0.06em]",
+                  "whitespace-nowrap font-cond text-sm font-semibold uppercase tracking-[0.06em] max-sm:hidden",
                   ativo ? "text-foreground" : "text-muted-2",
                 )}
               >

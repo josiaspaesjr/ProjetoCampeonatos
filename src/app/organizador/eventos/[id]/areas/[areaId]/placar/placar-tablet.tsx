@@ -154,7 +154,7 @@ export function PlacarTablet({
       <p className="truncate text-sm opacity-70">{atleta.academia ?? ""}</p>
 
       <div className="mt-4 flex items-end gap-6">
-        <span className="text-8xl font-black tabular-nums">{dados.pontos}</span>
+        <span className="text-6xl font-black tabular-nums sm:text-8xl">{dados.pontos}</span>
         <div className="mb-2 space-y-1 text-sm">
           <p>Vantagens: <span className="font-bold">{dados.vantagens}</span></p>
           <p>Punições: <span className="font-bold">{dados.punicoes}</span></p>
@@ -186,10 +186,10 @@ export function PlacarTablet({
 
   return (
     <div>
-      <div className="flex items-center justify-between rounded-2xl bg-zinc-900 px-6 py-4 text-white">
-        <p className="truncate text-sm text-zinc-300">{categoriaNome}</p>
-        <div className="flex items-center gap-4">
-          <span className={`font-cond text-4xl font-bold tabular-nums ${restante < 0 ? "text-red-400" : ""}`}>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-2xl bg-zinc-900 px-4 py-4 text-white sm:px-6">
+        <p className="w-full truncate text-sm text-zinc-300 sm:w-auto">{categoriaNome}</p>
+        <div className="flex items-center gap-3 sm:gap-4">
+          <span className={`font-cond text-3xl font-bold tabular-nums sm:text-4xl ${restante < 0 ? "text-red-400" : ""}`}>
             {fmt(restante)}
           </span>
           <button
@@ -213,7 +213,7 @@ export function PlacarTablet({
         </button>
       </div>
 
-      <div className="mt-4 flex gap-4">
+      <div className="mt-4 flex flex-col gap-4 sm:flex-row">
         <Coluna lado={1} atleta={atleta1} dados={lado1} cor="bg-blue-700" />
         <Coluna lado={2} atleta={atleta2} dados={lado2} cor="bg-red-700" />
       </div>

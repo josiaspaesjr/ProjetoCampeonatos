@@ -21,7 +21,7 @@ export default async function OrganizadorLayout({
             <span className="disp text-[28px]">
               BJJ<span className="text-brand">ARENA</span>
             </span>
-            <span className="ml-1.5 font-cond text-[15px] uppercase tracking-[0.1em] text-muted-3">
+            <span className="ml-1.5 hidden font-cond text-[15px] uppercase tracking-[0.1em] text-muted-3 sm:inline">
               / Organizador
             </span>
           </Link>

@@ -83,7 +83,7 @@ export function CategoriasFiltro({ categorias }: { categorias: CategoriaLinha[] 
                 {c.nome}
               </span>
             </div>
-            <div className="flex shrink-0 items-center gap-4 font-cond text-sm uppercase tracking-[0.04em]">
+            <div className="flex shrink-0 items-center gap-2 font-cond text-sm uppercase tracking-[0.04em] sm:gap-4">
               {c.preco && <span className="text-brand-soft">{c.preco}</span>}
               <span className={c.inscritos > 0 ? "text-muted-2" : "text-muted-3"}>
                 {c.inscritos} inscrito{c.inscritos === 1 ? "" : "s"}

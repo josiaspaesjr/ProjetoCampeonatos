@@ -21,8 +21,8 @@ export default async function AbaCronograma({
   return (
     <div className="px-6 pb-20 pt-10 md:px-12">
       <div className="mb-6 flex items-center justify-between gap-4">
-        <div>
-          <h1 className="disp text-[46px]">Cronograma</h1>
+        <div className="min-w-0">
+          <h1 className="disp text-[38px] md:text-[46px]">Cronograma</h1>
           <p className="font-cond text-sm uppercase tracking-[0.05em] text-muted-2">
             Horários estimados · atualiza sozinho
           </p>

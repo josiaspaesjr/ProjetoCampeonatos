@@ -96,9 +96,12 @@ export default async function PaginaChaves({
             : (["Sem chave", "secondary"] as [string, BadgeProps["variant"]]);
 
           return (
-            <li key={c.id} className="flex items-center justify-between px-5 py-3">
-              <div>
-                <p className="text-sm font-medium">{c.nome}</p>
+            <li
+              key={c.id}
+              className="flex flex-col gap-2.5 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">{c.nome}</p>
                 <p className="text-xs text-muted-foreground">
                   {qtd} confirmado(s)
                   {qtd === 1 && " — insuficiente para gerar chave"}
@@ -108,7 +111,7 @@ export default async function PaginaChaves({
                       ` · formato sugerido: ${formatoAutomatico(qtd) === "round_robin" ? "todos contra todos" : "eliminação simples"}`}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex shrink-0 flex-wrap items-center gap-3 max-sm:w-full">
                 <Badge variant={variante}>{rotulo}</Badge>
                 {qtd >= 2 && (!chave || chave.status === "rascunho") && (
                   <form action={gerarChave.bind(null, evento.id, c.id)}>

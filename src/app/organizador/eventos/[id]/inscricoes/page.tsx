@@ -119,33 +119,38 @@ export default async function PaginaInscricoes({
             const [rotulo, variante] = rotuloStatus[i.status] ?? [i.status, "outline" as const];
             const ativa = i.status === "confirmada" || i.status === "pendente_pagamento";
             return (
-              <li key={i.id} className="flex items-center justify-between gap-4 px-5 py-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    {i.nomeAtleta}
-                    <span className="ml-2 font-normal capitalize text-muted-foreground">
-                      {i.faixa}
-                      {i.academiaNome ? ` · ${i.academiaNome}` : ""}
-                    </span>
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {nomeCategoria.get(i.categoriaId)}
-                  </p>
+              <li
+                key={i.id}
+                className="flex flex-col gap-2.5 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+              >
+                <div className="flex min-w-0 items-center gap-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {i.nomeAtleta}
+                      <span className="ml-2 font-normal capitalize text-muted-foreground">
+                        {i.faixa}
+                        {i.academiaNome ? ` · ${i.academiaNome}` : ""}
+                      </span>
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {nomeCategoria.get(i.categoriaId)}
+                    </p>
+                  </div>
                 </div>
 
-                <div className="flex shrink-0 items-center gap-3">
+                <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 max-sm:w-full">
                   <Badge variant={variante}>{rotulo}</Badge>
 
                   {ativa && (
                     <form
                       action={moverInscricao.bind(null, id, i.id)}
-                      className="flex items-center gap-1"
+                      className="flex items-center gap-1 max-sm:flex-1"
                     >
                       <NativeSelect
                         name="categoriaId"
                         required
                         defaultValue=""
-                        className="h-8 w-44 text-xs"
+                        className="h-8 w-full text-xs sm:w-44"
                       >
                         <option value="" disabled>
                           Mover para…
@@ -199,11 +204,11 @@ export default async function PaginaInscricoes({
         <Card className="mt-4">
           <CardContent className="p-5">
             <form action={inscricaoManual.bind(null, id)} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Input name="nome" required placeholder="Nome completo" />
                 <Input name="email" type="email" required placeholder="E-mail" />
               </div>
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <Input name="dataNascimento" type="date" required />
                 <NativeSelect name="sexo" required defaultValue="">
                   <option value="" disabled>

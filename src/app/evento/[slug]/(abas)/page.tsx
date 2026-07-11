@@ -132,7 +132,7 @@ export default async function AbaInformacoes({
   return (
     <div className="grid items-start gap-12 px-6 pb-20 pt-10 md:px-12 lg:grid-cols-[minmax(0,1fr)_380px]">
       {/* MAIN */}
-      <main className="flex flex-col gap-14">
+      <main className="flex min-w-0 flex-col gap-14">
         {/* SOBRE */}
         <section>
           <div className="mb-3 font-cond text-[15px] font-semibold uppercase tracking-[0.14em] text-brand">
@@ -150,12 +150,15 @@ export default async function AbaInformacoes({
           )}
           <div className="mt-[30px] grid grid-cols-2 gap-px border border-white/10 bg-white/10 md:grid-cols-4">
             {fatos.map((f) => (
-              <div key={f.k} className="bg-background px-[22px] py-[22px]">
+              <div
+                key={f.k}
+                className="min-w-0 bg-background px-4 py-5 md:px-[22px] md:py-[22px]"
+              >
                 <div className="mb-2 font-cond text-[13px] uppercase tracking-[0.1em] text-muted-2">
                   {f.k}
                 </div>
                 <div
-                  className={`disp text-[38px] ${f.destaque ? "text-brand" : ""}`}
+                  className={`disp truncate text-[26px] md:text-[38px] ${f.destaque ? "text-brand" : ""}`}
                 >
                   {f.v}
                 </div>
@@ -196,8 +199,8 @@ export default async function AbaInformacoes({
 
         {/* CATEGORIAS */}
         <section id="categorias" className="scroll-mt-24">
-          <div className="mb-[18px] flex items-baseline gap-3">
-            <h2 className="disp text-[54px]">Categorias</h2>
+          <div className="mb-[18px] flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <h2 className="disp text-[40px] md:text-[54px]">Categorias</h2>
             <span className="font-cond text-[17px] uppercase tracking-[0.06em] text-muted-2">
               {cats.length} disponíve{cats.length === 1 ? "l" : "is"}
             </span>
@@ -232,8 +235,8 @@ export default async function AbaInformacoes({
               <div className="mb-0.5 font-cond text-[13px] uppercase tracking-[0.1em] text-muted-2">
                 Inscrição · {loteVigente.nome}
               </div>
-              <div className="mb-5 flex items-baseline gap-2">
-                <span className="disp text-[68px] leading-none text-brand">
+              <div className="mb-5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span className="disp text-[52px] leading-none text-brand md:text-[68px]">
                   {fmt.format(loteVigente.precoCentavos / 100)}
                 </span>
                 <span className="font-cond text-sm uppercase text-muted-2">

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useNavMobile } from "@/components/organizador/nav-mobile-context";
 
 /** valor sentinela da opção "criar novo evento" no seletor de evento ativo */
 const NOVO_EVENTO = "__novo__";
@@ -21,7 +22,11 @@ export interface ItemNav {
   badge?: string;
 }
 
-/** Sidebar fixa do console do organizador (248px, seletor de evento + menu). */
+/**
+ * Sidebar do console do organizador (248px, seletor de evento + menu).
+ * No desktop fica fixa (sticky); abaixo de `lg` vira um drawer off-canvas
+ * controlado pelo botão hambúrguer da topbar (via NavMobileContext).
+ */
 export function SidebarOrganizador({
   eventoId,
   eventos,
@@ -33,10 +38,12 @@ export function SidebarOrganizador({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { aberto, setAberto } = useNavMobile();
   const ativo = eventos.find((e) => e.id === eventoId);
+  const fechar = () => setAberto(false);
 
-  return (
-    <aside className="sticky top-[57px] flex h-[calc(100vh-57px)] flex-col self-start border-r border-white/8 bg-ink max-lg:hidden">
+  const conteudo = (
+    <>
       {/* seletor de evento ativo */}
       <div className="border-b border-white/6 px-[18px] py-4">
         <div className="mb-2 font-cond text-[11px] uppercase tracking-[0.14em] text-muted-3">
@@ -47,6 +54,7 @@ export function SidebarOrganizador({
             value={eventoId}
             onChange={(e) => {
               const v = e.target.value;
+              fechar();
               router.push(
                 v === NOVO_EVENTO
                   ? "/organizador/eventos/novo"
@@ -74,6 +82,7 @@ export function SidebarOrganizador({
         )}
         <Link
           href="/organizador/eventos/novo"
+          onClick={fechar}
           className="mt-2.5 flex items-center gap-1.5 font-cond text-xs font-semibold uppercase tracking-[0.06em] text-brand transition-colors hover:text-brand-soft"
         >
           + Criar novo evento
@@ -91,6 +100,7 @@ export function SidebarOrganizador({
             <Link
               key={n.id}
               href={n.href}
+              onClick={fechar}
               className={cn(
                 "flex items-center gap-3 border-l-[3px] px-[13px] py-[11px] font-cond text-base font-semibold uppercase tracking-[0.03em] transition-colors",
                 on
@@ -118,11 +128,49 @@ export function SidebarOrganizador({
       <div className="border-t border-white/6 px-[18px] py-3.5">
         <Link
           href="/organizador"
+          onClick={fechar}
           className="font-cond text-xs uppercase tracking-[0.06em] text-muted-3 transition-colors hover:text-foreground"
         >
           ← Todos os meus eventos
         </Link>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* desktop: sidebar fixa */}
+      <aside className="sticky top-[57px] hidden h-[calc(100vh-57px)] flex-col self-start border-r border-white/8 bg-ink lg:flex">
+        {conteudo}
+      </aside>
+
+      {/* mobile: drawer off-canvas */}
+      {aberto && (
+        <div className="lg:hidden">
+          <button
+            type="button"
+            aria-label="Fechar menu"
+            onClick={fechar}
+            className="fixed inset-0 z-[90] cursor-default bg-black/60 animate-[fade-in_0.2s_ease]"
+          />
+          <aside className="fixed left-0 top-0 z-[91] flex h-screen w-[min(300px,86vw)] flex-col border-r border-white/10 bg-ink animate-[drawer-in-left_0.28s_cubic-bezier(0.16,1,0.3,1)]">
+            <div className="flex items-center justify-between border-b border-white/8 px-[18px] py-3">
+              <span className="disp text-[22px]">
+                BJJ<span className="text-brand">ARENA</span>
+              </span>
+              <button
+                type="button"
+                onClick={fechar}
+                aria-label="Fechar menu"
+                className="flex h-9 w-9 items-center justify-center border border-white/16 text-lg text-foreground transition-colors hover:border-white/35"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col">{conteudo}</div>
+          </aside>
+        </div>
+      )}
+    </>
   );
 }

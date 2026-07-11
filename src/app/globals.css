@@ -170,6 +170,14 @@
     transform: translateX(0);
   }
 }
+@keyframes drawer-in-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
 @keyframes pop-in {
   from {
     opacity: 0;

@@ -25,14 +25,16 @@ export default function NovoEvento() {
         ← Voltar
       </Link>
 
-      <div className="relative mb-10">
-        <div className="disp pointer-events-none absolute -top-8 left-0 text-[110px] text-white/4">
+      <div className="relative mb-10 overflow-hidden">
+        <div className="disp pointer-events-none absolute -top-4 left-0 text-[72px] text-white/4 sm:-top-8 sm:text-[110px]">
           NOVO
         </div>
         <div className="relative mb-1 font-cond text-base font-semibold uppercase tracking-[0.14em] text-brand">
           Criar evento
         </div>
-        <h1 className="disp relative text-[72px]">Configure sua etapa</h1>
+        <h1 className="disp relative text-[clamp(40px,11vw,72px)]">
+          Configure sua etapa
+        </h1>
         <p className="relative mt-1.5 max-w-[520px] text-base font-medium text-muted-2">
           Informações básicas do evento. Lotes, categorias, áreas e chaves você
           configura depois no painel.

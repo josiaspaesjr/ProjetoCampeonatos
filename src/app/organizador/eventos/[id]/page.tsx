@@ -178,7 +178,7 @@ export default async function VisaoGeralEvento({
               {evento.circuito}
             </div>
           )}
-          <div className="disp mb-3.5 text-[52px] leading-[0.86]">
+          <div className="disp mb-3.5 text-[38px] leading-[0.9] break-words md:text-[52px] md:leading-[0.86]">
             {evento.nome}
           </div>
           <div className="flex flex-wrap gap-2.5">

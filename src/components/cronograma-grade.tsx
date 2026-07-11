@@ -44,7 +44,7 @@ function ColunaArea({ fila }: { fila: FilaDaArea }) {
 
       {/* HEADER */}
       <div className="flex items-baseline justify-between gap-3 border-b border-white/10 px-5 pb-3 pt-5">
-        <span className="disp tnum text-[34px] leading-none">
+        <span className="disp tnum min-w-0 truncate text-[26px] leading-none md:text-[34px]">
           {fila.area.nome}
         </span>
         {fila.fila.length > 0 && (
@@ -150,7 +150,7 @@ function AtletaTatame({
         {nome}
       </span>
       <span
-        className={`disp tnum shrink-0 text-[34px] leading-none ${lider ? "text-brand" : "text-foreground"}`}
+        className={`disp tnum shrink-0 text-[28px] leading-none md:text-[34px] ${lider ? "text-brand" : "text-foreground"}`}
       >
         {pontos}
       </span>
@@ -164,7 +164,7 @@ export function CronogramaGrade({ filas }: { filas: FilaDaArea[] }) {
     <>
       <AutoRefresh segundos={5} />
       <div
-        className={`grid gap-5 ${filas.length > 2 ? "grid-cols-3" : "grid-cols-2"}`}
+        className={`grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 ${filas.length > 2 ? "xl:grid-cols-3" : ""}`}
       >
         {filas.map((f) => (
           <ColunaArea key={f.area.id} fila={f} />
