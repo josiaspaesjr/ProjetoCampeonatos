@@ -1,0 +1,1 @@
+ALTER TABLE "inscricoes" ADD COLUMN "pais" text DEFAULT 'BR' NOT NULL;

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { bandeiraPais, nomePais } from "@/lib/paises";
 
 /** status relevante de um inscrito na lista pública */
 export type StatusInscrito = "confirmada" | "pendente_pagamento";
@@ -13,6 +14,8 @@ export interface AtletaCard {
   nome: string;
   academia: string | null;
   faixa: string;
+  /** código ISO alpha-2 do país (ex.: "BR") */
+  pais: string;
   status: StatusInscrito;
 }
 
@@ -51,19 +54,33 @@ export function AtletasLista({
   totalPendentes: number;
 }) {
   const [busca, setBusca] = useState("");
+  const [paisFiltro, setPaisFiltro] = useState<string | null>(null);
   const q = norm(busca.trim());
 
+  // países distintos presentes — só mostra o filtro/bandeiras se houver variedade
+  const paises = useMemo(() => {
+    const set = new Set<string>();
+    for (const d of divisoes) for (const a of d.atletas) set.add(a.pais);
+    return [...set].sort((a, b) =>
+      nomePais(a).localeCompare(nomePais(b), "pt-BR"),
+    );
+  }, [divisoes]);
+  const mostrarPais = paises.length > 1;
+
   const visiveis = useMemo(() => {
-    if (!q) return divisoes;
+    if (!q && !paisFiltro) return divisoes;
     return divisoes
       .map((d) => ({
         ...d,
-        atletas: d.atletas.filter((a) =>
-          norm(`${a.nome} ${a.academia ?? ""}`).includes(q),
-        ),
+        atletas: d.atletas.filter((a) => {
+          if (paisFiltro && a.pais !== paisFiltro) return false;
+          if (q && !norm(`${a.nome} ${a.academia ?? ""}`).includes(q))
+            return false;
+          return true;
+        }),
       }))
       .filter((d) => d.atletas.length > 0);
-  }, [divisoes, q]);
+  }, [divisoes, q, paisFiltro]);
 
   const totalAtletas = totalConfirmados + totalPendentes;
 
@@ -95,8 +112,26 @@ export function AtletasLista({
         value={busca}
         onChange={(e) => setBusca(e.target.value)}
         placeholder="Buscar atleta ou academia…"
-        className="mb-5 w-full border border-white/14 bg-background px-4 py-2.5 font-cond text-[15px] uppercase tracking-[0.02em] text-foreground placeholder:text-muted-3 focus:border-brand focus:outline-none"
+        className="mb-3 w-full border border-white/14 bg-background px-4 py-2.5 font-cond text-[15px] uppercase tracking-[0.02em] text-foreground placeholder:text-muted-3 focus:border-brand focus:outline-none"
       />
+
+      {/* FILTRO POR PAÍS (só quando há mais de um) */}
+      {mostrarPais && (
+        <div className="mb-5 flex flex-wrap gap-2">
+          <ChipPais ativo={paisFiltro === null} onClick={() => setPaisFiltro(null)}>
+            Todos os países
+          </ChipPais>
+          {paises.map((c) => (
+            <ChipPais
+              key={c}
+              ativo={paisFiltro === c}
+              onClick={() => setPaisFiltro(c)}
+            >
+              {bandeiraPais(c)} {nomePais(c)}
+            </ChipPais>
+          ))}
+        </div>
+      )}
 
       {visiveis.length === 0 ? (
         <div className="border border-white/10 bg-surface px-6 py-12 text-center font-cond text-[14px] uppercase tracking-[0.04em] text-muted-3">
@@ -105,7 +140,7 @@ export function AtletasLista({
       ) : (
         <div className="flex flex-col gap-5">
           {visiveis.map((d) => (
-            <Divisao key={d.categoriaId} divisao={d} />
+            <Divisao key={d.categoriaId} divisao={d} mostrarPais={mostrarPais} />
           ))}
         </div>
       )}
@@ -113,7 +148,13 @@ export function AtletasLista({
   );
 }
 
-function Divisao({ divisao }: { divisao: DivisaoAtletas }) {
+function Divisao({
+  divisao,
+  mostrarPais,
+}: {
+  divisao: DivisaoAtletas;
+  mostrarPais: boolean;
+}) {
   return (
     <section className="relative border border-white/10 bg-surface">
       <span className="absolute inset-x-0 top-0 z-10 h-[3px] bg-brand" />
@@ -155,14 +196,20 @@ function Divisao({ divisao }: { divisao: DivisaoAtletas }) {
       {/* CARDS DOS ATLETAS */}
       <div className="grid grid-cols-1 gap-px bg-white/6 sm:grid-cols-2 lg:grid-cols-3">
         {divisao.atletas.map((a) => (
-          <CardAtleta key={a.id} atleta={a} />
+          <CardAtleta key={a.id} atleta={a} mostrarPais={mostrarPais} />
         ))}
       </div>
     </section>
   );
 }
 
-function CardAtleta({ atleta }: { atleta: AtletaCard }) {
+function CardAtleta({
+  atleta,
+  mostrarPais,
+}: {
+  atleta: AtletaCard;
+  mostrarPais: boolean;
+}) {
   return (
     <div className="flex items-center justify-between gap-3 bg-surface px-4 py-3">
       <div className="flex min-w-0 items-center gap-2.5">
@@ -175,12 +222,42 @@ function CardAtleta({ atleta }: { atleta: AtletaCard }) {
             {atleta.nome}
           </div>
           <div className="truncate font-cond text-[12px] uppercase tracking-[0.03em] text-muted-3">
+            {mostrarPais && (
+              <span className="mr-1" title={nomePais(atleta.pais)}>
+                {bandeiraPais(atleta.pais)}
+              </span>
+            )}
             {atleta.academia ?? "Sem academia"}
           </div>
         </div>
       </div>
       <StatusBadge status={atleta.status} />
     </div>
+  );
+}
+
+function ChipPais({
+  ativo,
+  onClick,
+  children,
+}: {
+  ativo: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "inline-flex -skew-x-9 items-center border px-3 py-1.5 font-cond text-[13px] font-semibold uppercase tracking-[0.04em] transition-colors",
+        ativo
+          ? "border-brand bg-brand text-white"
+          : "border-white/14 text-muted-2 hover:border-brand/50 hover:text-brand-soft",
+      )}
+    >
+      <span className="inline-block skew-x-9">{children}</span>
+    </button>
   );
 }
 

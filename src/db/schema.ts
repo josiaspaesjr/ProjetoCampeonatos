@@ -261,6 +261,8 @@ export const inscricoes = pgTable(
     dataNascimento: date("data_nascimento").notNull(),
     academiaId: uuid("academia_id").references(() => academias.id),
     academiaNome: text("academia_nome"),
+    // país do atleta (ISO alpha-2, snapshot); padrão BR
+    pais: text("pais").notNull().default("BR"),
     // check-in / pesagem no dia do evento
     checkinEm: timestamp("checkin_em", { withTimezone: true }),
     pesoAferidoKg: numeric("peso_aferido_kg", { precision: 5, scale: 2 }),

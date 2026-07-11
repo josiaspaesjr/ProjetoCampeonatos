@@ -64,6 +64,13 @@
       "when": 1783693498991,
       "tag": "0008_wet_manta",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1783729707541,
+      "tag": "0009_long_lizard",
+      "breakpoints": true
     }
   ]
 }

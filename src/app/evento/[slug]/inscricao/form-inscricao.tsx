@@ -11,6 +11,7 @@ import { SeletorAcademia } from "@/components/inscricao/seletor-academia";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { CLASSES_IDADE, FAIXAS } from "@/lib/categorias/cbjj";
+import { PAISES } from "@/lib/paises";
 import {
   categoriaCompativel,
   idadeNoAnoDoEvento,
@@ -57,6 +58,7 @@ interface Props {
     faixa?: string;
     academiaId?: string;
     academiaNome?: string;
+    pais?: string;
   };
 }
 
@@ -94,6 +96,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
   const [sexo, setSexo] = useState(perfil?.sexo ?? "");
   const [faixa, setFaixa] = useState(perfil?.faixa ?? "");
   const [nascimento, setNascimento] = useState(perfil?.dataNascimento ?? "");
+  const [pais, setPais] = useState(perfil?.pais ?? "BR");
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -250,16 +253,36 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
             </div>
           </div>
 
-          <div>
-            <label className={labelCls} htmlFor="insc-academia">
-              Academia / equipe
-            </label>
-            <SeletorAcademia
-              id="insc-academia"
-              name="academiaId"
-              defaultId={perfil?.academiaId}
-              defaultNome={perfil?.academiaNome}
-            />
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label className={labelCls} htmlFor="insc-pais">
+                País *
+              </label>
+              <NativeSelect
+                id="insc-pais"
+                name="pais"
+                required
+                value={pais}
+                onChange={(e) => setPais(e.target.value)}
+              >
+                {PAISES.map((p) => (
+                  <option key={p.codigo} value={p.codigo}>
+                    {p.nome}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+            <div>
+              <label className={labelCls} htmlFor="insc-academia">
+                Academia / equipe
+              </label>
+              <SeletorAcademia
+                id="insc-academia"
+                name="academiaId"
+                defaultId={perfil?.academiaId}
+                defaultNome={perfil?.academiaNome}
+              />
+            </div>
           </div>
 
           <div>

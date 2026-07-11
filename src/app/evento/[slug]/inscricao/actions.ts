@@ -19,6 +19,7 @@ import {
   idadeNoAnoDoEvento,
 } from "@/lib/categorias/elegibilidade";
 import { getGateway } from "@/lib/pagamentos";
+import { normalizarPais } from "@/lib/paises";
 import { precoInscricaoCentavos } from "@/lib/lotes/preco";
 import { getUsuarioSessao } from "@/lib/auth";
 import { definirSessaoAtleta } from "@/lib/sessao";
@@ -51,6 +52,7 @@ export async function criarInscricao(eventoSlug: string, formData: FormData) {
   const sexo = String(formData.get("sexo") ?? "") as "masculino" | "feminino";
   const faixa = String(formData.get("faixa") ?? "") as Faixa;
   const academiaId = String(formData.get("academiaId") ?? "").trim() || null;
+  const pais = normalizarPais(String(formData.get("pais") ?? ""));
   const categoriaId = String(formData.get("categoriaId") ?? "");
 
   if (!nome || !email || !dataNascimento || !sexo || !faixa || !categoriaId) {
@@ -153,6 +155,7 @@ export async function criarInscricao(eventoSlug: string, formData: FormData) {
       dataNascimento,
       academiaId,
       academiaNome: academiaNome || null,
+      pais,
     })
     .returning();
 
