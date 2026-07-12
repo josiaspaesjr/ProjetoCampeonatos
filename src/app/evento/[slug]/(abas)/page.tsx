@@ -206,7 +206,7 @@ export default async function AbaInformacoes({
           </div>
         </section>
 
-        {/* SOBRE */}
+        {/* SOBRE — descrição + conteúdo opcional (regulamento) numa só seção */}
         <section>
           <div className="mb-3 font-cond text-[15px] font-semibold uppercase tracking-[0.14em] text-brand">
             Sobre o evento
@@ -221,15 +221,10 @@ export default async function AbaInformacoes({
               digital pela BJJArena.
             </p>
           )}
-        </section>
 
-        {/* REGULAMENTO */}
-        {regulamento.length > 0 && (
-          <section>
-            <div className="mb-5 font-cond text-[15px] font-semibold uppercase tracking-[0.14em] text-brand">
-              Regulamento
-            </div>
-            <div className="flex flex-col gap-px border border-white/10 bg-white/10">
+          {/* seções opcionais preenchidas no cadastro (regulamento) */}
+          {regulamento.length > 0 && (
+            <div className="mt-8 flex flex-col gap-px border border-white/10 bg-white/10">
               {regulamento.map((s) => (
                 <details
                   key={s.titulo}
@@ -250,8 +245,8 @@ export default async function AbaInformacoes({
                 </details>
               ))}
             </div>
-          </section>
-        )}
+          )}
+        </section>
 
       </main>
 
