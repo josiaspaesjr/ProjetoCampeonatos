@@ -18,6 +18,7 @@ import {
 } from "@/lib/categorias/elegibilidade";
 import { precoDoGrupoCentavos, type LoteVariacao } from "@/lib/lotes/preco";
 import { cn } from "@/lib/utils";
+import { useDic } from "@/lib/i18n/client";
 
 export interface CategoriaOpcao {
   id: string;
@@ -82,6 +83,7 @@ function BotoesEnvio({
   aoEnviar: (intent: "pagar_agora" | "pagar_depois") => void;
 }) {
   const { pending } = useFormStatus();
+  const di = useDic().inscricao;
   const bloqueado = !habilitado || pending;
 
   return (
@@ -101,8 +103,8 @@ function BotoesEnvio({
       >
         {pending && enviando === "pagar_agora" && <Spinner className="h-4 w-4" />}
         {pending && enviando === "pagar_agora"
-          ? "Enviando…"
-          : "Inscrever e pagar agora →"}
+          ? di.enviando
+          : `${di.pagarAgora} →`}
       </button>
       <button
         type="submit"
@@ -118,9 +120,7 @@ function BotoesEnvio({
         )}
       >
         {pending && enviando === "pagar_depois" && <Spinner className="h-4 w-4" />}
-        {pending && enviando === "pagar_depois"
-          ? "Salvando…"
-          : "Inscrever e pagar depois"}
+        {pending && enviando === "pagar_depois" ? di.salvando : di.pagarDepois}
       </button>
     </div>
   );
@@ -138,6 +138,9 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
   const [enviando, setEnviando] = useState<"pagar_agora" | "pagar_depois" | null>(
     null,
   );
+  const dic = useDic();
+  const di = dic.inscricao;
+  const nomeFaixa = dic.evento.faixaNomes as Record<string, string>;
 
   const perfilCompleto = !!(sexo && faixa && nascimento);
 
@@ -179,15 +182,17 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
     <div className="grid flex-1 items-stretch lg:grid-cols-[minmax(0,1fr)_400px]">
       {/* PASSO 1 — DADOS */}
       <div className="px-6 py-12 md:px-16">
-        <PassosInscricao atual={1} />
+        <PassosInscricao
+          atual={1}
+          rotulos={[di.passos.dados, di.passos.pagamento, di.passos.confirmacao]}
+        />
 
-        <Eyebrow className="mb-2 tracking-[0.14em]">Passo 1 · Seus dados</Eyebrow>
+        <Eyebrow className="mb-2 tracking-[0.14em]">{di.passo1}</Eyebrow>
         <h1 className="disp mb-1.5 text-[clamp(44px,5vw,64px)]">
-          Inscrição · {evento.nome}
+          {di.titulo} · {evento.nome}
         </h1>
         <p className="mb-[34px] max-w-[480px] text-base font-medium text-muted-2">
-          Só mostramos categorias compatíveis com seu perfil. Você pode pagar na
-          hora ou deixar para depois — o prazo vai até o fim das inscrições.
+          {di.subtitulo}
         </p>
 
         <form
@@ -199,7 +204,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
               // redirect() do Next lança um erro especial que deve propagar
               if (e && typeof e === "object" && "digest" in e) throw e;
               setEnviando(null);
-              setErro(e instanceof Error ? e.message : "Erro ao processar inscrição");
+              setErro(e instanceof Error ? e.message : di.erroGenerico);
             }
           }}
           className="flex max-w-[640px] flex-col gap-[26px]"
@@ -213,20 +218,20 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <label className={labelCls} htmlFor="insc-nome">
-                Nome completo *
+                {di.nomeCompleto} *
               </label>
               <Input
                 id="insc-nome"
                 name="nome"
                 required
-                placeholder="Seu nome"
+                placeholder={di.seuNome}
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
               />
             </div>
             <div>
               <label className={labelCls} htmlFor="insc-email">
-                E-mail *
+                {di.email} *
               </label>
               <Input
                 id="insc-email"
@@ -243,7 +248,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
           <div className="grid gap-5 sm:grid-cols-3">
             <div>
               <label className={labelCls} htmlFor="insc-nascimento">
-                Nascimento *
+                {di.nascimento} *
               </label>
               <Input
                 id="insc-nascimento"
@@ -256,7 +261,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
             </div>
             <div>
               <label className={labelCls} htmlFor="insc-sexo">
-                Sexo *
+                {di.sexo} *
               </label>
               <NativeSelect
                 id="insc-sexo"
@@ -266,14 +271,14 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
                 onChange={(e) => aoMudarPerfil(setSexo)(e.target.value)}
                 className={sexo ? "" : "text-muted-3"}
               >
-                <option value="">Selecione</option>
-                <option value="masculino">Masculino</option>
-                <option value="feminino">Feminino</option>
+                <option value="">{di.selecione}</option>
+                <option value="masculino">{di.masculino}</option>
+                <option value="feminino">{di.feminino}</option>
               </NativeSelect>
             </div>
             <div>
               <label className={labelCls} htmlFor="insc-faixa">
-                Faixa *
+                {di.faixa} *
               </label>
               <NativeSelect
                 id="insc-faixa"
@@ -283,10 +288,10 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
                 onChange={(e) => aoMudarPerfil(setFaixa)(e.target.value)}
                 className={faixa ? "" : "text-muted-3"}
               >
-                <option value="">Selecione</option>
+                <option value="">{di.selecione}</option>
                 {FAIXAS.map((f) => (
                   <option key={f} value={f}>
-                    {capitalizar(f)}
+                    {nomeFaixa[f] ?? capitalizar(f)}
                   </option>
                 ))}
               </NativeSelect>
@@ -296,7 +301,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
           <div className="grid gap-5 sm:grid-cols-2">
             <div>
               <label className={labelCls} htmlFor="insc-pais">
-                País *
+                {di.pais} *
               </label>
               <NativeSelect
                 id="insc-pais"
@@ -314,7 +319,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
             </div>
             <div>
               <label className={labelCls} htmlFor="insc-academia">
-                Academia / equipe
+                {di.academiaEquipe}
               </label>
               <SeletorAcademia
                 id="insc-academia"
@@ -326,7 +331,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
           </div>
 
           <div>
-            <span className={labelCls}>Categoria *</span>
+            <span className={labelCls}>{di.categoria} *</span>
             {perfilCompleto ? (
               compativeis.length ? (
                 <div className="flex flex-col gap-2">
@@ -353,7 +358,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
                           )}
                         >
                           {sel
-                            ? "selecionada"
+                            ? di.selecionada
                             : precoCat != null
                               ? fmt.format(precoCat / 100)
                               : ""}
@@ -364,12 +369,12 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
                 </div>
               ) : (
                 <p className="border border-dashed border-white/16 p-5 font-cond text-[13px] text-warning-foreground">
-                  Nenhuma categoria compatível com seu perfil neste evento.
+                  {di.semCategoriaCompat}
                 </p>
               )
             ) : (
               <p className="border border-dashed border-white/16 p-5 font-cond text-[13px] text-muted-3">
-                Preencha nascimento, sexo e faixa para ver suas categorias.
+                {di.preenchaPerfil}
               </p>
             )}
             <input type="hidden" name="categoriaId" value={categoriaId ?? ""} />
@@ -380,7 +385,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
               href={`/evento/${evento.slug}`}
               className="flex items-center justify-center border border-white/18 px-[26px] py-3 font-cond text-[17px] font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-white/40"
             >
-              Voltar
+              {di.voltar}
             </Link>
             <BotoesEnvio
               habilitado={podeContinuar}
@@ -398,17 +403,25 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
         badge={evento.badge}
         bannerUrl={evento.bannerUrl}
         linhas={[
-          { k: "Atleta", v: nome || null },
-          { k: "Faixa", v: faixa ? capitalizar(faixa) : null, dourado: true },
-          { k: "Divisão", v: divisao },
-          { k: "Categoria", v: categoriaEscolhida?.nome ?? null, dourado: true },
+          { k: di.resumo.atleta, v: nome || null },
+          {
+            k: di.resumo.faixa,
+            v: faixa ? (nomeFaixa[faixa] ?? capitalizar(faixa)) : null,
+            dourado: true,
+          },
+          { k: di.resumo.divisao, v: divisao },
+          {
+            k: di.resumo.categoria,
+            v: categoriaEscolhida?.nome ?? null,
+            dourado: true,
+          },
         ]}
-        precoRotulo="Taxa de inscrição"
+        precoRotulo={di.resumo.taxaInscricao}
         precoValor={fmt.format(precoExibido / 100)}
         notaRodape={
           evento.precoSegundaCentavos != null
-            ? `Segunda categoria: +${fmt.format(evento.precoSegundaCentavos / 100)} · pague via Pix agora ou depois`
-            : "Pague via Pix agora ou depois"
+            ? `${di.segundaCategoria}: +${fmt.format(evento.precoSegundaCentavos / 100)} · ${di.viaPix}`
+            : di.viaPix
         }
       />
     </div>

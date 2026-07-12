@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useDic } from "@/lib/i18n/client";
 
 /** Botão "Copiar código" do Pix copia-e-cola; vira "Copiado ✓" por 2s. */
 export function CopiarPix({ payload }: { payload: string }) {
   const [copiado, setCopiado] = useState(false);
+  const dch = useDic().checkout;
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
@@ -29,7 +31,7 @@ export function CopiarPix({ payload }: { payload: string }) {
       }}
       className="w-full cursor-pointer border border-brand/50 px-2 py-2.5 font-cond text-sm font-semibold uppercase tracking-[0.06em] text-brand-soft transition-colors hover:border-brand"
     >
-      {copiado ? "Copiado ✓" : "Copiar código"}
+      {copiado ? dch.copiado : dch.copiarCodigo}
     </button>
   );
 }

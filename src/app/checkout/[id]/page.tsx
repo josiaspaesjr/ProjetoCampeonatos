@@ -19,6 +19,7 @@ import { ResumoEvento, type LinhaResumo } from "@/components/inscricao/resumo-ev
 import { dataCurta } from "@/lib/datas";
 import { obterPixQrCodeAsaas } from "@/lib/pagamentos/asaas";
 import { dentroDoPrazoDePagamento } from "@/lib/pagamentos/prazo";
+import { getDicionario } from "@/lib/i18n/server";
 import { gerarCobrancaInscricao } from "@/app/minhas-inscricoes/actions";
 import { simularPagamentoAprovado } from "./actions";
 import { ContagemRegressiva } from "./contagem-regressiva";
@@ -55,6 +56,13 @@ export default async function PaginaCheckout({
 }) {
   const { id } = await params;
   const db = await getDb();
+  const dic = await getDicionario();
+  const dch = dic.checkout;
+  const passosRotulos: [string, string, string] = [
+    dic.inscricao.passos.dados,
+    dic.inscricao.passos.pagamento,
+    dic.inscricao.passos.confirmacao,
+  ];
 
   const pagamento = await db.query.pagamentos.findFirst({
     where: eq(pagamentos.id, id),
@@ -125,17 +133,25 @@ export default async function PaginaCheckout({
 
   const local =
     evento?.endereco ?? (evento?.cidade ? `${evento.cidade}/${evento.uf ?? ""}` : "");
+  const nomeFaixa = dic.evento.faixaNomes as Record<string, string>;
   const linhasResumo: LinhaResumo[] = [
-    { k: "Atleta", v: atleta?.nomeAtleta ?? null },
-    { k: "Faixa", v: atleta ? capitalizar(atleta.faixa) : null, dourado: true },
+    { k: dch.atleta, v: atleta?.nomeAtleta ?? null },
+    {
+      k: dch.faixa,
+      v: atleta ? (nomeFaixa[atleta.faixa] ?? capitalizar(atleta.faixa)) : null,
+      dourado: true,
+    },
     ...minhasInscricoes.map((i, idx) => ({
-      k: minhasInscricoes.length > 1 ? `Categoria ${idx + 1}` : "Categoria",
+      k:
+        minhasInscricoes.length > 1
+          ? `${dch.categoria} ${idx + 1}`
+          : dch.categoria,
       v: nomeCategoria.get(i.categoriaId) ?? null,
       dourado: true,
     })),
     {
-      k: "Status",
-      v: pago ? "Confirmada" : "Aguardando Pix",
+      k: dch.statusLabel,
+      v: pago ? dch.statusConfirmada : dch.statusAguardando,
       dourado: pago,
     },
   ];
@@ -153,14 +169,14 @@ export default async function PaginaCheckout({
             href={`/evento/${evento.slug}`}
             className="font-cond text-xs uppercase tracking-[0.1em] text-muted-2 transition-colors hover:text-foreground"
           >
-            ← Voltar ao evento
+            ← {dch.voltarAoEvento}
           </Link>
         )}
       </nav>
 
       <div className="grid flex-1 items-stretch lg:grid-cols-[minmax(0,1fr)_400px]">
         <div className="px-6 py-12 md:px-16">
-          <PassosInscricao atual={pago ? 3 : 2} />
+          <PassosInscricao atual={pago ? 3 : 2} rotulos={passosRotulos} />
 
           {pago ? (
             /* ===== PASSO 3 — CONFIRMAÇÃO ===== */
@@ -169,41 +185,39 @@ export default async function PaginaCheckout({
                 <span className="disp skew-x-9 text-[40px] text-white">✓</span>
               </div>
               <Eyebrow className="mb-2 tracking-[0.14em]">
-                Inscrição confirmada
+                {dch.confirmadaEyebrow}
               </Eyebrow>
               <h1 className="disp mb-[18px] text-[clamp(48px,6vw,76px)]">
-                Você está no chaveamento
+                {dch.confirmadaTitulo}
               </h1>
               <p className="mb-4 text-[17px] leading-relaxed text-muted-2">
-                Pagamento aprovado. Sua vaga em{" "}
+                {dch.aprovadoPre}{" "}
                 <strong className="text-foreground">{rotuloCategorias}</strong>{" "}
-                está confirmada
+                {dch.aprovadoMeio}
                 {usuario ? (
                   <>
                     {" "}
-                    para <strong className="text-foreground">{usuario.email}</strong>
+                    {dch.aprovadoPara}{" "}
+                    <strong className="text-foreground">{usuario.email}</strong>
                   </>
                 ) : null}
-                . Oss! 👊
+                {dch.aprovadoFim}
               </p>
-              <p className="mb-9 text-[15px] text-muted-2">
-                Acompanhe o cronograma ao vivo no dia do evento — a chamada de
-                área aparece em tempo real.
-              </p>
+              <p className="mb-9 text-[15px] text-muted-2">{dch.acompanhe}</p>
               <div className="flex flex-wrap gap-4">
                 {evento && (
                   <Link
                     href={`/evento/${evento.slug}/cronograma`}
                     className="bg-brand px-7 py-3 font-cond text-[17px] font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]"
                   >
-                    Ver cronograma
+                    {dch.verCronograma}
                   </Link>
                 )}
                 <Link
                   href="/minhas-inscricoes"
                   className="border border-white/18 px-7 py-3 font-cond text-[17px] font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-white/40"
                 >
-                  Minhas inscrições
+                  {dch.minhasInscricoes}
                 </Link>
               </div>
             </div>
@@ -211,29 +225,28 @@ export default async function PaginaCheckout({
             /* ===== PASSO 2 — PAGAMENTO ===== */
             <div>
               <Eyebrow className="mb-2 tracking-[0.14em]">
-                Passo 2 · Pagamento
+                {dch.passo2}
               </Eyebrow>
               <h1 className="disp mb-1.5 text-[clamp(44px,5vw,64px)]">
-                Pague com Pix
+                {dch.pagueComPix}
               </h1>
               <p className="mb-[34px] max-w-[480px] text-base font-medium text-muted-2">
-                A vaga fica reservada enquanto o pagamento estiver pendente.
-                Aprovação em segundos.
+                {dch.vagaReservada}
               </p>
 
               <div className="max-w-[560px] border border-brand/40 bg-surface">
                 <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/8 px-6 py-5">
                   <span className="font-cond text-lg font-semibold uppercase">
-                    {rotuloCategorias || "Inscrição"}
+                    {rotuloCategorias || dch.inscricao}
                   </span>
                   <span className="font-cond text-[13px] uppercase tracking-[0.08em] text-brand-soft">
-                    {expirado ? "cobrança expirada" : "aguardando pagamento"}
+                    {expirado ? dch.cobrancaExpiradaTag : dch.aguardandoPagamento}
                   </span>
                 </div>
                 <div className="p-6">
                   <div className="mb-[22px] flex items-baseline justify-between">
                     <span className="font-cond text-sm uppercase tracking-[0.08em] text-muted-2">
-                      Total
+                      {dch.total}
                     </span>
                     <span className="disp tnum text-[56px] leading-none text-brand">
                       {fmt.format(pagamento.valorBrutoCentavos / 100)}
@@ -254,11 +267,11 @@ export default async function PaginaCheckout({
                       )}
                       <div className="min-w-[200px] flex-1">
                         <div className="mb-2.5 font-cond text-[11px] uppercase tracking-[0.1em] text-muted-2">
-                          Pix copia e cola
+                          {dch.pixCopiaCola}
                         </div>
                         <div className="mb-2.5 break-all border border-white/10 bg-ink px-3.5 py-3 font-cond text-[11px] leading-normal text-muted-2">
                           {pixQr?.payload ??
-                            `(cobrança de teste ${pagamento.gatewayCobrancaId})`}
+                            `(${dch.cobrancaTeste} ${pagamento.gatewayCobrancaId})`}
                         </div>
                         <CopiarPix
                           payload={
@@ -273,17 +286,17 @@ export default async function PaginaCheckout({
                     pagamento.expiraEm &&
                     pagamento.status === "criado" && (
                       <div className="mb-5 font-cond text-xs text-muted-2">
-                        Expira em{" "}
+                        {dch.expiraEm}{" "}
                         <ContagemRegressiva
                           ate={pagamento.expiraEm.toISOString()}
                         />{" "}
-                        — após isso a vaga é liberada.
+                        {dch.aposLiberada}
                       </div>
                     )}
                   {expirado && (
                     <div className="mb-5 border border-white/10 bg-ink px-4 py-4 font-cond">
                       <p className="mb-3 text-xs uppercase tracking-[0.08em] text-brand-soft">
-                        Cobrança Pix expirada
+                        {dch.cobrancaPixExpirada}
                       </p>
                       {podePagarAinda && inscricaoParaCobranca ? (
                         <form
@@ -293,13 +306,12 @@ export default async function PaginaCheckout({
                           )}
                         >
                           <BotaoAcaoBruto className="flex h-[52px] w-full cursor-pointer items-center justify-center bg-brand text-lg font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">
-                            Gerar novo Pix
+                            {dch.gerarNovoPix}
                           </BotaoAcaoBruto>
                         </form>
                       ) : (
                         <p className="text-xs normal-case text-muted-2">
-                          O prazo de pagamento deste campeonato já encerrou — a
-                          vaga foi liberada.
+                          {dch.prazoEncerrado}
                         </p>
                       )}
                     </div>
@@ -308,7 +320,7 @@ export default async function PaginaCheckout({
                   {gatewayDev && pagamento.status === "criado" && !expirado && (
                     <form action={simularPagamentoAprovado.bind(null, pagamento.id)}>
                       <BotaoAcaoBruto className="flex h-[52px] w-full cursor-pointer items-center justify-center bg-brand font-cond text-lg font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">
-                        Simular pagamento aprovado (teste)
+                        {dch.simularPagamento}
                       </BotaoAcaoBruto>
                     </form>
                   )}
@@ -320,7 +332,7 @@ export default async function PaginaCheckout({
                   href={`/evento/${evento.slug}/inscricao`}
                   className="mt-5 inline-block font-cond text-xs uppercase tracking-[0.08em] text-muted-2 transition-colors hover:text-foreground"
                 >
-                  ← Editar dados
+                  ← {dch.editarDados}
                 </Link>
               )}
             </div>
@@ -329,7 +341,7 @@ export default async function PaginaCheckout({
 
         {/* RESUMO */}
         <ResumoEvento
-          nomeEvento={evento?.nome ?? "Evento"}
+          nomeEvento={evento?.nome ?? dch.eventoFallback}
           meta={
             evento
               ? [dataCurta(evento.dataInicio), local].filter(Boolean).join(" · ")
@@ -337,9 +349,11 @@ export default async function PaginaCheckout({
           }
           bannerUrl={evento?.bannerUrl}
           linhas={linhasResumo}
-          precoRotulo="Total"
+          precoRotulo={dch.total}
           precoValor={fmt.format(pagamento.valorBrutoCentavos / 100)}
-          notaRodape={pago ? "Pagamento aprovado via Pix" : "Pagamento via Pix"}
+          notaRodape={
+            pago ? dch.pagamentoAprovadoViaPix : dch.pagamentoViaPix
+          }
         />
       </div>
     </div>

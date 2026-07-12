@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { buscarAcademias, type AcademiaOpcao } from "@/lib/academias";
 import { cn } from "@/lib/utils";
+import { useDic } from "@/lib/i18n/client";
 
 interface Props {
   /** nome do campo enviado no formulário (guarda o id da academia) */
@@ -28,6 +29,7 @@ export function SeletorAcademia({
   className,
   id,
 }: Props) {
+  const di = useDic().inscricao;
   const reactId = useId();
   const inputId = id ?? `academia-${reactId}`;
   const listboxId = `${reactId}-lista`;
@@ -143,7 +145,7 @@ export function SeletorAcademia({
           aria-controls={listboxId}
           aria-autocomplete="list"
           required={required && !selecionado}
-          placeholder="Digite para buscar sua academia"
+          placeholder={di.buscarAcademia}
           value={texto}
           onChange={(e) => aoDigitar(e.target.value)}
           onFocus={() => {
@@ -160,7 +162,7 @@ export function SeletorAcademia({
           <button
             type="button"
             onClick={limpar}
-            aria-label="Limpar academia"
+            aria-label={di.limparAcademia}
             className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-muted-3 transition-colors hover:text-foreground"
           >
             ×
@@ -195,14 +197,14 @@ export function SeletorAcademia({
         ))}
         {semResultado && (
           <li className="px-4 py-2 text-sm text-muted-3">
-            Nenhuma academia encontrada. Tente outro termo.
+            {di.nenhumaAcademia}
           </li>
         )}
       </ul>
 
       {precisaSelecionar && (
         <p className="mt-1 font-cond text-[12px] text-warning-foreground">
-          Selecione uma academia da lista.
+          {di.selecioneAcademia}
         </p>
       )}
     </div>

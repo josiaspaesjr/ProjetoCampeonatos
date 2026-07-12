@@ -5,6 +5,8 @@ import { getDb } from "@/db";
 import { eventos, inscricoes, lotes } from "@/db/schema";
 import { Logo, SkewTexto } from "@/components/marca";
 import { dataCurta, diaMesPartes } from "@/lib/datas";
+import { getDicionario } from "@/lib/i18n/server";
+import { SeletorIdioma } from "@/lib/i18n/client";
 import { CatalogoClient, type CardEvento } from "./catalogo-client";
 
 export const metadata: Metadata = { title: "Eventos" };
@@ -12,14 +14,11 @@ export const metadata: Metadata = { title: "Eventos" };
 // catálogo vem do banco — nunca servir versão estática
 export const dynamic = "force-dynamic";
 
-const MODALIDADE_ROTULO: Record<string, string> = {
-  gi_nogi: "Gi + No-Gi",
-  gi: "Gi",
-  nogi: "No-Gi",
-};
-
 export default async function CatalogoEventos() {
   const db = await getDb();
+  const dic = await getDicionario();
+  const dc = dic.catalogo;
+  const modalidades = dic.evento.modalidades as Record<string, string>;
 
   const publicos = await db.query.eventos.findMany({
     where: inArray(eventos.status, [
@@ -62,19 +61,22 @@ export default async function CatalogoEventos() {
         !!(e.inscricoesAbrem && e.inscricoesAbrem > agora));
     const aoVivo = e.status === "em_andamento";
 
-    const status = aoVivo
-      ? "Ao vivo agora"
+    const statusChave = aoVivo
+      ? "aoVivo"
       : aberto
-        ? "Inscrições abertas"
+        ? "inscricoesAbertas"
         : emBreve
-          ? "Em breve"
+          ? "emBreve"
           : e.status === "finalizado"
-            ? "Finalizado"
-            : "Inscrições encerradas";
+            ? "finalizado"
+            : "encerradas";
+    const status = dc.status[statusChave];
 
     const { dia, mes } = diaMesPartes(e.dataInicio);
     const ano = new Date(`${e.dataInicio}T12:00:00`).getFullYear();
-    const local = e.cidade ? `${e.cidade}${e.uf ? `/${e.uf}` : ""}` : "Local a definir";
+    const local = e.cidade
+      ? `${e.cidade}${e.uf ? `/${e.uf}` : ""}`
+      : dc.localADefinir;
 
     return {
       slug: e.slug,
@@ -85,7 +87,7 @@ export default async function CatalogoEventos() {
       mesAno: `${mes} ${ano}`,
       dataLonga: dataCurta(e.dataInicio),
       cidade: local,
-      meta: `${local} · ${MODALIDADE_ROTULO[e.modalidade] ?? "Gi + No-Gi"}`,
+      meta: `${local} · ${modalidades[e.modalidade] ?? modalidades.gi_nogi}`,
       modalidade: e.modalidade,
       status,
       aberto,
@@ -102,16 +104,17 @@ export default async function CatalogoEventos() {
         <Logo />
         <div className="flex items-center gap-8 font-cond text-base font-semibold uppercase tracking-[0.04em]">
           <Link href="/eventos" className="text-brand">
-            Eventos
+            {dic.nav.eventos}
           </Link>
           <Link href="/#ranking" className="max-md:hidden transition-colors hover:text-brand">
-            Ranking
+            {dc.ranking}
           </Link>
           <Link href="/#aovivo" className="max-md:hidden transition-colors hover:text-brand">
-            Ao vivo
+            {dc.aoVivo}
           </Link>
+          <SeletorIdioma />
           <Link href="/organizador" className="-skew-x-9 bg-brand px-5 py-2.5 text-white">
-            <SkewTexto>Criar evento</SkewTexto>
+            <SkewTexto>{dc.criarEvento}</SkewTexto>
           </Link>
         </div>
       </nav>
@@ -122,14 +125,13 @@ export default async function CatalogoEventos() {
           CALENDÁRIO
         </div>
         <div className="relative mb-1.5 font-cond text-base font-semibold uppercase tracking-[0.14em] text-brand">
-          Circuito · {anoAtual}
+          {dc.circuito} · {anoAtual}
         </div>
         <h1 className="disp relative text-[clamp(64px,9vw,132px)]">
-          Todos os eventos
+          {dc.titulo}
         </h1>
         <p className="relative mt-2 max-w-[560px] text-lg font-medium text-muted-2">
-          Cada etapa publicada na plataforma. Filtre por modalidade ou status e
-          inscreva-se em dois cliques.
+          {dc.subtitulo}
         </p>
       </header>
 
@@ -141,7 +143,7 @@ export default async function CatalogoEventos() {
           BJJ<span className="text-brand">ARENA</span>
         </span>
         <span className="font-cond text-sm uppercase tracking-[0.08em] text-muted-3">
-          © {anoAtual} · Sistema de competições de jiu-jitsu
+          © {anoAtual} · {dic.rodape}
         </span>
       </footer>
     </div>

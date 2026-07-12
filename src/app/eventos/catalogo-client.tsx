@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { SkewTexto } from "@/components/marca";
 import { cn } from "@/lib/utils";
+import { useDic } from "@/lib/i18n/client";
 
 export interface CardEvento {
   slug: string;
@@ -23,33 +24,29 @@ export interface CardEvento {
   inscritos: number;
 }
 
-const FILTROS = [
-  "Todos",
-  "Inscrições abertas",
-  "Gi",
-  "No-Gi",
-  "Em breve",
-] as const;
+const FILTROS = ["todos", "abertas", "gi", "nogi", "emBreve"] as const;
 type Filtro = (typeof FILTROS)[number];
 
 export function CatalogoClient({ eventos }: { eventos: CardEvento[] }) {
-  const [filtro, setFiltro] = useState<Filtro>("Todos");
+  const [filtro, setFiltro] = useState<Filtro>("todos");
   const [busca, setBusca] = useState("");
+  const dic = useDic();
+  const dc = dic.catalogo;
 
   const visiveis = useMemo(() => {
     const q = busca.trim().toLowerCase();
     return eventos.filter((e) => {
       let ok = true;
-      if (filtro === "Inscrições abertas") ok = e.aberto;
-      else if (filtro === "Em breve") ok = e.emBreve;
-      else if (filtro === "Gi") ok = e.modalidade !== "nogi";
-      else if (filtro === "No-Gi") ok = e.modalidade !== "gi";
+      if (filtro === "abertas") ok = e.aberto;
+      else if (filtro === "emBreve") ok = e.emBreve;
+      else if (filtro === "gi") ok = e.modalidade !== "nogi";
+      else if (filtro === "nogi") ok = e.modalidade !== "gi";
       if (ok && q) ok = `${e.nome} ${e.cidade}`.toLowerCase().includes(q);
       return ok;
     });
   }, [eventos, filtro, busca]);
 
-  const mostrarDestaque = filtro === "Todos" && !busca.trim();
+  const mostrarDestaque = filtro === "todos" && !busca.trim();
   const destaque = mostrarDestaque
     ? (visiveis.find((e) => e.aoVivo) ?? visiveis.find((e) => e.aberto))
     : undefined;
@@ -66,7 +63,7 @@ export function CatalogoClient({ eventos }: { eventos: CardEvento[] }) {
           <input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar evento ou cidade"
+            placeholder={dc.buscar}
             className="h-11 w-full border border-white/14 bg-raised pl-[34px] pr-3.5 text-[15px] placeholder:text-muted-3 focus:border-brand focus:outline-none"
           />
         </div>
@@ -82,12 +79,12 @@ export function CatalogoClient({ eventos }: { eventos: CardEvento[] }) {
                   : "border-white/14 text-text-2 hover:border-white/30",
               )}
             >
-              <SkewTexto>{f}</SkewTexto>
+              <SkewTexto>{dc.filtros[f]}</SkewTexto>
             </button>
           ))}
         </div>
         <span className="ml-auto font-cond text-[15px] uppercase tracking-[0.06em] text-muted-3">
-          {visiveis.length} evento{visiveis.length === 1 ? "" : "s"}
+          {visiveis.length} {visiveis.length === 1 ? dc.evento : dc.eventos}
         </span>
       </div>
 
@@ -112,7 +109,9 @@ export function CatalogoClient({ eventos }: { eventos: CardEvento[] }) {
                 )}
                 <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,transparent_40%,rgba(17,17,18,0.6))]" />
                 <div className="absolute left-4 top-4 -skew-x-9 bg-brand px-3.5 py-1.5 font-cond text-[13px] font-semibold uppercase tracking-[0.08em] text-white">
-                  <SkewTexto>◆ {destaque.aoVivo ? "Ao vivo" : "Destaque"}</SkewTexto>
+                  <SkewTexto>
+                    ◆ {destaque.aoVivo ? dc.aoVivoBadge : dc.destaque}
+                  </SkewTexto>
                 </div>
               </div>
               <div className="flex flex-col justify-center p-9 px-[38px]">
@@ -129,12 +128,12 @@ export function CatalogoClient({ eventos }: { eventos: CardEvento[] }) {
                 )}
                 <div className="flex items-center gap-5">
                   <span className="-skew-x-9 bg-brand px-[26px] py-3 font-cond text-[17px] font-bold uppercase tracking-[0.04em] text-white">
-                    <SkewTexto>Ver evento →</SkewTexto>
+                    <SkewTexto>{dc.verEvento} →</SkewTexto>
                   </span>
                   <span className="font-cond text-[15px] uppercase tracking-[0.06em] text-muted-2">
                     {destaque.inscritos > 0
-                      ? `${destaque.inscritos} atleta${destaque.inscritos === 1 ? "" : "s"} confirmado${destaque.inscritos === 1 ? "" : "s"}`
-                      : "Inscrições abertas"}
+                      ? `${destaque.inscritos} ${destaque.inscritos === 1 ? dc.atletaConfirmado : dc.atletasConfirmados}`
+                      : dc.status.inscricoesAbertas}
                   </span>
                 </div>
               </div>
@@ -193,11 +192,11 @@ export function CatalogoClient({ eventos }: { eventos: CardEvento[] }) {
                 <div className="mt-auto flex items-center justify-between border-t border-white/8 pt-3.5">
                   <span className="text-sm font-medium text-muted-2">
                     {e.inscritos > 0
-                      ? `${e.inscritos} inscrito${e.inscritos === 1 ? "" : "s"}`
-                      : "Seja o primeiro"}
+                      ? `${e.inscritos} ${e.inscritos === 1 ? dc.inscrito : dc.inscritos}`
+                      : dc.sejaPrimeiro}
                   </span>
                   <span className="font-cond text-[15px] font-bold uppercase tracking-[0.06em] text-brand">
-                    {e.aberto ? "Inscrever →" : "Ver evento →"}
+                    {e.aberto ? dc.inscrever : dc.verEvento} →
                   </span>
                 </div>
               </div>
@@ -207,10 +206,8 @@ export function CatalogoClient({ eventos }: { eventos: CardEvento[] }) {
 
         {visiveis.length === 0 && (
           <div className="px-5 py-[70px] text-center">
-            <div className="disp text-[56px] text-white/14">Nenhum evento</div>
-            <p className="mt-1.5 text-base text-muted-2">
-              Nenhum evento corresponde a esses filtros. Tente outra busca.
-            </p>
+            <div className="disp text-[56px] text-white/14">{dc.nenhumEvento}</div>
+            <p className="mt-1.5 text-base text-muted-2">{dc.nenhumCorresponde}</p>
           </div>
         )}
       </section>

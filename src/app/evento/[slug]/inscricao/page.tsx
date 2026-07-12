@@ -6,6 +6,7 @@ import { academias, categorias, eventos, lotes } from "@/db/schema";
 import { Logo } from "@/components/marca";
 import { dataCurta } from "@/lib/datas";
 import { getAtletaAtual } from "@/lib/sessao";
+import { getDicionario } from "@/lib/i18n/server";
 import { criarInscricao } from "./actions";
 import { FormInscricao } from "./form-inscricao";
 
@@ -16,6 +17,7 @@ export default async function PaginaInscricao({
 }) {
   const { slug } = await params;
   const db = await getDb();
+  const di = (await getDicionario()).inscricao;
 
   const evento = await db.query.eventos.findFirst({
     where: and(eq(eventos.slug, slug), eq(eventos.status, "publicado")),
@@ -59,7 +61,7 @@ export default async function PaginaInscricao({
           href={`/evento/${evento.slug}`}
           className="font-cond text-xs uppercase tracking-[0.1em] text-muted-2 transition-colors hover:text-foreground"
         >
-          ← Voltar ao evento
+          ← {di.voltarAoEvento}
         </Link>
       </nav>
 
@@ -105,19 +107,17 @@ export default async function PaginaInscricao({
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center gap-6 px-6 py-24 text-center">
           <div className="font-cond text-xs uppercase tracking-[0.2em] text-muted-2">
-            {"// Inscrições encerradas"}
+            {`// ${di.encerradasTag}`}
           </div>
           <h1 className="max-w-[700px] disp text-[clamp(34px,4.6vw,54px)] font-extrabold uppercase leading-[0.95]">
             {evento.nome}
           </h1>
-          <p className="max-w-[480px] text-base text-muted-2">
-            As inscrições deste evento não estão abertas no momento.
-          </p>
+          <p className="max-w-[480px] text-base text-muted-2">{di.encerradasMsg}</p>
           <Link
             href={`/evento/${evento.slug}`}
             className="border border-white/20 px-[30px] py-[15px] disp text-[15px] font-bold uppercase tracking-[0.08em] text-foreground transition-colors hover:border-white/40"
           >
-            Voltar ao evento
+            {di.voltarAoEvento}
           </Link>
         </div>
       )}

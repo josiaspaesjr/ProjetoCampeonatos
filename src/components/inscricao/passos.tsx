@@ -1,20 +1,25 @@
 import { cn } from "@/lib/utils";
 
-const PASSOS = [
-  { num: 1, rotulo: "Dados" },
-  { num: 2, rotulo: "Pagamento" },
-  { num: 3, rotulo: "Confirmação" },
-];
-
-/** Indicador de progresso do fluxo de inscrição (nós skewados 1/2/3). */
-export function PassosInscricao({ atual }: { atual: 1 | 2 | 3 }) {
+/**
+ * Indicador de progresso do fluxo de inscrição (nós skewados 1/2/3).
+ * Componente puro (server + client): os rótulos vêm por prop, já traduzidos.
+ */
+export function PassosInscricao({
+  atual,
+  rotulos,
+}: {
+  atual: 1 | 2 | 3;
+  /** [Dados, Pagamento, Confirmação] no idioma atual */
+  rotulos: [string, string, string];
+}) {
   return (
     <div className="mb-10 flex max-w-[560px] items-center">
-      {PASSOS.map((p, i) => {
-        const ativo = p.num === atual;
-        const feito = p.num < atual;
+      {rotulos.map((rotulo, i) => {
+        const num = i + 1;
+        const ativo = num === atual;
+        const feito = num < atual;
         return (
-          <div key={p.num} className="flex flex-1 items-center">
+          <div key={num} className="flex flex-1 items-center">
             <div className="flex items-center gap-2.5">
               <div
                 className={cn(
@@ -26,7 +31,7 @@ export function PassosInscricao({ atual }: { atual: 1 | 2 | 3 }) {
                       : "border-white/20 text-muted-3",
                 )}
               >
-                <span className="skew-x-9 pt-[3px]">{feito ? "✓" : p.num}</span>
+                <span className="skew-x-9 pt-[3px]">{feito ? "✓" : num}</span>
               </div>
               <span
                 className={cn(
@@ -34,10 +39,10 @@ export function PassosInscricao({ atual }: { atual: 1 | 2 | 3 }) {
                   ativo ? "text-foreground" : "text-muted-2",
                 )}
               >
-                {p.rotulo}
+                {rotulo}
               </span>
             </div>
-            {i < PASSOS.length - 1 && (
+            {i < rotulos.length - 1 && (
               <div className="mx-3.5 h-px min-w-4 flex-1 bg-white/14" />
             )}
           </div>
