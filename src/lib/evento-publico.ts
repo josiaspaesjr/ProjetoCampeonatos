@@ -81,5 +81,5 @@ export const getContadoresEvento = cache(async (eventoId: string) => {
       )
     : 0;
 
-  return { atletas, chaves: chavesPublicadas };
+  return { atletas, chaves: chavesPublicadas, categorias: cats.length };
 });

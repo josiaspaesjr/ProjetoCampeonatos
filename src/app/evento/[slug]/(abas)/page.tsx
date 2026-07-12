@@ -1,12 +1,13 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { areas, categorias, chaves, inscricoes } from "@/db/schema";
+import { areas, categorias, inscricoes } from "@/db/schema";
+import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 import { dataHora, diaMes } from "@/lib/datas";
 import { secoesPreenchidas } from "@/lib/regulamento";
 import { getEventoPublico, statusDoEvento } from "@/lib/evento-publico";
-import { CategoriasFiltro } from "./categorias-filtro";
 
 const MODALIDADE_ROTULO: Record<string, string> = {
   gi_nogi: "Gi + No-Gi",
@@ -14,32 +15,37 @@ const MODALIDADE_ROTULO: Record<string, string> = {
   nogi: "No-Gi",
 };
 
-// abreviação de faixa para o fato "Faixas" (ex.: "Bca→Pta"), na ordem CBJJ
-const FAIXA_ABREV: Record<string, string> = {
-  branca: "Bca",
-  cinza: "Cza",
-  amarela: "Ama",
-  laranja: "Lja",
-  verde: "Vde",
-  azul: "Azl",
-  roxa: "Rxa",
-  marrom: "Mrm",
-  preta: "Pta",
-};
-const ORDEM_FAIXAS = Object.keys(FAIXA_ABREV);
+// ordem CBJJ das faixas, para exibir os swatches de cor "utilizados" no evento
+const ORDEM_FAIXAS = [
+  "branca",
+  "cinza",
+  "amarela",
+  "laranja",
+  "verde",
+  "azul",
+  "roxa",
+  "marrom",
+  "preta",
+];
 
-/** Faixa mín→máx a partir das faixas presentes nas categorias do evento. */
-function faixasDasCategorias(faixas: (string | null)[]): string | null {
-  const idx = faixas
-    .filter((f): f is string => !!f && f in FAIXA_ABREV)
-    .map((f) => ORDEM_FAIXAS.indexOf(f));
-  if (!idx.length) return null;
-  const min = Math.min(...idx);
-  const max = Math.max(...idx);
-  return min === max
-    ? FAIXA_ABREV[ORDEM_FAIXAS[min]]
-    : `${FAIXA_ABREV[ORDEM_FAIXAS[min]]}→${FAIXA_ABREV[ORDEM_FAIXAS[max]]}`;
+/** Faixas presentes no evento (cores usadas), em ordem CBJJ. */
+function faixasPresentes(
+  faixasCats: (string | null)[],
+  evento: { faixaMin: string | null; faixaMax: string | null },
+): string[] {
+  const set = new Set(
+    faixasCats.filter((f): f is string => !!f && ORDEM_FAIXAS.includes(f)),
+  );
+  // sem categorias ainda: cai no recorte de faixas do cadastro do evento
+  if (set.size === 0 && (evento.faixaMin || evento.faixaMax)) {
+    const min = ORDEM_FAIXAS.indexOf(evento.faixaMin ?? "branca");
+    const max = ORDEM_FAIXAS.indexOf(evento.faixaMax ?? "preta");
+    for (let i = min; i <= max; i++) set.add(ORDEM_FAIXAS[i]);
+  }
+  return ORDEM_FAIXAS.filter((f) => set.has(f));
 }
+
+const capFaixa = (f: string) => f.charAt(0).toUpperCase() + f.slice(1);
 
 export default async function AbaInformacoes({
   params,
@@ -53,15 +59,17 @@ export default async function AbaInformacoes({
 
   const db = await getDb();
   const [cats, confirmadas, areasDoEvento] = await Promise.all([
+    // só as faixas — o resto das categorias vive na aba Categorias
     db.query.categorias.findMany({
       where: eq(categorias.eventoId, evento.id),
-      orderBy: asc(categorias.nome),
+      columns: { faixa: true },
     }),
     db.query.inscricoes.findMany({
       where: and(
         eq(inscricoes.eventoId, evento.id),
         eq(inscricoes.status, "confirmada"),
       ),
+      columns: { academiaNome: true },
     }),
     db.query.areas.findMany({
       where: eq(areas.eventoId, evento.id),
@@ -69,25 +77,7 @@ export default async function AbaInformacoes({
     }),
   ]);
 
-  const chavesPublicadas = cats.length
-    ? (
-        await db.query.chaves.findMany({
-          where: inArray(
-            chaves.categoriaId,
-            cats.map((c) => c.id),
-          ),
-        })
-      ).filter((c) => c.status !== "rascunho")
-    : [];
-  const chavePorCategoria = new Map(
-    chavesPublicadas.map((c) => [c.categoriaId, c]),
-  );
-
-  const porCategoria = new Map<string, number>();
-  for (const i of confirmadas) {
-    porCategoria.set(i.categoriaId, (porCategoria.get(i.categoriaId) ?? 0) + 1);
-  }
-
+  // equipes confirmadas (sidebar)
   const porAcademia = new Map<string, number>();
   for (const i of confirmadas) {
     const nome = i.academiaNome ?? "Sem equipe";
@@ -102,28 +92,35 @@ export default async function AbaInformacoes({
   });
 
   const status = statusDoEvento(evento.status, inscricoesAbertas);
-
-  // faixas derivam das categorias geradas; fallback ao recorte antigo do evento
-  const faixas =
-    faixasDasCategorias(cats.map((c) => c.faixa)) ??
-    (evento.faixaMin || evento.faixaMax
-      ? `${FAIXA_ABREV[evento.faixaMin ?? "branca"]}→${FAIXA_ABREV[evento.faixaMax ?? "preta"]}`
-      : "Bca→Pta");
-
   const regulamento = secoesPreenchidas(evento.regulamento);
 
-  const fatos: { k: string; v: string; destaque?: boolean }[] = [
+  const faixas = faixasPresentes(cats.map((c) => c.faixa), evento);
+  // "cadastrado no campeonato": áreas reais ou o nº planejado no cadastro
+  const areasCount =
+    areasDoEvento.length > 0 ? areasDoEvento.length : (evento.numAreas ?? 0);
+
+  const fatos: { k: string; v: ReactNode; destaque?: boolean }[] = [
     { k: "Modalidade", v: MODALIDADE_ROTULO[evento.modalidade] ?? "Gi + No-Gi" },
-    {
-      k: "Áreas",
-      v:
-        areasDoEvento.length > 0
-          ? String(areasDoEvento.length)
-          : evento.numAreas
-            ? String(evento.numAreas)
-            : "—",
-    },
-    { k: "Faixas", v: faixas },
+    ...(areasCount > 0 ? [{ k: "Áreas", v: String(areasCount) }] : []),
+    ...(faixas.length
+      ? [
+          {
+            k: "Faixas",
+            v: (
+              <>
+                {faixas.map((f) => (
+                  <span
+                    key={f}
+                    title={capFaixa(f)}
+                    className="h-6 w-6 shrink-0 -skew-x-9 border border-white/25 md:h-7 md:w-7"
+                    style={{ background: corDaFaixa(f) }}
+                  />
+                ))}
+              </>
+            ),
+          },
+        ]
+      : []),
     ...(evento.dataGeracaoChaves
       ? [{ k: "Chaves", v: diaMes(evento.dataGeracaoChaves) }]
       : []),
@@ -131,6 +128,17 @@ export default async function AbaInformacoes({
       ? { k: "Pesagem", v: diaMes(evento.dataPesagem), destaque: true }
       : { k: "Data", v: diaMes(evento.dataInicio), destaque: true },
   ];
+
+  // grade de colunas acompanha a quantidade de fatos (evita célula vazia)
+  const colsMd =
+    (
+      {
+        2: "md:grid-cols-2",
+        3: "md:grid-cols-3",
+        4: "md:grid-cols-4",
+        5: "md:grid-cols-5",
+      } as Record<number, string>
+    )[Math.min(fatos.length, 5)] ?? "md:grid-cols-4";
 
   return (
     <div className="grid items-start gap-12 px-6 pb-20 pt-10 md:px-12 lg:grid-cols-[minmax(0,1fr)_380px]">
@@ -151,7 +159,9 @@ export default async function AbaInformacoes({
               digital pela BJJArena.
             </p>
           )}
-          <div className="mt-[30px] grid grid-cols-2 gap-px border border-white/10 bg-white/10 md:grid-cols-4">
+          <div
+            className={`mt-[30px] grid grid-cols-2 gap-px border border-white/10 bg-white/10 ${colsMd}`}
+          >
             {fatos.map((f) => (
               <div
                 key={f.k}
@@ -160,11 +170,17 @@ export default async function AbaInformacoes({
                 <div className="mb-2 font-cond text-[13px] uppercase tracking-[0.1em] text-muted-2">
                   {f.k}
                 </div>
-                <div
-                  className={`disp truncate text-[26px] md:text-[38px] ${f.destaque ? "text-brand" : ""}`}
-                >
-                  {f.v}
-                </div>
+                {typeof f.v === "string" ? (
+                  <div
+                    className={`disp truncate text-[26px] md:text-[38px] ${f.destaque ? "text-brand" : ""}`}
+                  >
+                    {f.v}
+                  </div>
+                ) : (
+                  <div className="flex min-h-[30px] flex-wrap items-center gap-1.5 md:min-h-[42px] md:gap-2">
+                    {f.v}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -200,32 +216,6 @@ export default async function AbaInformacoes({
           </section>
         )}
 
-        {/* CATEGORIAS */}
-        <section id="categorias" className="scroll-mt-24">
-          <div className="mb-[18px] flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <h2 className="disp text-[40px] md:text-[54px]">Categorias</h2>
-            <span className="font-cond text-[17px] uppercase tracking-[0.06em] text-muted-2">
-              {cats.length} disponíve{cats.length === 1 ? "l" : "is"}
-            </span>
-          </div>
-          <CategoriasFiltro
-            categorias={cats.map((c) => ({
-              id: c.id,
-              nome: c.nome,
-              faixa: c.faixa,
-              classeIdade: c.classeIdade,
-              sexo: c.sexo,
-              inscritos: porCategoria.get(c.id) ?? 0,
-              chaveUrl: chavePorCategoria.has(c.id)
-                ? `/evento/${evento.slug}/chaves/${c.id}`
-                : null,
-              preco:
-                c.precoCentavos != null
-                  ? fmt.format(c.precoCentavos / 100)
-                  : null,
-            }))}
-          />
-        </section>
       </main>
 
       {/* SIDEBAR */}
