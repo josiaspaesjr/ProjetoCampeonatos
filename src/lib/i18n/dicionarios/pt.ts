@@ -400,6 +400,60 @@ export const pt = {
       entrarComoOrganizador: "Entrar como organizador →",
       voltarInicio: "← Voltar ao início",
     },
+    campos: {
+      imagemCapa: "Imagem de capa (URL)",
+      bannerPlaceholder: "https://… (banner do evento)",
+      nomeEvento: "Nome do evento",
+      nomePlaceholder: "Copa Cidade de Jiu-Jitsu 2026",
+      inscricoesFechamEm: "Inscrições fecham em",
+      inscricoesFecham: "Inscrições fecham",
+      dataEvento: "Data do evento",
+      cidade: "Cidade",
+      cidadePlaceholder: "São Paulo",
+      uf: "UF",
+      moeda: "Moeda",
+      endereco: "Endereço / ginásio",
+      enderecoPlaceholder:
+        "Ginásio do Ibirapuera — Av. Pedro Álvares Cabral, s/n",
+      descricao: "Descrição",
+      descricaoPlaceholder: "Modalidades, regulamento, cronograma, premiação…",
+      circuito: "Circuito / temporada",
+      circuitoPlaceholder: "Circuito Nacional 2026",
+      modalidade: "Modalidade",
+      dataPesagem: "Data da pesagem",
+      dataGeracaoChaves: "Data de geração das chaves",
+      dataGeracaoNota: "Data prevista para montar as chaves — apenas informativo.",
+      detalhesCompeticao: "Detalhes da competição",
+      regulamento: "Regulamento",
+    },
+    moedas: {
+      brl: "BRL — Real (Pix)",
+      usd: "USD — Dólar",
+      eur: "EUR — Euro",
+    },
+    novo: {
+      voltar: "Voltar",
+      deco: "NOVO",
+      criarEvento: "Criar evento",
+      configureEtapa: "Configure sua etapa",
+      subtitulo:
+        "Informações básicas do evento. Lotes, categorias, áreas e chaves você configura depois no painel.",
+      regulamentoNota:
+        "Seções opcionais que aparecem na página pública do evento. Cada uma começa vazia — use “Inserir texto padrão” para partir de um modelo e editar como quiser.",
+      avisoPre: "Configurações avançadas —",
+      avisoBold: "lotes de inscrição, categorias, áreas e chaveamento",
+      avisoFim:
+        "— ficam disponíveis no painel do organizador logo após criar o evento.",
+      cancelar: "Cancelar",
+      criarEventoBtn: "Criar evento →",
+    },
+    regCampos: {
+      inserirPadrao: "Inserir texto padrão",
+      limpar: "limpar",
+      preenchido: "preenchido",
+      placeholder:
+        "Opcional — deixe em branco ou insira o texto padrão para editar.",
+    },
   },
 };
 

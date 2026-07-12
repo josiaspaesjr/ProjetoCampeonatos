@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { SECOES_REGULAMENTO } from "@/lib/regulamento";
 import { cn } from "@/lib/utils";
+import { useDic } from "@/lib/i18n/client";
 
 /**
  * Campos opcionais do regulamento: uma seção por tópico, começando vazia,
@@ -23,6 +24,8 @@ export function RegulamentoCampos({
 
   const setTexto = (chave: string, valor: string) =>
     setTextos((prev) => ({ ...prev, [chave]: valor }));
+
+  const dr = useDic().admin.regCampos;
 
   return (
     <div className="flex flex-col gap-2">
@@ -46,7 +49,7 @@ export function RegulamentoCampos({
               </span>
               {preenchido && (
                 <span className="font-cond text-[11px] uppercase tracking-[0.08em] text-brand-soft">
-                  preenchido
+                  {dr.preenchido}
                 </span>
               )}
               <span className="font-cond text-xs text-muted-3 transition-transform group-open:rotate-180">
@@ -60,7 +63,7 @@ export function RegulamentoCampos({
                 value={valor}
                 onChange={(e) => setTexto(secao.chave, e.target.value)}
                 rows={5}
-                placeholder="Opcional — deixe em branco ou insira o texto padrão para editar."
+                placeholder={dr.placeholder}
                 className="w-full resize-y border border-input bg-raised px-3.5 py-2.5 text-[15px] leading-normal transition-colors placeholder:text-muted-3 focus-visible:border-brand focus-visible:outline-none"
               />
               <div className="flex items-center gap-4">
@@ -69,7 +72,7 @@ export function RegulamentoCampos({
                   onClick={() => setTexto(secao.chave, secao.textoPadrao)}
                   className="font-cond text-[13px] font-semibold uppercase tracking-[0.06em] text-brand transition-colors hover:text-brand-soft"
                 >
-                  Inserir texto padrão
+                  {dr.inserirPadrao}
                 </button>
                 {preenchido && (
                   <button
@@ -77,7 +80,7 @@ export function RegulamentoCampos({
                     onClick={() => setTexto(secao.chave, "")}
                     className="font-cond text-[13px] font-semibold uppercase tracking-[0.06em] text-muted-3 transition-colors hover:text-foreground"
                   >
-                    limpar
+                    {dr.limpar}
                   </button>
                 )}
               </div>
