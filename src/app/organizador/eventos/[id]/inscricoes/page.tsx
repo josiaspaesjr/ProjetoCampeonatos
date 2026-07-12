@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { getUsuarioAtual } from "@/lib/auth";
+import { getDicionario } from "@/lib/i18n/server";
 import { FAIXAS } from "@/lib/categorias/cbjj";
 import {
   cancelarInscricao,
@@ -18,11 +19,11 @@ import {
   reembolsarInscricao,
 } from "./actions";
 
-const rotuloStatus: Record<string, [string, BadgeProps["variant"]]> = {
-  pendente_pagamento: ["Pendente", "warning"],
-  confirmada: ["Confirmada", "success"],
-  cancelada: ["Cancelada", "secondary"],
-  reembolsada: ["Reembolsada", "secondary"],
+const VARIANTE_STATUS: Record<string, BadgeProps["variant"]> = {
+  pendente_pagamento: "warning",
+  confirmada: "success",
+  cancelada: "secondary",
+  reembolsada: "secondary",
 };
 
 export default async function PaginaInscricoes({
@@ -33,6 +34,8 @@ export default async function PaginaInscricoes({
   const { id } = await params;
   const db = await getDb();
   const usuario = await getUsuarioAtual();
+  const dic = await getDicionario();
+  const t = dic.admin.inscricoes;
 
   const evento = await db.query.eventos.findFirst({
     where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
@@ -70,17 +73,17 @@ export default async function PaginaInscricoes({
   return (
     <div className="space-y-10">
       <p className="font-cond text-[15px] uppercase tracking-[0.05em] text-muted-2">
-        {lista.length} inscriç{lista.length === 1 ? "ão" : "ões"} no total
+        {lista.length}{" "}
+        {lista.length === 1 ? t.inscricaoSing : t.inscricaoPlur} {t.noTotal}
       </p>
 
       {esvaziadas.length > 0 && (
         <section className="rounded-xl border border-warning/40 bg-warning/15 p-5">
           <p className="font-semibold text-warning-foreground">
-            Categorias abaixo do mínimo de inscritos
+            {t.abaixoMinimo}
           </p>
           <p className="mt-1 text-xs text-warning-foreground/80">
-            Funda em outra categoria (move os atletas e fecha a origem) ou
-            reembolse os inscritos.
+            {t.abaixoMinimoDesc}
           </p>
           <ul className="mt-3 space-y-2">
             {esvaziadas.map((c) => (
@@ -88,7 +91,8 @@ export default async function PaginaInscricoes({
                 <span>
                   {c.nome}{" "}
                   <span className="text-warning-foreground/80">
-                    ({ativasPorCategoria.get(c.id)} de {c.minInscritos} mín.)
+                    ({ativasPorCategoria.get(c.id)} {t.de} {c.minInscritos}{" "}
+                    {t.min})
                   </span>
                 </span>
                 <form
@@ -96,7 +100,7 @@ export default async function PaginaInscricoes({
                   className="flex items-center gap-2"
                 >
                   <NativeSelect name="destinoId" required className="h-8 w-auto text-xs">
-                    <option value="">Fundir em…</option>
+                    <option value="">{t.fundirEm}</option>
                     {abertas
                       .filter((d) => d.id !== c.id && d.sexo === c.sexo)
                       .map((d) => (
@@ -105,7 +109,7 @@ export default async function PaginaInscricoes({
                         </option>
                       ))}
                   </NativeSelect>
-                  <BotaoAcao size="sm">Fundir</BotaoAcao>
+                  <BotaoAcao size="sm">{t.fundir}</BotaoAcao>
                 </form>
               </li>
             ))}
@@ -116,7 +120,8 @@ export default async function PaginaInscricoes({
       <section>
         <ul className="divide-y divide-border rounded-xl border bg-card">
           {lista.map((i) => {
-            const [rotulo, variante] = rotuloStatus[i.status] ?? [i.status, "outline" as const];
+            const rotulo = dic.admin.statusInscricao[i.status] ?? i.status;
+            const variante = VARIANTE_STATUS[i.status] ?? ("outline" as const);
             const ativa = i.status === "confirmada" || i.status === "pendente_pagamento";
             return (
               <li
@@ -128,7 +133,9 @@ export default async function PaginaInscricoes({
                     <p className="truncate text-sm font-medium">
                       {i.nomeAtleta}
                       <span className="ml-2 font-normal capitalize text-muted-foreground">
-                        {i.faixa}
+                        {dic.evento.faixaNomes[
+                          i.faixa as keyof typeof dic.evento.faixaNomes
+                        ] ?? i.faixa}
                         {i.academiaNome ? ` · ${i.academiaNome}` : ""}
                       </span>
                     </p>
@@ -153,7 +160,7 @@ export default async function PaginaInscricoes({
                         className="h-8 w-full text-xs sm:w-44"
                       >
                         <option value="" disabled>
-                          Mover para…
+                          {t.moverPara}
                         </option>
                         {abertas
                           .filter((c) => c.id !== i.categoriaId)
@@ -172,14 +179,14 @@ export default async function PaginaInscricoes({
                   {i.status === "pendente_pagamento" && (
                     <form action={cancelarInscricao.bind(null, id, i.id)}>
                       <AcaoTexto className="text-xs text-destructive hover:underline">
-                        cancelar
+                        {t.cancelarAcao}
                       </AcaoTexto>
                     </form>
                   )}
                   {i.status === "confirmada" && (
                     <form action={reembolsarInscricao.bind(null, id, i.id)}>
                       <AcaoTexto className="text-xs text-destructive hover:underline">
-                        reembolsar
+                        {t.reembolsar}
                       </AcaoTexto>
                     </form>
                   )}
@@ -189,41 +196,49 @@ export default async function PaginaInscricoes({
           })}
           {lista.length === 0 && (
             <li className="px-5 py-8 text-center text-sm text-muted-foreground">
-              Nenhuma inscrição ainda.
+              {t.nenhumaAinda}
             </li>
           )}
         </ul>
       </section>
 
       <section className="max-w-2xl">
-        <h2 className="text-lg font-bold">Inscrição manual</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Para atleta que pagou por fora (dinheiro, isenção) — entra direto como
-          confirmada e fica registrada na auditoria.
-        </p>
+        <h2 className="text-lg font-bold">{t.inscricaoManual}</h2>
+        <p className="mt-1 text-xs text-muted-foreground">{t.manualDesc}</p>
         <Card className="mt-4">
           <CardContent className="p-5">
             <form action={inscricaoManual.bind(null, id)} className="space-y-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Input name="nome" required placeholder="Nome completo" />
-                <Input name="email" type="email" required placeholder="E-mail" />
+                <Input
+                  name="nome"
+                  required
+                  placeholder={dic.inscricao.nomeCompleto}
+                />
+                <Input
+                  name="email"
+                  type="email"
+                  required
+                  placeholder={dic.inscricao.email}
+                />
               </div>
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 <Input name="dataNascimento" type="date" required />
                 <NativeSelect name="sexo" required defaultValue="">
                   <option value="" disabled>
-                    Sexo
+                    {dic.inscricao.sexo}
                   </option>
-                  <option value="masculino">Masculino</option>
-                  <option value="feminino">Feminino</option>
+                  <option value="masculino">{dic.inscricao.masculino}</option>
+                  <option value="feminino">{dic.inscricao.feminino}</option>
                 </NativeSelect>
                 <NativeSelect name="faixa" required defaultValue="">
                   <option value="" disabled>
-                    Faixa
+                    {dic.inscricao.faixa}
                   </option>
                   {FAIXAS.map((f) => (
                     <option key={f} value={f}>
-                      {f}
+                      {dic.evento.faixaNomes[
+                        f as keyof typeof dic.evento.faixaNomes
+                      ] ?? f}
                     </option>
                   ))}
                 </NativeSelect>
@@ -231,7 +246,7 @@ export default async function PaginaInscricoes({
               </div>
               <NativeSelect name="categoriaId" required defaultValue="">
                 <option value="" disabled>
-                  Categoria
+                  {dic.inscricao.categoria}
                 </option>
                 {abertas.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -239,7 +254,7 @@ export default async function PaginaInscricoes({
                   </option>
                 ))}
               </NativeSelect>
-              <BotaoAcao>Inscrever manualmente</BotaoAcao>
+              <BotaoAcao>{t.inscreverManualmente}</BotaoAcao>
             </form>
           </CardContent>
         </Card>

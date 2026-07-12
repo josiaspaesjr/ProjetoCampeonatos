@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, eventos } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
+import { getDicionario } from "@/lib/i18n/server";
 import { CLASSES_IDADE, FAIXAS } from "@/lib/categorias/cbjj";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 import { GRUPOS_PRECO_PRESETS } from "@/lib/lotes/preco";
@@ -16,11 +17,6 @@ import {
 } from "../../actions";
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
-const ROTULO_SEXO: Record<string, string> = {
-  masculino: "Masculino",
-  feminino: "Feminino",
-};
 
 // ordens canônicas do gerador (classe → sexo → faixa → peso)
 const ORDEM_CLASSE = new Map(CLASSES_IDADE.map((c, i) => [c.id, i]));
@@ -66,6 +62,12 @@ export default async function CategoriasEvento({
   const { erro } = await searchParams;
   const db = await getDb();
   const usuario = await getUsuarioAtual();
+  const dic = await getDicionario();
+  const tc = dic.admin.categorias;
+  const rotuloSexo: Record<string, string> = {
+    masculino: dic.inscricao.masculino,
+    feminino: dic.inscricao.feminino,
+  };
 
   const evento = await db.query.eventos.findFirst({
     where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
@@ -107,18 +109,21 @@ export default async function CategoriasEvento({
       {/* GRADE GERADA */}
       <div>
         <div className="mb-3.5 flex items-baseline gap-2.5">
-          <span className="disp text-[22px]">Grade gerada</span>
+          <span className="disp text-[22px]">{tc.gradeGerada}</span>
           {cats.length > 0 && (
             <span className="font-cond text-[13px] uppercase tracking-[0.06em] text-muted-3">
-              {cats.length} categoria{cats.length === 1 ? "" : "s"}
+              {cats.length} {cats.length === 1 ? tc.categoria : tc.categorias}
             </span>
           )}
         </div>
 
         {cats.length === 0 ? (
           <div className="border border-white/10 bg-surface px-[22px] py-12 text-center font-cond text-[15px] uppercase text-muted-3">
-            Monte a grade acima e clique em{" "}
-            <strong className="text-muted-2">Gerar categorias</strong>.
+            {tc.montePre}{" "}
+            <strong className="text-muted-2">
+              {dic.admin.gerador.gerarPre} {tc.categorias}
+            </strong>
+            .
           </div>
         ) : (
           <div className="flex flex-col gap-3">
@@ -139,12 +144,13 @@ export default async function CategoriasEvento({
                 >
                   <header className="flex flex-wrap items-center gap-x-2.5 gap-y-2 border-b border-white/10 bg-white/[0.03] px-4 py-2.5">
                     <span className="font-cond text-[15px] font-semibold uppercase tracking-[0.04em]">
-                      {classe?.nome ?? classeId} · {ROTULO_SEXO[sexo] ?? sexo}
+                      {dic.classesIdade[classeId] ?? classe?.nome ?? classeId} ·{" "}
+                      {rotuloSexo[sexo] ?? sexo}
                     </span>
                     {classe && (
                       <span className="font-cond text-xs text-muted-3">
                         {classe.idadeMin}
-                        {classe.idadeMax ? `–${classe.idadeMax}` : "+"} anos
+                        {classe.idadeMax ? `–${classe.idadeMax}` : "+"} {tc.anos}
                       </span>
                     )}
                     <div className="ml-auto flex items-center gap-2.5">
@@ -174,7 +180,11 @@ export default async function CategoriasEvento({
                             className="h-2.5 w-2.5 shrink-0 -skew-x-9 border border-white/25"
                             style={{ background: corDaFaixa(fg.chave || null) }}
                           />
-                          {fg.chave ? cap(fg.chave) : "—"}
+                          {fg.chave
+                            ? (dic.evento.faixaNomes[
+                                fg.chave as keyof typeof dic.evento.faixaNomes
+                              ] ?? cap(fg.chave))
+                            : "—"}
                         </span>
                         <div className="flex flex-1 flex-wrap gap-1.5">
                           {fg.itens.map((c) => (
@@ -189,17 +199,17 @@ export default async function CategoriasEvento({
                                   evento.id,
                                   c.id,
                                 )}
-                                titulo="Excluir categoria?"
+                                titulo={tc.excluirCat.titulo}
                                 descricao={
                                   <>
-                                    A categoria{" "}
+                                    {tc.excluirCat.descPre}{" "}
                                     <b className="text-foreground">{c.nome}</b>{" "}
-                                    será removida do evento.
+                                    {tc.excluirCat.descPos}
                                   </>
                                 }
-                                confirmarRotulo="Excluir categoria"
+                                confirmarRotulo={tc.excluirCat.confirmar}
                                 rotulo="×"
-                                title="Excluir categoria"
+                                title={tc.excluirCat.confirmar}
                                 className="flex h-4 w-4 cursor-pointer items-center justify-center text-sm leading-none text-muted-3 transition-colors hover:text-brand"
                               />
                             </span>
