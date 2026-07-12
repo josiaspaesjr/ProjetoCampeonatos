@@ -147,6 +147,9 @@ export default async function VisaoGeralEvento({
     MODALIDADE_ROTULO[evento.modalidade] ?? "Gi + No-Gi",
     evento.numAreas ? `${evento.numAreas} áreas` : null,
     evento.dataPesagem ? `Pesagem ${diaMes(evento.dataPesagem)}` : null,
+    evento.dataGeracaoChaves
+      ? `Chaves ${diaMes(evento.dataGeracaoChaves)}`
+      : null,
   ].filter(Boolean) as string[];
 
   return (

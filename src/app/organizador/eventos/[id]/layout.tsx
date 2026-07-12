@@ -112,6 +112,7 @@ export default async function LayoutConsoleEvento({
     bannerUrl: evento.bannerUrl ?? "",
     modalidade: evento.modalidade,
     dataPesagem: evento.dataPesagem ?? "",
+    dataGeracaoChaves: evento.dataGeracaoChaves ?? "",
     descricao: evento.descricao ?? "",
     regulamento: evento.regulamento ?? {},
   };

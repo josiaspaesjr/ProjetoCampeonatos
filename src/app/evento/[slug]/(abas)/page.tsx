@@ -124,6 +124,9 @@ export default async function AbaInformacoes({
             : "—",
     },
     { k: "Faixas", v: faixas },
+    ...(evento.dataGeracaoChaves
+      ? [{ k: "Chaves", v: diaMes(evento.dataGeracaoChaves) }]
+      : []),
     evento.dataPesagem
       ? { k: "Pesagem", v: diaMes(evento.dataPesagem), destaque: true }
       : { k: "Data", v: diaMes(evento.dataInicio), destaque: true },

@@ -170,6 +170,20 @@ export default function NovoEvento() {
             </label>
             <Input id="ev-pesagem" name="dataPesagem" type="date" className="h-12" />
           </div>
+          <div className="flex flex-col gap-[9px]">
+            <label className={labelCls} htmlFor="ev-geracao-chaves">
+              Data de geração das chaves
+            </label>
+            <Input
+              id="ev-geracao-chaves"
+              name="dataGeracaoChaves"
+              type="date"
+              className="h-12"
+            />
+            <p className="text-[13px] font-medium text-muted-3">
+              Data prevista para montar as chaves — apenas informativo.
+            </p>
+          </div>
         </div>
 
         {/* REGULAMENTO */}

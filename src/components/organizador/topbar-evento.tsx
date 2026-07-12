@@ -27,6 +27,7 @@ export interface EventoEditavel {
   bannerUrl: string;
   modalidade: string;
   dataPesagem: string;
+  dataGeracaoChaves: string;
   descricao: string;
   regulamento: Record<string, string>;
 }
@@ -236,6 +237,17 @@ export function TopbarEvento({
                     type="date"
                     defaultValue={evento.dataPesagem}
                   />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className={labelCls}>Data de geração das chaves</label>
+                  <Input
+                    name="dataGeracaoChaves"
+                    type="date"
+                    defaultValue={evento.dataGeracaoChaves}
+                  />
+                  <p className="text-xs font-medium text-muted-3">
+                    Prevista — apenas informativo.
+                  </p>
                 </div>
                 <div className="flex flex-col gap-2">
                   <label className={labelCls}>Descrição</label>

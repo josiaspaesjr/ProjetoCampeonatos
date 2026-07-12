@@ -28,6 +28,7 @@ import {
   type SelecaoGrade,
   type Sexo,
 } from "@/lib/categorias/cbjj";
+import { publicarEventoCore } from "@/lib/eventos/publicacao";
 import { lerRegulamentoDoForm } from "@/lib/regulamento";
 import { GRUPOS_PRECO_PRESETS, type LoteVariacao } from "@/lib/lotes/preco";
 import { diaLocalYmd, loteConflitante, ymdParaBR } from "@/lib/lotes/vigencia";
@@ -123,6 +124,8 @@ export async function criarEvento(formData: FormData) {
         : "gi_nogi") as "gi_nogi" | "gi" | "nogi",
       // nº de áreas e faixas vêm de outras partes (Áreas e grade de categorias)
       dataPesagem: String(formData.get("dataPesagem") ?? "") || null,
+      dataGeracaoChaves:
+        String(formData.get("dataGeracaoChaves") ?? "") || null,
       moeda: String(formData.get("moeda") ?? "BRL"),
       inscricoesFecham,
       regulamento: lerRegulamentoDoForm(formData),
@@ -262,6 +265,8 @@ export async function editarEvento(eventoId: string, formData: FormData) {
       // numAreas e faixas não são editados aqui — vivem na seção Áreas e na
       // grade de categorias
       dataPesagem: String(formData.get("dataPesagem") ?? "") || null,
+      dataGeracaoChaves:
+        String(formData.get("dataGeracaoChaves") ?? "") || null,
       moeda: String(formData.get("moeda") ?? "BRL"),
       inscricoesFecham,
       regulamento: lerRegulamentoDoForm(formData),
@@ -621,28 +626,16 @@ export async function lancarResultado(
 }
 
 export async function publicarEvento(eventoId: string) {
-  const { db, evento } = await eventoDoOrganizador(eventoId);
-  if (evento.status !== "rascunho") erroVisivel(eventoId, "Evento já publicado");
-
-  const cats = await db.query.categorias.findMany({
-    where: eq(categorias.eventoId, eventoId),
-  });
-  const lts = await db.query.lotes.findMany({
-    where: eq(lotes.eventoId, eventoId),
-  });
-  if (!cats.length) {
+  const { db } = await eventoDoOrganizador(eventoId);
+  // publica com o mínimo (categoria + lote); atletas/lutas/chaves/áreas ficam
+  // para depois — a regra de requisitos vive em publicarEventoCore (testada).
+  try {
+    await publicarEventoCore(db, eventoId);
+  } catch (e) {
     erroVisivel(
       eventoId,
-      "Para publicar, gere ao menos 1 categoria (use o Gerador de grade CBJJ abaixo).",
+      e instanceof Error ? e.message : "Não foi possível publicar o evento",
     );
   }
-  if (!lts.length) {
-    erroVisivel(eventoId, "Para publicar, crie ao menos 1 lote de inscrição.");
-  }
-
-  await db
-    .update(eventos)
-    .set({ status: "publicado" })
-    .where(eq(eventos.id, eventoId));
   revalidatePath(`/organizador/eventos/${eventoId}`);
 }

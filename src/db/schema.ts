@@ -145,6 +145,9 @@ export const eventos = pgTable("eventos", {
   // nº de áreas planejado no cadastro; as áreas reais vivem na tabela `areas`
   numAreas: integer("num_areas"),
   dataPesagem: date("data_pesagem"),
+  // data prevista para gerar as chaves — informativa (planejamento); não
+  // dispara geração automática
+  dataGeracaoChaves: date("data_geracao_chaves"),
   // recorte de faixas aceito nas inscrições (ordem do faixaEnum)
   faixaMin: faixaEnum("faixa_min"),
   faixaMax: faixaEnum("faixa_max"),
