@@ -9,6 +9,8 @@ import { AvisoPendencias } from "@/components/aviso-pendencias";
 import { Logo, SkewTexto } from "@/components/marca";
 import { AbasEvento } from "@/components/evento/abas-evento";
 import { dataCompleta } from "@/lib/datas";
+import { getDicionario } from "@/lib/i18n/server";
+import { SeletorIdioma } from "@/lib/i18n/client";
 
 export default async function LayoutEvento({
   children,
@@ -24,6 +26,7 @@ export default async function LayoutEvento({
   const { evento, loteVigente, inscricoesAbertas } = dados;
   const contadores = await getContadoresEvento(evento.id);
   const status = statusDoEvento(evento.status, inscricoesAbertas);
+  const dic = await getDicionario();
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
@@ -35,14 +38,15 @@ export default async function LayoutEvento({
             href="/eventos"
             className="max-sm:hidden transition-colors hover:text-brand"
           >
-            ← Todos os eventos
+            ← {dic.evento.todosEventos}
           </Link>
+          <SeletorIdioma />
           {inscricoesAbertas && (
             <Link
               href={`/evento/${evento.slug}/inscricao`}
               className="-skew-x-9 bg-brand px-[22px] py-2.5 text-white"
             >
-              <SkewTexto>Inscrever-se</SkewTexto>
+              <SkewTexto>{dic.evento.inscrever}</SkewTexto>
             </Link>
           )}
         </div>
@@ -70,7 +74,7 @@ export default async function LayoutEvento({
                 {status.vivo && (
                   <span className="h-[7px] w-[7px] rounded-full bg-white animate-pulse-dot" />
                 )}
-                {status.rotulo}
+                {dic.evento.status[status.chave]}
               </SkewTexto>
             </span>
             {evento.circuito ? (
@@ -122,7 +126,7 @@ export default async function LayoutEvento({
           BJJ<span className="text-brand">ARENA</span>
         </span>
         <span className="font-cond text-sm uppercase tracking-[0.08em] text-muted-3">
-          © {new Date().getFullYear()} · Sistema de competições de jiu-jitsu
+          © {new Date().getFullYear()} · {dic.rodape}
         </span>
       </footer>
     </div>

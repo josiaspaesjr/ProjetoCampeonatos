@@ -8,12 +8,7 @@ import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 import { dataHora, diaMes } from "@/lib/datas";
 import { secoesPreenchidas } from "@/lib/regulamento";
 import { getEventoPublico, statusDoEvento } from "@/lib/evento-publico";
-
-const MODALIDADE_ROTULO: Record<string, string> = {
-  gi_nogi: "Gi + No-Gi",
-  gi: "Gi",
-  nogi: "No-Gi",
-};
+import { getDicionario } from "@/lib/i18n/server";
 
 // ordem CBJJ das faixas, para exibir os swatches de cor "utilizados" no evento
 const ORDEM_FAIXAS = [
@@ -45,8 +40,6 @@ function faixasPresentes(
   return ORDEM_FAIXAS.filter((f) => set.has(f));
 }
 
-const capFaixa = (f: string) => f.charAt(0).toUpperCase() + f.slice(1);
-
 // valor "de destaque" (fonte display) — para dados curtos e numéricos
 const fatoBig = (s: string, destaque = false) => (
   <span
@@ -71,6 +64,8 @@ export default async function AbaInformacoes({
   const dados = await getEventoPublico(slug);
   if (!dados) notFound();
   const { evento, loteVigente, inscricoesAbertas } = dados;
+  const dic = await getDicionario();
+  const de = dic.evento;
 
   const db = await getDb();
   const [cats, confirmadas, areasDoEvento] = await Promise.all([
@@ -116,30 +111,35 @@ export default async function AbaInformacoes({
 
   const local = [evento.cidade, evento.uf].filter(Boolean).join(" · ");
 
+  const nomeFaixa = de.faixaNomes as Record<string, string>;
+  const modalidades = de.modalidades as Record<string, string>;
+  const pagamentoRotulo =
+    evento.moeda === "BRL" ? de.pagamento.pix : de.pagamento.cartao;
+
   // "ficha técnica": todos os campos do cadastro do evento que têm valor
   const fatos: { k: string; node: ReactNode }[] = [
     {
-      k: "Modalidade",
-      node: fatoBig(MODALIDADE_ROTULO[evento.modalidade] ?? "Gi + No-Gi"),
+      k: de.fatos.modalidade,
+      node: fatoBig(modalidades[evento.modalidade] ?? de.modalidades.gi_nogi),
     },
-    { k: "Data", node: fatoBig(diaMes(evento.dataInicio), true) },
-    ...(local ? [{ k: "Local", node: fatoTexto(local) }] : []),
+    { k: de.fatos.data, node: fatoBig(diaMes(evento.dataInicio), true) },
+    ...(local ? [{ k: de.fatos.local, node: fatoTexto(local) }] : []),
     ...(evento.endereco
-      ? [{ k: "Ginásio", node: fatoTexto(evento.endereco) }]
+      ? [{ k: de.fatos.ginasio, node: fatoTexto(evento.endereco) }]
       : []),
     ...(evento.circuito
-      ? [{ k: "Circuito", node: fatoTexto(evento.circuito) }]
+      ? [{ k: de.fatos.circuito, node: fatoTexto(evento.circuito) }]
       : []),
     ...(faixas.length
       ? [
           {
-            k: "Faixas",
+            k: de.fatos.faixas,
             node: (
               <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
                 {faixas.map((f) => (
                   <span
                     key={f}
-                    title={capFaixa(f)}
+                    title={nomeFaixa[f] ?? f}
                     className="h-6 w-6 shrink-0 -skew-x-9 border border-white/25 md:h-7 md:w-7"
                     style={{ background: corDaFaixa(f) }}
                   />
@@ -150,25 +150,25 @@ export default async function AbaInformacoes({
         ]
       : []),
     ...(areasCount > 0
-      ? [{ k: "Áreas", node: fatoBig(String(areasCount)) }]
+      ? [{ k: de.fatos.areas, node: fatoBig(String(areasCount)) }]
       : []),
     ...(evento.inscricoesFecham
       ? [
           {
-            k: "Inscrições até",
+            k: de.fatos.inscricoesAte,
             node: fatoTexto(dataHora(evento.inscricoesFecham)),
           },
         ]
       : []),
     ...(evento.dataPesagem
-      ? [{ k: "Pesagem", node: fatoBig(diaMes(evento.dataPesagem), true) }]
+      ? [{ k: de.fatos.pesagem, node: fatoBig(diaMes(evento.dataPesagem), true) }]
       : []),
     ...(evento.dataGeracaoChaves
-      ? [{ k: "Chaves", node: fatoBig(diaMes(evento.dataGeracaoChaves)) }]
+      ? [{ k: de.fatos.chaves, node: fatoBig(diaMes(evento.dataGeracaoChaves)) }]
       : []),
     {
-      k: "Pagamento",
-      node: fatoTexto(evento.moeda === "BRL" ? "Pix" : evento.moeda),
+      k: de.fatos.pagamento,
+      node: fatoTexto(pagamentoRotulo),
     },
   ];
 
@@ -183,7 +183,7 @@ export default async function AbaInformacoes({
         {/* FICHA TÉCNICA — todos os campos do cadastro, acima do "Sobre" */}
         <section>
           <div className="mb-3 font-cond text-[15px] font-semibold uppercase tracking-[0.14em] text-brand">
-            Ficha técnica
+            {de.fichaTecnica}
           </div>
           <div className="grid grid-cols-2 gap-px border border-white/10 bg-white/10 md:grid-cols-4">
             {cells.map((f, i) =>
@@ -209,7 +209,7 @@ export default async function AbaInformacoes({
         {/* SOBRE — descrição + conteúdo opcional (regulamento) numa só seção */}
         <section>
           <div className="mb-3 font-cond text-[15px] font-semibold uppercase tracking-[0.14em] text-brand">
-            Sobre o evento
+            {de.sobre}
           </div>
           {evento.descricao ? (
             <p className="max-w-[680px] whitespace-pre-line text-lg font-medium leading-relaxed text-text-2">
@@ -217,8 +217,7 @@ export default async function AbaInformacoes({
             </p>
           ) : (
             <p className="max-w-[680px] text-lg font-medium leading-relaxed text-muted-2">
-              Campeonato de jiu-jitsu com inscrições, chaveamento e placar
-              digital pela BJJArena.
+              {de.sobreFallback}
             </p>
           )}
 
@@ -258,38 +257,38 @@ export default async function AbaInformacoes({
           {inscricoesAbertas && loteVigente ? (
             <>
               <div className="mb-0.5 font-cond text-[13px] uppercase tracking-[0.1em] text-muted-2">
-                Inscrição · {loteVigente.nome}
+                {de.sidebar.inscricao} · {loteVigente.nome}
               </div>
               <div className="mb-5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
                 <span className="disp text-[52px] leading-none text-brand md:text-[68px]">
                   {fmt.format(loteVigente.precoCentavos / 100)}
                 </span>
                 <span className="font-cond text-sm uppercase text-muted-2">
-                  por categoria
+                  {de.sidebar.porCategoria}
                 </span>
               </div>
               <Link
                 href={`/evento/${evento.slug}/inscricao`}
                 className="mb-2.5 block bg-brand py-[15px] text-center font-cond text-[19px] font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]"
               >
-                Inscrever-se →
+                {de.inscrever} →
               </Link>
             </>
           ) : (
             <div className="mb-2.5 border border-white/14 p-4 text-center font-cond text-sm font-semibold uppercase tracking-[0.1em] text-muted-2">
-              {status.rotulo}
+              {de.status[status.chave]}
             </div>
           )}
           <Link
             href={`/evento/${evento.slug}/cronograma`}
             className="block border border-white/16 py-3 text-center font-cond text-[15px] font-semibold uppercase tracking-[0.05em] text-foreground transition-colors hover:border-white/30"
           >
-            Cronograma ao vivo
+            {de.cronogramaAoVivo}
           </Link>
           <div className="mt-[22px] flex flex-col gap-3 border-t border-white/8 pt-5">
             {evento.inscricoesFecham && (
               <div className="flex items-center justify-between font-cond text-sm uppercase tracking-[0.04em]">
-                <span className="text-muted-2">Inscrições fecham</span>
+                <span className="text-muted-2">{de.sidebar.inscricoesFecham}</span>
                 <span className="text-brand-soft">
                   {dataHora(evento.inscricoesFecham)}
                 </span>
@@ -297,17 +296,15 @@ export default async function AbaInformacoes({
             )}
             {loteVigente?.precoSegundaInscricaoCentavos != null && (
               <div className="flex items-center justify-between font-cond text-sm uppercase tracking-[0.04em]">
-                <span className="text-muted-2">Segunda categoria</span>
+                <span className="text-muted-2">{de.sidebar.segundaCategoria}</span>
                 <span className="text-text-2">
                   + {fmt.format(loteVigente.precoSegundaInscricaoCentavos / 100)}
                 </span>
               </div>
             )}
             <div className="flex items-center justify-between font-cond text-sm uppercase tracking-[0.04em]">
-              <span className="text-muted-2">Pagamento</span>
-              <span className="text-text-2">
-                {evento.moeda === "BRL" ? "Pix" : "Cartão"}
-              </span>
+              <span className="text-muted-2">{de.sidebar.pagamento}</span>
+              <span className="text-text-2">{pagamentoRotulo}</span>
             </div>
           </div>
         </div>
@@ -315,9 +312,12 @@ export default async function AbaInformacoes({
         {/* EQUIPES */}
         <div className="border border-white/10 bg-surface p-6">
           <div className="mb-3.5 flex items-baseline gap-2.5">
-            <span className="disp text-[30px]">Equipes</span>
+            <span className="disp text-[30px]">{de.sidebar.equipes}</span>
             <span className="font-cond text-[13px] uppercase text-muted-2">
-              {porAcademia.size} confirmada{porAcademia.size === 1 ? "" : "s"}
+              {porAcademia.size}{" "}
+              {porAcademia.size === 1
+                ? de.sidebar.confirmada
+                : de.sidebar.confirmadas}
             </span>
           </div>
           <div className="flex flex-col">
@@ -334,7 +334,7 @@ export default async function AbaInformacoes({
             ))}
             {equipes.length === 0 && (
               <div className="border-t border-white/6 py-3 font-cond text-sm text-muted-3">
-                Seja o primeiro a se inscrever!
+                {de.sidebar.sejaPrimeiro}
               </div>
             )}
           </div>

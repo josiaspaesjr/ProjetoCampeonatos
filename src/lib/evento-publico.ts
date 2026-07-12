@@ -39,16 +39,24 @@ export const getEventoPublico = cache(async (slug: string) => {
   return { evento, loteVigente, inscricoesAbertas };
 });
 
-/** Selo de status exibido no hero (rótulo + se pulsa o ponto "ao vivo"). */
+export type StatusEventoChave =
+  | "aoVivo"
+  | "inscricoesAbertas"
+  | "finalizado"
+  | "encerradas";
+
+/**
+ * Selo de status exibido no hero: retorna a CHAVE (traduzida na UI via
+ * `dic.evento.status[chave]`) e se pulsa o ponto "ao vivo".
+ */
 export function statusDoEvento(
   status: string,
   inscricoesAbertas: boolean,
-): { rotulo: string; vivo: boolean } {
-  if (status === "em_andamento") return { rotulo: "Ao vivo agora", vivo: true };
-  if (inscricoesAbertas) return { rotulo: "Inscrições abertas", vivo: true };
-  if (status === "finalizado")
-    return { rotulo: "Evento finalizado", vivo: false };
-  return { rotulo: "Inscrições encerradas", vivo: false };
+): { chave: StatusEventoChave; vivo: boolean } {
+  if (status === "em_andamento") return { chave: "aoVivo", vivo: true };
+  if (inscricoesAbertas) return { chave: "inscricoesAbertas", vivo: true };
+  if (status === "finalizado") return { chave: "finalizado", vivo: false };
+  return { chave: "encerradas", vivo: false };
 }
 
 /** Contadores exibidos nas abas (Atletas = confirmados, Chaves = publicadas). */

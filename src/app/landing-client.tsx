@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 import { Logo, SkewTexto } from "@/components/marca";
+import { useIdioma } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 import type { RankingGeral } from "@/lib/ranking";
 
@@ -34,7 +35,6 @@ export interface StatLanding {
 /* ------------------------------------------------------------------------ */
 
 type Lang = "pt" | "en" | "es";
-const LANG_KEY = "bjjarena_lang";
 
 const DICT = {
   pt: {
@@ -246,27 +246,6 @@ const LANGS: { code: string; id: Lang }[] = [
   { code: "ES", id: "es" },
 ];
 
-const EVENTO_LANG = "bjjarena:lang";
-
-function assinarLang(onChange: () => void) {
-  window.addEventListener(EVENTO_LANG, onChange);
-  window.addEventListener("storage", onChange);
-  return () => {
-    window.removeEventListener(EVENTO_LANG, onChange);
-    window.removeEventListener("storage", onChange);
-  };
-}
-
-function lerLangSalva(): Lang {
-  try {
-    const salvo = localStorage.getItem(LANG_KEY);
-    if (salvo && salvo in DICT) return salvo as Lang;
-  } catch {
-    /* storage indisponível */
-  }
-  return "pt";
-}
-
 /* ------------------------------------------------------------------------ */
 /* Página                                                                    */
 /* ------------------------------------------------------------------------ */
@@ -280,23 +259,9 @@ export function LandingClient({
   ranking: RankingGeral;
   bracket: BracketVivo;
 }) {
-  // idioma persistido em localStorage; useSyncExternalStore evita mismatch
-  // de hidratação (o servidor sempre renderiza pt)
-  const lang = useSyncExternalStore(
-    assinarLang,
-    lerLangSalva,
-    () => "pt" as Lang,
-  );
+  // idioma global (cookie + provider) — trocar reflete em todo o sistema
+  const { locale: lang, trocar: trocarLang } = useIdioma();
   const [abaRanking, setAbaRanking] = useState<keyof RankingGeral>("adulto");
-
-  const trocarLang = (l: Lang) => {
-    try {
-      localStorage.setItem(LANG_KEY, l);
-    } catch {
-      /* storage indisponível */
-    }
-    window.dispatchEvent(new Event(EVENTO_LANG));
-  };
 
   const t: Dict = DICT[lang];
   const linhasRanking = ranking[abaRanking].slice(0, 5);

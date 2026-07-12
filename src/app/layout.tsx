@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Barlow, Barlow_Condensed, Teko } from "next/font/google";
+import { IdiomaProvider } from "@/lib/i18n/client";
+import { getLocale } from "@/lib/i18n/server";
 import "./globals.css";
 
 const barlow = Barlow({
@@ -29,18 +31,21 @@ export const metadata: Metadata = {
     "Inscrições com Pix, chaves automáticas, cronograma ao vivo e placar digital para campeonatos de Jiu-Jitsu.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
   return (
     <html
-      lang="pt-BR"
+      lang={locale}
       data-scroll-behavior="smooth"
       className={`${barlow.variable} ${barlowCondensed.variable} ${teko.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <IdiomaProvider locale={locale}>{children}</IdiomaProvider>
+      </body>
     </html>
   );
 }

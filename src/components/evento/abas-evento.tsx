@@ -3,22 +3,26 @@
 import Link from "next/link";
 import { useSelectedLayoutSegment } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useDic } from "@/lib/i18n/client";
+import type { Dicionario } from "@/lib/i18n/dicionarios";
+
+type ChaveAba = keyof Dicionario["evento"]["abas"];
 
 interface Aba {
   /** segmento uma camada abaixo do layout `(abas)`; null = página inicial */
   seg: string | null;
-  rotulo: string;
+  chave: ChaveAba;
   href: string;
 }
 
 const ABAS: Aba[] = [
-  { seg: null, rotulo: "Informações", href: "" },
-  { seg: "categorias", rotulo: "Categorias", href: "/categorias" },
-  { seg: "atletas", rotulo: "Atletas", href: "/atletas" },
-  { seg: "chaves", rotulo: "Chaves", href: "/chaves" },
-  { seg: "lutas", rotulo: "Lutas", href: "/lutas" },
-  { seg: "cronograma", rotulo: "Cronograma", href: "/cronograma" },
-  { seg: "resultados", rotulo: "Resultados", href: "/resultados" },
+  { seg: null, chave: "informacoes", href: "" },
+  { seg: "categorias", chave: "categorias", href: "/categorias" },
+  { seg: "atletas", chave: "atletas", href: "/atletas" },
+  { seg: "chaves", chave: "chaves", href: "/chaves" },
+  { seg: "lutas", chave: "lutas", href: "/lutas" },
+  { seg: "cronograma", chave: "cronograma", href: "/cronograma" },
+  { seg: "resultados", chave: "resultados", href: "/resultados" },
 ];
 
 export function AbasEvento({
@@ -29,6 +33,7 @@ export function AbasEvento({
   contadores: Partial<Record<string, number>>;
 }) {
   const segmentoAtivo = useSelectedLayoutSegment();
+  const dic = useDic();
 
   return (
     <nav className="sticky top-16 z-40 border-b border-white/8 bg-ink/90 backdrop-blur-xl">
@@ -38,7 +43,7 @@ export function AbasEvento({
           const contador = aba.seg ? contadores[aba.seg] : undefined;
           return (
             <Link
-              key={aba.rotulo}
+              key={aba.chave}
               href={`/evento/${slug}${aba.href}`}
               className={cn(
                 "relative shrink-0 px-4 py-4 font-cond text-[15px] font-semibold uppercase tracking-[0.06em] transition-colors",
@@ -48,7 +53,7 @@ export function AbasEvento({
               )}
             >
               <span className="flex items-center gap-1.5">
-                {aba.rotulo}
+                {dic.evento.abas[aba.chave]}
                 {contador != null && contador > 0 && (
                   <span
                     className={cn(

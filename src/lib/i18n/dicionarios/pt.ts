@@ -1,0 +1,78 @@
+/** Dicionário base (pt-BR). en.ts e es.ts seguem exatamente esta forma. */
+export const pt = {
+  rodape: "Sistema de competições de jiu-jitsu",
+  nav: {
+    eventos: "Eventos",
+    minhasInscricoes: "Minhas inscrições",
+    minhaArea: "Minha área",
+    sair: "sair",
+    entrar: "Entrar",
+  },
+  evento: {
+    todosEventos: "Todos os eventos",
+    inscrever: "Inscrever-se",
+    cronogramaAoVivo: "Cronograma ao vivo",
+    status: {
+      aoVivo: "Ao vivo agora",
+      inscricoesAbertas: "Inscrições abertas",
+      finalizado: "Evento finalizado",
+      encerradas: "Inscrições encerradas",
+    },
+    abas: {
+      informacoes: "Informações",
+      categorias: "Categorias",
+      atletas: "Atletas",
+      chaves: "Chaves",
+      lutas: "Lutas",
+      cronograma: "Cronograma",
+      resultados: "Resultados",
+    },
+    fichaTecnica: "Ficha técnica",
+    fatos: {
+      modalidade: "Modalidade",
+      data: "Data",
+      local: "Local",
+      ginasio: "Ginásio",
+      circuito: "Circuito",
+      faixas: "Faixas",
+      areas: "Áreas",
+      inscricoesAte: "Inscrições até",
+      pesagem: "Pesagem",
+      chaves: "Chaves",
+      pagamento: "Pagamento",
+    },
+    modalidades: {
+      gi_nogi: "Gi + No-Gi",
+      gi: "Gi",
+      nogi: "No-Gi",
+    },
+    pagamento: { pix: "Pix", cartao: "Cartão" },
+    sobre: "Sobre o evento",
+    sobreFallback:
+      "Campeonato de jiu-jitsu com inscrições, chaveamento e placar digital pela BJJArena.",
+    sidebar: {
+      inscricao: "Inscrição",
+      porCategoria: "por categoria",
+      inscricoesFecham: "Inscrições fecham",
+      segundaCategoria: "Segunda categoria",
+      pagamento: "Pagamento",
+      equipes: "Equipes",
+      confirmada: "confirmada",
+      confirmadas: "confirmadas",
+      sejaPrimeiro: "Seja o primeiro a se inscrever!",
+    },
+    faixaNomes: {
+      branca: "Branca",
+      cinza: "Cinza",
+      amarela: "Amarela",
+      laranja: "Laranja",
+      verde: "Verde",
+      azul: "Azul",
+      roxa: "Roxa",
+      marrom: "Marrom",
+      preta: "Preta",
+    },
+  },
+};
+
+export type Dicionario = typeof pt;
