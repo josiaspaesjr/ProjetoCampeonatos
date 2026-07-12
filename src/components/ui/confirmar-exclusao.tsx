@@ -10,6 +10,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { Spinner } from "@/components/ui/botao-acao";
+import { useDic } from "@/lib/i18n/client";
 
 /**
  * Gatilho + modal de confirmação para ações destrutivas (excluir/apagar).
@@ -25,7 +26,7 @@ export function ConfirmarExclusao({
   acao,
   titulo,
   descricao,
-  confirmarRotulo = "Excluir",
+  confirmarRotulo,
   rotulo,
   className,
   title,
@@ -38,6 +39,7 @@ export function ConfirmarExclusao({
   className?: string;
   title?: string;
 }) {
+  const c = useDic().admin.comum;
   const [aberto, setAberto] = useState(false);
   const [enviando, iniciar] = useTransition();
   const enviandoRef = useRef(false);
@@ -127,7 +129,7 @@ export function ConfirmarExclusao({
                     disabled={enviando}
                     className="inline-flex h-10 flex-1 cursor-pointer items-center justify-center border border-white/16 px-4 font-cond text-sm font-semibold uppercase tracking-[0.04em] text-text-2 transition-colors hover:border-white/35 hover:text-foreground disabled:opacity-50"
                   >
-                    Cancelar
+                    {c.cancelar}
                   </button>
                   <button
                     type="button"
@@ -137,7 +139,7 @@ export function ConfirmarExclusao({
                     className="inline-flex h-10 flex-1 cursor-pointer items-center justify-center gap-2 bg-brand px-4 font-cond text-sm font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d] disabled:cursor-wait disabled:opacity-70"
                   >
                     {enviando && <Spinner className="h-3.5 w-3.5" />}
-                    {enviando ? "Excluindo…" : confirmarRotulo}
+                    {enviando ? c.excluindo : (confirmarRotulo ?? c.excluir)}
                   </button>
                 </div>
               </div>

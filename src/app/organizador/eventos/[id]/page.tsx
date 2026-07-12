@@ -6,21 +6,16 @@ import { categorias, chaves, eventos, inscricoes, lotes, pagamentos } from "@/db
 import { BotaoAcao } from "@/components/ui/botao-acao";
 import { ExcluirEvento } from "@/components/organizador/excluir-evento";
 import { getUsuarioAtual } from "@/lib/auth";
+import { getDicionario } from "@/lib/i18n/server";
 import { dataCurta, diaMes } from "@/lib/datas";
 import { cn } from "@/lib/utils";
 import { encerrarInscricoes, excluirEvento, publicarEvento } from "../actions";
 
-const MODALIDADE_ROTULO: Record<string, string> = {
-  gi_nogi: "Gi + No-Gi",
-  gi: "Gi",
-  nogi: "No-Gi",
-};
-
-const STATUS_INSCRICAO: Record<string, { rotulo: string; cor: string }> = {
-  confirmada: { rotulo: "Confirmada", cor: "text-success" },
-  pendente_pagamento: { rotulo: "Pendente Pix", cor: "text-brand-soft" },
-  cancelada: { rotulo: "Cancelada", cor: "text-muted-3" },
-  reembolsada: { rotulo: "Reembolsada", cor: "text-muted-3" },
+const COR_STATUS_INSCRICAO: Record<string, string> = {
+  confirmada: "text-success",
+  pendente_pagamento: "text-brand-soft",
+  cancelada: "text-muted-3",
+  reembolsada: "text-muted-3",
 };
 
 export default async function VisaoGeralEvento({
@@ -34,6 +29,8 @@ export default async function VisaoGeralEvento({
   const { erro } = await searchParams;
   const db = await getDb();
   const usuario = await getUsuarioAtual();
+  const dic = await getDicionario();
+  const da = dic.admin.overview;
 
   const evento = await db.query.eventos.findFirst({
     where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
@@ -79,33 +76,35 @@ export default async function VisaoGeralEvento({
 
   const checklist = [
     {
-      rotulo: "Evento publicado",
+      rotulo: da.eventoPublicado,
       feito: evento.status !== "rascunho",
-      dica: evento.status === "rascunho" ? "pendente" : "ao vivo",
+      dica: evento.status === "rascunho" ? da.pendente : da.aoVivo,
       href: base,
     },
     {
-      rotulo: "Lotes de preço",
+      rotulo: da.lotesPreco,
       feito: lts.length > 0,
-      dica: `${lts.length} lote${lts.length === 1 ? "" : "s"}`,
+      dica: `${lts.length} ${lts.length === 1 ? da.lote : da.lotes}`,
       href: `${base}/lotes`,
     },
     {
-      rotulo: "Grade de categorias",
+      rotulo: da.gradeCategorias,
       feito: cats.length > 0,
       dica: String(cats.length),
       href: `${base}/categorias`,
     },
     {
-      rotulo: "Áreas definidas",
+      rotulo: da.areasDefinidas,
       feito: !!evento.numAreas,
-      dica: evento.numAreas ? `${evento.numAreas} áreas` : "pendente",
+      dica: evento.numAreas
+        ? `${evento.numAreas} ${dic.evento.fatos.areas}`
+        : da.pendente,
       href: `${base}/areas`,
     },
     {
-      rotulo: "Chaves geradas",
+      rotulo: da.chavesGeradas,
       feito: chavesGeradas.length > 0,
-      dica: chavesGeradas.length ? String(chavesGeradas.length) : "pendente",
+      dica: chavesGeradas.length ? String(chavesGeradas.length) : da.pendente,
       href: `${base}/chaves`,
     },
   ];
@@ -115,27 +114,27 @@ export default async function VisaoGeralEvento({
 
   const stats = [
     {
-      rotulo: "Inscrições",
+      rotulo: dic.admin.nav.inscricoes,
       valor: String(confirmadas.length),
-      sub: `em ${equipes} equipe${equipes === 1 ? "" : "s"}`,
+      sub: `${da.emEquipes} ${equipes} ${equipes === 1 ? da.equipe : da.equipes}`,
       destaque: false,
     },
     {
-      rotulo: "Categorias",
+      rotulo: dic.admin.nav.categorias,
       valor: String(cats.length),
-      sub: "grade CBJJ",
+      sub: da.gradeCbjj,
       destaque: false,
     },
     {
-      rotulo: "Lotes",
+      rotulo: dic.admin.nav.lotes,
       valor: String(lts.length),
-      sub: vigente ? `${vigente.nome} vigente` : "nenhum vigente",
+      sub: vigente ? `${vigente.nome} ${da.vigente}` : da.nenhumVigente,
       destaque: true,
     },
     {
-      rotulo: "Receita",
+      rotulo: da.receita,
       valor: fmt.format(receitaCentavos / 100),
-      sub: "líquido confirmado",
+      sub: da.liquidoConfirmado,
       destaque: false,
     },
   ];
@@ -144,11 +143,15 @@ export default async function VisaoGeralEvento({
   const chips = [
     dataCurta(evento.dataInicio),
     evento.cidade ? `${evento.cidade}/${evento.uf ?? ""}` : null,
-    MODALIDADE_ROTULO[evento.modalidade] ?? "Gi + No-Gi",
-    evento.numAreas ? `${evento.numAreas} áreas` : null,
-    evento.dataPesagem ? `Pesagem ${diaMes(evento.dataPesagem)}` : null,
+    dic.evento.modalidades[
+      evento.modalidade as keyof typeof dic.evento.modalidades
+    ] ?? dic.evento.modalidades.gi_nogi,
+    evento.numAreas ? `${evento.numAreas} ${dic.evento.fatos.areas}` : null,
+    evento.dataPesagem
+      ? `${dic.evento.fatos.pesagem} ${diaMes(evento.dataPesagem)}`
+      : null,
     evento.dataGeracaoChaves
-      ? `Chaves ${diaMes(evento.dataGeracaoChaves)}`
+      ? `${dic.evento.fatos.chaves} ${diaMes(evento.dataGeracaoChaves)}`
       : null,
   ].filter(Boolean) as string[];
 
@@ -197,7 +200,7 @@ export default async function VisaoGeralEvento({
           </div>
           <div className="mt-[18px] flex flex-wrap items-center gap-4">
             <span className="text-[13px] font-medium text-muted-2">
-              Página pública:{" "}
+              {da.paginaPublica}{" "}
               <Link
                 href={`/evento/${evento.slug}`}
                 target="_blank"
@@ -210,7 +213,7 @@ export default async function VisaoGeralEvento({
               <>
                 <form action={publicarEvento.bind(null, evento.id)}>
                   <BotaoAcao variant="success" size="sm">
-                    Publicar evento
+                    {da.publicarEvento}
                   </BotaoAcao>
                 </form>
                 <ExcluirEvento
@@ -222,7 +225,7 @@ export default async function VisaoGeralEvento({
             {evento.status === "publicado" && (
               <form action={encerrarInscricoes.bind(null, evento.id)}>
                 <BotaoAcao variant="outline" size="sm">
-                  Encerrar inscrições
+                  {da.encerrarInscricoes}
                 </BotaoAcao>
               </form>
             )}
@@ -259,7 +262,7 @@ export default async function VisaoGeralEvento({
 
         <div className="border border-white/10 bg-surface px-6 py-[22px]">
           <div className="mb-1 flex items-baseline justify-between">
-            <div className="disp text-[28px]">Preparação</div>
+            <div className="disp text-[28px]">{da.preparacao}</div>
             <span className="tnum font-cond text-sm text-brand-soft">{pct}%</span>
           </div>
           <div className="my-2 mb-[18px] h-1.5 overflow-hidden border border-white/8 bg-ink">
@@ -300,24 +303,25 @@ export default async function VisaoGeralEvento({
       {/* INSCRIÇÕES RECENTES */}
       <div>
         <div className="mb-3.5 flex items-baseline justify-between">
-          <h2 className="disp text-[34px]">Inscrições recentes</h2>
+          <h2 className="disp text-[34px]">{da.inscricoesRecentes}</h2>
           <Link
             href={`${base}/inscricoes`}
             className="font-cond text-sm uppercase tracking-[0.05em] text-muted-3 transition-colors hover:text-foreground"
           >
-            {confirmadas.length} confirmada{confirmadas.length === 1 ? "" : "s"} →
+            {confirmadas.length}{" "}
+            {confirmadas.length === 1 ? da.confirmada : da.confirmadas} →
           </Link>
         </div>
         <div className="border border-white/10 bg-surface">
           {recentes.length === 0 ? (
             <div className="px-6 py-10 text-center font-cond text-[15px] uppercase text-muted-3">
-              Nenhuma inscrição ainda — divulgue a página pública do evento.
+              {da.nenhumaInscricao}
             </div>
           ) : (
             recentes.map((i) => {
-              const st = STATUS_INSCRICAO[i.status] ?? {
-                rotulo: i.status,
-                cor: "text-muted-2",
+              const st = {
+                rotulo: dic.admin.statusInscricao[i.status] ?? i.status,
+                cor: COR_STATUS_INSCRICAO[i.status] ?? "text-muted-2",
               };
               return (
                 <div
@@ -328,7 +332,7 @@ export default async function VisaoGeralEvento({
                     {i.nomeAtleta}
                   </span>
                   <span className="text-sm font-medium text-muted-2">
-                    {i.academiaNome ?? "Sem equipe"}
+                    {i.academiaNome ?? da.semEquipe}
                   </span>
                   <span className="font-cond text-[13px] uppercase tracking-[0.03em] text-text-2">
                     {nomeCategoria.get(i.categoriaId) ?? "—"}

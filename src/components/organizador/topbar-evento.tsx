@@ -7,6 +7,7 @@ import { useFormStatus } from "react-dom";
 import { CamposDataEvento } from "@/components/organizador/campos-data-evento";
 import { RegulamentoCampos } from "@/components/organizador/regulamento-campos";
 import { useNavMobile } from "@/components/organizador/nav-mobile-context";
+import { useDic } from "@/lib/i18n/client";
 import { Spinner } from "@/components/ui/botao-acao";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
@@ -32,26 +33,19 @@ export interface EventoEditavel {
   regulamento: Record<string, string>;
 }
 
-const TITULOS: [string, string][] = [
-  ["/inscricoes", "Inscrições"],
-  ["/categorias", "Categorias"],
-  ["/lotes", "Lotes de inscrição"],
-  ["/areas", "Áreas"],
-  ["/checkin", "Check-in"],
-  ["/chaves", "Chaves"],
+/** sufixo da rota → chave em dic.admin.nav (título da topbar) */
+const SUFIXO_TITULO: [string, string][] = [
+  ["/inscricoes", "inscricoes"],
+  ["/categorias", "categorias"],
+  ["/lotes", "lotesInscricao"],
+  ["/areas", "areas"],
+  ["/checkin", "checkin"],
+  ["/chaves", "chaves"],
 ];
-
-const ROTULO_STATUS: Record<string, string> = {
-  rascunho: "Rascunho",
-  publicado: "Publicado",
-  inscricoes_encerradas: "Inscrições encerradas",
-  em_andamento: "Em andamento",
-  finalizado: "Finalizado",
-};
-
 
 function BotaoSalvar() {
   const { pending } = useFormStatus();
+  const c = useDic().admin.comum;
   return (
     <button
       type="submit"
@@ -59,7 +53,7 @@ function BotaoSalvar() {
       className="flex h-[46px] flex-[2] cursor-pointer items-center justify-center gap-2 bg-brand font-cond text-base font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d] disabled:opacity-60"
     >
       {pending && <Spinner className="h-3.5 w-3.5" />}
-      {pending ? "Salvando…" : "Salvar alterações"}
+      {pending ? c.salvando : c.salvarAlteracoes}
     </button>
   );
 }
@@ -77,9 +71,15 @@ export function TopbarEvento({
   // key força o form a recriar (descarta o rascunho) a cada abertura
   const [geracao, setGeracao] = useState(0);
   const { setAberto: setMenuAberto } = useNavMobile();
+  const dic = useDic().admin;
+  const { campos, nav, comum, editar: ed } = dic;
 
-  const titulo =
-    TITULOS.find(([sufixo]) => pathname.includes(sufixo))?.[1] ?? "Visão geral";
+  const chaveTitulo = SUFIXO_TITULO.find(([sufixo]) =>
+    pathname.includes(sufixo),
+  )?.[1];
+  const titulo = chaveTitulo
+    ? nav[chaveTitulo as keyof typeof nav]
+    : nav.overview;
 
   const abrir = () => {
     setGeracao((g) => g + 1);
@@ -96,7 +96,7 @@ export function TopbarEvento({
           <button
             type="button"
             onClick={() => setMenuAberto(true)}
-            aria-label="Abrir menu"
+            aria-label={comum.abrirMenu}
             className="flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-[5px] border border-white/16 transition-colors hover:border-white/35 lg:hidden"
           >
             <span className="block h-[2px] w-5 bg-foreground" />
@@ -112,7 +112,7 @@ export function TopbarEvento({
             {titulo}
           </h1>
           <span className="hidden h-[22px] shrink-0 items-center border border-brand/50 bg-brand/14 px-2.5 font-cond text-[11px] font-semibold uppercase tracking-[0.06em] text-brand-soft sm:inline-flex">
-            {ROTULO_STATUS[evento.status] ?? evento.status}
+            {dic.status[evento.status] ?? evento.status}
           </span>
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-2 font-cond text-sm font-semibold uppercase tracking-[0.04em]">
@@ -121,13 +121,13 @@ export function TopbarEvento({
             target="_blank"
             className="inline-flex h-[38px] items-center border border-white/16 px-3 transition-colors hover:border-white/35 md:px-3.5"
           >
-            <span className="hidden sm:inline">Ver página&nbsp;</span>↗
+            <span className="hidden sm:inline">{ed.verPagina}&nbsp;</span>↗
           </Link>
           <button
             onClick={abrir}
             className="h-[38px] cursor-pointer border border-white/20 px-3 font-cond text-sm font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-white/40 md:px-3.5"
           >
-            ✎<span className="hidden sm:inline">&nbsp;Editar evento</span>
+            ✎<span className="hidden sm:inline">&nbsp;{ed.editarEvento}</span>
           </button>
         </div>
       </div>
@@ -143,14 +143,14 @@ export function TopbarEvento({
             <div className="flex items-center justify-between border-b border-white/8 px-[26px] py-[22px]">
               <div>
                 <div className="font-cond text-[13px] font-semibold uppercase tracking-[0.12em] text-brand">
-                  Editar cadastro
+                  {ed.eyebrow}
                 </div>
-                <div className="disp text-[34px]">Informações do evento</div>
+                <div className="disp text-[34px]">{ed.titulo}</div>
               </div>
               <button
                 onClick={() => setAberto(false)}
                 className="h-[38px] w-[38px] cursor-pointer border border-white/16 text-lg text-foreground transition-colors hover:border-white/35"
-                aria-label="Fechar"
+                aria-label={comum.fechar}
               >
                 ✕
               </button>
@@ -166,27 +166,27 @@ export function TopbarEvento({
             >
               <div className="flex flex-1 flex-col gap-[18px] overflow-y-auto px-[26px] py-6">
                 <div className="flex flex-col gap-2">
-                  <label className={labelCls}>Nome do evento</label>
+                  <label className={labelCls}>{campos.nomeEvento}</label>
                   <Input name="nome" required defaultValue={evento.nome} />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className={labelCls}>Circuito / temporada</label>
+                  <label className={labelCls}>{campos.circuito}</label>
                   <Input name="circuito" defaultValue={evento.circuito} />
                 </div>
                 <CamposDataEvento
                   gridClassName="grid grid-cols-1 gap-3.5 sm:grid-cols-2"
                   labelCls={labelCls}
-                  fechamLabel="Inscrições fecham"
+                  fechamLabel={campos.inscricoesFecham}
                   defaultDataInicio={evento.dataInicio}
                   defaultInscricoesFecham={evento.inscricoesFecham}
                 />
                 <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-[1fr_80px_130px]">
                   <div className="flex flex-col gap-2">
-                    <label className={labelCls}>Cidade</label>
+                    <label className={labelCls}>{campos.cidade}</label>
                     <Input name="cidade" defaultValue={evento.cidade} />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className={labelCls}>UF</label>
+                    <label className={labelCls}>{campos.uf}</label>
                     <Input
                       name="uf"
                       maxLength={2}
@@ -195,7 +195,7 @@ export function TopbarEvento({
                     />
                   </div>
                   <div className="flex flex-col gap-2">
-                    <label className={labelCls}>Moeda</label>
+                    <label className={labelCls}>{campos.moeda}</label>
                     <NativeSelect name="moeda" defaultValue={evento.moeda}>
                       <option value="BRL">BRL</option>
                       <option value="USD">USD</option>
@@ -204,11 +204,11 @@ export function TopbarEvento({
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className={labelCls}>Endereço / ginásio</label>
+                  <label className={labelCls}>{campos.endereco}</label>
                   <Input name="endereco" defaultValue={evento.endereco} />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className={labelCls}>Imagem de capa (URL)</label>
+                  <label className={labelCls}>{campos.imagemCapa}</label>
                   <Input
                     name="bannerUrl"
                     type="url"
@@ -217,10 +217,10 @@ export function TopbarEvento({
                 </div>
 
                 <div className="mt-2 border-t border-white/8 pt-4 font-cond text-[13px] font-semibold uppercase tracking-[0.1em] text-brand">
-                  Detalhes da competição
+                  {campos.detalhesCompeticao}
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className={labelCls}>Modalidade</label>
+                  <label className={labelCls}>{campos.modalidade}</label>
                   <NativeSelect
                     name="modalidade"
                     defaultValue={evento.modalidade}
@@ -231,7 +231,7 @@ export function TopbarEvento({
                   </NativeSelect>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className={labelCls}>Data da pesagem</label>
+                  <label className={labelCls}>{campos.dataPesagem}</label>
                   <Input
                     name="dataPesagem"
                     type="date"
@@ -239,18 +239,18 @@ export function TopbarEvento({
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className={labelCls}>Data de geração das chaves</label>
+                  <label className={labelCls}>{campos.dataGeracaoChaves}</label>
                   <Input
                     name="dataGeracaoChaves"
                     type="date"
                     defaultValue={evento.dataGeracaoChaves}
                   />
                   <p className="text-xs font-medium text-muted-3">
-                    Prevista — apenas informativo.
+                    {campos.dataGeracaoNota}
                   </p>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className={labelCls}>Descrição</label>
+                  <label className={labelCls}>{campos.descricao}</label>
                   <Textarea
                     name="descricao"
                     rows={5}
@@ -260,7 +260,7 @@ export function TopbarEvento({
 
                 <div className="mt-2 border-t border-white/8 pt-4">
                   <div className="mb-3 font-cond text-[13px] font-semibold uppercase tracking-[0.1em] text-brand">
-                    Regulamento
+                    {campos.regulamento}
                   </div>
                   <RegulamentoCampos valores={evento.regulamento} />
                 </div>
@@ -272,7 +272,7 @@ export function TopbarEvento({
                   onClick={() => setAberto(false)}
                   className="h-[46px] flex-1 cursor-pointer border border-white/18 font-cond text-base font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-white/40"
                 >
-                  Cancelar
+                  {comum.cancelar}
                 </button>
                 <BotaoSalvar />
               </div>

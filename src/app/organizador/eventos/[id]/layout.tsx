@@ -12,6 +12,7 @@ import {
   type EventoEditavel,
 } from "@/components/organizador/topbar-evento";
 import { getUsuarioAtual } from "@/lib/auth";
+import { getDicionario } from "@/lib/i18n/server";
 import { dataCurta } from "@/lib/datas";
 import { editarEvento } from "../actions";
 
@@ -31,6 +32,7 @@ export default async function LayoutConsoleEvento({
   const { id } = await params;
   const db = await getDb();
   const usuario = await getUsuarioAtual();
+  const nav = (await getDicionario()).admin.nav;
 
   const evento = await db.query.eventos.findFirst({
     where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
@@ -58,43 +60,43 @@ export default async function LayoutConsoleEvento({
 
   const base = `/organizador/eventos/${id}`;
   const itens: ItemNav[] = [
-    { id: "overview", rotulo: "Visão geral", icone: "◧", href: base },
+    { id: "overview", rotulo: nav.overview, icone: "◧", href: base },
     {
       id: "inscricoes",
-      rotulo: "Inscrições",
+      rotulo: nav.inscricoes,
       icone: "◇",
       href: `${base}/inscricoes`,
       badge: confirmadas.length ? String(confirmadas.length) : undefined,
     },
     {
       id: "lotes",
-      rotulo: "Lotes",
+      rotulo: nav.lotes,
       icone: "❏",
       href: `${base}/lotes`,
       badge: lts.length ? String(lts.length) : undefined,
     },
     {
       id: "categorias",
-      rotulo: "Categorias",
+      rotulo: nav.categorias,
       icone: "▦",
       href: `${base}/categorias`,
       badge: cats.length ? String(cats.length) : undefined,
     },
     {
       id: "chaves",
-      rotulo: "Chaves",
+      rotulo: nav.chaves,
       icone: "⑃",
       href: `${base}/chaves`,
       badge: chavesGeradas.length ? String(chavesGeradas.length) : undefined,
     },
     {
       id: "areas",
-      rotulo: "Áreas",
+      rotulo: nav.areas,
       icone: "⬒",
       href: `${base}/areas`,
       badge: ars.length ? String(ars.length) : undefined,
     },
-    { id: "checkin", rotulo: "Check-in", icone: "✔", href: `${base}/checkin` },
+    { id: "checkin", rotulo: nav.checkin, icone: "✔", href: `${base}/checkin` },
   ];
 
   const editavel: EventoEditavel = {

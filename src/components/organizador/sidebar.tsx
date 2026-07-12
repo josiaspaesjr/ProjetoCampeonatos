@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useDic } from "@/lib/i18n/client";
 import { useNavMobile } from "@/components/organizador/nav-mobile-context";
 
 /** valor sentinela da opção "criar novo evento" no seletor de evento ativo */
@@ -39,6 +40,7 @@ export function SidebarOrganizador({
   const pathname = usePathname();
   const router = useRouter();
   const { aberto, setAberto } = useNavMobile();
+  const nav = useDic().admin.nav;
   const ativo = eventos.find((e) => e.id === eventoId);
   const fechar = () => setAberto(false);
 
@@ -47,7 +49,7 @@ export function SidebarOrganizador({
       {/* seletor de evento ativo */}
       <div className="border-b border-white/6 px-[18px] py-4">
         <div className="mb-2 font-cond text-[11px] uppercase tracking-[0.14em] text-muted-3">
-          Evento ativo
+          {nav.eventoAtivo}
         </div>
         <div className="relative">
           <select
@@ -69,7 +71,7 @@ export function SidebarOrganizador({
               </option>
             ))}
             <option disabled>──────────</option>
-            <option value={NOVO_EVENTO}>+ Novo evento</option>
+            <option value={NOVO_EVENTO}>{nav.novoEvento}</option>
           </select>
           <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-3">
             ▾
@@ -85,7 +87,7 @@ export function SidebarOrganizador({
           onClick={fechar}
           className="mt-2.5 flex items-center gap-1.5 font-cond text-xs font-semibold uppercase tracking-[0.06em] text-brand transition-colors hover:text-brand-soft"
         >
-          + Criar novo evento
+          {nav.criarNovoEvento}
         </Link>
       </div>
 
@@ -131,7 +133,7 @@ export function SidebarOrganizador({
           onClick={fechar}
           className="font-cond text-xs uppercase tracking-[0.06em] text-muted-3 transition-colors hover:text-foreground"
         >
-          ← Todos os meus eventos
+          {nav.todosMeusEventos}
         </Link>
       </div>
     </>
