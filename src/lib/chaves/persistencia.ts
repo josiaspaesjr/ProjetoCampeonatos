@@ -42,8 +42,10 @@ export async function gerarChaveParaCategoria(
       eq(inscricoes.status, "confirmada"),
     ),
   });
+  // mensagens de erro usam códigos neutros de idioma — a UI traduz via
+  // dic.admin.erros.chave[código] (ver src/app/organizador/eventos/actions.ts)
   if (confirmadas.length < 2) {
-    throw new Error("A categoria precisa de ao menos 2 inscrições confirmadas");
+    throw new Error("chave_min_inscricoes");
   }
 
   // regeneração permitida apenas em rascunho
@@ -52,7 +54,7 @@ export async function gerarChaveParaCategoria(
   });
   if (existente) {
     if (existente.status !== "rascunho") {
-      throw new Error("Chave publicada não pode ser regenerada");
+      throw new Error("chave_publicada");
     }
     await db.delete(lutas).where(eq(lutas.chaveId, existente.id));
     await db.delete(chaves).where(eq(chaves.id, existente.id));

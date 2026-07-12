@@ -773,6 +773,11 @@ export const es: Dicionario = {
       grupoInvalidoNome: "Grupo de precio inválido:",
       grupoRepetido: "Grupo de precio repetido en el lote:",
       chaveGerarFalhou: "Error al generar la llave",
+      chave: {
+        chave_min_inscricoes:
+          "La categoría necesita al menos 2 inscripciones confirmadas",
+        chave_publicada: "Una llave publicada no se puede regenerar",
+      },
       nenhumaAguardandoChave:
         "Ninguna categoría esperando llave (2+ confirmados y sin llave generada)",
       chavesGeradasPre: "Generadas",

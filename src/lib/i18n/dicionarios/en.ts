@@ -771,6 +771,11 @@ export const en: Dicionario = {
       grupoInvalidoNome: "Invalid price group:",
       grupoRepetido: "Price group repeated in the tier:",
       chaveGerarFalhou: "Error generating the bracket",
+      chave: {
+        chave_min_inscricoes:
+          "The division needs at least 2 confirmed registrations",
+        chave_publicada: "A published bracket can't be regenerated",
+      },
       nenhumaAguardandoChave:
         "No division awaiting a bracket (2+ confirmed and no bracket yet)",
       chavesGeradasPre: "Generated",

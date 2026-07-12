@@ -472,9 +472,10 @@ export async function gerarChave(eventoId: string, categoriaId: string) {
     chave = await gerarChaveParaCategoria(db, categoriaId);
   } catch (e) {
     const erros = (await getDicionario()).admin.erros;
+    const codigo = e instanceof Error ? e.message : "";
     redirect(
       `/organizador/eventos/${eventoId}/chaves?erro=${encodeURIComponent(
-        e instanceof Error ? e.message : erros.chaveGerarFalhou,
+        erros.chave[codigo] ?? erros.chaveGerarFalhou,
       )}`,
     );
   }
@@ -545,7 +546,10 @@ export async function gerarChavesEmLote(eventoId: string) {
         dadosNovos: { categoriaId: cat.id, formato: chave.formato, seed: chave.seedSorteio },
       });
     } catch (e) {
-      falhas.push(`${cat.nome}: ${e instanceof Error ? e.message : "erro"}`);
+      const codigo = e instanceof Error ? e.message : "";
+      falhas.push(
+        `${cat.nome}: ${dic.admin.erros.chave[codigo] ?? dic.admin.erros.chaveGerarFalhou}`,
+      );
     }
   }
 

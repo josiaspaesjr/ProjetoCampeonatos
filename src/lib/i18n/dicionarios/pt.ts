@@ -779,6 +779,11 @@ export const pt = {
       grupoInvalidoNome: "Grupo de preço inválido:",
       grupoRepetido: "Grupo de preço repetido no lote:",
       chaveGerarFalhou: "Erro ao gerar a chave",
+      chave: {
+        chave_min_inscricoes:
+          "A categoria precisa de ao menos 2 inscrições confirmadas",
+        chave_publicada: "Chave publicada não pode ser regenerada",
+      } as Record<string, string>,
       nenhumaAguardandoChave:
         "Nenhuma categoria aguardando chave (2+ confirmados e sem chave gerada)",
       chavesGeradasPre: "Geradas",

@@ -124,14 +124,14 @@ describe("gerarChaveParaCategoria — só entra quem pagou (confirmada)", () => 
   it("menos de 2 pagos (1 pago + 3 pendentes): não gera chave", async () => {
     const { categoriaId } = await criarCategoriaCom(1, 3);
     await expect(gerarChaveParaCategoria(db, categoriaId)).rejects.toThrow(
-      /2 inscrições confirmadas/i,
+      /chave_min_inscricoes/,
     );
   });
 
   it("ninguém pagou (0 pago + 2 pendentes): não gera chave", async () => {
     const { categoriaId } = await criarCategoriaCom(0, 2);
     await expect(gerarChaveParaCategoria(db, categoriaId)).rejects.toThrow(
-      /2 inscrições confirmadas/i,
+      /chave_min_inscricoes/,
     );
   });
 });
