@@ -5,6 +5,7 @@ import { eventos, lotes } from "@/db/schema";
 import { ConfirmarExclusao } from "@/components/ui/confirmar-exclusao";
 import { NovoLote } from "@/components/organizador/novo-lote";
 import { getUsuarioAtual } from "@/lib/auth";
+import { getDicionario } from "@/lib/i18n/server";
 import { conflitosNaLista, diaLocalYmd } from "@/lib/lotes/vigencia";
 import { criarLote, excluirLote } from "../../actions";
 
@@ -31,24 +32,21 @@ const COR_TEXTO_SEG: Record<StatusLote, string> = {
 };
 
 // pills (bg / borda / texto / rótulo)
-const PILL: Record<StatusLote, { bg: string; borda: string; cor: string; rotulo: string }> = {
+const PILL: Record<StatusLote, { bg: string; borda: string; cor: string }> = {
   vigente: {
     bg: "rgba(238,46,36,0.14)",
     borda: "rgba(238,46,36,0.5)",
     cor: "#EE9A94",
-    rotulo: "Vigente",
   },
   futuro: {
     bg: "transparent",
     borda: "rgba(255,255,255,0.16)",
     cor: "#9C9A93",
-    rotulo: "Em breve",
   },
   encerrado: {
     bg: "transparent",
     borda: "rgba(255,255,255,0.1)",
     cor: "#6B6A64",
-    rotulo: "Encerrado",
   },
 };
 
@@ -63,6 +61,13 @@ export default async function LotesEvento({
   const { erro } = await searchParams;
   const db = await getDb();
   const usuario = await getUsuarioAtual();
+  const dic = await getDicionario();
+  const tl = dic.admin.lotes;
+  const rotuloStatusLote: Record<StatusLote, string> = {
+    vigente: tl.statusVigente,
+    futuro: tl.statusFuturo,
+    encerrado: tl.statusEncerrado,
+  };
 
   const evento = await db.query.eventos.findFirst({
     where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
@@ -123,30 +128,36 @@ export default async function LotesEvento({
 
       {totalComConflito > 0 && (
         <p className="border border-warning/40 bg-warning/10 px-4 py-3 font-cond text-sm uppercase tracking-[0.03em] text-warning">
-          ⚠ {totalComConflito} lote{totalComConflito === 1 ? "" : "s"} com datas
-          sobrepostas — nesses dias o preço vigente fica ambíguo. Ajuste os períodos
-          (exclua e recrie) para que cada lote ocupe dias distintos.
+          ⚠ {totalComConflito}{" "}
+          {totalComConflito === 1
+            ? dic.admin.overview.lote
+            : dic.admin.overview.lotes}{" "}
+          {tl.conflitoMsg}
         </p>
       )}
 
       {/* RESUMO — 3 CARDS */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <CardResumo rotulo="Lotes" valor={String(lts.length)} sub="janelas de preço" />
         <CardResumo
-          rotulo="Faixa de preço"
+          rotulo={dic.admin.nav.lotes}
+          valor={String(lts.length)}
+          sub={tl.janelasPreco}
+        />
+        <CardResumo
+          rotulo={tl.faixaPreco}
           valor={lts.length ? fmt.format(minPreco / 100) : "—"}
           sub={
             !lts.length
-              ? "sem lotes"
+              ? tl.semLotes
               : precoUnico
-                ? "preço único"
-                : `até ${fmt.format(maxPreco / 100)}`
+                ? tl.precoUnico
+                : `${tl.ate} ${fmt.format(maxPreco / 100)}`
           }
         />
         <CardResumo
-          rotulo="Vigente agora"
+          rotulo={tl.vigenteAgora}
           valor={vigente ? fmt.format(vigente.precoCentavos / 100) : "—"}
-          sub={vigente ? vigente.nome : "nenhum ativo"}
+          sub={vigente ? vigente.nome : tl.nenhumAtivo}
           destaque
         />
       </div>
@@ -154,15 +165,15 @@ export default async function LotesEvento({
       {/* LINHA DO TEMPO DE PREÇOS */}
       <div className="border border-white/10 bg-surface p-[22px]">
         <div className="mb-4 flex items-baseline justify-between gap-3">
-          <span className="disp text-[22px]">Linha do tempo de preços</span>
+          <span className="disp text-[22px]">{tl.linhaTempoPrecos}</span>
           <span className="tnum font-cond text-[13px] uppercase tracking-[0.06em] text-muted-3">
-            Hoje · {fmtData(agora)}
+            {tl.hoje} · {fmtData(agora)}
           </span>
         </div>
 
         {lts.length === 0 ? (
           <div className="flex h-[92px] items-center justify-center border border-dashed border-white/10 font-cond text-[14px] uppercase text-muted-3">
-            Nenhum lote para posicionar ainda.
+            {tl.nenhumPosicionar}
           </div>
         ) : (
           <>
@@ -230,7 +241,7 @@ export default async function LotesEvento({
         <div className="flex-1 lg:min-w-0">
           {lts.length === 0 ? (
             <div className="border border-white/10 bg-surface px-[22px] py-12 text-center font-cond text-[15px] uppercase text-muted-3">
-              Nenhum lote cadastrado. Crie o primeiro ao lado.
+              {tl.nenhumCadastrado}
             </div>
           ) : (
             <div className="flex flex-col gap-3">
@@ -272,11 +283,11 @@ export default async function LotesEvento({
                             color: pill.cor,
                           }}
                         >
-                          {pill.rotulo}
+                          {rotuloStatusLote[status]}
                         </span>
                         {temConflito && (
                           <span className="inline-flex h-5 items-center border border-warning/50 bg-warning/10 px-2 font-cond text-[11px] font-semibold uppercase tracking-[0.06em] text-warning">
-                            ⚠ Sobreposto
+                            ⚠ {tl.sobreposto}
                           </span>
                         )}
                         {i > 0 && delta !== 0 && (
@@ -293,11 +304,14 @@ export default async function LotesEvento({
                       </div>
                       <div className="tnum mt-0.5 font-cond text-sm uppercase tracking-[0.04em] text-muted-2">
                         {fmtData(lote.inicio)} → {fmtData(lote.fim)}
-                        <span className="text-muted-3"> · {dias} dia{dias === 1 ? "" : "s"}</span>
+                        <span className="text-muted-3">
+                          {" "}
+                          · {dias} {dias === 1 ? tl.dia : tl.dias}
+                        </span>
                       </div>
                       {temConflito && (
                         <div className="mt-1 font-cond text-[12px] uppercase tracking-[0.03em] text-warning">
-                          Datas sobrepõem: {conflitosDoLote.join(", ")}
+                          {tl.datasSobrepoe} {conflitosDoLote.join(", ")}
                         </div>
                       )}
                       {lote.variacoes && lote.variacoes.length > 0 && (
@@ -328,25 +342,26 @@ export default async function LotesEvento({
                       </div>
                       <div className="mt-1 font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
                         {lote.precoSegundaInscricaoCentavos != null
-                          ? `2ª insc. ${fmt.format(lote.precoSegundaInscricaoCentavos / 100)}`
-                          : "por inscrição"}
+                          ? `${tl.segundaInsc} ${fmt.format(lote.precoSegundaInscricaoCentavos / 100)}`
+                          : tl.porInscricao}
                       </div>
                     </div>
 
                     {/* excluir */}
                     <ConfirmarExclusao
                       acao={excluirLote.bind(null, evento.id, lote.id)}
-                      titulo="Excluir lote?"
+                      titulo={tl.excluirLote.titulo}
                       descricao={
                         <>
-                          O lote <b className="text-foreground">{lote.nome}</b> (
-                          {fmtData(lote.inicio)} → {fmtData(lote.fim)}) será
-                          removido. Esta ação não pode ser desfeita.
+                          {tl.excluirLote.descPre}{" "}
+                          <b className="text-foreground">{lote.nome}</b> (
+                          {fmtData(lote.inicio)} → {fmtData(lote.fim)}){" "}
+                          {tl.excluirLote.descPos}
                         </>
                       }
-                      confirmarRotulo="Excluir lote"
-                      rotulo="excluir"
-                      title="Excluir lote"
+                      confirmarRotulo={tl.excluirLote.confirmar}
+                      rotulo={dic.admin.comum.excluir}
+                      title={tl.excluirLote.confirmar}
                       className="cursor-pointer font-cond text-sm font-medium uppercase tracking-[0.04em] text-muted-3 transition-colors hover:text-brand"
                     />
                   </div>
