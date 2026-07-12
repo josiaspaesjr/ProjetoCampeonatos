@@ -104,14 +104,16 @@ describe("publicarEventoCore — publica sem atletas/lutas/chaves/áreas", () =>
 
   it("bloqueia sem categoria", async () => {
     const eventoId = await criarEvento({ comCategoria: false, comLote: true });
-    expect(await motivoNaoPublicavel(db, eventoId)).toMatch(/1 categoria/i);
-    await expect(publicarEventoCore(db, eventoId)).rejects.toThrow(/1 categoria/i);
+    expect(await motivoNaoPublicavel(db, eventoId)).toBe("sem_categoria");
+    await expect(publicarEventoCore(db, eventoId)).rejects.toThrow(
+      /sem_categoria/,
+    );
   });
 
   it("bloqueia sem lote de inscrição", async () => {
     const eventoId = await criarEvento({ comCategoria: true, comLote: false });
-    expect(await motivoNaoPublicavel(db, eventoId)).toMatch(/1 lote/i);
-    await expect(publicarEventoCore(db, eventoId)).rejects.toThrow(/1 lote/i);
+    expect(await motivoNaoPublicavel(db, eventoId)).toBe("sem_lote");
+    await expect(publicarEventoCore(db, eventoId)).rejects.toThrow(/sem_lote/);
   });
 
   it("não republica um evento já publicado", async () => {
@@ -120,6 +122,8 @@ describe("publicarEventoCore — publica sem atletas/lutas/chaves/áreas", () =>
       comCategoria: true,
       comLote: true,
     });
-    await expect(publicarEventoCore(db, eventoId)).rejects.toThrow(/já publicado/i);
+    await expect(publicarEventoCore(db, eventoId)).rejects.toThrow(
+      /ja_publicado/,
+    );
   });
 });

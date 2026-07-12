@@ -17,6 +17,7 @@ import {
   pagamentos,
 } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
+import { getDicionario } from "@/lib/i18n/server";
 import {
   gerarChaveParaCategoria,
   registrarResultadoNoBanco,
@@ -157,12 +158,10 @@ export async function criarEvento(formData: FormData) {
  */
 export async function excluirEvento(eventoId: string) {
   const { db, usuario, evento } = await eventoDoOrganizador(eventoId);
+  const erros = (await getDicionario()).admin.erros;
 
   if (evento.status !== "rascunho") {
-    erroVisivel(
-      eventoId,
-      "Só eventos em rascunho podem ser excluídos — este já foi publicado.",
-    );
+    erroVisivel(eventoId, erros.soRascunhoExcluir);
   }
 
   const [inscritos, pagos] = await Promise.all([
@@ -170,10 +169,7 @@ export async function excluirEvento(eventoId: string) {
     db.query.pagamentos.findMany({ where: eq(pagamentos.eventoId, eventoId) }),
   ]);
   if (inscritos.length || pagos.length) {
-    erroVisivel(
-      eventoId,
-      "Este evento já tem inscrições ou pagamentos registrados e não pode ser excluído.",
-    );
+    erroVisivel(eventoId, erros.eventoComInscricoes);
   }
 
   // filhos primeiro (sem cascade no schema): chaves/lutas de categorias,
@@ -218,11 +214,12 @@ export async function excluirEvento(eventoId: string) {
  */
 export async function editarEvento(eventoId: string, formData: FormData) {
   const { db, evento } = await eventoDoOrganizador(eventoId);
+  const erros = (await getDicionario()).admin.erros;
 
   const nome = String(formData.get("nome") ?? "").trim();
   const dataInicio = String(formData.get("dataInicio") ?? "");
   if (!nome || !dataInicio) {
-    erroVisivel(eventoId, "Nome e data do evento são obrigatórios.");
+    erroVisivel(eventoId, erros.nomeDataObrigatorios);
   }
 
   let slug = evento.slug;
@@ -244,7 +241,7 @@ export async function editarEvento(eventoId: string, formData: FormData) {
     ? new Date(String(formData.get("inscricoesFecham")))
     : null;
   if (!inscricoesFechamValidas(inscricoesFecham, dataInicio)) {
-    erroVisivel(eventoId, "As inscrições devem fechar até a data do evento.");
+    erroVisivel(eventoId, erros.inscricoesFecham);
   }
 
   await db
@@ -279,6 +276,7 @@ export async function editarEvento(eventoId: string, formData: FormData) {
 
 export async function gerarCategoriasCbjj(eventoId: string, formData: FormData) {
   const { db } = await eventoDoOrganizador(eventoId);
+  const erros = (await getDicionario()).admin.erros;
 
   const selecao: SelecaoGrade = {
     classes: formData.getAll("classes").map(String),
@@ -289,7 +287,7 @@ export async function gerarCategoriasCbjj(eventoId: string, formData: FormData) 
 
   const grade = gerarGrade(selecao);
   if (!grade.length) {
-    erroVisivel(eventoId, "Seleção não gera nenhuma categoria — marque ao menos uma classe, um sexo e uma faixa.");
+    erroVisivel(eventoId, erros.selecaoVazia);
   }
 
   // não duplica categorias com o mesmo nome já existentes no evento
@@ -320,15 +318,13 @@ export async function gerarCategoriasCbjj(eventoId: string, formData: FormData) 
 
 export async function excluirCategoria(eventoId: string, categoriaId: string) {
   const { db } = await eventoDoOrganizador(eventoId);
+  const erros = (await getDicionario()).admin.erros;
 
   const inscritos = await db.query.inscricoes.findMany({
     where: eq(inscricoes.categoriaId, categoriaId),
   });
   if (inscritos.length) {
-    erroVisivel(
-      eventoId,
-      "Categoria com inscritos não pode ser excluída — mova os atletas antes.",
-    );
+    erroVisivel(eventoId, erros.categoriaComInscritos);
   }
 
   await db
@@ -343,15 +339,16 @@ export async function excluirCategoria(eventoId: string, categoriaId: string) {
  */
 export async function definirGrupoPreco(eventoId: string, formData: FormData) {
   const { db } = await eventoDoOrganizador(eventoId);
+  const erros = (await getDicionario()).admin.erros;
 
   const classeIdade = String(formData.get("classeIdade") ?? "");
   const sexo = String(formData.get("sexo") ?? "");
   const grupo = String(formData.get("grupo") ?? "").trim() || null;
   if (!classeIdade || (sexo !== "masculino" && sexo !== "feminino")) {
-    erroVisivel(eventoId, "Bloco de categorias inválido para definir grupo de preço.");
+    erroVisivel(eventoId, erros.blocoInvalido);
   }
   if (grupo && !(GRUPOS_PRECO_PRESETS as readonly string[]).includes(grupo)) {
-    erroVisivel(eventoId, "Grupo de preço inválido.");
+    erroVisivel(eventoId, erros.grupoInvalido);
   }
 
   await db
@@ -369,6 +366,7 @@ export async function definirGrupoPreco(eventoId: string, formData: FormData) {
 
 export async function criarLote(eventoId: string, formData: FormData) {
   const { db } = await eventoDoOrganizador(eventoId);
+  const erros = (await getDicionario()).admin.erros;
 
   const nome = String(formData.get("nome") ?? "").trim();
   const preco = Math.round(Number(formData.get("preco") ?? 0) * 100);
@@ -385,10 +383,10 @@ export async function criarLote(eventoId: string, formData: FormData) {
   const fim = new Date(fimStr.includes("T") ? fimStr : `${fimStr}T23:59:59`);
 
   if (!nome || !preco || isNaN(inicio.getTime()) || isNaN(fim.getTime())) {
-    erroLote(eventoId, "Preencha nome, preço e vigência do lote.");
+    erroLote(eventoId, erros.loteCampos);
   }
   if (fim <= inicio) {
-    erroLote(eventoId, "O fim do lote precisa ser depois do início.");
+    erroLote(eventoId, erros.loteFimAntesInicio);
   }
 
   // o período não pode cair dentro (nem cruzar) o de outro lote: cada dia
@@ -407,7 +405,7 @@ export async function criarLote(eventoId: string, formData: FormData) {
   if (conflito) {
     erroLote(
       eventoId,
-      `As datas se sobrepõem ao lote "${conflito.nome}" (${ymdParaBR(conflito.inicio)} → ${ymdParaBR(conflito.fim)}). Cada lote precisa de um período separado dos demais.`,
+      `${erros.loteConflitoPre} "${conflito.nome}" (${ymdParaBR(conflito.inicio)} → ${ymdParaBR(conflito.fim)}). ${erros.loteConflitoPos}`,
     );
   }
 
@@ -421,13 +419,13 @@ export async function criarLote(eventoId: string, formData: FormData) {
     const centavos = precoParaCentavos(varPrecos[i] ?? null);
     if (!nomeVar && centavos == null) continue; // linha em branco
     if (!nomeVar || centavos == null) {
-      erroLote(eventoId, "Cada pacote de preço precisa de grupo e valor.");
+      erroLote(eventoId, erros.pacoteCampos);
     }
     if (!(GRUPOS_PRECO_PRESETS as readonly string[]).includes(nomeVar)) {
-      erroLote(eventoId, `Grupo de preço inválido: "${nomeVar}".`);
+      erroLote(eventoId, `${erros.grupoInvalidoNome} "${nomeVar}".`);
     }
     if (variacoes.some((v) => v.nome === nomeVar)) {
-      erroLote(eventoId, `Grupo de preço repetido no lote: "${nomeVar}".`);
+      erroLote(eventoId, `${erros.grupoRepetido} "${nomeVar}".`);
     }
     variacoes.push({ nome: nomeVar, precoCentavos: centavos });
   }
@@ -455,7 +453,10 @@ export async function excluirLote(eventoId: string, loteId: string) {
 export async function encerrarInscricoes(eventoId: string) {
   const { db, evento } = await eventoDoOrganizador(eventoId);
   if (evento.status !== "publicado") {
-    erroVisivel(eventoId, "Só eventos publicados podem ter inscrições encerradas.");
+    erroVisivel(
+      eventoId,
+      (await getDicionario()).admin.erros.soPublicadosEncerram,
+    );
   }
   await db
     .update(eventos)
@@ -470,9 +471,10 @@ export async function gerarChave(eventoId: string, categoriaId: string) {
   try {
     chave = await gerarChaveParaCategoria(db, categoriaId);
   } catch (e) {
+    const erros = (await getDicionario()).admin.erros;
     redirect(
       `/organizador/eventos/${eventoId}/chaves?erro=${encodeURIComponent(
-        e instanceof Error ? e.message : "Erro ao gerar a chave",
+        e instanceof Error ? e.message : erros.chaveGerarFalhou,
       )}`,
     );
   }
@@ -494,6 +496,7 @@ export async function gerarChave(eventoId: string, categoriaId: string) {
  */
 export async function gerarChavesEmLote(eventoId: string) {
   const { db, usuario } = await eventoDoOrganizador(eventoId);
+  const dic = await getDicionario();
 
   const [cats, confirmadas] = await Promise.all([
     db.query.categorias.findMany({ where: eq(categorias.eventoId, eventoId) }),
@@ -525,7 +528,7 @@ export async function gerarChavesEmLote(eventoId: string) {
   if (!pendentes.length) {
     redirect(
       `/organizador/eventos/${eventoId}/chaves?erro=${encodeURIComponent(
-        "Nenhuma categoria aguardando chave (2+ confirmados e sem chave gerada)",
+        dic.admin.erros.nenhumaAguardandoChave,
       )}`,
     );
   }
@@ -548,9 +551,11 @@ export async function gerarChavesEmLote(eventoId: string) {
 
   revalidatePath(`/organizador/eventos/${eventoId}/chaves`);
   if (falhas.length) {
+    const geradas = pendentes.length - falhas.length;
+    const ch = dic.admin.chaves;
     redirect(
       `/organizador/eventos/${eventoId}/chaves?erro=${encodeURIComponent(
-        `Geradas ${pendentes.length - falhas.length} chave(s); falhas — ${falhas.join(" · ")}`,
+        `${dic.admin.erros.chavesGeradasPre} ${geradas} ${geradas === 1 ? ch.chaveSing : ch.chavePlur}; ${dic.admin.erros.chavesComFalhas} ${falhas.join(" · ")}`,
       )}`,
     );
   }
@@ -570,7 +575,9 @@ export async function publicarChaves(eventoId: string) {
   const rascunhos = todas.filter((c) => c?.status === "rascunho");
   if (!rascunhos.length) {
     redirect(
-      `/organizador/eventos/${eventoId}/chaves?erro=${encodeURIComponent("Nenhuma chave em rascunho para publicar")}`,
+      `/organizador/eventos/${eventoId}/chaves?erro=${encodeURIComponent(
+        (await getDicionario()).admin.erros.nenhumaRascunhoPublicar,
+      )}`,
     );
   }
 
@@ -632,10 +639,9 @@ export async function publicarEvento(eventoId: string) {
   try {
     await publicarEventoCore(db, eventoId);
   } catch (e) {
-    erroVisivel(
-      eventoId,
-      e instanceof Error ? e.message : "Não foi possível publicar o evento",
-    );
+    const erros = (await getDicionario()).admin.erros;
+    const codigo = e instanceof Error ? e.message : "";
+    erroVisivel(eventoId, erros.publicar[codigo] ?? erros.publicarFalhou);
   }
   revalidatePath(`/organizador/eventos/${eventoId}`);
 }

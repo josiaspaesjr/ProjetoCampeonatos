@@ -742,6 +742,43 @@ export const es: Dicionario = {
       cronogramaPorArea: "Cronograma por área",
       fecharTelaCheia: "Cerrar pantalla completa",
     },
+    erros: {
+      soRascunhoExcluir:
+        "Solo los eventos en borrador se pueden eliminar — este ya fue publicado.",
+      eventoComInscricoes:
+        "Este evento ya tiene inscripciones o pagos registrados y no se puede eliminar.",
+      nomeDataObrigatorios: "El nombre y la fecha del evento son obligatorios.",
+      inscricoesFecham: "Las inscripciones deben cerrar hasta la fecha del evento.",
+      selecaoVazia:
+        "La selección no genera ninguna categoría — marca al menos una clase, un sexo y un cinturón.",
+      categoriaComInscritos:
+        "Una categoría con inscritos no se puede eliminar — mueve a los atletas antes.",
+      blocoInvalido: "Bloque de categorías inválido para definir el grupo de precio.",
+      grupoInvalido: "Grupo de precio inválido.",
+      soPublicadosEncerram:
+        "Solo los eventos publicados pueden cerrar inscripciones.",
+      publicarFalhou: "No se pudo publicar el evento",
+      publicar: {
+        nao_encontrado: "Evento no encontrado",
+        ja_publicado: "Evento ya publicado",
+        sem_categoria:
+          "Para publicar, genera al menos 1 categoría (usa el Generador de grilla CBJJ abajo).",
+        sem_lote: "Para publicar, crea al menos 1 lote de inscripción.",
+      },
+      loteCampos: "Completa el nombre, el precio y la vigencia del lote.",
+      loteFimAntesInicio: "El fin del lote debe ser posterior al inicio.",
+      loteConflitoPre: "Las fechas se superponen al lote",
+      loteConflitoPos: "Cada lote necesita un período separado de los demás.",
+      pacoteCampos: "Cada paquete de precio necesita grupo y valor.",
+      grupoInvalidoNome: "Grupo de precio inválido:",
+      grupoRepetido: "Grupo de precio repetido en el lote:",
+      chaveGerarFalhou: "Error al generar la llave",
+      nenhumaAguardandoChave:
+        "Ninguna categoría esperando llave (2+ confirmados y sin llave generada)",
+      chavesGeradasPre: "Generadas",
+      chavesComFalhas: "fallos —",
+      nenhumaRascunhoPublicar: "Ninguna llave en borrador para publicar",
+    },
   },
   regulamentoTitulos: {
     regrasInscricao: "Reglas de inscripción",

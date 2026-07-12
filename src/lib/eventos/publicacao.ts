@@ -10,6 +10,10 @@ import { categorias, eventos, lotes } from "@/db/schema";
  * inscritos, lutas, chaves nem áreas: tudo isso é preenchido depois (inscrições
  * chegam, chaves e áreas se montam quando fizer sentido). Um evento recém-criado
  * com grade + lote publica vazio.
+ *
+ * Retorna um **código** neutro de idioma (`nao_encontrado` | `ja_publicado` |
+ * `sem_categoria` | `sem_lote`) ou `null` se pode publicar — a UI traduz o
+ * código (dic.admin.erros.publicar[código]).
  */
 export async function motivoNaoPublicavel(
   db: Db,
@@ -18,19 +22,15 @@ export async function motivoNaoPublicavel(
   const evento = await db.query.eventos.findFirst({
     where: eq(eventos.id, eventoId),
   });
-  if (!evento) return "Evento não encontrado";
-  if (evento.status !== "rascunho") return "Evento já publicado";
+  if (!evento) return "nao_encontrado";
+  if (evento.status !== "rascunho") return "ja_publicado";
 
   const [cats, lts] = await Promise.all([
     db.query.categorias.findMany({ where: eq(categorias.eventoId, eventoId) }),
     db.query.lotes.findMany({ where: eq(lotes.eventoId, eventoId) }),
   ]);
-  if (!cats.length) {
-    return "Para publicar, gere ao menos 1 categoria (use o Gerador de grade CBJJ abaixo).";
-  }
-  if (!lts.length) {
-    return "Para publicar, crie ao menos 1 lote de inscrição.";
-  }
+  if (!cats.length) return "sem_categoria";
+  if (!lts.length) return "sem_lote";
   return null;
 }
 

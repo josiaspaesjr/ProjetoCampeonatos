@@ -748,6 +748,43 @@ export const pt = {
       cronogramaPorArea: "Cronograma por área",
       fecharTelaCheia: "Fechar tela cheia",
     },
+    erros: {
+      soRascunhoExcluir:
+        "Só eventos em rascunho podem ser excluídos — este já foi publicado.",
+      eventoComInscricoes:
+        "Este evento já tem inscrições ou pagamentos registrados e não pode ser excluído.",
+      nomeDataObrigatorios: "Nome e data do evento são obrigatórios.",
+      inscricoesFecham: "As inscrições devem fechar até a data do evento.",
+      selecaoVazia:
+        "Seleção não gera nenhuma categoria — marque ao menos uma classe, um sexo e uma faixa.",
+      categoriaComInscritos:
+        "Categoria com inscritos não pode ser excluída — mova os atletas antes.",
+      blocoInvalido: "Bloco de categorias inválido para definir grupo de preço.",
+      grupoInvalido: "Grupo de preço inválido.",
+      soPublicadosEncerram:
+        "Só eventos publicados podem ter inscrições encerradas.",
+      publicarFalhou: "Não foi possível publicar o evento",
+      publicar: {
+        nao_encontrado: "Evento não encontrado",
+        ja_publicado: "Evento já publicado",
+        sem_categoria:
+          "Para publicar, gere ao menos 1 categoria (use o Gerador de grade CBJJ abaixo).",
+        sem_lote: "Para publicar, crie ao menos 1 lote de inscrição.",
+      } as Record<string, string>,
+      loteCampos: "Preencha nome, preço e vigência do lote.",
+      loteFimAntesInicio: "O fim do lote precisa ser depois do início.",
+      loteConflitoPre: "As datas se sobrepõem ao lote",
+      loteConflitoPos: "Cada lote precisa de um período separado dos demais.",
+      pacoteCampos: "Cada pacote de preço precisa de grupo e valor.",
+      grupoInvalidoNome: "Grupo de preço inválido:",
+      grupoRepetido: "Grupo de preço repetido no lote:",
+      chaveGerarFalhou: "Erro ao gerar a chave",
+      nenhumaAguardandoChave:
+        "Nenhuma categoria aguardando chave (2+ confirmados e sem chave gerada)",
+      chavesGeradasPre: "Geradas",
+      chavesComFalhas: "falhas —",
+      nenhumaRascunhoPublicar: "Nenhuma chave em rascunho para publicar",
+    },
   },
   regulamentoTitulos: {
     regrasInscricao: "Regras de inscrição",

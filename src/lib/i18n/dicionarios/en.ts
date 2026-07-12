@@ -740,6 +740,43 @@ export const en: Dicionario = {
       cronogramaPorArea: "Schedule by mat",
       fecharTelaCheia: "Close full screen",
     },
+    erros: {
+      soRascunhoExcluir:
+        "Only draft events can be deleted — this one is already published.",
+      eventoComInscricoes:
+        "This event already has registrations or payments recorded and can't be deleted.",
+      nomeDataObrigatorios: "Event name and date are required.",
+      inscricoesFecham: "Registration must close on or before the event date.",
+      selecaoVazia:
+        "The selection generates no divisions — pick at least one class, one sex and one belt.",
+      categoriaComInscritos:
+        "A division with entrants can't be deleted — move the athletes first.",
+      blocoInvalido: "Invalid division block for setting a price group.",
+      grupoInvalido: "Invalid price group.",
+      soPublicadosEncerram:
+        "Only published events can have registration closed.",
+      publicarFalhou: "Couldn't publish the event",
+      publicar: {
+        nao_encontrado: "Event not found",
+        ja_publicado: "Event already published",
+        sem_categoria:
+          "To publish, generate at least 1 division (use the CBJJ grid generator below).",
+        sem_lote: "To publish, create at least 1 registration tier.",
+      },
+      loteCampos: "Fill in the tier's name, price and dates.",
+      loteFimAntesInicio: "The tier's end must be after its start.",
+      loteConflitoPre: "The dates overlap tier",
+      loteConflitoPos: "Each tier needs a period separate from the others.",
+      pacoteCampos: "Each price package needs a group and a value.",
+      grupoInvalidoNome: "Invalid price group:",
+      grupoRepetido: "Price group repeated in the tier:",
+      chaveGerarFalhou: "Error generating the bracket",
+      nenhumaAguardandoChave:
+        "No division awaiting a bracket (2+ confirmed and no bracket yet)",
+      chavesGeradasPre: "Generated",
+      chavesComFalhas: "failures —",
+      nenhumaRascunhoPublicar: "No draft bracket to publish",
+    },
   },
   regulamentoTitulos: {
     regrasInscricao: "Registration rules",
