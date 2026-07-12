@@ -326,6 +326,21 @@ export const pt = {
       dq: "Desqualificação",
     },
   },
+  classesIdade: {
+    pre_mirim: "Pré-Mirim",
+    mirim: "Mirim",
+    infantil: "Infantil",
+    infanto_juvenil: "Infanto-Juvenil",
+    juvenil: "Juvenil",
+    adulto: "Adulto",
+    master1: "Master 1",
+    master2: "Master 2",
+    master3: "Master 3",
+    master4: "Master 4",
+    master5: "Master 5",
+    master6: "Master 6",
+    master7: "Master 7",
+  } as Record<string, string>,
 };
 
 export type Dicionario = typeof pt;

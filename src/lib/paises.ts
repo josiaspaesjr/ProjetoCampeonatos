@@ -83,6 +83,29 @@ export function normalizarPais(codigo: string | null | undefined): string {
 export const nomePais = (codigo: string) =>
   POR_CODIGO.get(codigo)?.nome ?? codigo;
 
+// Intl.DisplayNames é caro de instanciar — um por idioma, memoizado
+const cacheDisplayNames = new Map<string, Intl.DisplayNames>();
+function regiaoDisplayNames(locale: string): Intl.DisplayNames {
+  let dn = cacheDisplayNames.get(locale);
+  if (!dn) {
+    dn = new Intl.DisplayNames([locale], { type: "region" });
+    cacheDisplayNames.set(locale, dn);
+  }
+  return dn;
+}
+
+/** nome do país no idioma pedido (via Intl); cai no nome PT-BR se indisponível */
+export function nomePaisLocale(codigo: string, locale: string): string {
+  const cc = codigo.toUpperCase();
+  try {
+    const nome = regiaoDisplayNames(locale).of(cc);
+    if (nome && nome.toUpperCase() !== cc) return nome;
+  } catch {
+    /* Intl indisponível ou código inválido */
+  }
+  return nomePais(codigo);
+}
+
 /** bandeira emoji a partir do código ISO alpha-2 */
 export function bandeiraPais(codigo: string): string {
   if (!/^[A-Za-z]{2}$/.test(codigo)) return "";

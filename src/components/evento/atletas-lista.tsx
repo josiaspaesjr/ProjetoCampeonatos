@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
-import { bandeiraPais, nomePais } from "@/lib/paises";
-import { useDic } from "@/lib/i18n/client";
+import { bandeiraPais, nomePaisLocale } from "@/lib/paises";
+import { useDic, useIdioma } from "@/lib/i18n/client";
 
 /** status relevante de um inscrito na lista pública */
 export type StatusInscrito = "confirmada" | "pendente_pagamento";
@@ -57,16 +57,17 @@ export function AtletasLista({
   const [busca, setBusca] = useState("");
   const [paisFiltro, setPaisFiltro] = useState<string | null>(null);
   const q = norm(busca.trim());
-  const dat = useDic().atletas;
+  const { locale, dic } = useIdioma();
+  const dat = dic.atletas;
 
   // países distintos presentes — só mostra o filtro/bandeiras se houver variedade
   const paises = useMemo(() => {
     const set = new Set<string>();
     for (const d of divisoes) for (const a of d.atletas) set.add(a.pais);
     return [...set].sort((a, b) =>
-      nomePais(a).localeCompare(nomePais(b), "pt-BR"),
+      nomePaisLocale(a, locale).localeCompare(nomePaisLocale(b, locale), locale),
     );
-  }, [divisoes]);
+  }, [divisoes, locale]);
   const mostrarPais = paises.length > 1;
 
   const visiveis = useMemo(() => {
@@ -133,7 +134,7 @@ export function AtletasLista({
               ativo={paisFiltro === c}
               onClick={() => setPaisFiltro(c)}
             >
-              {bandeiraPais(c)} {nomePais(c)}
+              {bandeiraPais(c)} {nomePaisLocale(c, locale)}
             </ChipPais>
           ))}
         </div>
@@ -256,7 +257,8 @@ function CardAtleta({
   atleta: AtletaCard;
   mostrarPais: boolean;
 }) {
-  const dat = useDic().atletas;
+  const { locale, dic } = useIdioma();
+  const dat = dic.atletas;
   return (
     <div className="flex items-center justify-between gap-3 bg-surface px-4 py-3">
       <div className="flex min-w-0 items-center gap-2.5">
@@ -270,7 +272,7 @@ function CardAtleta({
           </div>
           <div className="truncate font-cond text-[12px] uppercase tracking-[0.03em] text-muted-3">
             {mostrarPais && (
-              <span className="mr-1" title={nomePais(atleta.pais)}>
+              <span className="mr-1" title={nomePaisLocale(atleta.pais, locale)}>
                 {bandeiraPais(atleta.pais)}
               </span>
             )}

@@ -21,12 +21,13 @@ export interface CategoriaLinha {
 
 export function CategoriasFiltro({ categorias }: { categorias: CategoriaLinha[] }) {
   const [filtro, setFiltro] = useState("todas");
-  const dcat = useDic().categorias;
+  const dic = useDic();
+  const dcat = dic.categorias;
 
   const chips = useMemo(() => {
     const presentes = new Set(categorias.map((c) => c.classeIdade));
     const classes = CLASSES_IDADE.filter((cl) => presentes.has(cl.id)).map(
-      (cl) => ({ id: cl.id, rotulo: cl.nome }),
+      (cl) => ({ id: cl.id, rotulo: dic.classesIdade[cl.id] ?? cl.nome }),
     );
     const temFeminino = categorias.some((c) => c.sexo === "feminino");
     return [
@@ -34,7 +35,7 @@ export function CategoriasFiltro({ categorias }: { categorias: CategoriaLinha[] 
       ...classes,
       ...(temFeminino ? [{ id: "feminino", rotulo: dcat.feminino }] : []),
     ];
-  }, [categorias, dcat]);
+  }, [categorias, dic, dcat]);
 
   const visiveis = categorias.filter((c) => {
     if (filtro === "todas") return true;

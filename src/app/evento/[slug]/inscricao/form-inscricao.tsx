@@ -11,14 +11,14 @@ import { SeletorAcademia } from "@/components/inscricao/seletor-academia";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { CLASSES_IDADE, FAIXAS } from "@/lib/categorias/cbjj";
-import { PAISES } from "@/lib/paises";
+import { PAISES, nomePaisLocale } from "@/lib/paises";
 import {
   categoriaCompativel,
   idadeNoAnoDoEvento,
 } from "@/lib/categorias/elegibilidade";
 import { precoDoGrupoCentavos, type LoteVariacao } from "@/lib/lotes/preco";
 import { cn } from "@/lib/utils";
-import { useDic } from "@/lib/i18n/client";
+import { useDic, useIdioma } from "@/lib/i18n/client";
 
 export interface CategoriaOpcao {
   id: string;
@@ -63,11 +63,12 @@ interface Props {
   };
 }
 
+/** id da classe de idade (para traduzir no resumo); nulo se fora das faixas */
 function divisaoDaIdade(idade: number): string | null {
   const classe = [...CLASSES_IDADE]
     .reverse()
     .find((c) => idade >= c.idadeMin && (c.idadeMax == null || idade <= c.idadeMax));
-  return classe?.nome ?? null;
+  return classe?.id ?? null;
 }
 
 const capitalizar = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -138,7 +139,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
   const [enviando, setEnviando] = useState<"pagar_agora" | "pagar_depois" | null>(
     null,
   );
-  const dic = useDic();
+  const { locale, dic } = useIdioma();
   const di = dic.inscricao;
   const nomeFaixa = dic.evento.faixaNomes as Record<string, string>;
 
@@ -151,8 +152,11 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
   }, [perfilCompleto, sexo, faixa, nascimento, categorias, dataEvento]);
 
   const categoriaEscolhida = compativeis.find((c) => c.id === categoriaId) ?? null;
-  const divisao = nascimento
+  const divisaoId = nascimento
     ? divisaoDaIdade(idadeNoAnoDoEvento(nascimento, dataEvento))
+    : null;
+  const divisao = divisaoId
+    ? (dic.classesIdade[divisaoId] ?? divisaoId)
     : null;
   const podeContinuar = !!(nome && email && perfilCompleto && categoriaEscolhida);
 
@@ -312,7 +316,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
               >
                 {PAISES.map((p) => (
                   <option key={p.codigo} value={p.codigo}>
-                    {p.nome}
+                    {nomePaisLocale(p.codigo, locale)}
                   </option>
                 ))}
               </NativeSelect>
