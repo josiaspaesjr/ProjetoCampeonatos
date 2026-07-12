@@ -6,14 +6,15 @@ import { categorias, chaves, eventos, inscricoes } from "@/db/schema";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { BotaoAcao } from "@/components/ui/botao-acao";
 import { getUsuarioAtual } from "@/lib/auth";
+import { getDicionario } from "@/lib/i18n/server";
 import { formatoAutomatico } from "@/lib/chaves/persistencia";
 import { gerarChave, gerarChavesEmLote, publicarChaves } from "../../actions";
 
-const rotuloChave: Record<string, [string, BadgeProps["variant"]]> = {
-  rascunho: ["Rascunho", "warning"],
-  publicada: ["Publicada", "default"],
-  em_andamento: ["Em andamento", "outline"],
-  concluida: ["Concluída", "success"],
+const VARIANTE_CHAVE: Record<string, BadgeProps["variant"]> = {
+  rascunho: "warning",
+  publicada: "default",
+  em_andamento: "outline",
+  concluida: "success",
 };
 
 export default async function PaginaChaves({
@@ -27,6 +28,8 @@ export default async function PaginaChaves({
   const { erro } = await searchParams;
   const db = await getDb();
   const usuario = await getUsuarioAtual();
+  const dic = await getDicionario();
+  const ch = dic.admin.chaves;
 
   const evento = await db.query.eventos.findFirst({
     where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
@@ -68,20 +71,22 @@ export default async function PaginaChaves({
         </p>
       )}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="max-w-[560px] text-sm text-muted-foreground">
-          Categorias sem inscrições confirmadas ficam ocultas. Gere em
-          rascunho, revise e publique — depois de publicada a chave não pode
-          ser regenerada.
-        </p>
+        <p className="max-w-[560px] text-sm text-muted-foreground">{ch.intro}</p>
         <div className="flex items-center gap-3">
           {semChave > 0 && (
             <form action={gerarChavesEmLote.bind(null, evento.id)}>
-              <BotaoAcao>Gerar {semChave} chave(s) em lote</BotaoAcao>
+              <BotaoAcao>
+                {ch.gerar} {semChave}{" "}
+                {semChave === 1 ? ch.chaveSing : ch.chavePlur} {ch.emLote}
+              </BotaoAcao>
             </form>
           )}
           {rascunhos > 0 && (
             <form action={publicarChaves.bind(null, evento.id)}>
-              <BotaoAcao variant="success">Publicar {rascunhos} chave(s)</BotaoAcao>
+              <BotaoAcao variant="success">
+                {ch.publicar} {rascunhos}{" "}
+                {rascunhos === 1 ? ch.chaveSing : ch.chavePlur}
+              </BotaoAcao>
             </form>
           )}
         </div>
@@ -91,9 +96,10 @@ export default async function PaginaChaves({
         {comInscritos.map((c) => {
           const chave = chavePorCategoria.get(c.id);
           const qtd = contagem.get(c.id) ?? 0;
-          const [rotulo, variante] = chave
-            ? rotuloChave[chave.status]
-            : (["Sem chave", "secondary"] as [string, BadgeProps["variant"]]);
+          const rotulo = chave ? (ch.status[chave.status] ?? chave.status) : ch.semChave;
+          const variante: BadgeProps["variant"] = chave
+            ? (VARIANTE_CHAVE[chave.status] ?? "secondary")
+            : "secondary";
 
           return (
             <li
@@ -103,12 +109,12 @@ export default async function PaginaChaves({
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">{c.nome}</p>
                 <p className="text-xs text-muted-foreground">
-                  {qtd} confirmado(s)
-                  {qtd === 1 && " — insuficiente para gerar chave"}
+                  {qtd} {qtd === 1 ? ch.confirmadoSing : ch.confirmadoPlur}
+                  {qtd === 1 && ` — ${ch.insuficiente}`}
                   {chave
-                    ? ` · ${chave.formato === "round_robin" ? "todos contra todos" : "eliminação simples"}`
+                    ? ` · ${chave.formato === "round_robin" ? ch.formatoRR : ch.formatoElim}`
                     : qtd >= 2 &&
-                      ` · formato sugerido: ${formatoAutomatico(qtd) === "round_robin" ? "todos contra todos" : "eliminação simples"}`}
+                      ` · ${ch.formatoSugerido} ${formatoAutomatico(qtd) === "round_robin" ? ch.formatoRR : ch.formatoElim}`}
                 </p>
               </div>
               <div className="flex shrink-0 flex-wrap items-center gap-3 max-sm:w-full">
@@ -116,7 +122,7 @@ export default async function PaginaChaves({
                 {qtd >= 2 && (!chave || chave.status === "rascunho") && (
                   <form action={gerarChave.bind(null, evento.id, c.id)}>
                     <BotaoAcao variant="outline" size="sm">
-                      {chave ? "Regenerar" : "Gerar chave"}
+                      {chave ? ch.regenerar : ch.gerarChave}
                     </BotaoAcao>
                   </form>
                 )}
@@ -125,7 +131,7 @@ export default async function PaginaChaves({
                     href={`/organizador/eventos/${evento.id}/chaves/${chave.id}`}
                     className="text-xs font-medium underline"
                   >
-                    abrir
+                    {ch.abrir}
                   </Link>
                 )}
               </div>
@@ -134,7 +140,7 @@ export default async function PaginaChaves({
         })}
         {comInscritos.length === 0 && (
           <li className="px-5 py-10 text-center text-sm text-muted-foreground">
-            Nenhuma categoria com inscrições confirmadas ainda.
+            {ch.nenhumaCategoriaConfirmada}
           </li>
         )}
       </ul>

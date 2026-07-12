@@ -25,7 +25,9 @@ export function RegulamentoCampos({
   const setTexto = (chave: string, valor: string) =>
     setTextos((prev) => ({ ...prev, [chave]: valor }));
 
-  const dr = useDic().admin.regCampos;
+  const dic = useDic();
+  const dr = dic.admin.regCampos;
+  const rt = dic.regulamentoTitulos;
 
   return (
     <div className="flex flex-col gap-2">
@@ -45,7 +47,7 @@ export function RegulamentoCampos({
                 )}
               />
               <span className="flex-1 font-cond text-[17px] font-semibold uppercase tracking-[0.03em]">
-                {secao.titulo}
+                {rt[secao.chave] ?? secao.titulo}
               </span>
               {preenchido && (
                 <span className="font-cond text-[11px] uppercase tracking-[0.08em] text-brand-soft">

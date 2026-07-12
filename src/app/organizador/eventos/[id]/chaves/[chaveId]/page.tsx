@@ -4,6 +4,7 @@ import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, chaves, eventos, inscricoes, lutas } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
+import { getDicionario } from "@/lib/i18n/server";
 import { calcularPodioDaChave } from "@/lib/chaves/persistencia";
 import { BracketView, type AtletaInfo } from "@/components/bracket-view";
 import { lancarResultado } from "../../../actions";
@@ -16,6 +17,7 @@ export default async function PaginaChave({
   const { id, chaveId } = await params;
   const db = await getDb();
   const usuario = await getUsuarioAtual();
+  const dic = await getDicionario();
 
   const evento = await db.query.eventos.findFirst({
     where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
@@ -57,18 +59,19 @@ export default async function PaginaChave({
         href={`/organizador/eventos/${id}/chaves`}
         className="text-sm text-muted-foreground hover:underline"
       >
-        ← Todas as chaves
+        ← {dic.chavesTab.todasAsChaves}
       </Link>
       <div className="mt-2 flex items-center justify-between">
         <h1 className="text-xl font-bold">{categoria?.nome}</h1>
         <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
-          {chave.status} · seed {chave.seedSorteio.slice(0, 8)}
+          {dic.admin.chaves.status[chave.status] ?? chave.status} · seed{" "}
+          {chave.seedSorteio.slice(0, 8)}
         </span>
       </div>
 
       {podio && (
         <div className="mt-4 rounded-xl border border-success/30 bg-success/10 p-5">
-          <p className="font-semibold text-success">Pódio</p>
+          <p className="font-semibold text-success">{dic.chavesTab.podio}</p>
           <ol className="mt-2 space-y-1 text-sm">
             <li>🥇 {podio.primeiro && atletas[podio.primeiro]?.nome}</li>
             <li>🥈 {podio.segundo && atletas[podio.segundo]?.nome}</li>
@@ -81,8 +84,7 @@ export default async function PaginaChave({
 
       {chave.status === "rascunho" && (
         <p className="mt-4 rounded-md bg-warning/15 px-4 py-3 text-sm text-warning-foreground">
-          Chave em rascunho — publique na lista de chaves para liberar o
-          lançamento de resultados.
+          {dic.admin.chaves.chaveRascunhoAviso}
         </p>
       )}
 

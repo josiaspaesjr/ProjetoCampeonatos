@@ -226,13 +226,13 @@ export default async function AbaInformacoes({
             <div className="mt-8 flex flex-col gap-px border border-white/10 bg-white/10">
               {regulamento.map((s) => (
                 <details
-                  key={s.titulo}
+                  key={s.chave}
                   className="group bg-background [&_summary::-webkit-details-marker]:hidden"
                 >
                   <summary className="flex cursor-pointer items-center gap-3 px-5 py-4 select-none">
                     <span className="h-2 w-2 shrink-0 -skew-x-9 bg-brand" />
                     <span className="flex-1 font-cond text-[19px] font-semibold uppercase tracking-[0.02em]">
-                      {s.titulo}
+                      {dic.regulamentoTitulos[s.chave] ?? s.titulo}
                     </span>
                     <span className="font-cond text-xs text-muted-3 transition-transform group-open:rotate-180">
                       ▾

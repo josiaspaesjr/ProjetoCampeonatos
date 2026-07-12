@@ -17,6 +17,7 @@ import {
   type LutaSelecionada,
 } from "@/components/cronograma/programacao-areas";
 import type { AreaCron } from "@/lib/cronograma/cronograma-areas";
+import { useDic } from "@/lib/i18n/client";
 
 const AREAS_MIN = 1;
 const AREAS_MAX = 40;
@@ -79,21 +80,25 @@ export function EstruturadorAreas({
     };
   }, [areasFull, lutaSel]);
 
+  const dic = useDic();
+  const ta = dic.admin.areas;
+
   // ---- SEM CATEGORIAS: bloqueia com prompt para a seção Categorias ----
   if (!temCategorias) {
     return (
       <div className="relative border border-white/10 bg-surface px-[22px] py-12 text-center">
         <span className="absolute inset-y-0 left-0 w-[3px] bg-brand" />
-        <div className="disp text-[26px]">Nenhuma categoria carregada</div>
+        <div className="disp text-[26px]">{ta.nenhumaCategoria}</div>
         <p className="mx-auto mt-2 max-w-md font-cond text-[15px] uppercase tracking-[0.03em] text-muted-2">
-          Gere a grade de categorias antes de estruturar as áreas — a
-          distribuição parte dela.
+          {ta.gereGradeAntes}
         </p>
         <Link
           href={`${base}/categorias`}
           className="mt-5 inline-flex -skew-x-9 items-center bg-brand px-5 py-3 font-cond text-[15px] font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]"
         >
-          <span className="inline-block skew-x-9">Ir para Categorias →</span>
+          <span className="inline-block skew-x-9">
+            {ta.irPara} {dic.admin.nav.categorias} →
+          </span>
         </Link>
       </div>
     );
@@ -114,7 +119,7 @@ export function EstruturadorAreas({
               htmlFor="num-areas"
               className="mb-1.5 block font-cond text-[13px] font-semibold uppercase tracking-[0.1em] text-muted-3"
             >
-              Número de áreas (tatames)
+              {ta.numeroAreas}
             </label>
             <input
               id="num-areas"
@@ -131,13 +136,13 @@ export function EstruturadorAreas({
           {/* Categorias carregadas */}
           <div>
             <div className="font-cond text-[13px] font-semibold uppercase tracking-[0.1em] text-muted-3">
-              Categorias carregadas
+              {ta.categoriasCarregadas}
             </div>
             <div className="disp tnum mt-1.5 text-[38px] leading-none">
               {totalCategorias}
             </div>
             <div className="mt-1.5 font-cond text-[13px] uppercase tracking-[0.04em] text-muted-2">
-              em {gruposTotal} grupo{gruposTotal === 1 ? "" : "s"}
+              {ta.em} {gruposTotal} {gruposTotal === 1 ? ta.grupo : ta.grupos}
             </div>
           </div>
 
@@ -148,32 +153,29 @@ export function EstruturadorAreas({
               disabled={!nValido}
               className="inline-flex -skew-x-9 items-center bg-brand px-6 py-4 font-cond text-lg font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <span className="inline-block skew-x-9">⚙ Estruturar áreas</span>
+              <span className="inline-block skew-x-9">⚙ {ta.estruturarAreas}</span>
             </BotaoAcaoBruto>
           </form>
         </div>
 
         <p className="border-t border-white/10 px-6 py-3.5 font-cond text-[13px] uppercase leading-relaxed tracking-[0.03em] text-muted-3">
-          O sistema ordena a grade dos extremos ao meio (kids e masters mais
-          velhos liberam cedo, o miolo — Adulto / Master 1 — corre por último) e
-          espalha as categorias pelas áreas equilibrando a carga, montando o
-          cronograma de lutas com horário previsto por tatame.
+          {ta.ajudaOrdena}
         </p>
       </div>
 
       {/* LEGENDA DO FUNIL */}
       <div className="border border-white/10 bg-surface p-[22px]">
         <div className="mb-3.5 flex items-baseline justify-between gap-3">
-          <span className="disp text-[22px]">Ordem do dia</span>
+          <span className="disp text-[22px]">{ta.ordemDoDia}</span>
           <span className="font-cond text-[13px] uppercase tracking-[0.06em] text-muted-3">
-            extremos → meio
+            {ta.extremosMeio}
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-x-1 gap-y-2.5">
           {classesDoFunil.map((c, i) => {
             const extremo = c.onda * 2 <= maiorOndaValor;
             return (
-              <span key={c.nome} className="flex items-center gap-1">
+              <span key={c.id} className="flex items-center gap-1">
                 {i > 0 && <span className="mr-1 text-muted-3">›</span>}
                 <span
                   className={cn(
@@ -188,7 +190,7 @@ export function EstruturadorAreas({
                       className="h-2 w-2 shrink-0"
                       style={{ background: corDaOnda(c.onda, maiorOndaValor) }}
                     />
-                    {c.nome}
+                    {dic.classesIdade[c.id] ?? c.nome}
                   </span>
                 </span>
               </span>
@@ -201,13 +203,26 @@ export function EstruturadorAreas({
         <>
           {/* RESUMO — 4 STATS */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat rotulo="Áreas" valor={String(areasAtuais)} sub="tatames" destaque />
-            <Stat rotulo="Categorias" valor={String(totalCategorias)} sub="na grade" />
-            <Stat rotulo="Média / área" valor={String(media)} sub="categorias" />
             <Stat
-              rotulo="Grupos"
+              rotulo={dic.admin.nav.areas}
+              valor={String(areasAtuais)}
+              sub={ta.tatames}
+              destaque
+            />
+            <Stat
+              rotulo={dic.admin.nav.categorias}
+              valor={String(totalCategorias)}
+              sub={ta.naGrade}
+            />
+            <Stat
+              rotulo={ta.mediaArea}
+              valor={String(media)}
+              sub={dic.admin.categorias.categorias}
+            />
+            <Stat
+              rotulo={ta.statGrupos}
               valor={String(gruposTotal)}
-              sub="classe · sexo · faixa"
+              sub={ta.classeSexoFaixa}
             />
           </div>
 
@@ -218,7 +233,7 @@ export function EstruturadorAreas({
               onClick={() => setAreasFull(true)}
               className="inline-flex -skew-x-9 items-center border border-white/14 px-4 py-2 font-cond text-[13px] font-semibold uppercase tracking-[0.04em] text-muted-2 transition-colors hover:border-brand/50 hover:text-brand-soft"
             >
-              <span className="inline-block skew-x-9">⤢ Expandir para tela cheia</span>
+              <span className="inline-block skew-x-9">⤢ {ta.expandirTelaCheia}</span>
             </button>
           </div>
 
@@ -234,12 +249,13 @@ export function EstruturadorAreas({
         // AINDA NÃO ESTRUTURADO
         <div className="border border-dashed border-white/12 bg-surface px-[22px] py-14 text-center">
           <div className="disp text-[26px] text-muted-2">
-            Pronto para estruturar
+            {ta.prontoEstruturar}
           </div>
           <p className="mx-auto mt-2 max-w-md font-cond text-[15px] uppercase tracking-[0.03em] text-muted-3">
-            Informe o número de áreas e clique em{" "}
-            <span className="text-brand-soft">Estruturar áreas</span> para
-            distribuir as {totalCategorias} categorias e montar o cronograma.
+            {ta.informePre}{" "}
+            <span className="text-brand-soft">{ta.estruturarAreas}</span>{" "}
+            {ta.informeDistribuir} {totalCategorias}{" "}
+            {dic.admin.categorias.categorias} {ta.informeMontar}
           </p>
         </div>
       )}
@@ -248,13 +264,13 @@ export function EstruturadorAreas({
       {areasFull && (
         <div className="fixed inset-0 z-[200] flex flex-col bg-[#0A0A0B] p-4">
           <div className="mb-3 flex items-center justify-between gap-3">
-            <span className="disp text-[22px]">Cronograma por área</span>
+            <span className="disp text-[22px]">{ta.cronogramaPorArea}</span>
             <button
               type="button"
               onClick={() => setAreasFull(false)}
               className="inline-flex -skew-x-9 items-center border border-white/14 px-4 py-2 font-cond text-[13px] font-semibold uppercase tracking-[0.04em] text-muted-2 transition-colors hover:border-brand/50 hover:text-brand-soft"
             >
-              <span className="inline-block skew-x-9">✕ Fechar tela cheia</span>
+              <span className="inline-block skew-x-9">✕ {ta.fecharTelaCheia}</span>
             </button>
           </div>
           <ProgramacaoAreas

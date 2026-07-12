@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getUsuarioAtual } from "@/lib/auth";
+import { getDicionario } from "@/lib/i18n/server";
 import { codigoCurto } from "@/lib/checkin/qr";
 
 export default async function PaginaCheckin({
@@ -21,6 +22,8 @@ export default async function PaginaCheckin({
   const { q = "" } = await searchParams;
   const db = await getDb();
   const usuario = await getUsuarioAtual();
+  const dic = await getDicionario();
+  const ck = dic.admin.checkin;
 
   const evento = await db.query.eventos.findFirst({
     where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
@@ -51,16 +54,13 @@ export default async function PaginaCheckin({
 
   return (
     <div>
-      <p className="text-sm text-muted-foreground">
-        Escaneie o QR do atleta com a câmera do celular (abre direto a tela de
-        pesagem) ou busque por nome / código.
-      </p>
+      <p className="text-sm text-muted-foreground">{ck.intro}</p>
 
       <div className="mt-6 grid grid-cols-3 gap-2.5 sm:gap-4">
         {[
-          ["Confirmados", confirmadas.length],
-          ["Check-in feito", feitos],
-          ["Fora do peso", foraDoPeso],
+          [ck.confirmados, confirmadas.length],
+          [ck.checkinFeito, feitos],
+          [ck.foraDoPeso, foraDoPeso],
         ].map(([rotulo, valor]) => (
           <Card key={rotulo}>
             <CardContent className="p-3.5 sm:p-5">
@@ -72,12 +72,8 @@ export default async function PaginaCheckin({
       </div>
 
       <form method="GET" className="mt-6 flex gap-2">
-        <Input
-          name="q"
-          defaultValue={q}
-          placeholder="Nome do atleta ou código (ex.: A1B2C3D4)"
-        />
-        <Button>Buscar</Button>
+        <Input name="q" defaultValue={q} placeholder={ck.buscarPlaceholder} />
+        <Button>{ck.buscar}</Button>
       </form>
 
       <ul className="mt-4 divide-y divide-border rounded-xl border bg-card">
@@ -101,12 +97,14 @@ export default async function PaginaCheckin({
               <span className="shrink-0">
                 {i.checkinEm ? (
                   i.foraDoPeso ? (
-                    <Badge variant="destructive">Fora do peso ({i.pesoAferidoKg}kg)</Badge>
+                    <Badge variant="destructive">
+                      {ck.foraDoPeso} ({i.pesoAferidoKg}kg)
+                    </Badge>
                   ) : (
                     <Badge variant="success">OK · {i.pesoAferidoKg}kg</Badge>
                   )
                 ) : (
-                  <Badge variant="secondary">Aguardando</Badge>
+                  <Badge variant="secondary">{ck.aguardando}</Badge>
                 )}
               </span>
             </Link>
@@ -114,7 +112,8 @@ export default async function PaginaCheckin({
         ))}
         {resultados.length === 0 && (
           <li className="px-5 py-8 text-center text-sm text-muted-foreground">
-            Nenhum atleta encontrado{termo ? ` para "${q}"` : ""}.
+            {dic.atletas.nenhumEncontrado}
+            {termo ? ` ${ck.para} "${q}"` : ""}.
           </li>
         )}
       </ul>

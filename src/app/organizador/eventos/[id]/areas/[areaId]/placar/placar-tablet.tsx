@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import type { MetodoVitoria } from "@/lib/bracket";
+import { useDic } from "@/lib/i18n/client";
 import {
   encerrarLutaDoPlacar,
   salvarPlacarParcial,
@@ -45,6 +46,9 @@ export function PlacarTablet({
   placarInicial,
 }: Props) {
   const router = useRouter();
+  const dic = useDic();
+  const t = dic.admin.placarTablet;
+  const met = dic.bracket.metodos;
   const [placar, setPlacar] = useState<{ l1: Lado; l2: Lado }>(
     placarInicial ?? { l1: zerado, l2: zerado },
   );
@@ -156,8 +160,8 @@ export function PlacarTablet({
       <div className="mt-4 flex items-end gap-6">
         <span className="text-6xl font-black tabular-nums sm:text-8xl">{dados.pontos}</span>
         <div className="mb-2 space-y-1 text-sm">
-          <p>Vantagens: <span className="font-bold">{dados.vantagens}</span></p>
-          <p>Punições: <span className="font-bold">{dados.punicoes}</span></p>
+          <p>{t.vantagensLabel}: <span className="font-bold">{dados.vantagens}</span></p>
+          <p>{t.punicoesLabel}: <span className="font-bold">{dados.punicoes}</span></p>
         </div>
       </div>
 
@@ -172,13 +176,13 @@ export function PlacarTablet({
           </button>
         ))}
         <button onClick={() => ajustar(lado, "pontos", -1)} className="rounded-xl bg-white/10 py-2 text-sm hover:bg-white/20">
-          −1 ponto
+          {t.menos1Ponto}
         </button>
         <button onClick={() => ajustar(lado, "vantagens", 1)} className="rounded-xl bg-white/10 py-2 text-sm hover:bg-white/20">
-          +Vantagem
+          {t.maisVantagem}
         </button>
         <button onClick={() => ajustar(lado, "punicoes", 1)} className="rounded-xl bg-white/10 py-2 text-sm hover:bg-white/20">
-          +Punição
+          {t.maisPunicao}
         </button>
       </div>
     </div>
@@ -196,20 +200,20 @@ export function PlacarTablet({
             onClick={() => setRodando((r) => !r)}
             className="rounded-lg bg-white/20 px-4 py-2 text-sm font-medium hover:bg-white/30"
           >
-            {rodando ? "Pausar" : "Iniciar"}
+            {rodando ? t.pausar : t.iniciar}
           </button>
           <button
             onClick={() => { setRodando(false); setRestante(duracaoSegundos); }}
             className="rounded-lg bg-white/10 px-3 py-2 text-sm hover:bg-white/20"
           >
-            Zerar
+            {t.zerar}
           </button>
         </div>
         <button
           onClick={abrirEncerramento}
           className="rounded-lg bg-emerald-600 px-5 py-2 font-medium hover:bg-emerald-500"
         >
-          Encerrar luta
+          {t.encerrarLuta}
         </button>
       </div>
 
@@ -220,7 +224,7 @@ export function PlacarTablet({
 
       {encerrando && (
         <div className="mt-4 rounded-2xl border border-zinc-200 bg-white p-6">
-          <p className="font-bold">Confirmar resultado</p>
+          <p className="font-bold">{t.confirmarResultado}</p>
           <div className="mt-3 flex flex-wrap items-center gap-6 text-sm">
             <label className="flex items-center gap-2">
               <input
@@ -245,22 +249,22 @@ export function PlacarTablet({
               onChange={(e) => setMetodo(e.target.value as MetodoVitoria)}
               className="rounded-lg border border-zinc-300 px-3 py-2"
             >
-              <option value="pontos">Pontos</option>
-              <option value="vantagens">Vantagens</option>
-              <option value="finalizacao">Finalização</option>
-              <option value="decisao">Decisão</option>
-              <option value="wo">W.O.</option>
-              <option value="dq">Desqualificação</option>
+              <option value="pontos">{met.pontos}</option>
+              <option value="vantagens">{met.vantagens}</option>
+              <option value="finalizacao">{met.finalizacao}</option>
+              <option value="decisao">{met.decisao}</option>
+              <option value="wo">{met.wo}</option>
+              <option value="dq">{met.dq}</option>
             </select>
             <button
               onClick={confirmar}
               disabled={!vencedorId}
               className="rounded-lg bg-emerald-600 px-5 py-2 font-medium text-white hover:bg-emerald-500 disabled:bg-zinc-300"
             >
-              Confirmar
+              {t.confirmar}
             </button>
             <button onClick={() => setEncerrando(false)} className="text-zinc-500 hover:underline">
-              voltar
+              {t.voltar}
             </button>
           </div>
         </div>

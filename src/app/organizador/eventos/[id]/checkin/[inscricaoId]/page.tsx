@@ -7,6 +7,7 @@ import { AcaoTexto, BotaoAcao } from "@/components/ui/botao-acao";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getUsuarioAtual } from "@/lib/auth";
+import { getDicionario } from "@/lib/i18n/server";
 import { codigoCurto } from "@/lib/checkin/qr";
 import { desfazerCheckin, registrarCheckin } from "../actions";
 
@@ -18,6 +19,8 @@ export default async function PaginaCheckinAtleta({
   const { id, inscricaoId } = await params;
   const db = await getDb();
   const usuario = await getUsuarioAtual();
+  const dic = await getDicionario();
+  const ca = dic.admin.checkinAtleta;
 
   const evento = await db.query.eventos.findFirst({
     where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
@@ -43,7 +46,7 @@ export default async function PaginaCheckinAtleta({
         href={`/organizador/eventos/${id}/checkin`}
         className="text-sm text-muted-foreground hover:underline"
       >
-        ← Check-in
+        ← {dic.admin.nav.checkin}
       </Link>
 
       <Card className="mt-3 rounded-2xl">
@@ -52,7 +55,11 @@ export default async function PaginaCheckinAtleta({
             <div>
               <h1 className="text-2xl font-bold">{inscricao.nomeAtleta}</h1>
               <p className="mt-0.5 text-sm capitalize text-muted-foreground">
-                faixa {inscricao.faixa} · {idade} anos
+                {dic.inscricao.faixa}{" "}
+                {dic.evento.faixaNomes[
+                  inscricao.faixa as keyof typeof dic.evento.faixaNomes
+                ] ?? inscricao.faixa}{" "}
+                · {idade} {dic.admin.categorias.anos}
                 {inscricao.academiaNome ? ` · ${inscricao.academiaNome}` : ""}
               </p>
             </div>
@@ -64,13 +71,17 @@ export default async function PaginaCheckinAtleta({
           <div className="mt-4 rounded-xl bg-muted p-4 text-sm">
             <p className="font-medium">{categoria?.nome}</p>
             <p className="mt-0.5 text-muted-foreground">
-              {limite ? `Limite: ${limite}kg (com kimono)` : "Sem limite de peso"}
+              {limite
+                ? `${ca.limiteLabel} ${limite}kg ${ca.comKimono}`
+                : ca.semLimite}
             </p>
           </div>
 
           {inscricao.status !== "confirmada" ? (
             <p className="mt-5 rounded-md bg-destructive/10 px-4 py-3 text-sm text-destructive">
-              Inscrição {inscricao.status.replace("_", " ")} — não pode fazer check-in.
+              {ca.inscricaoPre}{" "}
+              {dic.admin.statusInscricao[inscricao.status] ?? inscricao.status}{" "}
+              {ca.naoPodeCheckin}
             </p>
           ) : inscricao.checkinEm ? (
             <div className="mt-5">
@@ -80,13 +91,13 @@ export default async function PaginaCheckinAtleta({
                 <p
                   className={`text-2xl font-bold ${inscricao.foraDoPeso ? "text-destructive" : "text-success"}`}
                 >
-                  {inscricao.foraDoPeso ? "FORA DO PESO" : "Check-in OK ✓"}
+                  {inscricao.foraDoPeso ? ca.foraDoPesoMaiusc : ca.checkinOk}
                 </p>
                 <p
                   className={`mt-1 text-sm ${inscricao.foraDoPeso ? "text-destructive" : "text-success"}`}
                 >
                   {inscricao.pesoAferidoKg}kg
-                  {limite ? ` · limite ${limite}kg` : ""} ·{" "}
+                  {limite ? ` · ${ca.limiteWord} ${limite}kg` : ""} ·{" "}
                   {inscricao.checkinEm.toLocaleTimeString("pt-BR", {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -94,8 +105,7 @@ export default async function PaginaCheckinAtleta({
                 </p>
                 {inscricao.foraDoPeso && (
                   <p className="mt-2 text-xs text-destructive">
-                    Resolva na gestão de inscrições: mover de categoria ou
-                    desclassificar, conforme o regulamento do evento.
+                    {ca.foraResolva}
                   </p>
                 )}
               </div>
@@ -104,14 +114,14 @@ export default async function PaginaCheckinAtleta({
                 className="mt-3 text-center"
               >
                 <AcaoTexto className="text-xs text-muted-foreground hover:text-destructive hover:underline">
-                  desfazer check-in (registrado na auditoria)
+                  {ca.desfazerCheckin}
                 </AcaoTexto>
               </form>
             </div>
           ) : (
             <form action={registrarCheckin.bind(null, id, inscricao.id)} className="mt-5">
               <label className="block">
-                <span className="text-sm font-medium">Peso aferido (kg)</span>
+                <span className="text-sm font-medium">{ca.pesoAferido}</span>
                 <Input
                   name="peso"
                   type="number"
@@ -125,7 +135,7 @@ export default async function PaginaCheckinAtleta({
                 />
               </label>
               <BotaoAcao variant="success" size="lg" className="mt-4 w-full">
-                Registrar pesagem
+                {ca.registrarPesagem}
               </BotaoAcao>
             </form>
           )}

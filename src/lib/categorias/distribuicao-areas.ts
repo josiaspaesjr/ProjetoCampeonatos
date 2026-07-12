@@ -158,13 +158,17 @@ export function agruparExibicao<
 /** classes distintas na ordem do dia (para a legenda do funil) */
 export function classesEmOrdem<T extends { classeIdade: string }>(
   cats: T[],
-): { nome: string; onda: number }[] {
+): { id: string; nome: string; onda: number }[] {
   const vistas = new Map<string, number>();
   for (const c of cats) {
-    const nome = nomeDaClasse(c.classeIdade);
-    if (!vistas.has(nome)) vistas.set(nome, ondaDaClasse(c.classeIdade));
+    if (!vistas.has(c.classeIdade))
+      vistas.set(c.classeIdade, ondaDaClasse(c.classeIdade));
   }
-  return [...vistas].map(([nome, onda]) => ({ nome, onda }));
+  return [...vistas].map(([id, onda]) => ({
+    id,
+    nome: nomeDaClasse(id),
+    onda,
+  }));
 }
 
 /** maior onda presente (mín. 1, para não dividir por zero na cor) */

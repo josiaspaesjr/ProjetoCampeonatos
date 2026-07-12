@@ -124,9 +124,9 @@ export function lerRegulamentoDoForm(formData: FormData): Regulamento | null {
 /** Seções preenchidas, na ordem canônica — para exibir na página pública. */
 export function secoesPreenchidas(
   regulamento: Regulamento | null | undefined,
-): { titulo: string; texto: string }[] {
+): { chave: string; titulo: string; texto: string }[] {
   if (!regulamento) return [];
   return SECOES_REGULAMENTO.filter((s) => regulamento[s.chave]?.trim()).map(
-    (s) => ({ titulo: s.titulo, texto: regulamento[s.chave] }),
+    (s) => ({ chave: s.chave, titulo: s.titulo, texto: regulamento[s.chave] }),
   );
 }

@@ -5,6 +5,7 @@ import { getDb } from "@/db";
 import { chaves, eventos } from "@/db/schema";
 import { buttonVariants } from "@/components/ui/button";
 import { getUsuarioAtual } from "@/lib/auth";
+import { getDicionario } from "@/lib/i18n/server";
 import { duracaoLutaSegundos, montarFilaDaArea } from "@/lib/cronograma/fila";
 import { PlacarTablet } from "./placar-tablet";
 
@@ -16,6 +17,8 @@ export default async function PaginaPlacar({
   const { id, areaId } = await params;
   const db = await getDb();
   const usuario = await getUsuarioAtual();
+  const dic = await getDicionario();
+  const p = dic.admin.placar;
 
   const evento = await db.query.eventos.findFirst({
     where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
@@ -30,15 +33,15 @@ export default async function PaginaPlacar({
   if (!proxima) {
     return (
       <div className="mx-auto max-w-lg py-20 text-center">
-        <p className="text-2xl font-bold">Nenhuma luta pronta em {fila.area.nome}</p>
-        <p className="mt-2 text-muted-foreground">
-          A fila está vazia ou aguardando vencedores das lutas anteriores.
+        <p className="text-2xl font-bold">
+          {p.nenhumLutaProntaEm} {fila.area.nome}
         </p>
+        <p className="mt-2 text-muted-foreground">{p.filaVazia}</p>
         <Link
           href={`/organizador/eventos/${id}/areas`}
           className={`mt-6 inline-block ${buttonVariants()}`}
         >
-          Voltar às áreas
+          {p.voltarAsAreas}
         </Link>
       </div>
     );
@@ -54,10 +57,12 @@ export default async function PaginaPlacar({
     <div>
       <div className="mb-4 flex items-center justify-between">
         <Link href={`/organizador/eventos/${id}/areas`} className="text-sm text-muted-foreground hover:underline">
-          ← Áreas
+          ← {dic.admin.nav.areas}
         </Link>
         <p className="text-sm font-medium text-muted-foreground">
-          {fila.area.nome} · {fila.fila.length} luta(s) na fila
+          {fila.area.nome} · {fila.fila.length}{" "}
+          {fila.fila.length === 1 ? dic.lutasTab.luta : dic.lutasTab.lutas}{" "}
+          {p.naFila}
         </p>
       </div>
 
