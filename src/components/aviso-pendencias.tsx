@@ -8,6 +8,7 @@ import {
   prazoDePagamento,
 } from "@/lib/pagamentos/prazo";
 import { getAtletaAtual } from "@/lib/sessao";
+import { getDicionario } from "@/lib/i18n/server";
 
 /**
  * Faixa global de pendências de pagamento.
@@ -63,6 +64,7 @@ export async function AvisoPendencias() {
     .sort((a, b) => a.getTime() - b.getTime())[0];
 
   const n = pagaveis.length;
+  const dm = (await getDicionario()).minhas;
 
   return (
     <Link
@@ -71,17 +73,15 @@ export async function AvisoPendencias() {
     >
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-center gap-x-3 gap-y-1 px-6 py-2.5 text-center font-cond text-[13px] uppercase tracking-[0.04em] md:px-12">
         <span className="font-bold text-amber-400">
-          {n === 1
-            ? "1 inscrição aguardando pagamento"
-            : `${n} inscrições aguardando pagamento`}
+          {n} {n === 1 ? dm.avisoSing : dm.avisoPlur}
         </span>
         {prazoMaisProximo && (
           <span className="text-amber-200/80">
-            · pague até {dataHora(prazoMaisProximo)}
+            · {dm.pagueAte} {dataHora(prazoMaisProximo)}
           </span>
         )}
         <span className="text-white underline decoration-amber-400/60 underline-offset-2 group-hover:decoration-amber-400">
-          Pagar agora →
+          {dm.pagarAgora} →
         </span>
       </div>
     </Link>

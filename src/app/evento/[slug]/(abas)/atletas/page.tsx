@@ -3,6 +3,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, chaves, inscricoes } from "@/db/schema";
 import { getEventoPublico } from "@/lib/evento-publico";
+import { getDicionario } from "@/lib/i18n/server";
 import {
   AtletasLista,
   type AtletaCard,
@@ -18,6 +19,7 @@ export default async function AbaAtletas({
   const dados = await getEventoPublico(slug);
   if (!dados) notFound();
   const { evento } = dados;
+  const dat = (await getDicionario()).atletas;
 
   const db = await getDb();
   const cats = await db.query.categorias.findMany({
@@ -87,9 +89,9 @@ export default async function AbaAtletas({
   return (
     <div className="px-6 pb-20 pt-10 md:px-12">
       <div className="mb-6">
-        <h1 className="disp text-[46px]">Atletas</h1>
+        <h1 className="disp text-[46px]">{dat.titulo}</h1>
         <p className="font-cond text-sm uppercase tracking-[0.05em] text-muted-2">
-          Inscritos por divisão · busque por atleta ou academia
+          {dat.subtitulo}
         </p>
       </div>
       <AtletasLista

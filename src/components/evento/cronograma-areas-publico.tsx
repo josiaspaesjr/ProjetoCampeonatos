@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useDic } from "@/lib/i18n/client";
 import { AutoRefresh } from "@/components/auto-refresh";
 import {
   AbrirLutaCtx,
@@ -22,6 +23,7 @@ export function CronogramaAreasPublico({
   cronograma: AreaCron[];
 }) {
   const [lutaSel, setLutaSel] = useState<LutaSelecionada | null>(null);
+  const dcr = useDic().cronogramaTab;
 
   // modal aberto: trava o scroll do body e fecha com Esc
   useEffect(() => {
@@ -41,8 +43,7 @@ export function CronogramaAreasPublico({
   if (cronograma.length === 0) {
     return (
       <p className="font-cond text-sm uppercase tracking-[0.04em] text-muted-3">
-        O cronograma aparece aqui quando o organizador distribuir as chaves pelas
-        áreas.
+        {dcr.vazio}
       </p>
     );
   }

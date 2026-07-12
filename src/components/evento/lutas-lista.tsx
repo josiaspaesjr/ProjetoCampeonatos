@@ -3,6 +3,7 @@
 import { useContext, useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { useDic } from "@/lib/i18n/client";
 import { AutoRefresh } from "@/components/auto-refresh";
 import {
   AbrirLutaCtx,
@@ -47,6 +48,7 @@ export function LutasLista({
   const [busca, setBusca] = useState("");
   const [area, setArea] = useState<string | null>(null);
   const [lutaSel, setLutaSel] = useState<LutaSelecionada | null>(null);
+  const dl = useDic().lutasTab;
 
   // modal aberto: trava o scroll do body e fecha com Esc
   useEffect(() => {
@@ -78,8 +80,7 @@ export function LutasLista({
   if (itens.length === 0) {
     return (
       <p className="font-cond text-sm uppercase tracking-[0.04em] text-muted-3">
-        As lutas aparecem aqui quando o organizador gerar as chaves e distribuir
-        as áreas.
+        {dl.vazio}
       </p>
     );
   }
@@ -94,13 +95,13 @@ export function LutasLista({
           type="search"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
-          placeholder="Buscar atleta ou academia…"
+          placeholder={dl.buscar}
           className="w-full border border-white/14 bg-background px-4 py-2.5 font-cond text-[15px] uppercase tracking-[0.02em] text-foreground placeholder:text-muted-3 focus:border-brand focus:outline-none"
         />
         {areas.length > 1 && (
           <div className="flex flex-wrap gap-2">
             <ChipArea ativo={area === null} onClick={() => setArea(null)}>
-              Todas
+              {dl.todas}
             </ChipArea>
             {areas.map((a) => (
               <ChipArea key={a} ativo={area === a} onClick={() => setArea(a)}>
@@ -112,15 +113,15 @@ export function LutasLista({
       </div>
 
       <p className="mb-2 font-cond text-[12px] uppercase tracking-[0.05em] text-muted-3">
-        <span className="tnum">{filtradas.length}</span> luta
-        {filtradas.length === 1 ? "" : "s"}
+        <span className="tnum">{filtradas.length}</span>{" "}
+        {filtradas.length === 1 ? dl.luta : dl.lutas}
         {area ? ` · ${area}` : ""}
         {q ? ` · "${busca.trim()}"` : ""}
       </p>
 
       {filtradas.length === 0 ? (
         <div className="border border-white/10 bg-surface px-6 py-12 text-center font-cond text-[14px] uppercase tracking-[0.04em] text-muted-3">
-          Nenhuma luta encontrada
+          {dl.nenhumaEncontrada}
         </div>
       ) : (
         <ul className="flex flex-col border border-white/10 bg-surface">

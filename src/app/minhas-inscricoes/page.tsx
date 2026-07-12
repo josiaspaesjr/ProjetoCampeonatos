@@ -12,27 +12,29 @@ import {
   prazoDePagamento,
 } from "@/lib/pagamentos/prazo";
 import { getAtletaAtual } from "@/lib/sessao";
+import { getDicionario } from "@/lib/i18n/server";
 import { gerarCobrancaInscricao } from "./actions";
-
-const rotuloStatus: Record<string, [string, BadgeProps["variant"]]> = {
-  pendente_pagamento: ["Aguardando pagamento", "warning"],
-  confirmada: ["Confirmada", "success"],
-  cancelada: ["Cancelada", "secondary"],
-  reembolsada: ["Reembolsada", "secondary"],
-};
 
 export default async function MinhasInscricoes() {
   const atleta = await getAtletaAtual();
+  const dm = (await getDicionario()).minhas;
+
+  const rotuloStatus: Record<string, [string, BadgeProps["variant"]]> = {
+    pendente_pagamento: [dm.statusAguardando, "warning"],
+    confirmada: [dm.statusConfirmada, "success"],
+    cancelada: [dm.statusCancelada, "secondary"],
+    reembolsada: [dm.statusReembolsada, "secondary"],
+  };
 
   if (!atleta) {
     return (
       <PublicShell>
         <p className="text-muted-foreground">
-          Você ainda não tem inscrições —{" "}
+          {dm.semInscricoesPre}{" "}
           <Link href="/" className="underline">
-            encontre um evento
+            {dm.encontreEvento}
           </Link>{" "}
-          para começar.
+          {dm.semInscricoesPos}
         </p>
       </PublicShell>
     );
@@ -81,7 +83,7 @@ export default async function MinhasInscricoes() {
 
   return (
     <PublicShell>
-      <h1 className="text-2xl font-bold">Minhas inscrições</h1>
+      <h1 className="text-2xl font-bold">{dm.titulo}</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         {atleta.nome} · {atleta.email}
       </p>
@@ -102,7 +104,7 @@ export default async function MinhasInscricoes() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={qrPorInscricao.get(i.id)}
-                    alt="QR de check-in"
+                    alt={dm.qrAlt}
                     className="h-20 w-20 shrink-0 rounded-lg border"
                   />
                 )}
@@ -113,7 +115,7 @@ export default async function MinhasInscricoes() {
                   </p>
                   {qrPorInscricao.has(i.id) && (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Check-in: mostre o QR na pesagem · código{" "}
+                      {dm.checkinInfo}{" "}
                       <span className="font-cond">{codigoCurto(i.id)}</span>
                     </p>
                   )}
@@ -128,17 +130,17 @@ export default async function MinhasInscricoes() {
                       className="mt-1.5"
                     >
                       <BotaoAcaoBruto className="inline-flex cursor-pointer items-center bg-brand px-3 py-1.5 font-cond text-xs font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">
-                        Pagar agora
+                        {dm.pagarAgora}
                       </BotaoAcaoBruto>
                       {prazo && (
                         <span className="mt-1 block text-[11px] text-muted-foreground">
-                          pague até {dataHora(prazo)}
+                          {dm.pagueAte} {dataHora(prazo)}
                         </span>
                       )}
                     </form>
                   ) : (
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Prazo de pagamento encerrado
+                      {dm.prazoEncerrado}
                     </p>
                   ))}
               </div>
@@ -147,7 +149,7 @@ export default async function MinhasInscricoes() {
         })}
         {minhas.length === 0 && (
           <li className="px-5 py-8 text-center text-muted-foreground">
-            Nenhuma inscrição ainda.
+            {dm.nenhumaAinda}
           </li>
         )}
       </ul>

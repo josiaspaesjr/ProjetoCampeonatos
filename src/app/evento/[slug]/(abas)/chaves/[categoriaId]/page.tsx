@@ -5,6 +5,7 @@ import { getDb } from "@/db";
 import { categorias, chaves, inscricoes, lutas } from "@/db/schema";
 import { calcularPodioDaChave } from "@/lib/chaves/persistencia";
 import { getEventoPublico } from "@/lib/evento-publico";
+import { getDicionario } from "@/lib/i18n/server";
 import { BracketView, type AtletaInfo } from "@/components/bracket-view";
 
 export default async function ChavePublica({
@@ -16,6 +17,7 @@ export default async function ChavePublica({
   const dados = await getEventoPublico(slug);
   if (!dados) notFound();
   const { evento } = dados;
+  const dic = await getDicionario();
 
   const db = await getDb();
   const categoria = await db.query.categorias.findFirst({
@@ -59,13 +61,13 @@ export default async function ChavePublica({
         href={`/evento/${evento.slug}/chaves`}
         className="font-cond text-sm uppercase tracking-[0.05em] text-muted-2 transition-colors hover:text-brand"
       >
-        ← Todas as chaves
+        ← {dic.chavesTab.todasAsChaves}
       </Link>
       <h1 className="disp mt-2 text-[40px]">{categoria.nome}</h1>
 
       {podio && (
         <div className="mt-4 rounded-xl border border-success/30 bg-success/10 p-5">
-          <p className="font-semibold text-success">Pódio</p>
+          <p className="font-semibold text-success">{dic.chavesTab.podio}</p>
           <ol className="mt-2 space-y-1 text-sm">
             <li>🥇 {podio.primeiro && atletas[podio.primeiro]?.nome}</li>
             <li>🥈 {podio.segundo && atletas[podio.segundo]?.nome}</li>
@@ -77,7 +79,12 @@ export default async function ChavePublica({
       )}
 
       <div className="mt-6">
-        <BracketView lutas={linhas} atletas={atletas} formato={chave.formato} />
+        <BracketView
+          lutas={linhas}
+          atletas={atletas}
+          formato={chave.formato}
+          labels={dic.bracket}
+        />
       </div>
     </div>
   );

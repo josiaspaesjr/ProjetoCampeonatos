@@ -4,6 +4,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, chaves, inscricoes } from "@/db/schema";
 import { getEventoPublico } from "@/lib/evento-publico";
+import { getDicionario } from "@/lib/i18n/server";
 import { montarFilasDoEvento } from "@/lib/cronograma/fila";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 
@@ -24,6 +25,7 @@ export default async function AbaChaves({
   const dados = await getEventoPublico(slug);
   if (!dados) notFound();
   const { evento } = dados;
+  const dk = (await getDicionario()).chavesTab;
 
   const db = await getDb();
   const cats = await db.query.categorias.findMany({
@@ -94,26 +96,24 @@ export default async function AbaChaves({
   return (
     <div className="px-6 pb-20 pt-10 md:px-12">
       <div className="mb-6 flex items-baseline gap-3">
-        <h1 className="disp text-[46px]">Chaves</h1>
+        <h1 className="disp text-[46px]">{dk.titulo}</h1>
         <span className="font-cond text-[15px] uppercase tracking-[0.06em] text-muted-2">
-          {linhas.length} publicada{linhas.length === 1 ? "" : "s"}
+          {linhas.length} {linhas.length === 1 ? dk.publicada : dk.publicadas}
         </span>
       </div>
 
       {linhas.length === 0 ? (
         <div className="border border-white/10 bg-surface px-6 py-16 text-center font-cond text-sm uppercase tracking-[0.06em] text-muted-3">
-          {cats.length === 0
-            ? "As chaves aparecem aqui quando o organizador gerar as categorias."
-            : "Nenhuma chave publicada ainda — volte mais perto do evento."}
+          {cats.length === 0 ? dk.vazioSemCat : dk.vazioSemChave}
         </div>
       ) : (
         <div className="border border-white/10">
           {/* CABEÇALHO */}
           <div className="hidden grid-cols-[minmax(0,1fr)_90px_140px_120px] gap-4 border-b border-white/10 bg-white/[0.03] px-5 py-3 font-cond text-[12px] uppercase tracking-[0.1em] text-muted-3 md:grid">
-            <span>Divisão</span>
-            <span className="text-right">Inscritos</span>
-            <span>Início est.</span>
-            <span>Tatame</span>
+            <span>{dk.colDivisao}</span>
+            <span className="text-right">{dk.colInscritos}</span>
+            <span>{dk.colInicio}</span>
+            <span>{dk.colTatame}</span>
           </div>
           {linhas.map(({ c, inscritos, ag }, i) => (
             <Link
@@ -139,7 +139,7 @@ export default async function AbaChaves({
                 {ag ? (
                   <span className="text-brand-soft">{quando(ag.inicio)}</span>
                 ) : (
-                  <span className="text-muted-3">a definir</span>
+                  <span className="text-muted-3">{dk.aDefinir}</span>
                 )}
               </span>
               <span className="font-cond text-sm uppercase tracking-[0.04em] text-muted-2 max-md:col-span-2">
@@ -150,10 +150,7 @@ export default async function AbaChaves({
         </div>
       )}
 
-      <p className="mt-4 font-cond text-xs text-muted-3">
-        Horários são estimativas e mudam em tempo real conforme o andamento das
-        lutas. Toque numa divisão para ver a chave completa.
-      </p>
+      <p className="mt-4 font-cond text-xs text-muted-3">{dk.nota}</p>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { CLASSES_IDADE } from "@/lib/categorias/cbjj";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 import { cn } from "@/lib/utils";
+import { useDic } from "@/lib/i18n/client";
 
 export interface CategoriaLinha {
   id: string;
@@ -20,6 +21,7 @@ export interface CategoriaLinha {
 
 export function CategoriasFiltro({ categorias }: { categorias: CategoriaLinha[] }) {
   const [filtro, setFiltro] = useState("todas");
+  const dcat = useDic().categorias;
 
   const chips = useMemo(() => {
     const presentes = new Set(categorias.map((c) => c.classeIdade));
@@ -28,11 +30,11 @@ export function CategoriasFiltro({ categorias }: { categorias: CategoriaLinha[] 
     );
     const temFeminino = categorias.some((c) => c.sexo === "feminino");
     return [
-      { id: "todas", rotulo: "Todas" },
+      { id: "todas", rotulo: dcat.todas },
       ...classes,
-      ...(temFeminino ? [{ id: "feminino", rotulo: "Feminino" }] : []),
+      ...(temFeminino ? [{ id: "feminino", rotulo: dcat.feminino }] : []),
     ];
-  }, [categorias]);
+  }, [categorias, dcat]);
 
   const visiveis = categorias.filter((c) => {
     if (filtro === "todas") return true;
@@ -86,14 +88,15 @@ export function CategoriasFiltro({ categorias }: { categorias: CategoriaLinha[] 
             <div className="flex shrink-0 items-center gap-2 font-cond text-sm uppercase tracking-[0.04em] sm:gap-4">
               {c.preco && <span className="text-brand-soft">{c.preco}</span>}
               <span className={c.inscritos > 0 ? "text-muted-2" : "text-muted-3"}>
-                {c.inscritos} inscrito{c.inscritos === 1 ? "" : "s"}
+                {c.inscritos}{" "}
+                {c.inscritos === 1 ? dcat.inscrito : dcat.inscritos}
               </span>
               {c.chaveUrl && (
                 <Link
                   href={c.chaveUrl}
                   className="tracking-[0.08em] text-brand transition-colors hover:text-brand-soft"
                 >
-                  Chave →
+                  {dcat.chave} →
                 </Link>
               )}
             </div>
@@ -101,13 +104,12 @@ export function CategoriasFiltro({ categorias }: { categorias: CategoriaLinha[] 
         ))}
         {visiveis.length === 0 && (
           <div className="px-5 py-8 font-cond text-sm text-muted-3">
-            Nenhuma categoria neste filtro.
+            {dcat.nenhumaNoFiltro}
           </div>
         )}
       </div>
       <div className="mt-3.5 font-cond text-xs text-muted-3">
-        Mostrando {rotuloFiltro} · as categorias compatíveis com seu perfil
-        aparecem na tela de inscrição
+        {dcat.mostrando} {rotuloFiltro} · {dcat.notaCompat}
       </div>
     </div>
   );

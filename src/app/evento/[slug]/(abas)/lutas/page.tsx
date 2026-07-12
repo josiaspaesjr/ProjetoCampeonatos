@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { inscricoes } from "@/db/schema";
 import { getEventoPublico } from "@/lib/evento-publico";
+import { getDicionario } from "@/lib/i18n/server";
 import { montarCronogramaDoEvento } from "@/lib/cronograma/cronograma-areas";
 import { LutasLista, type LutaItem } from "@/components/evento/lutas-lista";
 
@@ -15,6 +16,7 @@ export default async function AbaLutas({
   const dados = await getEventoPublico(slug);
   if (!dados) notFound();
   const { evento } = dados;
+  const dl = (await getDicionario()).lutasTab;
 
   const db = await getDb();
   const [cronograma, confirmadas] = await Promise.all([
@@ -52,9 +54,9 @@ export default async function AbaLutas({
   return (
     <div className="px-6 pb-20 pt-10 md:px-12">
       <div className="mb-6">
-        <h1 className="disp text-[46px]">Lutas</h1>
+        <h1 className="disp text-[46px]">{dl.titulo}</h1>
         <p className="font-cond text-sm uppercase tracking-[0.05em] text-muted-2">
-          Busque por atleta ou academia · atualiza sozinho
+          {dl.subtitulo}
         </p>
       </div>
       <LutasLista itens={itens} areas={areasNomes} />

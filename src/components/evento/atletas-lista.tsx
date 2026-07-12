@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 import { bandeiraPais, nomePais } from "@/lib/paises";
+import { useDic } from "@/lib/i18n/client";
 
 /** status relevante de um inscrito na lista pública */
 export type StatusInscrito = "confirmada" | "pendente_pagamento";
@@ -56,6 +57,7 @@ export function AtletasLista({
   const [busca, setBusca] = useState("");
   const [paisFiltro, setPaisFiltro] = useState<string | null>(null);
   const q = norm(busca.trim());
+  const dat = useDic().atletas;
 
   // países distintos presentes — só mostra o filtro/bandeiras se houver variedade
   const paises = useMemo(() => {
@@ -87,8 +89,7 @@ export function AtletasLista({
   if (totalAtletas === 0) {
     return (
       <p className="font-cond text-sm uppercase tracking-[0.04em] text-muted-3">
-        Ninguém inscrito ainda — os atletas aparecem aqui assim que as inscrições
-        começarem.
+        {dat.ninguemInscrito}
       </p>
     );
   }
@@ -98,11 +99,16 @@ export function AtletasLista({
       {/* RESUMO */}
       <div className="mb-4 flex flex-wrap items-center gap-2.5 font-cond text-[13px] uppercase tracking-[0.04em]">
         <span className="text-muted-2">
-          <span className="tnum text-foreground">{totalAtletas}</span> inscritos
+          <span className="tnum text-foreground">{totalAtletas}</span>{" "}
+          {dat.inscritos}
         </span>
-        <SeloContagem tone="ok">{totalConfirmados} confirmados</SeloContagem>
+        <SeloContagem tone="ok">
+          {totalConfirmados} {dat.confirmadosSelo}
+        </SeloContagem>
         {totalPendentes > 0 && (
-          <SeloContagem tone="pend">{totalPendentes} pendentes</SeloContagem>
+          <SeloContagem tone="pend">
+            {totalPendentes} {dat.pendentesSelo}
+          </SeloContagem>
         )}
       </div>
 
@@ -111,7 +117,7 @@ export function AtletasLista({
         type="search"
         value={busca}
         onChange={(e) => setBusca(e.target.value)}
-        placeholder="Buscar atleta ou academia…"
+        placeholder={dat.buscar}
         className="mb-3 w-full border border-white/14 bg-background px-4 py-2.5 font-cond text-[15px] uppercase tracking-[0.02em] text-foreground placeholder:text-muted-3 focus:border-brand focus:outline-none"
       />
 
@@ -119,7 +125,7 @@ export function AtletasLista({
       {mostrarPais && (
         <div className="mb-5 flex flex-wrap gap-2">
           <ChipPais ativo={paisFiltro === null} onClick={() => setPaisFiltro(null)}>
-            Todos os países
+            {dat.todosPaises}
           </ChipPais>
           {paises.map((c) => (
             <ChipPais
@@ -135,7 +141,7 @@ export function AtletasLista({
 
       {visiveis.length === 0 ? (
         <div className="border border-white/10 bg-surface px-6 py-12 text-center font-cond text-[14px] uppercase tracking-[0.04em] text-muted-3">
-          Nenhum atleta encontrado
+          {dat.nenhumEncontrado}
         </div>
       ) : (
         <div className="flex flex-col gap-5">
@@ -165,6 +171,7 @@ function Divisao({
 }) {
   const [abertoLocal, setAbertoLocal] = useState(false);
   const aberto = forcarAberto || abertoLocal;
+  const dat = useDic().atletas;
 
   return (
     <section className="relative border border-white/10 bg-surface">
@@ -188,13 +195,13 @@ function Divisao({
               {divisao.titulo}
             </div>
             <div className="mt-0.5 font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
-              <span className="tnum">{divisao.confirmados}</span> confirmado
-              {divisao.confirmados === 1 ? "" : "s"}
+              <span className="tnum">{divisao.confirmados}</span>{" "}
+              {divisao.confirmados === 1 ? dat.confirmado : dat.confirmados}
               {divisao.pendentes > 0 && (
                 <>
                   {" · "}
-                  <span className="tnum">{divisao.pendentes}</span> pendente
-                  {divisao.pendentes === 1 ? "" : "s"}
+                  <span className="tnum">{divisao.pendentes}</span>{" "}
+                  {divisao.pendentes === 1 ? dat.pendente : dat.pendentes}
                 </>
               )}
             </div>
@@ -205,7 +212,7 @@ function Divisao({
             href={divisao.chaveHref}
             className="shrink-0 font-cond text-[12px] font-semibold uppercase tracking-[0.05em] text-muted-3 transition-colors hover:text-brand-soft"
           >
-            Ver chave →
+            {dat.verChave} →
           </Link>
         )}
       </div>
@@ -249,6 +256,7 @@ function CardAtleta({
   atleta: AtletaCard;
   mostrarPais: boolean;
 }) {
+  const dat = useDic().atletas;
   return (
     <div className="flex items-center justify-between gap-3 bg-surface px-4 py-3">
       <div className="flex min-w-0 items-center gap-2.5">
@@ -266,7 +274,7 @@ function CardAtleta({
                 {bandeiraPais(atleta.pais)}
               </span>
             )}
-            {atleta.academia ?? "Sem academia"}
+            {atleta.academia ?? dat.semAcademia}
           </div>
         </div>
       </div>
@@ -301,6 +309,7 @@ function ChipPais({
 }
 
 function StatusBadge({ status }: { status: StatusInscrito }) {
+  const dat = useDic().atletas;
   const confirmado = status === "confirmada";
   return (
     <span
@@ -312,7 +321,7 @@ function StatusBadge({ status }: { status: StatusInscrito }) {
       )}
     >
       <span className="inline-block skew-x-9">
-        {confirmado ? "Confirmado" : "Pendente"}
+        {confirmado ? dat.statusConfirmado : dat.statusPendente}
       </span>
     </span>
   );

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createContext, useContext } from "react";
 import { cn } from "@/lib/utils";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { useDic } from "@/lib/i18n/client";
 import type {
   AreaCron,
   CategoriaCron,
@@ -92,6 +93,7 @@ function CardArea({
   full: boolean;
 }) {
   const colunas = layout === "colunas";
+  const dp = useDic().placar;
   return (
     <div
       className={cn(
@@ -111,13 +113,13 @@ function CardArea({
               {area.totalCats}
             </span>
             <span className="ml-1 font-cond text-[11px] uppercase tracking-[0.04em] text-muted-3">
-              cat.
+              {dp.catAbrev}
             </span>
           </div>
         </div>
         <div className="mt-1.5 flex items-center justify-between gap-2 font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
           <span>
-            {area.totalGrupos} grupo{area.totalGrupos === 1 ? "" : "s"}
+            {area.totalGrupos} {area.totalGrupos === 1 ? dp.grupo : dp.grupos}
           </span>
           <span className="tnum">
             {area.dataLabel} · {area.inicio} → {area.fim}
@@ -129,7 +131,7 @@ function CardArea({
       <div className={colunas ? "min-h-0 flex-1 overflow-y-auto" : undefined}>
         {area.categorias.length === 0 ? (
           <div className="px-4 py-8 text-center font-cond text-[13px] uppercase tracking-[0.04em] text-muted-3">
-            Sem categorias nesta área
+            {dp.semCategorias}
           </div>
         ) : (
           area.categorias.map((cat, i) => <BlocoCategoria key={i} cat={cat} />)
@@ -143,7 +145,7 @@ function CardArea({
             href={`${base}/areas/${area.id}/placar`}
             className="font-cond text-[12px] font-semibold uppercase tracking-[0.05em] text-muted-3 transition-colors hover:text-brand-soft"
           >
-            Operar placar →
+            {dp.operarPlacar} →
           </Link>
         </div>
       )}
@@ -153,6 +155,7 @@ function CardArea({
 
 /** bloco de uma categoria: linha-destaque + suas lutas (ou roster) */
 function BlocoCategoria({ cat }: { cat: CategoriaCron }) {
+  const dp = useDic().placar;
   return (
     <div>
       {/* LINHA DA CATEGORIA (destaque forte) */}
@@ -180,7 +183,7 @@ function BlocoCategoria({ cat }: { cat: CategoriaCron }) {
               </span>
             </span>
             <div className="tnum mt-1 font-cond text-[11px] uppercase tracking-[0.04em] text-muted-3">
-              {cat.nLutas} luta{cat.nLutas === 1 ? "" : "s"}
+              {cat.nLutas} {cat.nLutas === 1 ? dp.luta : dp.lutas}
             </div>
           </div>
         </div>
@@ -201,9 +204,7 @@ function BlocoCategoria({ cat }: { cat: CategoriaCron }) {
       ) : (
         <div className="px-4 py-2">
           <div className="mb-1 font-cond text-[10px] uppercase tracking-[0.08em] text-muted-3">
-            {cat.atletas.length > 0
-              ? "Chave não gerada · inscritos"
-              : "Sem atletas confirmados"}
+            {cat.atletas.length > 0 ? dp.chaveNaoGerada : dp.semAtletas}
           </div>
           {cat.atletas.length > 0 && (
             <ul className="flex flex-col">
@@ -280,6 +281,7 @@ export function NomeAtleta({
   nome: string;
   estado: EstadoAtleta;
 }) {
+  const dp = useDic().placar;
   return (
     <span
       className={cn(
@@ -290,7 +292,7 @@ export function NomeAtleta({
         estado === "indefinido" && "italic text-muted-3",
       )}
     >
-      {nome}
+      {nome === "A definir" ? dp.aDefinir : nome}
     </span>
   );
 }
@@ -323,6 +325,7 @@ export function ModalPlacar({
   sel: LutaSelecionada | null;
   onFechar: () => void;
 }) {
+  const dp = useDic().placar;
   if (!sel) return null;
   const { luta, catTitulo, catSubtitulo } = sel;
 
@@ -335,10 +338,10 @@ export function ModalPlacar({
       luta.punicoes2 >
     0;
   const status = luta.decidida
-    ? "Encerrada"
+    ? dp.statusEncerrada
     : temParcial
-      ? "Em andamento"
-      : "A realizar";
+      ? dp.statusEmAndamento
+      : dp.statusARealizar;
 
   return (
     <div
@@ -367,7 +370,7 @@ export function ModalPlacar({
           <button
             type="button"
             onClick={onFechar}
-            aria-label="Fechar"
+            aria-label={dp.fechar}
             className="shrink-0 font-cond text-[15px] uppercase tracking-[0.04em] text-muted-3 transition-colors hover:text-brand-soft"
           >
             ✕
@@ -410,7 +413,7 @@ export function ModalPlacar({
         {/* MÉTODO (quando encerrada) */}
         {luta.decidida && luta.metodo && (
           <div className="border-t border-white/10 px-5 py-3 font-cond text-[12px] uppercase tracking-[0.04em] text-muted-2">
-            Vitória por{" "}
+            {dp.vitoriaPor}{" "}
             <span className="font-semibold text-foreground">{luta.metodo}</span>
             {luta.finalizacao ? ` · ${luta.finalizacao}` : ""}
           </div>
@@ -434,6 +437,7 @@ function AtletaPlacar({
   punicoes: number;
   estado: EstadoAtleta;
 }) {
+  const dp = useDic().placar;
   const vencedor = estado === "vencedor";
   return (
     <div
@@ -458,8 +462,8 @@ function AtletaPlacar({
       </div>
 
       <div className="flex shrink-0 items-start gap-3">
-        <MiniPlacar rotulo="VNT" valor={vantagens} />
-        <MiniPlacar rotulo="PUN" valor={punicoes} />
+        <MiniPlacar rotulo={dp.vnt} valor={vantagens} />
+        <MiniPlacar rotulo={dp.pun} valor={punicoes} />
       </div>
 
       <span

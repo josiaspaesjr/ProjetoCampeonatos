@@ -10,6 +10,36 @@ export interface AtletaInfo {
   academia: string | null;
 }
 
+/** rótulos traduzíveis da chave; padrão pt quando não informados */
+export interface BracketLabels {
+  rodadaPre: string;
+  rodadaPos: string;
+  final: string;
+  semifinal: string;
+  quartas: string;
+  aguardando: string;
+  bye: string;
+  metodos: Record<string, string>;
+}
+
+const LABELS_PT: BracketLabels = {
+  rodadaPre: "",
+  rodadaPos: "ª rodada",
+  final: "Final",
+  semifinal: "Semifinal",
+  quartas: "Quartas",
+  aguardando: "aguardando",
+  bye: "bye",
+  metodos: {
+    pontos: "Pontos",
+    vantagens: "Vantagens",
+    finalizacao: "Finalização",
+    decisao: "Decisão",
+    wo: "W.O.",
+    dq: "Desqualificação",
+  },
+};
+
 interface Props {
   lutas: LutaRow[];
   atletas: Record<string, AtletaInfo>;
@@ -17,25 +47,24 @@ interface Props {
   formato?: string;
   /** quando presente, lutas prontas exibem formulário de resultado */
   acaoResultado?: (formData: FormData) => Promise<void>;
+  /** rótulos no idioma atual (padrão pt) */
+  labels?: BracketLabels;
 }
 
-const rotuloRodada = (rodada: number, total: number, formato?: string): string => {
-  if (formato === "round_robin") return `${rodada}ª rodada`;
+const rotuloRodada = (
+  rodada: number,
+  total: number,
+  formato: string | undefined,
+  L: BracketLabels,
+): string => {
+  const generico = `${L.rodadaPre}${rodada}${L.rodadaPos}`;
+  if (formato === "round_robin") return generico;
   const doFim = total - rodada;
-  if (doFim === 0) return "Final";
-  if (doFim === 1) return "Semifinal";
-  if (doFim === 2) return "Quartas";
-  return `${rodada}ª rodada`;
+  if (doFim === 0) return L.final;
+  if (doFim === 1) return L.semifinal;
+  if (doFim === 2) return L.quartas;
+  return generico;
 };
-
-const metodos: [string, string][] = [
-  ["pontos", "Pontos"],
-  ["vantagens", "Vantagens"],
-  ["finalizacao", "Finalização"],
-  ["decisao", "Decisão"],
-  ["wo", "W.O."],
-  ["dq", "Desqualificação"],
-];
 
 function LinhaAtleta({
   inscricaoId,
@@ -68,7 +97,14 @@ function LinhaAtleta({
   );
 }
 
-export function BracketView({ lutas: linhas, atletas, formato, acaoResultado }: Props) {
+export function BracketView({
+  lutas: linhas,
+  atletas,
+  formato,
+  acaoResultado,
+  labels,
+}: Props) {
+  const L = labels ?? LABELS_PT;
   const totalRodadas = Math.max(...linhas.map((l) => l.rodada));
   const byes = idsDeBye(
     linhas,
@@ -86,7 +122,7 @@ export function BracketView({ lutas: linhas, atletas, formato, acaoResultado }: 
         {rodadas.map((lutasDaRodada, i) => (
           <div key={i} className="w-64 shrink-0">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              {rotuloRodada(i + 1, totalRodadas, formato)}
+              {rotuloRodada(i + 1, totalRodadas, formato, L)}
             </p>
             <div className="flex h-full flex-col justify-around gap-4">
               {lutasDaRodada.map((luta) => {
@@ -103,7 +139,7 @@ export function BracketView({ lutas: linhas, atletas, formato, acaoResultado }: 
                       inscricaoId={luta.atleta1InscricaoId}
                       atletas={atletas}
                       vencedor={luta.vencedorInscricaoId}
-                      slotLivre="aguardando"
+                      slotLivre={L.aguardando}
                     />
                     <div className="my-1 border-t" />
                     {/* o slot vazio do bye é sempre o atleta2 */}
@@ -111,12 +147,12 @@ export function BracketView({ lutas: linhas, atletas, formato, acaoResultado }: 
                       inscricaoId={luta.atleta2InscricaoId}
                       atletas={atletas}
                       vencedor={luta.vencedorInscricaoId}
-                      slotLivre={bye ? "bye" : "aguardando"}
+                      slotLivre={bye ? L.bye : L.aguardando}
                     />
 
                     {luta.vencedorInscricaoId && luta.metodo && (
                       <p className="mt-2 text-xs text-muted-foreground">
-                        {metodos.find(([m]) => m === luta.metodo)?.[1] ?? luta.metodo}
+                        {L.metodos[luta.metodo] ?? luta.metodo}
                         {luta.nomeFinalizacao ? ` — ${luta.nomeFinalizacao}` : ""}
                       </p>
                     )}
@@ -148,7 +184,7 @@ export function BracketView({ lutas: linhas, atletas, formato, acaoResultado }: 
                         </div>
                         <div className="flex gap-2">
                           <NativeSelect name="metodo" className="h-7 px-1 py-0 text-xs">
-                            {metodos.map(([valor, rotulo]) => (
+                            {Object.entries(L.metodos).map(([valor, rotulo]) => (
                               <option key={valor} value={valor}>
                                 {rotulo}
                               </option>
