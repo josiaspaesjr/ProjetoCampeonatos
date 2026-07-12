@@ -4,6 +4,7 @@ import { Logo, PontoVivo, SkewTexto } from "@/components/marca";
 import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { Input } from "@/components/ui/input";
 import { supabaseConfigurado } from "@/lib/supabase/server";
+import { getDicionario } from "@/lib/i18n/server";
 import { cadastrar, entrar } from "./actions";
 
 export default async function PaginaEntrar({
@@ -14,6 +15,8 @@ export default async function PaginaEntrar({
   if (!supabaseConfigurado()) redirect("/");
   const { next = "/", erro, modo } = await searchParams;
   const cadastro = modo === "cadastro";
+  const dic = await getDicionario();
+  const de = dic.admin.entrar;
 
   const labelCls =
     "font-cond text-sm font-semibold uppercase tracking-[0.08em] text-muted-2";
@@ -37,23 +40,18 @@ export default async function PaginaEntrar({
         <div className="relative">
           <div className="mb-3.5 inline-flex items-center gap-2 font-cond text-[15px] font-semibold uppercase tracking-[0.12em] text-brand">
             <PontoVivo />
-            Área do organizador
+            {de.areaOrganizador}
           </div>
           <h1 className="disp max-w-[520px] text-[clamp(56px,6vw,96px)]">
-            Rode seu
-            <br />
-            campeonato
-            <br />
-            <span className="text-brand">de ponta a ponta</span>.
+            {de.heroTitulo} <span className="text-brand">{de.heroAccent}</span>.
           </h1>
           <p className="mt-[18px] max-w-[420px] text-[17px] font-medium leading-normal text-text-2">
-            Entre para criar eventos, publicar inscrições, gerar chaves e
-            acompanhar o ranking oficial.
+            {de.heroDesc}
           </p>
         </div>
 
         <div className="relative font-cond text-sm uppercase tracking-[0.08em] text-muted-3">
-          © {new Date().getFullYear()} · Sistema de competições de jiu-jitsu
+          © {new Date().getFullYear()} · {dic.rodape}
         </div>
       </div>
 
@@ -64,12 +62,10 @@ export default async function PaginaEntrar({
             <Logo />
           </div>
           <div className="disp mb-1 text-[56px]">
-            {cadastro ? "Criar conta" : "Entrar"}
+            {cadastro ? de.criarConta : de.entrar}
           </div>
           <p className="mb-[34px] text-[15px] font-medium text-muted-2">
-            {cadastro
-              ? "Crie sua conta de organizador para publicar eventos."
-              : "Acesse sua conta de organizador para continuar."}
+            {cadastro ? de.subCriar : de.subEntrar}
           </p>
 
           {erro && (
@@ -86,14 +82,14 @@ export default async function PaginaEntrar({
             {cadastro && (
               <div className="flex flex-col gap-[9px]">
                 <label className={labelCls} htmlFor="login-nome">
-                  Nome completo
+                  {de.nomeCompleto}
                 </label>
                 <Input id="login-nome" name="nome" required className="h-12" />
               </div>
             )}
             <div className="flex flex-col gap-[9px]">
               <label className={labelCls} htmlFor="login-email">
-                E-mail
+                {de.email}
               </label>
               <Input
                 id="login-email"
@@ -106,7 +102,7 @@ export default async function PaginaEntrar({
             </div>
             <div className="flex flex-col gap-[9px]">
               <label className={labelCls} htmlFor="login-senha">
-                Senha {cadastro && "(mín. 6 caracteres)"}
+                {de.senha} {cadastro && de.senhaMin}
               </label>
               <Input
                 id="login-senha"
@@ -120,14 +116,14 @@ export default async function PaginaEntrar({
             </div>
 
             <BotaoAcaoBruto className="mt-2 flex h-[52px] -skew-x-9 items-center justify-center bg-brand font-cond text-xl font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">
-              <SkewTexto>{cadastro ? "Criar conta →" : "Entrar →"}</SkewTexto>
+              <SkewTexto>{cadastro ? de.criarContaBtn : de.entrarBtn}</SkewTexto>
             </BotaoAcaoBruto>
           </form>
 
           <div className="my-6 flex items-center gap-3.5">
             <div className="h-px flex-1 bg-white/10" />
             <span className="font-cond text-[13px] uppercase tracking-[0.1em] text-muted-3">
-              ou
+              {de.ou}
             </span>
             <div className="h-px flex-1 bg-white/10" />
           </div>
@@ -135,22 +131,22 @@ export default async function PaginaEntrar({
           <p className="text-center text-sm font-medium text-muted-2">
             {cadastro ? (
               <>
-                Já tem conta?{" "}
+                {de.jaTemConta}{" "}
                 <Link
                   href={`/entrar?next=${encodeURIComponent(next)}`}
                   className="font-semibold text-brand hover:text-foreground"
                 >
-                  Entrar
+                  {de.entrar}
                 </Link>
               </>
             ) : (
               <>
-                Ainda não tem conta?{" "}
+                {de.aindaNaoTemConta}{" "}
                 <Link
                   href={`/entrar?modo=cadastro&next=${encodeURIComponent(next)}`}
                   className="font-semibold text-brand hover:text-foreground"
                 >
-                  Criar conta de organizador
+                  {de.criarContaOrg}
                 </Link>
               </>
             )}

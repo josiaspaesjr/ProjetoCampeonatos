@@ -341,6 +341,66 @@ export const pt = {
     master6: "Master 6",
     master7: "Master 7",
   } as Record<string, string>,
+  admin: {
+    organizador: "Organizador",
+    sair: "Sair",
+    orgDev: "Organizador Dev",
+    status: {
+      rascunho: "Rascunho",
+      publicado: "Publicado",
+      inscricoes_encerradas: "Inscrições encerradas",
+      em_andamento: "Em andamento",
+      finalizado: "Finalizado",
+    } as Record<string, string>,
+    dashboard: {
+      painel: "Painel do organizador",
+      meusEventos: "Meus eventos",
+      novoEvento: "+ Novo evento",
+      nenhumEvento: "Nenhum evento ainda",
+      criePrimeiro:
+        "Crie seu primeiro campeonato e comece a receber inscrições.",
+    },
+    entrar: {
+      areaOrganizador: "Área do organizador",
+      heroTitulo: "Rode seu campeonato",
+      heroAccent: "de ponta a ponta",
+      heroDesc:
+        "Entre para criar eventos, publicar inscrições, gerar chaves e acompanhar o ranking oficial.",
+      criarConta: "Criar conta",
+      entrar: "Entrar",
+      subCriar: "Crie sua conta de organizador para publicar eventos.",
+      subEntrar: "Acesse sua conta de organizador para continuar.",
+      nomeCompleto: "Nome completo",
+      email: "E-mail",
+      senha: "Senha",
+      senhaMin: "(mín. 6 caracteres)",
+      criarContaBtn: "Criar conta →",
+      entrarBtn: "Entrar →",
+      ou: "ou",
+      jaTemConta: "Já tem conta?",
+      aindaNaoTemConta: "Ainda não tem conta?",
+      criarContaOrg: "Criar conta de organizador",
+    },
+    acesso: {
+      ola: "Olá",
+      comoEntrar: "Como quer entrar?",
+      ambos:
+        "Sua conta tem os dois acessos. Escolha por onde começar — você troca quando quiser.",
+      escolha:
+        "Escolha o tipo de acesso. Você pode organizar campeonatos ou competir como atleta.",
+      competir: "Competir",
+      souAtleta: "Sou atleta",
+      atletaDesc:
+        "Veja os campeonatos que você disputou, seus resultados, cartel e os QR de check-in das inscrições.",
+      entrarComoAtleta: "Entrar como atleta →",
+      gerir: "Gerir",
+      souOrganizador: "Sou organizador",
+      orgDesc:
+        "Crie e publique eventos, gere chaves, faça o check-in e acompanhe inscrições e receita.",
+      entrarComoOrganizador: "Entrar como organizador →",
+      voltarInicio: "← Voltar ao início",
+    },
+  },
 };
 
 export type Dicionario = typeof pt;

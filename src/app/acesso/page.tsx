@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Logo } from "@/components/marca";
 import { perfilDeAcesso } from "@/lib/perfil-acesso";
 import { supabaseConfigurado } from "@/lib/supabase/server";
+import { getDicionario } from "@/lib/i18n/server";
 
 /**
  * Roteador pós-login. Identifica o perfil e encaminha:
@@ -24,6 +25,7 @@ export default async function Acesso() {
 
   // ambos, ou conta nova sem histórico → deixa o usuário escolher
   const primeiroNome = usuario.nome.split(/\s+/)[0];
+  const dac = (await getDicionario()).admin.acesso;
 
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
@@ -33,15 +35,11 @@ export default async function Acesso() {
 
       <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col justify-center px-6 py-16 md:px-12">
         <div className="mb-2 font-cond text-[15px] font-semibold uppercase tracking-[0.14em] text-brand">
-          Olá, {primeiroNome}
+          {dac.ola}, {primeiroNome}
         </div>
-        <h1 className="disp text-[clamp(44px,6vw,80px)]">
-          Como quer entrar?
-        </h1>
+        <h1 className="disp text-[clamp(44px,6vw,80px)]">{dac.comoEntrar}</h1>
         <p className="mt-3 max-w-[520px] text-base font-medium text-muted-2">
-          {ehOrganizador && ehAtleta
-            ? "Sua conta tem os dois acessos. Escolha por onde começar — você troca quando quiser."
-            : "Escolha o tipo de acesso. Você pode organizar campeonatos ou competir como atleta."}
+          {ehOrganizador && ehAtleta ? dac.ambos : dac.escolha}
         </p>
 
         <div className="mt-10 grid gap-5 md:grid-cols-2">
@@ -52,15 +50,14 @@ export default async function Acesso() {
           >
             <div className="absolute left-0 top-0 h-full w-[5px] bg-brand" />
             <div className="font-cond text-sm font-semibold uppercase tracking-[0.1em] text-muted-2">
-              Competir
+              {dac.competir}
             </div>
-            <div className="disp mt-1 text-[44px]">Sou atleta</div>
+            <div className="disp mt-1 text-[44px]">{dac.souAtleta}</div>
             <p className="mt-2 text-[15px] font-medium leading-normal text-muted-2">
-              Veja os campeonatos que você disputou, seus resultados, cartel e
-              os QR de check-in das inscrições.
+              {dac.atletaDesc}
             </p>
             <div className="mt-6 font-cond text-[15px] font-bold uppercase tracking-[0.06em] text-brand">
-              Entrar como atleta →
+              {dac.entrarComoAtleta}
             </div>
           </Link>
 
@@ -71,15 +68,14 @@ export default async function Acesso() {
           >
             <div className="absolute left-0 top-0 h-full w-[5px] bg-brand" />
             <div className="font-cond text-sm font-semibold uppercase tracking-[0.1em] text-muted-2">
-              Gerir
+              {dac.gerir}
             </div>
-            <div className="disp mt-1 text-[44px]">Sou organizador</div>
+            <div className="disp mt-1 text-[44px]">{dac.souOrganizador}</div>
             <p className="mt-2 text-[15px] font-medium leading-normal text-muted-2">
-              Crie e publique eventos, gere chaves, faça o check-in e acompanhe
-              inscrições e receita.
+              {dac.orgDesc}
             </p>
             <div className="mt-6 font-cond text-[15px] font-bold uppercase tracking-[0.06em] text-brand">
-              Entrar como organizador →
+              {dac.entrarComoOrganizador}
             </div>
           </Link>
         </div>
@@ -89,7 +85,7 @@ export default async function Acesso() {
             href="/"
             className="font-cond text-sm uppercase tracking-[0.06em] text-muted-3 transition-colors hover:text-foreground"
           >
-            ← Voltar ao início
+            {dac.voltarInicio}
           </Link>
         </div>
       </main>

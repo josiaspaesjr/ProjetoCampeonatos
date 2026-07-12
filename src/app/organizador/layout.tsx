@@ -4,6 +4,7 @@ import { MarcaBloco } from "@/components/marca";
 import { AcaoTexto } from "@/components/ui/botao-acao";
 import { getUsuarioSessao } from "@/lib/auth";
 import { supabaseConfigurado } from "@/lib/supabase/server";
+import { getDicionario } from "@/lib/i18n/server";
 
 export default async function OrganizadorLayout({
   children,
@@ -11,6 +12,7 @@ export default async function OrganizadorLayout({
   children: React.ReactNode;
 }) {
   const usuario = await getUsuarioSessao();
+  const da = (await getDicionario()).admin;
 
   return (
     <div className="min-h-screen bg-[#0A0A0B] text-foreground">
@@ -22,7 +24,7 @@ export default async function OrganizadorLayout({
               BJJ<span className="text-brand">ARENA</span>
             </span>
             <span className="ml-1.5 hidden font-cond text-[15px] uppercase tracking-[0.1em] text-muted-3 sm:inline">
-              / Organizador
+              / {da.organizador}
             </span>
           </Link>
           {supabaseConfigurado() && usuario ? (
@@ -32,12 +34,12 @@ export default async function OrganizadorLayout({
             >
               <span>{usuario.nome}</span>
               <AcaoTexto className="uppercase transition-colors hover:text-foreground">
-                Sair
+                {da.sair}
               </AcaoTexto>
             </form>
           ) : (
             <span className="font-cond text-[15px] uppercase tracking-[0.06em] text-muted-2">
-              {usuario?.nome ?? "Organizador Dev"}
+              {usuario?.nome ?? da.orgDev}
             </span>
           )}
         </div>

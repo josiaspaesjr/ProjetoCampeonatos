@@ -340,4 +340,63 @@ export const en: Dicionario = {
     master6: "Master 6",
     master7: "Master 7",
   },
+  admin: {
+    organizador: "Organizer",
+    sair: "Sign out",
+    orgDev: "Dev Organizer",
+    status: {
+      rascunho: "Draft",
+      publicado: "Published",
+      inscricoes_encerradas: "Registration closed",
+      em_andamento: "In progress",
+      finalizado: "Finished",
+    },
+    dashboard: {
+      painel: "Organizer panel",
+      meusEventos: "My events",
+      novoEvento: "+ New event",
+      nenhumEvento: "No events yet",
+      criePrimeiro: "Create your first championship and start taking registrations.",
+    },
+    entrar: {
+      areaOrganizador: "Organizer area",
+      heroTitulo: "Run your championship",
+      heroAccent: "end to end",
+      heroDesc:
+        "Sign in to create events, publish registration, generate brackets and follow the official ranking.",
+      criarConta: "Create account",
+      entrar: "Sign in",
+      subCriar: "Create your organizer account to publish events.",
+      subEntrar: "Sign in to your organizer account to continue.",
+      nomeCompleto: "Full name",
+      email: "E-mail",
+      senha: "Password",
+      senhaMin: "(min. 6 characters)",
+      criarContaBtn: "Create account →",
+      entrarBtn: "Sign in →",
+      ou: "or",
+      jaTemConta: "Already have an account?",
+      aindaNaoTemConta: "Don't have an account yet?",
+      criarContaOrg: "Create organizer account",
+    },
+    acesso: {
+      ola: "Hi",
+      comoEntrar: "How do you want to enter?",
+      ambos:
+        "Your account has both accesses. Choose where to start — you can switch anytime.",
+      escolha:
+        "Choose the type of access. You can organize championships or compete as an athlete.",
+      competir: "Compete",
+      souAtleta: "I'm an athlete",
+      atletaDesc:
+        "See the championships you've competed in, your results, record and the check-in QR codes for your registrations.",
+      entrarComoAtleta: "Enter as athlete →",
+      gerir: "Manage",
+      souOrganizador: "I'm an organizer",
+      orgDesc:
+        "Create and publish events, generate brackets, run check-in and track registrations and revenue.",
+      entrarComoOrganizador: "Enter as organizer →",
+      voltarInicio: "← Back to home",
+    },
+  },
 };
