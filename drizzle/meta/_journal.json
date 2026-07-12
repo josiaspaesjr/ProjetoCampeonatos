@@ -71,6 +71,13 @@
       "when": 1783729707541,
       "tag": "0009_long_lizard",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1783813440712,
+      "tag": "0010_lively_santa_claus",
+      "breakpoints": true
     }
   ]
 }

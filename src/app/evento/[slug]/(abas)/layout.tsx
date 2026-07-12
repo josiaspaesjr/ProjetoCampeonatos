@@ -5,6 +5,7 @@ import {
   getEventoPublico,
   statusDoEvento,
 } from "@/lib/evento-publico";
+import { AvisoPendencias } from "@/components/aviso-pendencias";
 import { Logo, SkewTexto } from "@/components/marca";
 import { AbasEvento } from "@/components/evento/abas-evento";
 import { dataCompleta } from "@/lib/datas";
@@ -46,6 +47,8 @@ export default async function LayoutEvento({
           )}
         </div>
       </nav>
+
+      <AvisoPendencias />
 
       {/* HERO BANNER */}
       <header className="relative flex h-[clamp(340px,44vh,460px)] items-end overflow-hidden">

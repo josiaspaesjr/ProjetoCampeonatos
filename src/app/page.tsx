@@ -2,6 +2,7 @@ import { eq, inArray, ne } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, chaves, eventos, inscricoes, lutas } from "@/db/schema";
 import { calcularRankingGeral } from "@/lib/ranking";
+import { AvisoPendencias } from "@/components/aviso-pendencias";
 import {
   LandingClient,
   type BracketVivo,
@@ -112,5 +113,10 @@ export default async function Home() {
     { valor: String(confirmadas.length), destaque: false },
   ];
 
-  return <LandingClient stats={stats} ranking={ranking} bracket={bracket} />;
+  return (
+    <>
+      <AvisoPendencias />
+      <LandingClient stats={stats} ranking={ranking} bracket={bracket} />
+    </>
+  );
 }

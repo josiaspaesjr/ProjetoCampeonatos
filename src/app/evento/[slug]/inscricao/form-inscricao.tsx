@@ -71,22 +71,58 @@ function divisaoDaIdade(idade: number): string | null {
 
 const capitalizar = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-function BotaoContinuar({ habilitado }: { habilitado: boolean }) {
+function BotoesEnvio({
+  habilitado,
+  enviando,
+  aoEnviar,
+}: {
+  habilitado: boolean;
+  /** qual intent foi clicado, para mostrar o spinner no botão certo */
+  enviando: "pagar_agora" | "pagar_depois" | null;
+  aoEnviar: (intent: "pagar_agora" | "pagar_depois") => void;
+}) {
   const { pending } = useFormStatus();
+  const bloqueado = !habilitado || pending;
+
   return (
-    <button
-      type="submit"
-      disabled={!habilitado || pending}
-      className={cn(
-        "flex flex-1 items-center justify-center gap-2 px-[26px] py-3 font-cond text-lg font-bold uppercase tracking-[0.04em] transition-colors",
-        habilitado
-          ? "cursor-pointer bg-brand text-white hover:bg-[#d5261d]"
-          : "cursor-not-allowed bg-brand/30 text-white/50",
-      )}
-    >
-      {pending && <Spinner className="h-4 w-4" />}
-      {pending ? "Enviando…" : "Continuar para o pagamento →"}
-    </button>
+    <div className="flex flex-1 flex-col gap-3 sm:flex-row">
+      <button
+        type="submit"
+        name="intent"
+        value="pagar_agora"
+        disabled={bloqueado}
+        onClick={() => aoEnviar("pagar_agora")}
+        className={cn(
+          "flex flex-1 items-center justify-center gap-2 px-[26px] py-3 font-cond text-lg font-bold uppercase tracking-[0.04em] transition-colors",
+          bloqueado
+            ? "cursor-not-allowed bg-brand/30 text-white/50"
+            : "cursor-pointer bg-brand text-white hover:bg-[#d5261d]",
+        )}
+      >
+        {pending && enviando === "pagar_agora" && <Spinner className="h-4 w-4" />}
+        {pending && enviando === "pagar_agora"
+          ? "Enviando…"
+          : "Inscrever e pagar agora →"}
+      </button>
+      <button
+        type="submit"
+        name="intent"
+        value="pagar_depois"
+        disabled={bloqueado}
+        onClick={() => aoEnviar("pagar_depois")}
+        className={cn(
+          "flex flex-1 items-center justify-center gap-2 px-[26px] py-3 font-cond text-lg font-bold uppercase tracking-[0.04em] transition-colors",
+          bloqueado
+            ? "cursor-not-allowed border border-white/12 text-white/40"
+            : "cursor-pointer border border-white/25 text-foreground hover:border-white/50",
+        )}
+      >
+        {pending && enviando === "pagar_depois" && <Spinner className="h-4 w-4" />}
+        {pending && enviando === "pagar_depois"
+          ? "Salvando…"
+          : "Inscrever e pagar depois"}
+      </button>
+    </div>
   );
 }
 
@@ -99,6 +135,9 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
   const [pais, setPais] = useState(perfil?.pais ?? "BR");
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState<"pagar_agora" | "pagar_depois" | null>(
+    null,
+  );
 
   const perfilCompleto = !!(sexo && faixa && nascimento);
 
@@ -147,8 +186,8 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
           Inscrição · {evento.nome}
         </h1>
         <p className="mb-[34px] max-w-[480px] text-base font-medium text-muted-2">
-          Só mostramos categorias compatíveis com seu perfil. Pagamento na
-          próxima etapa.
+          Só mostramos categorias compatíveis com seu perfil. Você pode pagar na
+          hora ou deixar para depois — o prazo vai até o fim das inscrições.
         </p>
 
         <form
@@ -159,6 +198,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
             } catch (e) {
               // redirect() do Next lança um erro especial que deve propagar
               if (e && typeof e === "object" && "digest" in e) throw e;
+              setEnviando(null);
               setErro(e instanceof Error ? e.message : "Erro ao processar inscrição");
             }
           }}
@@ -335,14 +375,18 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
             <input type="hidden" name="categoriaId" value={categoriaId ?? ""} />
           </div>
 
-          <div className="mt-2 flex gap-4">
+          <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-stretch">
             <Link
               href={`/evento/${evento.slug}`}
-              className="border border-white/18 px-[26px] py-3 font-cond text-[17px] font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-white/40"
+              className="flex items-center justify-center border border-white/18 px-[26px] py-3 font-cond text-[17px] font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-white/40"
             >
               Voltar
             </Link>
-            <BotaoContinuar habilitado={podeContinuar} />
+            <BotoesEnvio
+              habilitado={podeContinuar}
+              enviando={enviando}
+              aoEnviar={setEnviando}
+            />
           </div>
         </form>
       </div>
@@ -363,8 +407,8 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
         precoValor={fmt.format(precoExibido / 100)}
         notaRodape={
           evento.precoSegundaCentavos != null
-            ? `Segunda categoria: +${fmt.format(evento.precoSegundaCentavos / 100)} · Pix`
-            : "Pagamento via Pix na próxima etapa"
+            ? `Segunda categoria: +${fmt.format(evento.precoSegundaCentavos / 100)} · pague via Pix agora ou depois`
+            : "Pague via Pix agora ou depois"
         }
       />
     </div>

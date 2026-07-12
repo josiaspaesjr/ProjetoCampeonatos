@@ -1,16 +1,18 @@
 import Link from "next/link";
 import { desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
-import {
-  categorias,
-  eventos,
-  inscricoes,
-  pagamentoInscricoes,
-} from "@/db/schema";
+import { categorias, eventos, inscricoes, lotes } from "@/db/schema";
 import { PublicShell } from "@/components/public-shell";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
+import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { codigoCurto, gerarQrDataUrl, urlCheckin } from "@/lib/checkin/qr";
+import { dataHora } from "@/lib/datas";
+import {
+  dentroDoPrazoDePagamento,
+  prazoDePagamento,
+} from "@/lib/pagamentos/prazo";
 import { getAtletaAtual } from "@/lib/sessao";
+import { gerarCobrancaInscricao } from "./actions";
 
 const rotuloStatus: Record<string, [string, BadgeProps["variant"]]> = {
   pendente_pagamento: ["Aguardando pagamento", "warning"],
@@ -42,28 +44,28 @@ export default async function MinhasInscricoes() {
     orderBy: desc(inscricoes.criadoEm),
   });
 
-  const [cats, evts, vinculos] = await Promise.all([
+  const eventoIds = [...new Set(minhas.map((i) => i.eventoId))];
+  const [cats, evts, lotesEventos] = await Promise.all([
     minhas.length
       ? db.query.categorias.findMany({
           where: inArray(categorias.id, minhas.map((i) => i.categoriaId)),
         })
       : [],
     minhas.length
-      ? db.query.eventos.findMany({
-          where: inArray(eventos.id, minhas.map((i) => i.eventoId)),
-        })
+      ? db.query.eventos.findMany({ where: inArray(eventos.id, eventoIds) })
       : [],
     minhas.length
-      ? db.query.pagamentoInscricoes.findMany({
-          where: inArray(pagamentoInscricoes.inscricaoId, minhas.map((i) => i.id)),
-        })
+      ? db.query.lotes.findMany({ where: inArray(lotes.eventoId, eventoIds) })
       : [],
   ]);
   const nomeCategoria = new Map(cats.map((c) => [c.id, c.nome]));
   const eventoPorId = new Map(evts.map((e) => [e.id, e]));
-  const pagamentoPorInscricao = new Map(
-    vinculos.map((v) => [v.inscricaoId, v.pagamentoId]),
-  );
+  const lotesPorEvento = new Map<string, typeof lotesEventos>();
+  for (const l of lotesEventos) {
+    const arr = lotesPorEvento.get(l.eventoId) ?? [];
+    arr.push(l);
+    lotesPorEvento.set(l.eventoId, arr);
+  }
 
   // QR de check-in para inscrições confirmadas — o staff escaneia na pesagem
   const qrPorInscricao = new Map(
@@ -87,6 +89,11 @@ export default async function MinhasInscricoes() {
       <ul className="mt-6 divide-y divide-border rounded-xl border bg-card">
         {minhas.map((i) => {
           const evento = eventoPorId.get(i.eventoId);
+          const lotesDoEvento = lotesPorEvento.get(i.eventoId) ?? [];
+          const dentroPrazo = evento
+            ? dentroDoPrazoDePagamento(evento, lotesDoEvento)
+            : false;
+          const prazo = evento ? prazoDePagamento(evento, lotesDoEvento) : null;
           const [rotulo, variante] = rotuloStatus[i.status] ?? [i.status, "outline" as const];
           return (
             <li key={i.id} className="flex items-center justify-between px-5 py-4">
@@ -115,16 +122,25 @@ export default async function MinhasInscricoes() {
               <div className="text-right">
                 <Badge variant={variante}>{rotulo}</Badge>
                 {i.status === "pendente_pagamento" &&
-                  pagamentoPorInscricao.has(i.id) && (
-                    <p className="mt-1">
-                      <Link
-                        href={`/checkout/${pagamentoPorInscricao.get(i.id)}`}
-                        className="text-xs text-muted-foreground underline"
-                      >
-                        pagar agora
-                      </Link>
+                  (dentroPrazo ? (
+                    <form
+                      action={gerarCobrancaInscricao.bind(null, i.id)}
+                      className="mt-1.5"
+                    >
+                      <BotaoAcaoBruto className="inline-flex cursor-pointer items-center bg-brand px-3 py-1.5 font-cond text-xs font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">
+                        Pagar agora
+                      </BotaoAcaoBruto>
+                      {prazo && (
+                        <span className="mt-1 block text-[11px] text-muted-foreground">
+                          pague até {dataHora(prazo)}
+                        </span>
+                      )}
+                    </form>
+                  ) : (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Prazo de pagamento encerrado
                     </p>
-                  )}
+                  ))}
               </div>
             </li>
           );

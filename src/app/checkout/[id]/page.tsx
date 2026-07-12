@@ -6,6 +6,7 @@ import {
   categorias,
   eventos,
   inscricoes,
+  lotes,
   pagamentoInscricoes,
   pagamentos,
   usuarios,
@@ -17,6 +18,8 @@ import { PassosInscricao } from "@/components/inscricao/passos";
 import { ResumoEvento, type LinhaResumo } from "@/components/inscricao/resumo-evento";
 import { dataCurta } from "@/lib/datas";
 import { obterPixQrCodeAsaas } from "@/lib/pagamentos/asaas";
+import { dentroDoPrazoDePagamento } from "@/lib/pagamentos/prazo";
+import { gerarCobrancaInscricao } from "@/app/minhas-inscricoes/actions";
 import { simularPagamentoAprovado } from "./actions";
 import { ContagemRegressiva } from "./contagem-regressiva";
 import { CopiarPix } from "./copiar-pix";
@@ -88,6 +91,22 @@ export default async function PaginaCheckout({
   });
   const gatewayDev = !process.env.ASAAS_API_KEY && !process.env.STRIPE_SECRET_KEY;
   const pago = pagamento.status === "pago";
+  const agora = new Date();
+  // cobrança vencida: expirada de fato ou "criada" cujo prazo do Pix já passou
+  const expirado =
+    !pago &&
+    (pagamento.status === "expirado" ||
+      (pagamento.status === "criado" &&
+        !!pagamento.expiraEm &&
+        pagamento.expiraEm < agora));
+  // prazo do campeonato (último dia de inscrição) para gerar um novo Pix
+  const lotesEvento = evento
+    ? await db.query.lotes.findMany({ where: eq(lotes.eventoId, evento.id) })
+    : [];
+  const podePagarAinda = evento
+    ? dentroDoPrazoDePagamento(evento, lotesEvento, agora)
+    : false;
+  const inscricaoParaCobranca = minhasInscricoes[0]?.id ?? null;
 
   // com Asaas ativo, o QR é consultado ao vivo (não fica no banco)
   let pixQr: { encodedImage: string; payload: string } | null = null;
@@ -124,7 +143,7 @@ export default async function PaginaCheckout({
   return (
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       {/* re-busca o status enquanto o pagamento está pendente (webhook Pix) */}
-      {pagamento.status === "criado" && <AutoRefresh segundos={8} />}
+      {pagamento.status === "criado" && !expirado && <AutoRefresh segundos={8} />}
 
       {/* NAV */}
       <nav className="flex items-center justify-between border-b border-white/7 px-6 py-4 md:px-12">
@@ -208,7 +227,7 @@ export default async function PaginaCheckout({
                     {rotuloCategorias || "Inscrição"}
                   </span>
                   <span className="font-cond text-[13px] uppercase tracking-[0.08em] text-brand-soft">
-                    aguardando pagamento
+                    {expirado ? "cobrança expirada" : "aguardando pagamento"}
                   </span>
                 </div>
                 <div className="p-6">
@@ -221,46 +240,72 @@ export default async function PaginaCheckout({
                     </span>
                   </div>
 
-                  <div className="mb-5 flex flex-wrap items-center gap-5">
-                    {pixQr ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={`data:image/png;base64,${pixQr.encodedImage}`}
-                        alt="QR Code Pix"
-                        className="h-28 w-28 shrink-0 bg-white p-1"
-                      />
-                    ) : (
-                      <QrPlaceholder />
+                  {!expirado && (
+                    <div className="mb-5 flex flex-wrap items-center gap-5">
+                      {pixQr ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={`data:image/png;base64,${pixQr.encodedImage}`}
+                          alt="QR Code Pix"
+                          className="h-28 w-28 shrink-0 bg-white p-1"
+                        />
+                      ) : (
+                        <QrPlaceholder />
+                      )}
+                      <div className="min-w-[200px] flex-1">
+                        <div className="mb-2.5 font-cond text-[11px] uppercase tracking-[0.1em] text-muted-2">
+                          Pix copia e cola
+                        </div>
+                        <div className="mb-2.5 break-all border border-white/10 bg-ink px-3.5 py-3 font-cond text-[11px] leading-normal text-muted-2">
+                          {pixQr?.payload ??
+                            `(cobrança de teste ${pagamento.gatewayCobrancaId})`}
+                        </div>
+                        <CopiarPix
+                          payload={
+                            pixQr?.payload ?? pagamento.gatewayCobrancaId ?? ""
+                          }
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {!expirado &&
+                    pagamento.expiraEm &&
+                    pagamento.status === "criado" && (
+                      <div className="mb-5 font-cond text-xs text-muted-2">
+                        Expira em{" "}
+                        <ContagemRegressiva
+                          ate={pagamento.expiraEm.toISOString()}
+                        />{" "}
+                        — após isso a vaga é liberada.
+                      </div>
                     )}
-                    <div className="min-w-[200px] flex-1">
-                      <div className="mb-2.5 font-cond text-[11px] uppercase tracking-[0.1em] text-muted-2">
-                        Pix copia e cola
-                      </div>
-                      <div className="mb-2.5 break-all border border-white/10 bg-ink px-3.5 py-3 font-cond text-[11px] leading-normal text-muted-2">
-                        {pixQr?.payload ??
-                          `(cobrança de teste ${pagamento.gatewayCobrancaId})`}
-                      </div>
-                      <CopiarPix
-                        payload={pixQr?.payload ?? pagamento.gatewayCobrancaId ?? ""}
-                      />
-                    </div>
-                  </div>
-
-                  {pagamento.expiraEm && pagamento.status === "criado" && (
-                    <div className="mb-5 font-cond text-xs text-muted-2">
-                      Expira em{" "}
-                      <ContagemRegressiva ate={pagamento.expiraEm.toISOString()} />{" "}
-                      — após isso a vaga é liberada.
-                    </div>
-                  )}
-                  {pagamento.status === "expirado" && (
-                    <div className="mb-5 border border-destructive/50 bg-destructive/10 px-4 py-3 font-cond text-xs text-destructive">
-                      Cobrança expirada — refaça a inscrição para gerar um novo
-                      Pix.
+                  {expirado && (
+                    <div className="mb-5 border border-white/10 bg-ink px-4 py-4 font-cond">
+                      <p className="mb-3 text-xs uppercase tracking-[0.08em] text-brand-soft">
+                        Cobrança Pix expirada
+                      </p>
+                      {podePagarAinda && inscricaoParaCobranca ? (
+                        <form
+                          action={gerarCobrancaInscricao.bind(
+                            null,
+                            inscricaoParaCobranca,
+                          )}
+                        >
+                          <BotaoAcaoBruto className="flex h-[52px] w-full cursor-pointer items-center justify-center bg-brand text-lg font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">
+                            Gerar novo Pix
+                          </BotaoAcaoBruto>
+                        </form>
+                      ) : (
+                        <p className="text-xs normal-case text-muted-2">
+                          O prazo de pagamento deste campeonato já encerrou — a
+                          vaga foi liberada.
+                        </p>
+                      )}
                     </div>
                   )}
 
-                  {gatewayDev && pagamento.status === "criado" && (
+                  {gatewayDev && pagamento.status === "criado" && !expirado && (
                     <form action={simularPagamentoAprovado.bind(null, pagamento.id)}>
                       <BotaoAcaoBruto className="flex h-[52px] w-full cursor-pointer items-center justify-center bg-brand font-cond text-lg font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">
                         Simular pagamento aprovado (teste)

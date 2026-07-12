@@ -1,3 +1,4 @@
+import { AvisoPendencias } from "@/components/aviso-pendencias";
 import { Logo } from "@/components/marca";
 import { PublicNav } from "@/components/public-nav";
 import { getUsuarioSessao } from "@/lib/auth";
@@ -21,6 +22,7 @@ export async function PublicShell({
           <PublicNav usuarioNome={usuario?.nome ?? null} comAuth={comAuth} />
         </div>
       </header>
+      <AvisoPendencias />
       <main className={`mx-auto w-full px-6 py-10 md:px-12 ${largura}`}>
         {children}
       </main>

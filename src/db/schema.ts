@@ -255,6 +255,9 @@ export const inscricoes = pgTable(
       .notNull()
       .references(() => categorias.id),
     status: inscricaoStatusEnum("status").notNull().default("pendente_pagamento"),
+    // preço travado no ato da inscrição (centavos) — vale mesmo pagando depois,
+    // preservando o desconto de 2ª inscrição da ocasião; nulo só em linhas legadas
+    precoCentavos: integer("preco_centavos"),
     // snapshot no momento da inscrição — histórico imune a edição de perfil
     nomeAtleta: text("nome_atleta").notNull(),
     faixa: faixaEnum("faixa").notNull(),
