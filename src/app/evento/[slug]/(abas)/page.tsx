@@ -47,6 +47,21 @@ function faixasPresentes(
 
 const capFaixa = (f: string) => f.charAt(0).toUpperCase() + f.slice(1);
 
+// valor "de destaque" (fonte display) — para dados curtos e numéricos
+const fatoBig = (s: string, destaque = false) => (
+  <span
+    className={`disp block truncate text-[26px] md:text-[38px] ${destaque ? "text-brand" : ""}`}
+  >
+    {s}
+  </span>
+);
+// valor textual (mais comprido) — fonte condensada, até 2 linhas
+const fatoTexto = (s: string) => (
+  <span className="line-clamp-2 font-cond text-[16px] font-semibold uppercase leading-snug tracking-[0.02em] text-text-2 md:text-[18px]">
+    {s}
+  </span>
+);
+
 export default async function AbaInformacoes({
   params,
 }: {
@@ -99,15 +114,28 @@ export default async function AbaInformacoes({
   const areasCount =
     areasDoEvento.length > 0 ? areasDoEvento.length : (evento.numAreas ?? 0);
 
-  const fatos: { k: string; v: ReactNode; destaque?: boolean }[] = [
-    { k: "Modalidade", v: MODALIDADE_ROTULO[evento.modalidade] ?? "Gi + No-Gi" },
-    ...(areasCount > 0 ? [{ k: "Áreas", v: String(areasCount) }] : []),
+  const local = [evento.cidade, evento.uf].filter(Boolean).join(" · ");
+
+  // "ficha técnica": todos os campos do cadastro do evento que têm valor
+  const fatos: { k: string; node: ReactNode }[] = [
+    {
+      k: "Modalidade",
+      node: fatoBig(MODALIDADE_ROTULO[evento.modalidade] ?? "Gi + No-Gi"),
+    },
+    { k: "Data", node: fatoBig(diaMes(evento.dataInicio), true) },
+    ...(local ? [{ k: "Local", node: fatoTexto(local) }] : []),
+    ...(evento.endereco
+      ? [{ k: "Ginásio", node: fatoTexto(evento.endereco) }]
+      : []),
+    ...(evento.circuito
+      ? [{ k: "Circuito", node: fatoTexto(evento.circuito) }]
+      : []),
     ...(faixas.length
       ? [
           {
             k: "Faixas",
-            v: (
-              <>
+            node: (
+              <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
                 {faixas.map((f) => (
                   <span
                     key={f}
@@ -116,34 +144,68 @@ export default async function AbaInformacoes({
                     style={{ background: corDaFaixa(f) }}
                   />
                 ))}
-              </>
+              </div>
             ),
           },
         ]
       : []),
-    ...(evento.dataGeracaoChaves
-      ? [{ k: "Chaves", v: diaMes(evento.dataGeracaoChaves) }]
+    ...(areasCount > 0
+      ? [{ k: "Áreas", node: fatoBig(String(areasCount)) }]
       : []),
-    evento.dataPesagem
-      ? { k: "Pesagem", v: diaMes(evento.dataPesagem), destaque: true }
-      : { k: "Data", v: diaMes(evento.dataInicio), destaque: true },
+    ...(evento.inscricoesFecham
+      ? [
+          {
+            k: "Inscrições até",
+            node: fatoTexto(dataHora(evento.inscricoesFecham)),
+          },
+        ]
+      : []),
+    ...(evento.dataPesagem
+      ? [{ k: "Pesagem", node: fatoBig(diaMes(evento.dataPesagem), true) }]
+      : []),
+    ...(evento.dataGeracaoChaves
+      ? [{ k: "Chaves", node: fatoBig(diaMes(evento.dataGeracaoChaves)) }]
+      : []),
+    {
+      k: "Pagamento",
+      node: fatoTexto(evento.moeda === "BRL" ? "Pix" : evento.moeda),
+    },
   ];
 
-  // grade de colunas acompanha a quantidade de fatos (evita célula vazia)
-  const colsMd =
-    (
-      {
-        2: "md:grid-cols-2",
-        3: "md:grid-cols-3",
-        4: "md:grid-cols-4",
-        5: "md:grid-cols-5",
-      } as Record<number, string>
-    )[Math.min(fatos.length, 5)] ?? "md:grid-cols-4";
+  // completa a última linha para não deixar buraco (4 col desktop / 2 mobile)
+  const cells: ((typeof fatos)[number] | null)[] = [...fatos];
+  while (cells.length % 4 !== 0) cells.push(null);
 
   return (
     <div className="grid items-start gap-12 px-6 pb-20 pt-10 md:px-12 lg:grid-cols-[minmax(0,1fr)_380px]">
       {/* MAIN */}
       <main className="flex min-w-0 flex-col gap-14">
+        {/* FICHA TÉCNICA — todos os campos do cadastro, acima do "Sobre" */}
+        <section>
+          <div className="mb-3 font-cond text-[15px] font-semibold uppercase tracking-[0.14em] text-brand">
+            Ficha técnica
+          </div>
+          <div className="grid grid-cols-2 gap-px border border-white/10 bg-white/10 md:grid-cols-4">
+            {cells.map((f, i) =>
+              f ? (
+                <div
+                  key={f.k}
+                  className="min-w-0 bg-background px-4 py-5 md:px-[22px] md:py-[22px]"
+                >
+                  <div className="mb-2 font-cond text-[13px] uppercase tracking-[0.1em] text-muted-2">
+                    {f.k}
+                  </div>
+                  <div className="flex min-h-[42px] items-center md:min-h-[46px]">
+                    {f.node}
+                  </div>
+                </div>
+              ) : (
+                <div key={`fill-${i}`} className="bg-background" aria-hidden />
+              ),
+            )}
+          </div>
+        </section>
+
         {/* SOBRE */}
         <section>
           <div className="mb-3 font-cond text-[15px] font-semibold uppercase tracking-[0.14em] text-brand">
@@ -159,31 +221,6 @@ export default async function AbaInformacoes({
               digital pela BJJArena.
             </p>
           )}
-          <div
-            className={`mt-[30px] grid grid-cols-2 gap-px border border-white/10 bg-white/10 ${colsMd}`}
-          >
-            {fatos.map((f) => (
-              <div
-                key={f.k}
-                className="min-w-0 bg-background px-4 py-5 md:px-[22px] md:py-[22px]"
-              >
-                <div className="mb-2 font-cond text-[13px] uppercase tracking-[0.1em] text-muted-2">
-                  {f.k}
-                </div>
-                {typeof f.v === "string" ? (
-                  <div
-                    className={`disp truncate text-[26px] md:text-[38px] ${f.destaque ? "text-brand" : ""}`}
-                  >
-                    {f.v}
-                  </div>
-                ) : (
-                  <div className="flex min-h-[30px] flex-wrap items-center gap-1.5 md:min-h-[42px] md:gap-2">
-                    {f.v}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
         </section>
 
         {/* REGULAMENTO */}
