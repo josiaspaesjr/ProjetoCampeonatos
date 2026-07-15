@@ -65,6 +65,7 @@ export default async function AbaAtletas({
         id: i.id,
         nome: i.nomeAtleta,
         academia: i.academiaNome,
+        divisao: c.nome,
         faixa: i.faixa,
         pais: i.pais,
         status: i.status === "confirmada" ? "confirmada" : "pendente_pagamento",

@@ -14,6 +14,8 @@ export interface AtletaCard {
   id: string;
   nome: string;
   academia: string | null;
+  /** nome da divisão (categoria) em que o atleta está inscrito */
+  divisao: string;
   faixa: string;
   /** código ISO alpha-2 do país (ex.: "BR") */
   pais: string;
@@ -31,6 +33,22 @@ export interface DivisaoAtletas {
   atletas: AtletaCard[];
 }
 
+/** como os atletas estão agrupados na lista */
+type ModoAgrupamento = "divisao" | "academia";
+
+/** grupo genérico renderizado na lista — uma divisão OU uma academia */
+interface GrupoAtletas {
+  id: string;
+  titulo: string;
+  /** cor da faixa no cabeçalho (modo divisão); null no modo academia */
+  faixa: string | null;
+  confirmados: number;
+  pendentes: number;
+  /** link para a chave pública, quando publicada (só no modo divisão) */
+  chaveHref: string | null;
+  atletas: AtletaCard[];
+}
+
 /** normaliza para busca: minúsculas sem acento */
 const norm = (s: string) =>
   s
@@ -38,11 +56,23 @@ const norm = (s: string) =>
     .replace(/\p{Diacritic}/gu, "")
     .toLowerCase();
 
+/** conta confirmados/pendentes de uma lista de atletas */
+function contagem(atletas: AtletaCard[]) {
+  let confirmados = 0;
+  for (const a of atletas) if (a.status === "confirmada") confirmados++;
+  return { confirmados, pendentes: atletas.length - confirmados };
+}
+
+/** ordena atletas por nome no idioma ativo (sem mutar o array original) */
+const porNome = (atletas: AtletaCard[], locale: string) =>
+  [...atletas].sort((a, b) => a.nome.localeCompare(b.nome, locale));
+
 /**
- * Aba **Atletas** pública: todos os inscritos agrupados por divisão (categoria),
- * com card por atleta e selo **Confirmado** (confirmada) / **Pendente**
- * (pendente_pagamento) — o atleta se inscreve e paga depois; só os confirmados
- * entram nas áreas e chaves. Tem busca (atleta/academia) e atalho para a chave
+ * Aba **Atletas** pública: todos os inscritos, agrupados por **divisão**
+ * (categoria) ou por **academia** — alternável pelo usuário. Card por atleta
+ * com selo **Confirmado** (confirmada) / **Pendente** (pendente_pagamento) — o
+ * atleta se inscreve e paga depois; só os confirmados entram nas áreas e
+ * chaves. Tem busca (atleta/academia), filtro por país e atalho para a chave
  * de cada categoria quando ela já está publicada.
  */
 export function AtletasLista({
@@ -56,6 +86,7 @@ export function AtletasLista({
 }) {
   const [busca, setBusca] = useState("");
   const [paisFiltro, setPaisFiltro] = useState<string | null>(null);
+  const [modo, setModo] = useState<ModoAgrupamento>("divisao");
   const q = norm(busca.trim());
   const { locale, dic } = useIdioma();
   const dat = dic.atletas;
@@ -70,20 +101,78 @@ export function AtletasLista({
   }, [divisoes, locale]);
   const mostrarPais = paises.length > 1;
 
+  // monta os grupos conforme o modo escolhido
+  const grupos = useMemo<GrupoAtletas[]>(() => {
+    if (modo === "divisao") {
+      return divisoes.map((d) => ({
+        id: d.categoriaId,
+        titulo: d.titulo,
+        faixa: d.faixa,
+        confirmados: d.confirmados,
+        pendentes: d.pendentes,
+        chaveHref: d.chaveHref,
+        atletas: d.atletas,
+      }));
+    }
+    // por academia: achata todos os inscritos e reagrupa pelo nome da academia.
+    // Os sem academia vão para um grupo à parte, sempre exibido por último.
+    const porAcademia = new Map<string, AtletaCard[]>();
+    const semAcademia: AtletaCard[] = [];
+    for (const d of divisoes) {
+      for (const a of d.atletas) {
+        const nome = a.academia?.trim();
+        if (!nome) {
+          semAcademia.push(a);
+          continue;
+        }
+        const arr = porAcademia.get(nome);
+        if (arr) arr.push(a);
+        else porAcademia.set(nome, [a]);
+      }
+    }
+
+    const lista: GrupoAtletas[] = [...porAcademia.entries()]
+      .map(([nome, atletas]) => {
+        const ordenados = porNome(atletas, locale);
+        return {
+          id: `academia:${nome}`,
+          titulo: nome,
+          faixa: null,
+          ...contagem(ordenados),
+          chaveHref: null,
+          atletas: ordenados,
+        };
+      })
+      .sort((a, b) => a.titulo.localeCompare(b.titulo, locale));
+
+    if (semAcademia.length) {
+      const ordenados = porNome(semAcademia, locale);
+      lista.push({
+        id: "sem-academia",
+        titulo: dat.semAcademia,
+        faixa: null,
+        ...contagem(ordenados),
+        chaveHref: null,
+        atletas: ordenados,
+      });
+    }
+    return lista;
+  }, [divisoes, modo, locale, dat.semAcademia]);
+
   const visiveis = useMemo(() => {
-    if (!q && !paisFiltro) return divisoes;
-    return divisoes
-      .map((d) => ({
-        ...d,
-        atletas: d.atletas.filter((a) => {
+    if (!q && !paisFiltro) return grupos;
+    return grupos
+      .map((g) => ({
+        ...g,
+        atletas: g.atletas.filter((a) => {
           if (paisFiltro && a.pais !== paisFiltro) return false;
           if (q && !norm(`${a.nome} ${a.academia ?? ""}`).includes(q))
             return false;
           return true;
         }),
       }))
-      .filter((d) => d.atletas.length > 0);
-  }, [divisoes, q, paisFiltro]);
+      .filter((g) => g.atletas.length > 0);
+  }, [grupos, q, paisFiltro]);
 
   const totalAtletas = totalConfirmados + totalPendentes;
 
@@ -113,6 +202,19 @@ export function AtletasLista({
         )}
       </div>
 
+      {/* AGRUPAR POR: divisão | academia */}
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <span className="font-cond text-[12px] uppercase tracking-[0.06em] text-muted-3">
+          {dat.agruparPor}
+        </span>
+        <Chip ativo={modo === "divisao"} onClick={() => setModo("divisao")}>
+          {dat.porDivisao}
+        </Chip>
+        <Chip ativo={modo === "academia"} onClick={() => setModo("academia")}>
+          {dat.porAcademia}
+        </Chip>
+      </div>
+
       {/* BUSCA */}
       <input
         type="search"
@@ -125,17 +227,17 @@ export function AtletasLista({
       {/* FILTRO POR PAÍS (só quando há mais de um) */}
       {mostrarPais && (
         <div className="mb-5 flex flex-wrap gap-2">
-          <ChipPais ativo={paisFiltro === null} onClick={() => setPaisFiltro(null)}>
+          <Chip ativo={paisFiltro === null} onClick={() => setPaisFiltro(null)}>
             {dat.todosPaises}
-          </ChipPais>
+          </Chip>
           {paises.map((c) => (
-            <ChipPais
+            <Chip
               key={c}
               ativo={paisFiltro === c}
               onClick={() => setPaisFiltro(c)}
             >
               {bandeiraPais(c)} {nomePaisLocale(c, locale)}
-            </ChipPais>
+            </Chip>
           ))}
         </div>
       )}
@@ -146,10 +248,11 @@ export function AtletasLista({
         </div>
       ) : (
         <div className="flex flex-col gap-5">
-          {visiveis.map((d) => (
-            <Divisao
-              key={d.categoriaId}
-              divisao={d}
+          {visiveis.map((g) => (
+            <Grupo
+              key={g.id}
+              grupo={g}
+              modo={modo}
               mostrarPais={mostrarPais}
               forcarAberto={Boolean(q) || paisFiltro !== null}
             />
@@ -160,14 +263,16 @@ export function AtletasLista({
   );
 }
 
-function Divisao({
-  divisao,
+function Grupo({
+  grupo,
+  modo,
   mostrarPais,
   forcarAberto,
 }: {
-  divisao: DivisaoAtletas;
+  grupo: GrupoAtletas;
+  modo: ModoAgrupamento;
   mostrarPais: boolean;
-  /** força a divisão aberta (ex.: durante busca/filtro) ignorando o estado local */
+  /** força o grupo aberto (ex.: durante busca/filtro) ignorando o estado local */
   forcarAberto: boolean;
 }) {
   const [abertoLocal, setAbertoLocal] = useState(false);
@@ -178,7 +283,7 @@ function Divisao({
     <section className="relative border border-white/10 bg-surface">
       <span className="absolute inset-x-0 top-0 z-10 h-[3px] bg-brand" />
 
-      {/* CABEÇALHO DA DIVISÃO — clique alterna o collapse (fechado por padrão) */}
+      {/* CABEÇALHO DO GRUPO — clique alterna o collapse (fechado por padrão) */}
       <div className="flex items-center justify-between gap-3 px-4 pb-3 pt-4">
         <button
           type="button"
@@ -187,30 +292,34 @@ function Divisao({
           className="group flex min-w-0 flex-1 items-start gap-2.5 text-left"
         >
           <Chevron aberto={aberto} />
-          <span
-            className="mt-0.5 h-3.5 w-3.5 shrink-0 -skew-x-9 border border-white/25"
-            style={{ background: corDaFaixa(divisao.faixa) }}
-          />
+          {modo === "academia" ? (
+            <IconeAcademia />
+          ) : (
+            <span
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 -skew-x-9 border border-white/25"
+              style={{ background: corDaFaixa(grupo.faixa) }}
+            />
+          )}
           <div className="min-w-0">
             <div className="truncate font-cond text-[15px] font-bold uppercase tracking-[0.02em] text-white">
-              {divisao.titulo}
+              {grupo.titulo}
             </div>
             <div className="mt-0.5 font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
-              <span className="tnum">{divisao.confirmados}</span>{" "}
-              {divisao.confirmados === 1 ? dat.confirmado : dat.confirmados}
-              {divisao.pendentes > 0 && (
+              <span className="tnum">{grupo.confirmados}</span>{" "}
+              {grupo.confirmados === 1 ? dat.confirmado : dat.confirmados}
+              {grupo.pendentes > 0 && (
                 <>
                   {" · "}
-                  <span className="tnum">{divisao.pendentes}</span>{" "}
-                  {divisao.pendentes === 1 ? dat.pendente : dat.pendentes}
+                  <span className="tnum">{grupo.pendentes}</span>{" "}
+                  {grupo.pendentes === 1 ? dat.pendente : dat.pendentes}
                 </>
               )}
             </div>
           </div>
         </button>
-        {divisao.chaveHref && (
+        {grupo.chaveHref && (
           <Link
-            href={divisao.chaveHref}
+            href={grupo.chaveHref}
             className="shrink-0 font-cond text-[12px] font-semibold uppercase tracking-[0.05em] text-muted-3 transition-colors hover:text-brand-soft"
           >
             {dat.verChave} →
@@ -221,8 +330,13 @@ function Divisao({
       {/* CARDS DOS ATLETAS */}
       {aberto && (
         <div className="grid grid-cols-1 gap-px border-t border-white/10 bg-white/6 sm:grid-cols-2 lg:grid-cols-3">
-          {divisao.atletas.map((a) => (
-            <CardAtleta key={a.id} atleta={a} mostrarPais={mostrarPais} />
+          {grupo.atletas.map((a) => (
+            <CardAtleta
+              key={a.id}
+              atleta={a}
+              modo={modo}
+              mostrarPais={mostrarPais}
+            />
           ))}
         </div>
       )}
@@ -250,15 +364,41 @@ function Chevron({ aberto }: { aberto: boolean }) {
   );
 }
 
+/** ícone de equipe no cabeçalho quando o grupo é uma academia */
+function IconeAcademia() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-2"
+    >
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
 function CardAtleta({
   atleta,
+  modo,
   mostrarPais,
 }: {
   atleta: AtletaCard;
+  modo: ModoAgrupamento;
   mostrarPais: boolean;
 }) {
   const { locale, dic } = useIdioma();
   const dat = dic.atletas;
+  // no modo academia o card mostra a divisão do atleta; caso contrário, a academia
+  const linha =
+    modo === "academia" ? atleta.divisao : (atleta.academia ?? dat.semAcademia);
   return (
     <div className="flex items-center justify-between gap-3 bg-surface px-4 py-3">
       <div className="flex min-w-0 items-center gap-2.5">
@@ -276,7 +416,7 @@ function CardAtleta({
                 {bandeiraPais(atleta.pais)}
               </span>
             )}
-            {atleta.academia ?? dat.semAcademia}
+            {linha}
           </div>
         </div>
       </div>
@@ -285,7 +425,7 @@ function CardAtleta({
   );
 }
 
-function ChipPais({
+function Chip({
   ativo,
   onClick,
   children,
