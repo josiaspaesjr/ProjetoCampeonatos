@@ -3,6 +3,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, chaves, inscricoes } from "@/db/schema";
 import { getEventoPublico } from "@/lib/evento-publico";
+import { dataCompleta } from "@/lib/datas";
 import { getDicionario } from "@/lib/i18n/server";
 import {
   AtletasLista,
@@ -97,6 +98,11 @@ export default async function AbaAtletas({
       </div>
       <AtletasLista
         divisoes={divisoes}
+        evento={{
+          nome: evento.nome,
+          local: [evento.cidade, evento.uf].filter(Boolean).join(" · "),
+          data: dataCompleta(evento.dataInicio),
+        }}
         totalConfirmados={totalConfirmados}
         totalPendentes={totalPendentes}
       />

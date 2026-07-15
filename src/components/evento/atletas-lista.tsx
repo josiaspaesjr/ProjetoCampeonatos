@@ -6,6 +6,10 @@ import { cn } from "@/lib/utils";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 import { bandeiraPais, nomePaisLocale } from "@/lib/paises";
 import { useDic, useIdioma } from "@/lib/i18n/client";
+import type { Dicionario } from "@/lib/i18n/dicionarios/pt";
+
+/** strings da aba Atletas (usadas também no documento de impressão) */
+type DicAtletas = Dicionario["atletas"];
 
 /** status relevante de um inscrito na lista pública */
 export type StatusInscrito = "confirmada" | "pendente_pagamento";
@@ -31,6 +35,15 @@ export interface DivisaoAtletas {
   /** link para a chave pública, quando publicada */
   chaveHref: string | null;
   atletas: AtletaCard[];
+}
+
+/** dados do evento usados no cabeçalho da lista impressa */
+export interface EventoResumo {
+  nome: string;
+  /** "Cidade · UF" (ou vazio) */
+  local: string;
+  /** data já formatada (pt-BR) */
+  data: string;
 }
 
 /** como os atletas estão agrupados na lista */
@@ -67,6 +80,177 @@ function contagem(atletas: AtletaCard[]) {
 const porNome = (atletas: AtletaCard[], locale: string) =>
   [...atletas].sort((a, b) => a.nome.localeCompare(b.nome, locale));
 
+/** escapa texto do usuário para interpolar com segurança no HTML de impressão */
+const escaparHtml = (s: string) =>
+  s.replace(/[&<>"']/g, (c) => {
+    switch (c) {
+      case "&":
+        return "&amp;";
+      case "<":
+        return "&lt;";
+      case ">":
+        return "&gt;";
+      case '"':
+        return "&quot;";
+      default:
+        return "&#39;";
+    }
+  });
+
+/**
+ * Monta um documento HTML autocontido (tema claro, pronto para papel A4) com a
+ * lista de atletas de uma academia — cabeçalho com marca/evento, resumo de
+ * confirmados e tabela nº / atleta (com marcador de faixa) / categoria / país /
+ * status. Todo texto do usuário passa por `escaparHtml`.
+ */
+function montarHtmlImpressao({
+  grupo,
+  evento,
+  mostrarPais,
+  locale,
+  dat,
+}: {
+  grupo: GrupoAtletas;
+  evento: EventoResumo;
+  mostrarPais: boolean;
+  locale: string;
+  dat: DicAtletas;
+}) {
+  const { confirmados, pendentes } = contagem(grupo.atletas);
+
+  const linhas = grupo.atletas
+    .map((a, i) => {
+      const ok = a.status === "confirmada";
+      const celPais = mostrarPais
+        ? `<td class="pais">${escaparHtml(nomePaisLocale(a.pais, locale))}</td>`
+        : "";
+      return `<tr>
+        <td class="num">${i + 1}</td>
+        <td class="nome"><span class="faixa" style="background:${corDaFaixa(a.faixa)}"></span>${escaparHtml(a.nome)}</td>
+        <td class="cat">${escaparHtml(a.divisao)}</td>
+        ${celPais}
+        <td><span class="badge ${ok ? "ok" : "pend"}">${escaparHtml(ok ? dat.statusConfirmado : dat.statusPendente)}</span></td>
+      </tr>`;
+    })
+    .join("");
+
+  const thPais = mostrarPais ? `<th>${escaparHtml(dat.colPais)}</th>` : "";
+  const legenda = [evento.nome, evento.data, evento.local]
+    .filter(Boolean)
+    .map(escaparHtml)
+    .join("&nbsp;&nbsp;·&nbsp;&nbsp;");
+  const resumo =
+    `${confirmados} ${escaparHtml(dat.confirmadosSelo)}` +
+    (pendentes > 0
+      ? `&nbsp;&nbsp;·&nbsp;&nbsp;${pendentes} ${escaparHtml(dat.pendentesSelo)}`
+      : "");
+  const geradoEm = new Date().toLocaleString("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+
+  return `<!doctype html>
+<html lang="${escaparHtml(locale)}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${escaparHtml(grupo.titulo)} — ${escaparHtml(evento.nome)}</title>
+<style>
+  :root { --tinta:#18181b; --musgo:#6b7280; --linha:#e5e7eb; --marca:#ee2e24; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; padding:0; }
+  body {
+    font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    color:var(--tinta); padding:0 4mm;
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .barra { height:5px; background:var(--marca); margin:0 -4mm 22px; }
+  .eyebrow { display:flex; justify-content:space-between; align-items:baseline; gap:16px; }
+  .marca { font-size:12px; font-weight:800; letter-spacing:.14em; color:#9ca3af; text-transform:uppercase; }
+  .marca b { color:var(--marca); }
+  .rotulo { font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:#9ca3af; font-weight:700; }
+  h1 { font-size:30px; font-weight:800; letter-spacing:-.01em; margin:10px 0 0; text-transform:uppercase; }
+  .evento { margin-top:7px; font-size:12.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--musgo); }
+  .resumo { margin-top:14px; display:inline-block; border:1px solid var(--tinta); padding:5px 12px; font-size:11px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; }
+  table { width:100%; border-collapse:collapse; margin-top:20px; }
+  thead th { text-align:left; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--musgo); border-bottom:2px solid var(--tinta); padding:0 10px 9px; }
+  th.num, td.num { width:34px; text-align:right; color:#9ca3af; }
+  tbody td { padding:10px; border-bottom:1px solid var(--linha); font-size:13px; vertical-align:middle; }
+  tbody tr:nth-child(even) td { background:#f8f8f8; }
+  td.nome { font-weight:700; white-space:nowrap; }
+  td.cat, td.pais { color:#3f3f46; font-size:12px; }
+  .faixa { display:inline-block; width:13px; height:13px; margin-right:9px; vertical-align:-1px; border:1px solid #d4d4d8; transform:skewX(-9deg); }
+  .badge { display:inline-block; font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; padding:2px 8px; border:1px solid; white-space:nowrap; }
+  .badge.ok { color:#047857; border-color:#a7f3d0; background:#ecfdf5; }
+  .badge.pend { color:#b45309; border-color:#fde68a; background:#fffbeb; }
+  footer { margin-top:26px; padding-top:12px; border-top:1px solid var(--linha); display:flex; justify-content:space-between; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:#9ca3af; }
+  @page { size:A4; margin:14mm; }
+  @media print { body { padding:0; } .barra { margin:0 0 22px; } }
+</style>
+</head>
+<body>
+  <div class="barra"></div>
+  <div class="eyebrow">
+    <span class="marca">BJJ<b>ARENA</b></span>
+    <span class="rotulo">${escaparHtml(dat.listaAtletas)}</span>
+  </div>
+  <h1>${escaparHtml(grupo.titulo)}</h1>
+  <div class="evento">${legenda}</div>
+  <div class="resumo">${resumo}</div>
+  <table>
+    <thead>
+      <tr>
+        <th class="num">#</th>
+        <th>${escaparHtml(dat.colAtleta)}</th>
+        <th>${escaparHtml(dat.colCategoria)}</th>
+        ${thPais}
+        <th>${escaparHtml(dat.colStatus)}</th>
+      </tr>
+    </thead>
+    <tbody>${linhas}</tbody>
+  </table>
+  <footer>
+    <span>BJJARENA</span>
+    <span>${escaparHtml(dat.geradoEm)} ${escaparHtml(geradoEm)}</span>
+  </footer>
+</body>
+</html>`;
+}
+
+/** imprime um HTML autocontido via iframe oculto (sem popup, sem sair da página) */
+function imprimirHtml(html: string) {
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("aria-hidden", "true");
+  iframe.style.cssText =
+    "position:fixed;left:-9999px;top:0;width:0;height:0;border:0;";
+  document.body.appendChild(iframe);
+
+  let acionado = false;
+  const acionar = () => {
+    if (acionado) return;
+    const win = iframe.contentWindow;
+    if (!win) return;
+    acionado = true;
+    win.focus();
+    win.print();
+    win.onafterprint = () => iframe.remove();
+    // rede de segurança: remove o iframe mesmo se onafterprint não disparar
+    window.setTimeout(() => iframe.remove(), 60000);
+  };
+
+  iframe.onload = () => window.setTimeout(acionar, 60);
+  const doc = iframe.contentWindow?.document;
+  if (!doc) {
+    iframe.remove();
+    return;
+  }
+  doc.open();
+  doc.write(html);
+  doc.close();
+  // fallback: em alguns navegadores o onload não dispara após document.write
+  window.setTimeout(acionar, 400);
+}
+
 /**
  * Aba **Atletas** pública: todos os inscritos, agrupados por **divisão**
  * (categoria) ou por **academia** — alternável pelo usuário. Card por atleta
@@ -77,10 +261,12 @@ const porNome = (atletas: AtletaCard[], locale: string) =>
  */
 export function AtletasLista({
   divisoes,
+  evento,
   totalConfirmados,
   totalPendentes,
 }: {
   divisoes: DivisaoAtletas[];
+  evento: EventoResumo;
   totalConfirmados: number;
   totalPendentes: number;
 }) {
@@ -253,6 +439,7 @@ export function AtletasLista({
               key={g.id}
               grupo={g}
               modo={modo}
+              evento={evento}
               mostrarPais={mostrarPais}
               forcarAberto={Boolean(q) || paisFiltro !== null}
             />
@@ -266,18 +453,21 @@ export function AtletasLista({
 function Grupo({
   grupo,
   modo,
+  evento,
   mostrarPais,
   forcarAberto,
 }: {
   grupo: GrupoAtletas;
   modo: ModoAgrupamento;
+  evento: EventoResumo;
   mostrarPais: boolean;
   /** força o grupo aberto (ex.: durante busca/filtro) ignorando o estado local */
   forcarAberto: boolean;
 }) {
   const [abertoLocal, setAbertoLocal] = useState(false);
   const aberto = forcarAberto || abertoLocal;
-  const dat = useDic().atletas;
+  const { locale, dic } = useIdioma();
+  const dat = dic.atletas;
 
   return (
     <section className="relative border border-white/10 bg-surface">
@@ -317,13 +507,28 @@ function Grupo({
             </div>
           </div>
         </button>
-        {grupo.chaveHref && (
-          <Link
-            href={grupo.chaveHref}
-            className="shrink-0 font-cond text-[12px] font-semibold uppercase tracking-[0.05em] text-muted-3 transition-colors hover:text-brand-soft"
+        {modo === "academia" ? (
+          <button
+            type="button"
+            onClick={() =>
+              imprimirHtml(
+                montarHtmlImpressao({ grupo, evento, mostrarPais, locale, dat }),
+              )
+            }
+            className="flex shrink-0 items-center gap-1.5 font-cond text-[12px] font-semibold uppercase tracking-[0.05em] text-muted-3 transition-colors hover:text-brand-soft"
           >
-            {dat.verChave} →
-          </Link>
+            <IconeImprimir />
+            {dat.imprimir}
+          </button>
+        ) : (
+          grupo.chaveHref && (
+            <Link
+              href={grupo.chaveHref}
+              className="shrink-0 font-cond text-[12px] font-semibold uppercase tracking-[0.05em] text-muted-3 transition-colors hover:text-brand-soft"
+            >
+              {dat.verChave} →
+            </Link>
+          )
         )}
       </div>
 
@@ -381,6 +586,26 @@ function IconeAcademia() {
       <circle cx="9" cy="7" r="4" />
       <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+/** ícone de impressora no botão de imprimir a lista da academia */
+function IconeImprimir() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-3.5 w-3.5 shrink-0"
+    >
+      <path d="M6 9V2h12v7" />
+      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+      <path d="M6 14h12v8H6z" />
     </svg>
   );
 }
