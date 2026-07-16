@@ -371,15 +371,9 @@ export const pt = {
         "Crie seu primeiro campeonato e comece a receber inscrições.",
     },
     entrar: {
-      areaOrganizador: "Área do organizador",
-      heroTitulo: "Rode seu campeonato",
-      heroAccent: "de ponta a ponta",
-      heroDesc:
-        "Entre para criar eventos, publicar inscrições, gerar chaves e acompanhar o ranking oficial.",
-      criarConta: "Criar conta",
+      // comuns
       entrar: "Entrar",
-      subCriar: "Crie sua conta de organizador para publicar eventos.",
-      subEntrar: "Acesse sua conta de organizador para continuar.",
+      criarConta: "Criar conta",
       nomeCompleto: "Nome completo",
       email: "E-mail",
       senha: "Senha",
@@ -389,7 +383,42 @@ export const pt = {
       ou: "ou",
       jaTemConta: "Já tem conta?",
       aindaNaoTemConta: "Ainda não tem conta?",
-      criarContaOrg: "Criar conta de organizador",
+      criarContaLink: "Criar conta",
+      // painel neutro (login e escolha de tipo)
+      eyebrowNeutro: "Sua conta",
+      heroTitulo: "Todo o seu jiu-jitsu",
+      heroAccent: "num só lugar",
+      heroDesc:
+        "Entre para se inscrever em campeonatos, criar eventos e acompanhar o ranking oficial.",
+      subEntrar: "Acesse sua conta para continuar.",
+      // escolha do tipo de conta
+      escolhaTitulo: "Criar conta",
+      escolhaSub:
+        "Como você quer usar o LeagueMat? Escolha para começar — dá para ter os dois depois.",
+      trocarTipo: "← Escolher outro tipo",
+      atletaEyebrow: "Competir",
+      contaAtleta: "Sou atleta",
+      atletaCardDesc:
+        "Inscreva-se nos campeonatos e acompanhe suas chaves, resultados e cartel — com um perfil só.",
+      criarAtletaBtn: "Criar conta de atleta →",
+      orgEyebrow: "Organizar",
+      contaOrganizador: "Sou organizador",
+      orgCardDesc:
+        "Crie e publique eventos, gere chaves, faça o check-in e acompanhe as inscrições e a receita.",
+      criarOrgBtn: "Criar conta de organizador →",
+      // painel e subtítulo por tipo (no cadastro)
+      atletaArea: "Área do atleta",
+      atletaHeroTitulo: "Seu jiu-jitsu",
+      atletaHeroAccent: "em um só perfil",
+      atletaHeroDesc:
+        "Crie seu perfil uma vez e use em todas as etapas — inscrições, chaves, cronograma e ranking.",
+      atletaSubCriar: "Crie sua conta de atleta para se inscrever nos campeonatos.",
+      orgArea: "Área do organizador",
+      orgHeroTitulo: "Rode seu campeonato",
+      orgHeroAccent: "de ponta a ponta",
+      orgHeroDesc:
+        "Crie eventos, publique inscrições, gere chaves e acompanhe o ranking oficial.",
+      orgSubCriar: "Crie sua conta de organizador para publicar eventos.",
     },
     acesso: {
       ola: "Olá",

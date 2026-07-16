@@ -28,21 +28,37 @@ export async function cadastrar(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const senha = String(formData.get("senha") ?? "");
   const next = destinoSeguro(formData.get("next") as string | null);
+  // tipo de conta escolhido no cadastro (atleta é o padrão)
+  const tipo =
+    String(formData.get("tipo") ?? "") === "organizador"
+      ? "organizador"
+      : "atleta";
+
+  // ao errar, volta ao formulário do mesmo tipo (não ao login)
+  const voltarCadastro = (msg: string) =>
+    redirect(
+      `/entrar?modo=cadastro&tipo=${tipo}&next=${encodeURIComponent(next)}&erro=${encodeURIComponent(msg)}`,
+    );
 
   if (!nome || !email || senha.length < 6) {
-    redirect(`/entrar?erro=${encodeURIComponent("Preencha nome, e-mail e senha (mín. 6 caracteres)")}&next=${encodeURIComponent(next)}`);
+    voltarCadastro("Preencha nome, e-mail e senha (mín. 6 caracteres)");
   }
 
   const supabase = await criarClienteSupabase();
   const { error } = await supabase.auth.signUp({
     email,
     password: senha,
-    options: { data: { nome } },
+    // `tipo` é lido no primeiro acesso para marcar eh_organizador na conta
+    options: { data: { nome, tipo } },
   });
   if (error) {
-    redirect(`/entrar?erro=${encodeURIComponent(error.message)}&next=${encodeURIComponent(next)}`);
+    voltarCadastro(error.message);
   }
-  redirect(next);
+
+  // sem destino explícito, cada tipo cai na sua área
+  const destino =
+    next !== "/" ? next : tipo === "organizador" ? "/organizador" : "/atleta";
+  redirect(destino);
 }
 
 export async function sair() {

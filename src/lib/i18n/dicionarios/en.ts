@@ -369,15 +369,9 @@ export const en: Dicionario = {
       criePrimeiro: "Create your first championship and start taking registrations.",
     },
     entrar: {
-      areaOrganizador: "Organizer area",
-      heroTitulo: "Run your championship",
-      heroAccent: "end to end",
-      heroDesc:
-        "Sign in to create events, publish registration, generate brackets and follow the official ranking.",
-      criarConta: "Create account",
+      // common
       entrar: "Sign in",
-      subCriar: "Create your organizer account to publish events.",
-      subEntrar: "Sign in to your organizer account to continue.",
+      criarConta: "Create account",
       nomeCompleto: "Full name",
       email: "E-mail",
       senha: "Password",
@@ -387,7 +381,42 @@ export const en: Dicionario = {
       ou: "or",
       jaTemConta: "Already have an account?",
       aindaNaoTemConta: "Don't have an account yet?",
-      criarContaOrg: "Create organizer account",
+      criarContaLink: "Create account",
+      // neutral panel (login and type choice)
+      eyebrowNeutro: "Your account",
+      heroTitulo: "All your jiu-jitsu",
+      heroAccent: "in one place",
+      heroDesc:
+        "Sign in to register for championships, create events and follow the official ranking.",
+      subEntrar: "Sign in to your account to continue.",
+      // account-type choice
+      escolhaTitulo: "Create account",
+      escolhaSub:
+        "How will you use LeagueMat? Pick one to start — you can have both later.",
+      trocarTipo: "← Choose a different type",
+      atletaEyebrow: "Compete",
+      contaAtleta: "I'm an athlete",
+      atletaCardDesc:
+        "Register for championships and follow your brackets, results and record — with a single profile.",
+      criarAtletaBtn: "Create athlete account →",
+      orgEyebrow: "Organize",
+      contaOrganizador: "I'm an organizer",
+      orgCardDesc:
+        "Create and publish events, generate brackets, run check-in and track registrations and revenue.",
+      criarOrgBtn: "Create organizer account →",
+      // per-type panel and subtitle (on sign-up)
+      atletaArea: "Athlete area",
+      atletaHeroTitulo: "Your jiu-jitsu",
+      atletaHeroAccent: "in one profile",
+      atletaHeroDesc:
+        "Build your profile once and use it across every stage — registration, brackets, schedule and ranking.",
+      atletaSubCriar: "Create your athlete account to register for championships.",
+      orgArea: "Organizer area",
+      orgHeroTitulo: "Run your championship",
+      orgHeroAccent: "end to end",
+      orgHeroDesc:
+        "Create events, publish registration, generate brackets and follow the official ranking.",
+      orgSubCriar: "Create your organizer account to publish events.",
     },
     acesso: {
       ola: "Hi",

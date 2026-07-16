@@ -42,6 +42,11 @@ export async function getUsuarioSessao() {
       return vinculado;
     }
 
+    // tipo escolhido no cadastro decide se a conta já nasce como organizador
+    const tipoCadastro = user.user_metadata?.tipo as string | undefined;
+    // insert idempotente: no primeiro acesso, layout e page do organizador
+    // chamam isto em paralelo — sem onConflict a 2ª inserção estoura o unique
+    // de auth_id. Se houve corrida, relê a linha que a outra requisição criou.
     const [criado] = await db
       .insert(usuarios)
       .values({
@@ -50,9 +55,16 @@ export async function getUsuarioSessao() {
         nome:
           (user.user_metadata?.nome as string | undefined) ??
           user.email.split("@")[0],
+        ehOrganizador: tipoCadastro === "organizador",
       })
+      .onConflictDoNothing({ target: usuarios.authId })
       .returning();
-    return criado;
+    if (criado) return criado;
+    return (
+      (await db.query.usuarios.findFirst({
+        where: eq(usuarios.authId, user.id),
+      })) ?? null
+    );
   }
 
   // --- modo dev sem Supabase ------------------------------------------------
