@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
-import { categorias, eventos, inscricoes } from "@/db/schema";
+import { categorias, eventos, inscricoes, usuarios } from "@/db/schema";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { AcaoTexto, BotaoAcao } from "@/components/ui/botao-acao";
 import { SeletorAcademia } from "@/components/inscricao/seletor-academia";
@@ -11,6 +11,7 @@ import { NativeSelect } from "@/components/ui/native-select";
 import { getUsuarioAtual } from "@/lib/auth";
 import { getDicionario } from "@/lib/i18n/server";
 import { FAIXAS } from "@/lib/categorias/cbjj";
+import { formatarCep, formatarCpf } from "@/lib/cpf";
 import {
   cancelarInscricao,
   fundirCategorias,
@@ -54,6 +55,26 @@ export default async function PaginaInscricoes({
   ]);
   const abertas = cats.filter((c) => c.status === "aberta");
   const nomeCategoria = new Map(cats.map((c) => [c.id, c.nome]));
+
+  // CPF/endereço ficam no perfil (usuarios); carrega em lote os das inscrições
+  const usuarioIds = [...new Set(lista.map((i) => i.usuarioId))];
+  const dadosUsuarios = usuarioIds.length
+    ? await db.query.usuarios.findMany({
+        where: inArray(usuarios.id, usuarioIds),
+        columns: {
+          id: true,
+          cpf: true,
+          enderecoCep: true,
+          enderecoLogradouro: true,
+          enderecoNumero: true,
+          enderecoComplemento: true,
+          enderecoBairro: true,
+          enderecoCidade: true,
+          enderecoUf: true,
+        },
+      })
+    : [];
+  const perfilPorUsuario = new Map(dadosUsuarios.map((u) => [u.id, u]));
 
   const ativasPorCategoria = new Map<string, number>();
   for (const i of lista) {
@@ -123,6 +144,21 @@ export default async function PaginaInscricoes({
             const rotulo = dic.admin.statusInscricao[i.status] ?? i.status;
             const variante = VARIANTE_STATUS[i.status] ?? ("outline" as const);
             const ativa = i.status === "confirmada" || i.status === "pendente_pagamento";
+            const u = perfilPorUsuario.get(i.usuarioId);
+            const endereco = u
+              ? [
+                  [u.enderecoLogradouro, u.enderecoNumero].filter(Boolean).join(", "),
+                  u.enderecoComplemento,
+                  u.enderecoBairro,
+                  [u.enderecoCidade, u.enderecoUf].filter(Boolean).join("/"),
+                  u.enderecoCep ? `CEP ${formatarCep(u.enderecoCep)}` : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")
+              : "";
+            const cpfTxt =
+              u && u.cpf ? `${dic.inscricao.cpf} ${formatarCpf(u.cpf)}` : "";
+            const docLinha = [cpfTxt, endereco].filter(Boolean).join(" · ");
             return (
               <li
                 key={i.id}
@@ -142,6 +178,11 @@ export default async function PaginaInscricoes({
                     <p className="truncate text-xs text-muted-foreground">
                       {nomeCategoria.get(i.categoriaId)}
                     </p>
+                    {docLinha && (
+                      <p className="mt-0.5 text-xs text-muted-foreground/70">
+                        {docLinha}
+                      </p>
+                    )}
                   </div>
                 </div>
 
