@@ -6,9 +6,9 @@ import { supabaseConfigurado } from "@/lib/supabase/server";
 import { getDicionario } from "@/lib/i18n/server";
 
 /**
- * Roteador pós-login. Identifica o perfil e encaminha:
- * - só organizador → painel; só atleta → área do atleta;
- * - os dois (ou conta nova, sem nada ainda) → tela de escolha.
+ * Roteador pós-login. Toda conta pode competir; organizar exige a flag.
+ * - não é organizador → área do atleta;
+ * - é organizador → tela de escolha (a mesma conta compete E organiza).
  */
 export default async function Acesso() {
   const perfil = await perfilDeAcesso();
@@ -20,8 +20,9 @@ export default async function Acesso() {
 
   const { usuario, ehOrganizador, ehAtleta } = perfil;
 
-  if (ehOrganizador && !ehAtleta) redirect("/organizador");
-  if (ehAtleta && !ehOrganizador) redirect("/atleta");
+  // todo mundo pode competir: quem não organiza entra direto na área do
+  // atleta; o organizador escolhe por onde entrar (compete E organiza).
+  if (!ehOrganizador) redirect("/atleta");
 
   // ambos, ou conta nova sem histórico → deixa o usuário escolher
   const primeiroNome = usuario.nome.split(/\s+/)[0];

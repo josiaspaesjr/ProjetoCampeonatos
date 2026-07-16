@@ -44,15 +44,31 @@ export async function cadastrar(formData: FormData) {
     voltarCadastro("Preencha nome, e-mail e senha (mín. 6 caracteres)");
   }
 
+  // conta já existe com esse e-mail → manda para o login. Não há "conta de
+  // atleta" separada: a mesma conta compete e organiza (e-mail é a identidade).
+  const jaTemConta =
+    "Você já tem uma conta com esse e-mail. Entre — a mesma conta compete e organiza.";
+  const irParaLogin = (msg: string) =>
+    redirect(`/entrar?next=${encodeURIComponent(next)}&erro=${encodeURIComponent(msg)}`);
+
   const supabase = await criarClienteSupabase();
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password: senha,
     // `tipo` é lido no primeiro acesso para marcar eh_organizador na conta
     options: { data: { nome, tipo } },
   });
   if (error) {
+    const existe =
+      /already (registered|been registered|exists)|user already/i.test(error.message) ||
+      (error as { code?: string }).code === "user_already_exists";
+    if (existe) irParaLogin(jaTemConta);
     voltarCadastro(error.message);
+  }
+  // proteção contra enumeração ligada: signUp não erra, mas devolve identities
+  // vazio quando o e-mail já está cadastrado
+  if (data.user && data.user.identities?.length === 0) {
+    irParaLogin(jaTemConta);
   }
 
   // sem destino explícito, cada tipo cai na sua área
