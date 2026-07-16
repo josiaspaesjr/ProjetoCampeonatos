@@ -18,6 +18,7 @@ import {
 } from "@/lib/categorias/elegibilidade";
 import { criarCobrancaPixParaInscricoes } from "@/lib/pagamentos/cobranca";
 import { normalizarPais } from "@/lib/paises";
+import { soDigitos, validarCpf } from "@/lib/cpf";
 import { precoInscricaoCentavos } from "@/lib/lotes/preco";
 import { getUsuarioSessao } from "@/lib/auth";
 import { definirSessaoAtleta } from "@/lib/sessao";
@@ -51,10 +52,34 @@ export async function criarInscricao(eventoSlug: string, formData: FormData) {
   const faixa = String(formData.get("faixa") ?? "") as Faixa;
   const academiaId = String(formData.get("academiaId") ?? "").trim() || null;
   const pais = normalizarPais(String(formData.get("pais") ?? ""));
+  const cpf = soDigitos(String(formData.get("cpf") ?? "")) || null;
+  const enderecoCep = soDigitos(String(formData.get("cep") ?? "")) || null;
+  const enderecoLogradouro = String(formData.get("logradouro") ?? "").trim() || null;
+  const enderecoNumero = String(formData.get("numero") ?? "").trim() || null;
+  const enderecoComplemento = String(formData.get("complemento") ?? "").trim() || null;
+  const enderecoBairro = String(formData.get("bairro") ?? "").trim() || null;
+  const enderecoCidade = String(formData.get("cidade") ?? "").trim() || null;
+  const enderecoUf = String(formData.get("uf") ?? "").trim().toUpperCase() || null;
   const categoriaId = String(formData.get("categoriaId") ?? "");
 
   if (!nome || !email || !dataNascimento || !sexo || !faixa || !categoriaId) {
     throw new Error("Preencha todos os campos obrigatórios");
+  }
+  // endereço obrigatório (complemento é opcional)
+  if (
+    !enderecoCep ||
+    !enderecoLogradouro ||
+    !enderecoNumero ||
+    !enderecoBairro ||
+    !enderecoCidade ||
+    !enderecoUf
+  ) {
+    throw new Error("Preencha o endereço completo");
+  }
+  // CPF obrigatório e válido para atletas do Brasil (documento nacional)
+  const ehBrasil = pais === "BR";
+  if (ehBrasil && (!cpf || !validarCpf(cpf))) {
+    throw new Error("Informe um CPF válido");
   }
 
   // academia: precisa existir no catálogo — o formulário só envia um id
@@ -75,6 +100,14 @@ export async function criarInscricao(eventoSlug: string, formData: FormData) {
     sexo,
     faixaAtual: faixa,
     academiaId,
+    cpf: ehBrasil ? cpf : null,
+    enderecoCep,
+    enderecoLogradouro,
+    enderecoNumero,
+    enderecoComplemento,
+    enderecoBairro,
+    enderecoCidade,
+    enderecoUf,
   };
 
   let usuario;

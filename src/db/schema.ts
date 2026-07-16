@@ -122,6 +122,16 @@ export const usuarios = pgTable("usuarios", {
   sexo: sexoEnum("sexo"),
   faixaAtual: faixaEnum("faixa_atual"),
   academiaId: uuid("academia_id").references(() => academias.id),
+  // documento e endereço, coletados na inscrição (CPF só para atletas do Brasil).
+  // guardados no perfil para reaproveitar nas próximas inscrições.
+  cpf: text("cpf"),
+  enderecoCep: text("endereco_cep"),
+  enderecoLogradouro: text("endereco_logradouro"),
+  enderecoNumero: text("endereco_numero"),
+  enderecoComplemento: text("endereco_complemento"),
+  enderecoBairro: text("endereco_bairro"),
+  enderecoCidade: text("endereco_cidade"),
+  enderecoUf: text("endereco_uf"),
   ehOrganizador: boolean("eh_organizador").notNull().default(false),
   ehAdmin: boolean("eh_admin").notNull().default(false),
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),

@@ -100,6 +100,14 @@ export default async function PaginaInscricao({
                   faixa: atleta.faixaAtual ?? undefined,
                   academiaId: atleta.academiaId ?? undefined,
                   academiaNome: academiaAtleta?.nome ?? undefined,
+                  cpf: atleta.cpf ?? undefined,
+                  cep: atleta.enderecoCep ?? undefined,
+                  logradouro: atleta.enderecoLogradouro ?? undefined,
+                  numero: atleta.enderecoNumero ?? undefined,
+                  complemento: atleta.enderecoComplemento ?? undefined,
+                  bairro: atleta.enderecoBairro ?? undefined,
+                  cidade: atleta.enderecoCidade ?? undefined,
+                  uf: atleta.enderecoUf ?? undefined,
                 }
               : undefined
           }

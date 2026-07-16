@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { CLASSES_IDADE, FAIXAS } from "@/lib/categorias/cbjj";
 import { PAISES, nomePaisLocale } from "@/lib/paises";
+import { formatarCep, formatarCpf, validarCpf } from "@/lib/cpf";
 import {
   categoriaCompativel,
   idadeNoAnoDoEvento,
@@ -60,6 +61,14 @@ interface Props {
     academiaId?: string;
     academiaNome?: string;
     pais?: string;
+    cpf?: string;
+    cep?: string;
+    logradouro?: string;
+    numero?: string;
+    complemento?: string;
+    bairro?: string;
+    cidade?: string;
+    uf?: string;
   };
 }
 
@@ -134,6 +143,14 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
   const [faixa, setFaixa] = useState(perfil?.faixa ?? "");
   const [nascimento, setNascimento] = useState(perfil?.dataNascimento ?? "");
   const [pais, setPais] = useState(perfil?.pais ?? "BR");
+  const [cpf, setCpf] = useState(perfil?.cpf ? formatarCpf(perfil.cpf) : "");
+  const [cep, setCep] = useState(perfil?.cep ? formatarCep(perfil.cep) : "");
+  const [logradouro, setLogradouro] = useState(perfil?.logradouro ?? "");
+  const [numero, setNumero] = useState(perfil?.numero ?? "");
+  const [complemento, setComplemento] = useState(perfil?.complemento ?? "");
+  const [bairro, setBairro] = useState(perfil?.bairro ?? "");
+  const [cidade, setCidade] = useState(perfil?.cidade ?? "");
+  const [uf, setUf] = useState(perfil?.uf ?? "");
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState<"pagar_agora" | "pagar_depois" | null>(
@@ -158,7 +175,19 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
   const divisao = divisaoId
     ? (dic.classesIdade[divisaoId] ?? divisaoId)
     : null;
-  const podeContinuar = !!(nome && email && perfilCompleto && categoriaEscolhida);
+  // CPF só é exigido para atletas do Brasil (documento nacional); endereço
+  // (menos complemento) é obrigatório para todos.
+  const ehBrasil = pais === "BR";
+  const cpfValido = !ehBrasil || validarCpf(cpf);
+  const enderecoCompleto = !!(cep && logradouro && numero && bairro && cidade && uf);
+  const podeContinuar = !!(
+    nome &&
+    email &&
+    perfilCompleto &&
+    categoriaEscolhida &&
+    cpfValido &&
+    enderecoCompleto
+  );
 
   const fmt = new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -330,6 +359,126 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
                 name="academiaId"
                 defaultId={perfil?.academiaId}
                 defaultNome={perfil?.academiaNome}
+              />
+            </div>
+          </div>
+
+          {ehBrasil && (
+            <div>
+              <label className={labelCls} htmlFor="insc-cpf">
+                {di.cpf} *
+              </label>
+              <Input
+                id="insc-cpf"
+                name="cpf"
+                inputMode="numeric"
+                required
+                placeholder="000.000.000-00"
+                maxLength={14}
+                value={cpf}
+                onChange={(e) => setCpf(formatarCpf(e.target.value))}
+                aria-invalid={!!cpf && !cpfValido}
+              />
+              {!!cpf && !cpfValido && (
+                <p className="mt-1.5 font-cond text-[13px] text-destructive">
+                  {di.cpfInvalido}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="grid gap-5 sm:grid-cols-[170px_1fr]">
+            <div>
+              <label className={labelCls} htmlFor="insc-cep">
+                {di.cep} *
+              </label>
+              <Input
+                id="insc-cep"
+                name="cep"
+                inputMode="numeric"
+                required
+                placeholder="00000-000"
+                maxLength={9}
+                value={cep}
+                onChange={(e) => setCep(formatarCep(e.target.value))}
+              />
+            </div>
+            <div>
+              <label className={labelCls} htmlFor="insc-logradouro">
+                {di.logradouro} *
+              </label>
+              <Input
+                id="insc-logradouro"
+                name="logradouro"
+                required
+                value={logradouro}
+                onChange={(e) => setLogradouro(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <label className={labelCls} htmlFor="insc-numero">
+                {di.numero} *
+              </label>
+              <Input
+                id="insc-numero"
+                name="numero"
+                required
+                value={numero}
+                onChange={(e) => setNumero(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className={labelCls} htmlFor="insc-complemento">
+                {di.complemento}
+              </label>
+              <Input
+                id="insc-complemento"
+                name="complemento"
+                value={complemento}
+                onChange={(e) => setComplemento(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-[1fr_1fr_90px]">
+            <div>
+              <label className={labelCls} htmlFor="insc-bairro">
+                {di.bairro} *
+              </label>
+              <Input
+                id="insc-bairro"
+                name="bairro"
+                required
+                value={bairro}
+                onChange={(e) => setBairro(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className={labelCls} htmlFor="insc-cidade">
+                {di.cidade} *
+              </label>
+              <Input
+                id="insc-cidade"
+                name="cidade"
+                required
+                value={cidade}
+                onChange={(e) => setCidade(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className={labelCls} htmlFor="insc-uf">
+                {di.uf} *
+              </label>
+              <Input
+                id="insc-uf"
+                name="uf"
+                required
+                maxLength={2}
+                value={uf}
+                onChange={(e) => setUf(e.target.value.toUpperCase())}
               />
             </div>
           </div>
