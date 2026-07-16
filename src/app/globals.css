@@ -86,6 +86,8 @@
 
   --animate-pulse-dot: pulse-dot 1.5s ease-in-out infinite;
   --animate-marquee: marquee 24s linear infinite;
+  --animate-marca-ripple: marca-ripple 1.8s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+  --animate-marca-breathe: marca-breathe 1.8s ease-in-out infinite;
 
   @keyframes pulse-dot {
     0%,
@@ -102,6 +104,30 @@
     }
     to {
       transform: translateX(-50%);
+    }
+  }
+  /* onda concêntrica da marca no carregamento (losango expandindo + sumindo) */
+  @keyframes marca-ripple {
+    0% {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+    18% {
+      opacity: 0.8;
+    }
+    100% {
+      transform: scale(1.65);
+      opacity: 0;
+    }
+  }
+  /* respiração sutil do losango central */
+  @keyframes marca-breathe {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(0.92);
     }
   }
 }
