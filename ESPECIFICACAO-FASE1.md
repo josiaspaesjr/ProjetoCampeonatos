@@ -1,6 +1,6 @@
 # Plataforma de Campeonatos de BJJ — Especificação Fase 1
 
-> Nome provisório: BJJCAMP (a definir). Referência de mercado: Smoothcomp.
+> Nome: LeagueMat. Referência de mercado: Smoothcomp.
 > Objetivo da Fase 1: um organizador consegue criar um evento, receber inscrições pagas via Pix, gerar chaves e publicar resultados — utilizável em um campeonato real de pequeno/médio porte (até ~500 atletas).
 
 ---
@@ -170,7 +170,7 @@ Decisões de arquitetura que protegem a Fase 2:
 ## 8. Decisões em aberto (não bloqueiam o início)
 
 1. **Monetização**: crédito por atleta (modelo Smoothcomp) vs. % sobre inscrição retida no split. O split do Asaas favorece o modelo percentual; o schema suporta ambos.
-2. **Nome e domínio** — placeholder "BJJCAMP".
+2. **Nome e domínio** — DECIDIDO: LeagueMat (domínio a definir).
 3. **Gateway definitivo**: DECIDIDO — dupla trilha nacional + internacional atrás de abstração comum (`GatewayPagamento`). Pendente apenas: Asaas vs. Mercado Pago como trilha nacional (validar taxas de split e prazo de repasse).
 4. **Alvo de lançamento**: organizador independente vs. liga parceira (define prioridade do gerador de grade CBJJ vs. categorias customizadas).
 

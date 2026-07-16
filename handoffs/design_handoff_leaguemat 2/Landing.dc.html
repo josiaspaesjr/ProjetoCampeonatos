@@ -36,7 +36,7 @@
       <span class="disp" style="font-size:30px; letter-spacing:0.01em;">BJJ<span style="color:#EE2E24;">ARENA</span></span>
     </div>
     <div class="cond" style="display:flex; align-items:center; gap:28px; font-weight:600; font-size:16px; letter-spacing:0.04em;">
-      <a href="BJJArena v3 - Eventos.dc.html">{{ t.navEventos }}</a>
+      <a href="LeagueMat v3 - Eventos.dc.html">{{ t.navEventos }}</a>
       <a href="#ranking">{{ t.navRanking }}</a>
       <a href="#aovivo">{{ t.navAoVivo }}</a>
       <!-- LANG SWITCHER -->
@@ -45,7 +45,7 @@
           <button onClick="{{ lg.onClick }}" class="cond" style="padding:7px 11px 5px; background:{{ lg.bg }}; border:none; color:{{ lg.color }}; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:14px; letter-spacing:0.06em; cursor:pointer;">{{ lg.code }}</button>
         </sc-for>
       </div>
-      <a href="BJJArena v3 - Login.dc.html" style="background:#EE2E24; color:#fff; padding:11px 22px 8px; transform:skewX(-9deg);"><span style="display:inline-block; transform:skewX(9deg);">{{ t.navCriar }}</span></a>
+      <a href="LeagueMat v3 - Login.dc.html" style="background:#EE2E24; color:#fff; padding:11px 22px 8px; transform:skewX(-9deg);"><span style="display:inline-block; transform:skewX(9deg);">{{ t.navCriar }}</span></a>
     </div>
   </nav>
 
@@ -67,7 +67,7 @@
       <div style="display:flex; flex-wrap:wrap; gap:44px; align-items:flex-end; margin-top:30px;">
         <p style="font-size:19px; line-height:1.5; color:#C9C6BF; max-width:460px; font-weight:500;">{{ t.heroDesc }}</p>
         <div style="display:flex; gap:14px; pointer-events:auto;">
-          <a href="BJJArena v3 - Login.dc.html" class="cond" style="background:#EE2E24; color:#fff; font-weight:700; font-size:19px; letter-spacing:0.04em; padding:17px 34px 14px; transform:skewX(-9deg);"><span style="display:inline-block; transform:skewX(9deg);">{{ t.heroBtn1 }}</span></a>
+          <a href="LeagueMat v3 - Login.dc.html" class="cond" style="background:#EE2E24; color:#fff; font-weight:700; font-size:19px; letter-spacing:0.04em; padding:17px 34px 14px; transform:skewX(-9deg);"><span style="display:inline-block; transform:skewX(9deg);">{{ t.heroBtn1 }}</span></a>
           <a href="#aovivo" class="cond" style="border:1px solid rgba(255,255,255,0.28); color:#F5F3EF; font-weight:700; font-size:19px; letter-spacing:0.04em; padding:17px 34px 14px; transform:skewX(-9deg);"><span style="display:inline-block; transform:skewX(9deg);">{{ t.heroBtn2 }}</span></a>
         </div>
       </div>
@@ -178,7 +178,7 @@
     <div style="position:relative;">
       <h2 class="disp" style="font-size:clamp(60px,10vw,140px);">{{ t.ctaTitle }}<br><span style="color:#EE2E24;">{{ t.ctaAccent }}</span>.</h2>
       <div style="display:flex; gap:16px; justify-content:center; margin-top:30px;">
-        <a href="BJJArena v3 - Login.dc.html" class="cond" style="background:#EE2E24; color:#fff; font-weight:700; font-size:20px; letter-spacing:0.04em; padding:18px 40px 15px; transform:skewX(-9deg);"><span style="display:inline-block; transform:skewX(9deg);">{{ t.ctaBtn1 }}</span></a>
+        <a href="LeagueMat v3 - Login.dc.html" class="cond" style="background:#EE2E24; color:#fff; font-weight:700; font-size:20px; letter-spacing:0.04em; padding:18px 40px 15px; transform:skewX(-9deg);"><span style="display:inline-block; transform:skewX(9deg);">{{ t.ctaBtn1 }}</span></a>
         <a href="Arena JJ - Inscricao.dc.html" class="cond" style="border:1px solid rgba(255,255,255,0.28); color:#F5F3EF; font-weight:700; font-size:20px; letter-spacing:0.04em; padding:18px 40px 15px; transform:skewX(-9deg);"><span style="display:inline-block; transform:skewX(9deg);">{{ t.ctaBtn2 }}</span></a>
       </div>
     </div>
@@ -198,11 +198,11 @@ class Component extends DCLogic {
 
   componentDidMount() {
     this._t = setInterval(() => this.setState({ now: Date.now() }), 1000);
-    try { const s = localStorage.getItem('bjjarena_lang'); if (s) this.setState({ lang: s }); } catch (e) {}
+    try { const s = localStorage.getItem('leaguemat_lang'); if (s) this.setState({ lang: s }); } catch (e) {}
   }
   componentWillUnmount() { clearInterval(this._t); }
 
-  setLang(l) { try { localStorage.setItem('bjjarena_lang', l); } catch (e) {} this.setState({ lang: l }); }
+  setLang(l) { try { localStorage.setItem('leaguemat_lang', l); } catch (e) {} this.setState({ lang: l }); }
 
   dict() {
     return {

@@ -191,7 +191,7 @@ function montarHtmlImpressao({
 <body>
   <div class="barra"></div>
   <div class="eyebrow">
-    <span class="marca">BJJ<b>ARENA</b></span>
+    <span class="marca">League<b>Mat</b></span>
     <span class="rotulo">${escaparHtml(dat.listaAtletas)}</span>
   </div>
   <h1>${escaparHtml(grupo.titulo)}</h1>
@@ -210,7 +210,7 @@ function montarHtmlImpressao({
     <tbody>${linhas}</tbody>
   </table>
   <footer>
-    <span>BJJARENA</span>
+    <span>LEAGUEMAT</span>
     <span>${escaparHtml(dat.geradoEm)} ${escaparHtml(geradoEm)}</span>
   </footer>
 </body>

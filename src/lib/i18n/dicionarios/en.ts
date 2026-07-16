@@ -50,7 +50,7 @@ export const en: Dicionario = {
     pagamento: { pix: "Pix", cartao: "Card" },
     sobre: "About the event",
     sobreFallback:
-      "Jiu-jitsu championship with registration, bracketing and digital scoreboard by BJJArena.",
+      "Jiu-jitsu championship with registration, bracketing and digital scoreboard by LeagueMat.",
     sidebar: {
       inscricao: "Registration",
       porCategoria: "per division",

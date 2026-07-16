@@ -21,7 +21,7 @@ export default async function OrganizadorLayout({
           <Link href="/organizador" className="flex items-center gap-2.5">
             <MarcaBloco tamanho={32} />
             <span className="disp text-[28px]">
-              BJJ<span className="text-brand">ARENA</span>
+              League<span className="text-brand">Mat</span>
             </span>
             <span className="ml-1.5 hidden font-cond text-[15px] uppercase tracking-[0.1em] text-muted-3 sm:inline">
               / {da.organizador}

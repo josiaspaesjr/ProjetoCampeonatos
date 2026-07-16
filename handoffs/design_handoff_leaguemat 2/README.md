@@ -1,12 +1,12 @@
-# Handoff: BJJArena — Sistema de Competições de Jiu-Jitsu (design v3)
+# Handoff: LeagueMat — Sistema de Competições de Jiu-Jitsu (design v3)
 
-> Este pacote descreve o **design e o layout** de todas as telas do BJJArena, além das **mudanças de campos** por tela. Os arquivos `.dc.html` são **referências de design** (protótipos em HTML), **não** código de produção — recrie-os no framework do codebase alvo (React/Vue/Svelte etc.), puxando os dados dinâmicos do backend.
+> Este pacote descreve o **design e o layout** de todas as telas do LeagueMat, além das **mudanças de campos** por tela. Os arquivos `.dc.html` são **referências de design** (protótipos em HTML), **não** código de produção — recrie-os no framework do codebase alvo (React/Vue/Svelte etc.), puxando os dados dinâmicos do backend.
 
 ---
 
 ## 1. Visão geral do produto
 
-BJJArena é uma plataforma SaaS para rodar competições de jiu-jitsu de ponta a ponta: publicação de eventos, inscrição de atletas, pesagem, chaveamento ao vivo, arbitragem e ranking oficial.
+LeagueMat é uma plataforma SaaS para rodar competições de jiu-jitsu de ponta a ponta: publicação de eventos, inscrição de atletas, pesagem, chaveamento ao vivo, arbitragem e ranking oficial.
 
 **Fluxo público (atleta/visitante):** Landing → Eventos (catálogo) → Evento (página pública) → Inscrição (3 passos).
 **Fluxo organizador:** "Criar evento" (na landing) → Login → Criar Evento → Console do Organizador.
@@ -78,7 +78,7 @@ Marketing da plataforma. **Não lista eventos** (decisão do cliente: a home só
 - **Como funciona** (seção clara inclinada): 4 passos numerados.
 - **Ao vivo / Ranking:** demo de chaveamento em tempo real + tabela de ranking (prova de recursos, não eventos).
 - **CTA final** ("O tatame, organizado.") + footer.
-- **i18n:** seletor PT/EN/ES troca toda a copy em runtime; escolha persistida em `localStorage['bjjarena_lang']`. Dicionário completo embutido no componente (pt/en/es). Nomes próprios (atletas/equipes) não são traduzidos. **Só a landing tem i18n até agora** — as demais telas estão em pt-BR e podem receber o mesmo seletor.
+- **i18n:** seletor PT/EN/ES troca toda a copy em runtime; escolha persistida em `localStorage['leaguemat_lang']`. Dicionário completo embutido no componente (pt/en/es). Nomes próprios (atletas/equipes) não são traduzidos. **Só a landing tem i18n até agora** — as demais telas estão em pt-BR e podem receber o mesmo seletor.
 
 ### 3.2 Eventos — catálogo (`Eventos.dc.html`)
 - Header com "CALENDÁRIO" fantasma + "Todos os eventos".

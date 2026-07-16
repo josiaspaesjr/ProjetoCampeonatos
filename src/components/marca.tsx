@@ -1,25 +1,28 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
-/** Bloco da marca: "B" branco sobre quadrado vermelho com skew de −9°. */
+/**
+ * Marca gráfica do LeagueMat: losango concêntrico (moldura · faixa · miolo).
+ * A "tinta" usa currentColor, então acompanha o texto ao redor (claro no chrome
+ * escuro do app); a faixa é um cinza neutro. Reto, sem cantos arredondados.
+ */
 export function MarcaBloco({ tamanho = 34 }: { tamanho?: number }) {
   return (
-    <span
+    <svg
       aria-hidden
-      className="flex -skew-x-9 items-center justify-center bg-brand"
-      style={{ width: tamanho, height: tamanho }}
+      width={tamanho}
+      height={tamanho}
+      viewBox="0 0 100 100"
+      style={{ display: "block" }}
     >
-      <span
-        className="disp block skew-x-9 leading-none text-white"
-        style={{ fontSize: Math.round(tamanho * 0.76) }}
-      >
-        B
-      </span>
-    </span>
+      <polygon points="50,2 98,50 50,98 2,50" fill="currentColor" />
+      <polygon points="50,13 87,50 50,87 13,50" fill="#6b6a64" />
+      <polygon points="50,30 70,50 50,70 30,50" fill="currentColor" />
+    </svg>
   );
 }
 
-/** Compat: alias do antigo diamante — hoje renderiza o bloco v3. */
+/** Compat: alias histórico do losango da marca. */
 export function MarcaDiamante({ tamanho = 34 }: { tamanho?: number }) {
   return <MarcaBloco tamanho={tamanho} />;
 }
@@ -44,7 +47,7 @@ export function Logo({
         className="disp tracking-[0.01em]"
         style={{ fontSize: Math.round(tamanho * 0.88) }}
       >
-        BJJ<span className="text-brand">ARENA</span>
+        League<span className="text-brand">Mat</span>
       </span>
     </Link>
   );

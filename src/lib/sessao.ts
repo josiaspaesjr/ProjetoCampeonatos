@@ -9,7 +9,7 @@ import { supabaseConfigurado } from "@/lib/supabase/server";
  * Sem Supabase (dev com PGlite), usa o cookie simples que permite alternar
  * de atleta pelo formulário de inscrição.
  */
-const COOKIE_DEV = "bjjcamp_uid";
+const COOKIE_DEV = "leaguemat_uid";
 
 export async function getAtletaAtual() {
   return getUsuarioSessao();

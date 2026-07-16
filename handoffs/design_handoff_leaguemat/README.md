@@ -1,7 +1,7 @@
-# Handoff: BJJArena — Sistema de Competições de Jiu-Jitsu
+# Handoff: LeagueMat — Sistema de Competições de Jiu-Jitsu
 
 ## Overview
-BJJArena is a SaaS platform for running Brazilian jiu-jitsu / grappling competitions end-to-end: event publishing, athlete registration, weigh-in, live brackets, refereeing, and an official ranking. This handoff covers three public-facing screens of the athlete/visitor experience:
+LeagueMat is a SaaS platform for running Brazilian jiu-jitsu / grappling competitions end-to-end: event publishing, athlete registration, weigh-in, live brackets, refereeing, and an official ranking. This handoff covers three public-facing screens of the athlete/visitor experience:
 
 1. **Landing** — product marketing page for the platform (targets federations, academies, and athletes).
 2. **Event page** — public presentation of a single published event, with categories, teams, and a registration CTA.
@@ -91,12 +91,12 @@ Type scale (approx, clamp used for hero):
 ## Screens / Views
 
 ### 1. Landing (`Landing.dc.html`)
-**Purpose:** Sell the BJJArena platform; route federations/academies to "create event" and athletes to registration.
+**Purpose:** Sell the LeagueMat platform; route federations/academies to "create event" and athletes to registration.
 
 **Layout:** Single scrolling page, full-width sections, 48px side padding.
 
 **Sections (top → bottom):**
-- **Sticky nav** — translucent (`rgba(11,11,12,0.82)` + `backdrop-filter: blur(14px)`), bottom hairline. Left: diamond logo + "BJJArena". Center: uppercase nav links (Recursos, Ao vivo, Ranking, Eventos) in `#B9B4A8`. Right: gold "Começar grátis" button (solid `#C6A15B`, black text).
+- **Sticky nav** — translucent (`rgba(11,11,12,0.82)` + `backdrop-filter: blur(14px)`), bottom hairline. Left: diamond logo + "LeagueMat". Center: uppercase nav links (Recursos, Ao vivo, Ranking, Eventos) in `#B9B4A8`. Right: gold "Começar grátis" button (solid `#C6A15B`, black text).
 - **Hero** — min-height 88vh, content bottom-aligned. Striped bg + gold radial glow + a vertical-text label on the right edge. Eyebrow pill with pulsing dot ("O sistema operacional do jiu-jitsu competitivo"). H1 "Toda competição, / uma plataforma" (second line gold). Blurb (max 480px) + three mono stats (Eventos 340+, Atletas 58 mil, Federações 27 — last in gold). Two CTAs: gold "Começar grátis", outlined "Ver demonstração".
 - **Marquee** — horizontal auto-scrolling ticker, Saira Condensed uppercase in `#5C594F` with gold diamond separators. Items: "Gi & No-Gi", "Chaveamento ao vivo", "Ranking oficial IBJJF-style", "Arbitragem certificada".
 - **Eventos** (`#eventos`) — heading "Eventos ao vivo agora" + subhead. Responsive card grid (`repeat(auto-fill, minmax(330px, 1fr))`, gap 20px). Each card: 16:10 striped image placeholder with status badge (top-left) + date badge (bottom-right, day large + gold month), then name, city/type meta (mono), footer row with slots text + gold "Inscrever →". Hover: gold border.
@@ -104,7 +104,7 @@ Type scale (approx, clamp used for hero):
 - **Chaveamento ao vivo** (`#chaveamento`) — two columns. Left: live-red pulsing "Ao vivo agora" eyebrow, heading, paragraph, outlined gold "Abrir chaveamento". Right: a bracket card — header row (division + "● Área 3" in red), a `1fr 40px 1fr` VS grid with two competitor rows per side (winner rows have gold border + light name, losers muted), score in gold mono, footer "Próxima chamada: FINAL / 02:14 restantes".
 - **Ranking** (`#ranking`) — alt surface. Heading "Os melhores do circuito" + category tabs (Adulto active gold, Master/Feminino outlined). Table with columns `70px 1fr 1fr 120px 110px` (# / Atleta / Equipe / Faixa / Pontos). Header row on `#131315`. Row 1 has a faint gold row background and gold rank number; points right-aligned in gold-light mono.
 - **CTA** (`#inscricao`) — striped bg + bottom gold radial glow, centered. Eyebrow, huge H1 "O tatame, / organizado" (2nd line gold), paragraph, two CTAs: gold "Criar meu evento", outlined "Sou atleta" (→ `Inscricao.dc.html`).
-- **Footer** — logo + `© 2026 BJJArena · Sistema de competições de jiu-jitsu` (mono, `#5C594F`).
+- **Footer** — logo + `© 2026 LeagueMat · Sistema de competições de jiu-jitsu` (mono, `#5C594F`).
 
 ### 2. Event page (`Evento.dc.html`)
 **Purpose:** Public page for one published event with all details + registration entry point.

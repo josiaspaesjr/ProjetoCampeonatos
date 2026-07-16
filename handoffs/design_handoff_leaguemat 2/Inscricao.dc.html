@@ -159,7 +159,7 @@
           <p style="font-size:15px; color:#9C9A93; margin-bottom:34px; font-weight:500;">Você receberá uma notificação antes de cada luta e a chamada de área em tempo real no dia do evento.</p>
           <div style="display:flex; gap:14px;">
             <a href="Arena JJ - Evento.dc.html" class="cond" style="height:48px; display:inline-flex; align-items:center; padding:0 28px; background:#EE2E24; color:#fff; font-weight:700; font-size:17px; letter-spacing:0.04em;">Ver cronograma</a>
-            <a href="BJJArena v3 - Landing.dc.html" class="cond" style="height:48px; display:inline-flex; align-items:center; padding:0 28px; border:1px solid rgba(255,255,255,0.18); color:#F5F3EF; font-weight:600; font-size:17px; letter-spacing:0.04em;">Início</a>
+            <a href="LeagueMat v3 - Landing.dc.html" class="cond" style="height:48px; display:inline-flex; align-items:center; padding:0 28px; border:1px solid rgba(255,255,255,0.18); color:#F5F3EF; font-weight:600; font-size:17px; letter-spacing:0.04em;">Início</a>
           </div>
         </div>
       </sc-if>
@@ -257,7 +257,7 @@ class Component extends DCLogic {
       payBg: ready ? red : 'rgba(238,46,36,0.3)', payColor: ready ? '#fff' : 'rgba(255,255,255,0.5)', payCursor: ready ? 'pointer' : 'not-allowed',
       goPay: () => { if (ready) this.setState({ step:'pay' }); }, backToForm: () => this.setState({ step:'form' }),
       chosenCat: chosen, qr,
-      pixCode: '00020126580014BR.GOV.BCB.PIX0136arena-jj-copa-2026-inscricao-70brl5204000053039865802BR5920BJJ ARENA COMPETICOES6009SAO PAULO62070503***6304A1B2',
+      pixCode: '00020126580014BR.GOV.BCB.PIX0136arena-jj-copa-2026-inscricao-70brl5204000053039865802BR5920LEAGUE MAT COMPETICOES6009SAO PAULO62070503***6304A1B2',
       copyLabel: st.copied ? 'Copiado ✓' : 'Copiar código', copyPix: () => { this.setState({ copied:true }); setTimeout(() => this.setState({ copied:false }), 2000); },
       timer: this.fmtTimer(st.remaining), approve: () => this.setState({ step:'done' }),
       summary: [

@@ -123,7 +123,7 @@ export default async function LayoutEvento({
       {/* FOOTER */}
       <footer className="flex flex-wrap items-center justify-between gap-6 border-t border-white/8 px-6 py-[34px] md:px-12">
         <span className="disp text-[26px]">
-          BJJ<span className="text-brand">ARENA</span>
+          League<span className="text-brand">Mat</span>
         </span>
         <span className="font-cond text-sm uppercase tracking-[0.08em] text-muted-3">
           © {new Date().getFullYear()} · {dic.rodape}

@@ -35,12 +35,12 @@ async function criarDbPglite(): Promise<Db> {
   return db as unknown as Db;
 }
 
-const globalDb = globalThis as unknown as { __bjjcampDb?: Promise<Db> };
+const globalDb = globalThis as unknown as { __leaguematDb?: Promise<Db> };
 
 export function getDb(): Promise<Db> {
-  if (!globalDb.__bjjcampDb) {
+  if (!globalDb.__leaguematDb) {
     const url = process.env.DATABASE_URL;
-    globalDb.__bjjcampDb = url ? criarDbPostgres(url) : criarDbPglite();
+    globalDb.__leaguematDb = url ? criarDbPostgres(url) : criarDbPglite();
   }
-  return globalDb.__bjjcampDb;
+  return globalDb.__leaguematDb;
 }

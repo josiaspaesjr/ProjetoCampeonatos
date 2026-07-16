@@ -2,19 +2,19 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "bjjcamp-dev",
+      "name": "leaguemat-dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 3000
     },
     {
-      "name": "bjjcamp-dev-preview",
+      "name": "leaguemat-dev-preview",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["next", "dev", "-p", "3200"],
       "port": 3200
     },
     {
-      "name": "bjjcamp-prod",
+      "name": "leaguemat-prod",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "start", "--", "-p", "3100"],
       "port": 3100

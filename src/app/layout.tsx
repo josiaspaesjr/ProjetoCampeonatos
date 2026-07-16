@@ -24,8 +24,8 @@ const teko = Teko({
 
 export const metadata: Metadata = {
   title: {
-    default: "BJJArena — Campeonatos de Jiu-Jitsu",
-    template: "%s · BJJArena",
+    default: "LeagueMat — Campeonatos de Jiu-Jitsu",
+    template: "%s · LeagueMat",
   },
   description:
     "Inscrições com Pix, chaves automáticas, cronograma ao vivo e placar digital para campeonatos de Jiu-Jitsu.",

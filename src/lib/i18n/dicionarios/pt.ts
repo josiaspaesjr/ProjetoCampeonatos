@@ -49,7 +49,7 @@ export const pt = {
     pagamento: { pix: "Pix", cartao: "Cartão" },
     sobre: "Sobre o evento",
     sobreFallback:
-      "Campeonato de jiu-jitsu com inscrições, chaveamento e placar digital pela BJJArena.",
+      "Campeonato de jiu-jitsu com inscrições, chaveamento e placar digital pela LeagueMat.",
     sidebar: {
       inscricao: "Inscrição",
       porCategoria: "por categoria",

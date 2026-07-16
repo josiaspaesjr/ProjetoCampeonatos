@@ -158,7 +158,7 @@ export function SidebarOrganizador({
           <aside className="fixed left-0 top-0 z-[91] flex h-screen w-[min(300px,86vw)] flex-col border-r border-white/10 bg-ink animate-[drawer-in-left_0.28s_cubic-bezier(0.16,1,0.3,1)]">
             <div className="flex items-center justify-between border-b border-white/8 px-[18px] py-3">
               <span className="disp text-[22px]">
-                BJJ<span className="text-brand">ARENA</span>
+                League<span className="text-brand">Mat</span>
               </span>
               <button
                 type="button"

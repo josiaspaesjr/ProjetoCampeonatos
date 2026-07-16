@@ -12,7 +12,7 @@ import { criarClienteSupabase, supabaseConfigurado } from "@/lib/supabase/server
  *   vinculada por e-mail ou criada no primeiro acesso).
  * - Sem Supabase (dev com PGlite): cookie simples de desenvolvimento.
  */
-const COOKIE_DEV = "bjjcamp_uid";
+const COOKIE_DEV = "leaguemat_uid";
 
 export async function getUsuarioSessao() {
   const db = await getDb();

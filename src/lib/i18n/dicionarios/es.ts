@@ -50,7 +50,7 @@ export const es: Dicionario = {
     pagamento: { pix: "Pix", cartao: "Tarjeta" },
     sobre: "Sobre el evento",
     sobreFallback:
-      "Campeonato de jiu-jitsu con inscripciones, llaves y marcador digital por BJJArena.",
+      "Campeonato de jiu-jitsu con inscripciones, llaves y marcador digital por LeagueMat.",
     sidebar: {
       inscricao: "Inscripción",
       porCategoria: "por categoría",
