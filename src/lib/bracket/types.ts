@@ -56,6 +56,6 @@ export interface OpcoesGeracao {
 export interface Podio {
   primeiro: string | null;
   segundo: string | null;
-  /** no BJJ há dois terceiros lugares (perdedores das semifinais) */
+  /** nas artes marciais de combate há dois terceiros lugares (perdedores das semifinais) */
   terceiros: string[];
 }

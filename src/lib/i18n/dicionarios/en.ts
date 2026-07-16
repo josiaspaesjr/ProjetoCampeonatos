@@ -1,7 +1,7 @@
 import type { Dicionario } from "./pt";
 
 export const en: Dicionario = {
-  rodape: "Jiu-jitsu competition system",
+  rodape: "Martial arts competition system",
   nav: {
     eventos: "Events",
     minhasInscricoes: "My registrations",
@@ -50,7 +50,7 @@ export const en: Dicionario = {
     pagamento: { pix: "Pix", cartao: "Card" },
     sobre: "About the event",
     sobreFallback:
-      "Jiu-jitsu championship with registration, bracketing and digital scoreboard by LeagueMat.",
+      "Martial arts championship with registration, bracketing and digital scoreboard by LeagueMat.",
     sidebar: {
       inscricao: "Registration",
       porCategoria: "per division",
@@ -384,7 +384,7 @@ export const en: Dicionario = {
       criarContaLink: "Create account",
       // neutral panel (login and type choice)
       eyebrowNeutro: "Your account",
-      heroTitulo: "All your jiu-jitsu",
+      heroTitulo: "All your martial arts",
       heroAccent: "in one place",
       heroDesc:
         "Sign in to register for championships, create events and follow the official ranking.",
@@ -406,7 +406,7 @@ export const en: Dicionario = {
       criarOrgBtn: "Create organizer account →",
       // per-type panel and subtitle (on sign-up)
       atletaArea: "Athlete area",
-      atletaHeroTitulo: "Your jiu-jitsu",
+      atletaHeroTitulo: "Your martial arts",
       atletaHeroAccent: "in one profile",
       atletaHeroDesc:
         "Build your profile once and use it across every stage — registration, brackets, schedule and ranking.",
@@ -448,7 +448,7 @@ export const en: Dicionario = {
       imagemCapa: "Cover image (URL)",
       bannerPlaceholder: "https://… (event banner)",
       nomeEvento: "Event name",
-      nomePlaceholder: "City Jiu-Jitsu Cup 2026",
+      nomePlaceholder: "City Martial Arts Cup 2026",
       inscricoesFechamEm: "Registration closes on",
       inscricoesFecham: "Registration closes",
       dataEvento: "Event date",
@@ -545,7 +545,7 @@ export const en: Dicionario = {
       gradeCategorias: "Division grid",
       areasDefinidas: "Mats defined",
       chavesGeradas: "Brackets generated",
-      gradeCbjj: "CBJJ grid",
+      gradeCbjj: "category grid",
       vigente: "active",
       nenhumVigente: "none active",
       receita: "Revenue",
@@ -806,7 +806,7 @@ export const en: Dicionario = {
         nao_encontrado: "Event not found",
         ja_publicado: "Event already published",
         sem_categoria:
-          "To publish, generate at least 1 division (use the CBJJ grid generator below).",
+          "To publish, generate at least 1 division (use the category grid generator below).",
         sem_lote: "To publish, create at least 1 registration tier.",
       },
       loteCampos: "Fill in the tier's name, price and dates.",

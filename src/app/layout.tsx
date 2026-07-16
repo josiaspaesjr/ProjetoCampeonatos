@@ -24,11 +24,11 @@ const teko = Teko({
 
 export const metadata: Metadata = {
   title: {
-    default: "LeagueMat — Campeonatos de Jiu-Jitsu",
+    default: "LeagueMat — Campeonatos de Artes Marciais",
     template: "%s · LeagueMat",
   },
   description:
-    "Inscrições com Pix, chaves automáticas, cronograma ao vivo e placar digital para campeonatos de Jiu-Jitsu.",
+    "Inscrições com Pix, chaves automáticas, cronograma ao vivo e placar digital para campeonatos de artes marciais.",
 };
 
 export default async function RootLayout({

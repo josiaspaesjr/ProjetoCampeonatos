@@ -1,6 +1,6 @@
 /** Dicionário base (pt-BR). en.ts e es.ts seguem exatamente esta forma. */
 export const pt = {
-  rodape: "Sistema de competições de jiu-jitsu",
+  rodape: "Sistema de competições de artes marciais",
   nav: {
     eventos: "Eventos",
     minhasInscricoes: "Minhas inscrições",
@@ -49,7 +49,7 @@ export const pt = {
     pagamento: { pix: "Pix", cartao: "Cartão" },
     sobre: "Sobre o evento",
     sobreFallback:
-      "Campeonato de jiu-jitsu com inscrições, chaveamento e placar digital pela LeagueMat.",
+      "Campeonato de artes marciais com inscrições, chaveamento e placar digital pela LeagueMat.",
     sidebar: {
       inscricao: "Inscrição",
       porCategoria: "por categoria",
@@ -386,7 +386,7 @@ export const pt = {
       criarContaLink: "Criar conta",
       // painel neutro (login e escolha de tipo)
       eyebrowNeutro: "Sua conta",
-      heroTitulo: "Todo o seu jiu-jitsu",
+      heroTitulo: "Todas as suas artes marciais",
       heroAccent: "num só lugar",
       heroDesc:
         "Entre para se inscrever em campeonatos, criar eventos e acompanhar o ranking oficial.",
@@ -408,7 +408,7 @@ export const pt = {
       criarOrgBtn: "Criar conta de organizador →",
       // painel e subtítulo por tipo (no cadastro)
       atletaArea: "Área do atleta",
-      atletaHeroTitulo: "Seu jiu-jitsu",
+      atletaHeroTitulo: "Suas artes marciais",
       atletaHeroAccent: "em um só perfil",
       atletaHeroDesc:
         "Crie seu perfil uma vez e use em todas as etapas — inscrições, chaves, cronograma e ranking.",
@@ -450,7 +450,7 @@ export const pt = {
       imagemCapa: "Imagem de capa (URL)",
       bannerPlaceholder: "https://… (banner do evento)",
       nomeEvento: "Nome do evento",
-      nomePlaceholder: "Copa Cidade de Jiu-Jitsu 2026",
+      nomePlaceholder: "Copa Cidade de Artes Marciais 2026",
       inscricoesFechamEm: "Inscrições fecham em",
       inscricoesFecham: "Inscrições fecham",
       dataEvento: "Data do evento",
@@ -550,7 +550,7 @@ export const pt = {
       gradeCategorias: "Grade de categorias",
       areasDefinidas: "Áreas definidas",
       chavesGeradas: "Chaves geradas",
-      gradeCbjj: "grade CBJJ",
+      gradeCbjj: "grade de categorias",
       vigente: "vigente",
       nenhumVigente: "nenhum vigente",
       receita: "Receita",
@@ -814,7 +814,7 @@ export const pt = {
         nao_encontrado: "Evento não encontrado",
         ja_publicado: "Evento já publicado",
         sem_categoria:
-          "Para publicar, gere ao menos 1 categoria (use o Gerador de grade CBJJ abaixo).",
+          "Para publicar, gere ao menos 1 categoria (use o Gerador de grade abaixo).",
         sem_lote: "Para publicar, crie ao menos 1 lote de inscrição.",
       } as Record<string, string>,
       loteCampos: "Preencha nome, preço e vigência do lote.",

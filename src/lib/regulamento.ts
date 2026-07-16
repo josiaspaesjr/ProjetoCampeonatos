@@ -27,13 +27,13 @@ export const SECOES_REGULAMENTO: SecaoRegulamento[] = [
     chave: "regrasLuta",
     titulo: "Regras de luta",
     textoPadrao:
-      "As lutas seguem o regulamento técnico da CBJJ/IBJJF vigente. A pontuação considera quedas, passagens de guarda, montada, pegada nas costas, joelho na barriga e raspagens, além de vantagens e punições. Vence quem finalizar, somar mais pontos ou, em caso de empate, obtiver mais vantagens; persistindo o empate, a decisão é do árbitro.",
+      "As lutas seguem o regulamento técnico oficial da modalidade em vigor. A pontuação, as vantagens e as punições seguem os critérios técnicos da modalidade. Vence quem finalizar, somar mais pontos ou, em caso de empate, obtiver mais vantagens; persistindo o empate, a decisão é do árbitro.",
   },
   {
     chave: "temposLuta",
     titulo: "Tempos de luta",
     textoPadrao:
-      "Tempo de combate por faixa (adulto): Branca 5 min · Azul 6 min · Roxa 7 min · Marrom 8 min · Preta 10 min. Categorias infantis e master podem ter tempos reduzidos, conforme a tabela CBJJ. O tempo é corrido e controlado pela mesa de cada área.",
+      "O tempo de combate varia conforme a faixa e a categoria de idade, seguindo a tabela oficial da modalidade. Categorias infantis e master podem ter tempos reduzidos. O tempo é corrido e controlado pela mesa de cada área.",
   },
   {
     chave: "chaveamento",
@@ -51,7 +51,7 @@ export const SECOES_REGULAMENTO: SecaoRegulamento[] = [
     chave: "uniforme",
     titulo: "Uniforme",
     textoPadrao:
-      "No Gi, o kimono deve estar limpo, sem rasgos, nas cores branca, azul ou preta, dentro das medidas da CBJJ; a faixa deve corresponder à graduação do atleta. No No-Gi, é obrigatório o uso de rashguard e shorts adequados. A inspeção de uniforme e a medição do gi podem ser feitas antes da luta, e a reprovação pode levar à desclassificação.",
+      "No Gi, o kimono deve estar limpo, sem rasgos, nas cores branca, azul ou preta, dentro das medidas oficiais da modalidade; a faixa deve corresponder à graduação do atleta. No No-Gi, é obrigatório o uso de rashguard e shorts adequados. A inspeção de uniforme e a medição do gi podem ser feitas antes da luta, e a reprovação pode levar à desclassificação.",
   },
   {
     chave: "arbitragem",
@@ -87,7 +87,7 @@ export const SECOES_REGULAMENTO: SecaoRegulamento[] = [
     chave: "criancas",
     titulo: "Regras para crianças",
     textoPadrao:
-      "Nas categorias infantis, o foco é pedagógico e a segurança é prioridade. Golpes de finalização e técnicas consideradas de risco são restritos conforme a faixa etária, seguindo a tabela CBJJ. A presença de um responsável é obrigatória, e a organização pode ajustar tempos e regras para o bem-estar das crianças.",
+      "Nas categorias infantis, o foco é pedagógico e a segurança é prioridade. Golpes de finalização e técnicas consideradas de risco são restritos conforme a faixa etária, seguindo a tabela oficial da modalidade. A presença de um responsável é obrigatória, e a organização pode ajustar tempos e regras para o bem-estar das crianças.",
   },
   {
     chave: "estrutura",
@@ -105,7 +105,7 @@ export const SECOES_REGULAMENTO: SecaoRegulamento[] = [
     chave: "termosObrigatorios",
     titulo: "Termos obrigatórios",
     textoPadrao:
-      "Ao se inscrever, o atleta (ou seu responsável legal, no caso de menores) declara estar apto a competir, aceita o regulamento na íntegra e assume os riscos inerentes à prática do jiu-jitsu. Autoriza também o uso de sua imagem em fotos e vídeos do evento para fins de divulgação, sem ônus para a organização.",
+      "Ao se inscrever, o atleta (ou seu responsável legal, no caso de menores) declara estar apto a competir, aceita o regulamento na íntegra e assume os riscos inerentes à prática de artes marciais. Autoriza também o uso de sua imagem em fotos e vídeos do evento para fins de divulgação, sem ônus para a organização.",
   },
 ];
 

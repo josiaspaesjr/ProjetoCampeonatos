@@ -154,7 +154,7 @@ const DICT: Record<Lang, Conteudo> = {
       criar: "Criar evento",
     },
     hero: {
-      badge: "O sistema operacional do jiu-jitsu",
+      badge: "O sistema operacional das artes marciais",
       l1: "O campeonato inteiro.",
       l2pre: "Num só",
       accent: "sistema",
@@ -399,7 +399,7 @@ const DICT: Record<Lang, Conteudo> = {
     ctaBtn1: "Criar meu evento",
     ctaBtn2: "Ver eventos",
     foot: {
-      tagline: "O sistema completo para campeonatos de jiu-jitsu.",
+      tagline: "O sistema completo para campeonatos de artes marciais.",
       colOrg: "Organizador",
       colAtleta: "Atleta",
       colSistema: "Sistema",
@@ -412,7 +412,7 @@ const DICT: Record<Lang, Conteudo> = {
       lkRecursos: "Recursos",
       lkFormatos: "Formatos",
       lkAtleta: "Minha área",
-      copy: "© 2026 LeagueMat · Sistema de competições de jiu-jitsu",
+      copy: "© 2026 LeagueMat · Sistema de competições de artes marciais",
     },
   },
 
@@ -426,7 +426,7 @@ const DICT: Record<Lang, Conteudo> = {
       criar: "Create event",
     },
     hero: {
-      badge: "The operating system of jiu-jitsu",
+      badge: "The operating system of martial arts",
       l1: "The whole championship.",
       l2pre: "One",
       accent: "system",
@@ -671,7 +671,7 @@ const DICT: Record<Lang, Conteudo> = {
     ctaBtn1: "Create my event",
     ctaBtn2: "Browse events",
     foot: {
-      tagline: "The complete platform for jiu-jitsu championships.",
+      tagline: "The complete platform for martial arts championships.",
       colOrg: "Organizer",
       colAtleta: "Athlete",
       colSistema: "System",
@@ -684,7 +684,7 @@ const DICT: Record<Lang, Conteudo> = {
       lkRecursos: "Features",
       lkFormatos: "Formats",
       lkAtleta: "My area",
-      copy: "© 2026 LeagueMat · Jiu-jitsu competition system",
+      copy: "© 2026 LeagueMat · Martial arts competition system",
     },
   },
 
@@ -698,7 +698,7 @@ const DICT: Record<Lang, Conteudo> = {
       criar: "Crear evento",
     },
     hero: {
-      badge: "El sistema operativo del jiu-jitsu",
+      badge: "El sistema operativo de las artes marciales",
       l1: "Todo el campeonato.",
       l2pre: "Un solo",
       accent: "sistema",
@@ -943,7 +943,7 @@ const DICT: Record<Lang, Conteudo> = {
     ctaBtn1: "Crear mi evento",
     ctaBtn2: "Ver eventos",
     foot: {
-      tagline: "La plataforma completa para campeonatos de jiu-jitsu.",
+      tagline: "La plataforma completa para campeonatos de artes marciales.",
       colOrg: "Organizador",
       colAtleta: "Atleta",
       colSistema: "Sistema",
@@ -956,7 +956,7 @@ const DICT: Record<Lang, Conteudo> = {
       lkRecursos: "Recursos",
       lkFormatos: "Formatos",
       lkAtleta: "Mi área",
-      copy: "© 2026 LeagueMat · Sistema de competiciones de jiu-jitsu",
+      copy: "© 2026 LeagueMat · Sistema de competiciones de artes marciales",
     },
   },
 };
@@ -1197,7 +1197,7 @@ export function LandingClient({
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,rgba(12,12,13,0.96)_0%,rgba(12,12,13,0.82)_42%,rgba(12,12,13,0.45)_100%)]" />
         <div className="pointer-events-none absolute -right-10 top-[44%] -translate-y-1/2">
           <div className="disp whitespace-nowrap text-[340px] tracking-[0.02em] text-white/[0.03]">
-            JIU-JITSU
+            ARTES MARCIAIS
           </div>
         </div>
 

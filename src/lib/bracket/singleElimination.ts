@@ -282,7 +282,7 @@ export function registrarResultado(
 
 /**
  * Pódio a partir da chave: campeão, vice e dois terceiros (perdedores das
- * semifinais — padrão BJJ). Semifinais decididas por bye não geram terceiro.
+ * semifinais — padrão em artes marciais). Semifinais decididas por bye não geram terceiro.
  * Campos ficam nulos enquanto as lutas correspondentes não forem decididas.
  */
 export function calcularPodio(chave: Chave): Podio {

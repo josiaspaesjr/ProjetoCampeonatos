@@ -1,7 +1,7 @@
 import type { Dicionario } from "./pt";
 
 export const es: Dicionario = {
-  rodape: "Sistema de competiciones de jiu-jitsu",
+  rodape: "Sistema de competiciones de artes marciales",
   nav: {
     eventos: "Eventos",
     minhasInscricoes: "Mis inscripciones",
@@ -50,7 +50,7 @@ export const es: Dicionario = {
     pagamento: { pix: "Pix", cartao: "Tarjeta" },
     sobre: "Sobre el evento",
     sobreFallback:
-      "Campeonato de jiu-jitsu con inscripciones, llaves y marcador digital por LeagueMat.",
+      "Campeonato de artes marciales con inscripciones, llaves y marcador digital por LeagueMat.",
     sidebar: {
       inscricao: "Inscripción",
       porCategoria: "por categoría",
@@ -384,7 +384,7 @@ export const es: Dicionario = {
       criarContaLink: "Crear cuenta",
       // panel neutro (login y elección de tipo)
       eyebrowNeutro: "Tu cuenta",
-      heroTitulo: "Todo tu jiu-jitsu",
+      heroTitulo: "Todas tus artes marciales",
       heroAccent: "en un solo lugar",
       heroDesc:
         "Entra para inscribirte en campeonatos, crear eventos y seguir el ranking oficial.",
@@ -406,7 +406,7 @@ export const es: Dicionario = {
       criarOrgBtn: "Crear cuenta de organizador →",
       // panel y subtítulo por tipo (al registrarse)
       atletaArea: "Área del atleta",
-      atletaHeroTitulo: "Tu jiu-jitsu",
+      atletaHeroTitulo: "Tus artes marciales",
       atletaHeroAccent: "en un solo perfil",
       atletaHeroDesc:
         "Crea tu perfil una vez y úsalo en cada etapa — inscripciones, llaves, cronograma y ranking.",
@@ -448,7 +448,7 @@ export const es: Dicionario = {
       imagemCapa: "Imagen de portada (URL)",
       bannerPlaceholder: "https://… (banner del evento)",
       nomeEvento: "Nombre del evento",
-      nomePlaceholder: "Copa Ciudad de Jiu-Jitsu 2026",
+      nomePlaceholder: "Copa Ciudad de Artes Marciales 2026",
       inscricoesFechamEm: "Las inscripciones cierran el",
       inscricoesFecham: "Inscripciones cierran",
       dataEvento: "Fecha del evento",
@@ -545,7 +545,7 @@ export const es: Dicionario = {
       gradeCategorias: "Grilla de categorías",
       areasDefinidas: "Áreas definidas",
       chavesGeradas: "Llaves generadas",
-      gradeCbjj: "grilla CBJJ",
+      gradeCbjj: "grilla de categorías",
       vigente: "vigente",
       nenhumVigente: "ninguno activo",
       receita: "Ingresos",
@@ -808,7 +808,7 @@ export const es: Dicionario = {
         nao_encontrado: "Evento no encontrado",
         ja_publicado: "Evento ya publicado",
         sem_categoria:
-          "Para publicar, genera al menos 1 categoría (usa el Generador de grilla CBJJ abajo).",
+          "Para publicar, genera al menos 1 categoría (usa el Generador de grilla abajo).",
         sem_lote: "Para publicar, crea al menos 1 lote de inscripción.",
       },
       loteCampos: "Completa el nombre, el precio y la vigencia del lote.",

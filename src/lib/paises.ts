@@ -1,7 +1,7 @@
 /**
  * Lista de países para inscrição/filtro (código ISO 3166-1 alpha-2 + nome PT-BR).
  * O código é o que fica gravado em `inscricoes.pais` (snapshot); o padrão é BR.
- * Cobre as nações mais comuns no jiu-jitsu; dá para estender à vontade.
+ * Cobre as nações mais comuns nas artes marciais; dá para estender à vontade.
  */
 export interface Pais {
   codigo: string;
