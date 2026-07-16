@@ -437,6 +437,13 @@ export const es: Dicionario = {
       entrarComoOrganizador: "Entrar como organizador →",
       voltarInicio: "← Volver al inicio",
     },
+    ativarOrg: {
+      eyebrow: "Cuenta de atleta",
+      titulo: "Hazte organizador",
+      desc: "Tu cuenta es de atleta. Para crear y publicar campeonatos, activa el acceso de organizador — es un clic y mantienes todo de tu cuenta de atleta.",
+      ativar: "Activar acceso de organizador",
+      voltar: "Volver",
+    },
     campos: {
       imagemCapa: "Imagen de portada (URL)",
       bannerPlaceholder: "https://… (banner del evento)",

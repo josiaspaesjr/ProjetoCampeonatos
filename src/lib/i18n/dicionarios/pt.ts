@@ -439,6 +439,13 @@ export const pt = {
       entrarComoOrganizador: "Entrar como organizador →",
       voltarInicio: "← Voltar ao início",
     },
+    ativarOrg: {
+      eyebrow: "Conta de atleta",
+      titulo: "Tornar-se organizador",
+      desc: "Sua conta é de atleta. Para criar e publicar campeonatos, ative o acesso de organizador — é um clique e você mantém tudo da sua conta de atleta.",
+      ativar: "Ativar acesso de organizador",
+      voltar: "Voltar",
+    },
     campos: {
       imagemCapa: "Imagem de capa (URL)",
       bannerPlaceholder: "https://… (banner do evento)",

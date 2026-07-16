@@ -81,15 +81,9 @@ export async function getOrganizadorAtual() {
   if (supabaseConfigurado()) {
     const usuario = await getUsuarioSessao();
     if (!usuario) redirect("/entrar?next=/organizador");
-    if (!usuario.ehOrganizador) {
-      const db = await getDb();
-      const [promovido] = await db
-        .update(usuarios)
-        .set({ ehOrganizador: true })
-        .where(eq(usuarios.id, usuario.id))
-        .returning();
-      return promovido;
-    }
+    // conta de atleta não é promovida em silêncio: manda ativar o acesso
+    // de organizador (promoção explícita, com confirmação)
+    if (!usuario.ehOrganizador) redirect("/organizador/ativar");
     return usuario;
   }
 
