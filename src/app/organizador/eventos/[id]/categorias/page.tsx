@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { categorias, eventos } from "@/db/schema";
+import { categorias } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
+import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import { CLASSES_IDADE, FAIXAS } from "@/lib/categorias/cbjj";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
@@ -69,9 +70,7 @@ export default async function CategoriasEvento({
     feminino: dic.inscricao.feminino,
   };
 
-  const evento = await db.query.eventos.findFirst({
-    where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
-  });
+  const evento = await eventoGerenciavel(db, id, usuario.id);
   if (!evento) notFound();
 
   const cats = await db.query.categorias.findMany({

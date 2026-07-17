@@ -532,6 +532,38 @@ export const pt = {
       chaves: "Chaves",
       areas: "Áreas",
       checkin: "Check-in",
+      equipe: "Equipe",
+    },
+    equipe: {
+      titulo: "Equipe",
+      descricao:
+        "Convide pessoas para ajudar a organizar este evento. Colaboradores têm acesso total ao evento — menos gerenciar a equipe e excluir o evento.",
+      dono: "Dono",
+      voce: "você",
+      colaboradores: "Colaboradores",
+      convidar: "Convidar colaborador",
+      convidarDesc:
+        "Gere um link de convite e envie para a pessoa. Ela aceita, faz login e passa a ajudar na organização.",
+      emailOpcional: "E-mail (opcional)",
+      gerarConvite: "Gerar convite",
+      convitesPendentes: "Convites pendentes",
+      pendente: "pendente",
+      semEmail: "sem e-mail",
+      copiar: "Copiar",
+      copiado: "Copiado!",
+      remover: "Remover",
+      soDonoGerencia:
+        "Só o dono do evento pode convidar ou remover pessoas da equipe.",
+    },
+    convite: {
+      eyebrow: "Convite",
+      titulo: "Ajudar a organizar",
+      descPre: "Você foi convidado para ajudar a organizar",
+      aceitar: "Aceitar convite",
+      entrar: "Entrar para aceitar",
+      verEvento: "Ir para o evento",
+      jaUsado: "Este convite já foi utilizado.",
+      invalido: "Convite inválido ou expirado.",
     },
     editar: {
       verPagina: "Ver página",

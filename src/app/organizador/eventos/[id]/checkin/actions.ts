@@ -3,15 +3,14 @@
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/db";
-import { auditoria, categorias, eventos, inscricoes } from "@/db/schema";
+import { auditoria, categorias, inscricoes } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
+import { eventoGerenciavel } from "@/lib/eventos/acesso";
 
 async function contexto(eventoId: string) {
   const db = await getDb();
   const usuario = await getUsuarioAtual();
-  const evento = await db.query.eventos.findFirst({
-    where: and(eq(eventos.id, eventoId), eq(eventos.organizadorId, usuario.id)),
-  });
+  const evento = await eventoGerenciavel(db, eventoId, usuario.id);
   if (!evento) throw new Error("Evento não encontrado ou sem permissão");
   return { db, usuario, evento };
 }

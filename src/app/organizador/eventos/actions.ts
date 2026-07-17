@@ -17,6 +17,7 @@ import {
   pagamentos,
 } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
+import { ehDonoDoEvento, eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import {
   gerarChaveParaCategoria,
@@ -58,9 +59,7 @@ function erroLote(eventoId: string, mensagem: string): never {
 async function eventoDoOrganizador(eventoId: string) {
   const db = await getDb();
   const usuario = await getUsuarioAtual();
-  const evento = await db.query.eventos.findFirst({
-    where: and(eq(eventos.id, eventoId), eq(eventos.organizadorId, usuario.id)),
-  });
+  const evento = await eventoGerenciavel(db, eventoId, usuario.id);
   if (!evento) throw new Error("Evento não encontrado ou sem permissão");
   return { db, usuario, evento };
 }
@@ -158,6 +157,10 @@ export async function criarEvento(formData: FormData) {
  */
 export async function excluirEvento(eventoId: string) {
   const { db, usuario, evento } = await eventoDoOrganizador(eventoId);
+  // só o dono exclui o evento — colaboradores não
+  if (!ehDonoDoEvento(evento, usuario.id)) {
+    throw new Error("Apenas o dono do evento pode excluí-lo");
+  }
   const erros = (await getDicionario()).admin.erros;
 
   if (evento.status !== "rascunho") {

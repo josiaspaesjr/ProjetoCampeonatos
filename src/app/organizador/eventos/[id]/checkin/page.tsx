@@ -2,12 +2,13 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { categorias, eventos, inscricoes } from "@/db/schema";
+import { categorias, inscricoes } from "@/db/schema";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getUsuarioAtual } from "@/lib/auth";
+import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import { codigoCurto } from "@/lib/checkin/qr";
 
@@ -25,9 +26,7 @@ export default async function PaginaCheckin({
   const dic = await getDicionario();
   const ck = dic.admin.checkin;
 
-  const evento = await db.query.eventos.findFirst({
-    where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
-  });
+  const evento = await eventoGerenciavel(db, id, usuario.id);
   if (!evento) notFound();
 
   const [confirmadas, cats] = await Promise.all([

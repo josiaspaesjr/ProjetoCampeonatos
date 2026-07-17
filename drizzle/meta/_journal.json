@@ -92,6 +92,13 @@
       "when": 1784228727029,
       "tag": "0012_steep_giant_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1784296301280,
+      "tag": "0013_serious_shockwave",
+      "breakpoints": true
     }
   ]
 }

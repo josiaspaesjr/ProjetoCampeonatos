@@ -2,11 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { categorias, eventos, inscricoes } from "@/db/schema";
+import { categorias, inscricoes } from "@/db/schema";
 import { AcaoTexto, BotaoAcao } from "@/components/ui/botao-acao";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { getUsuarioAtual } from "@/lib/auth";
+import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import { codigoCurto } from "@/lib/checkin/qr";
 import { desfazerCheckin, registrarCheckin } from "../actions";
@@ -22,9 +23,7 @@ export default async function PaginaCheckinAtleta({
   const dic = await getDicionario();
   const ca = dic.admin.checkinAtleta;
 
-  const evento = await db.query.eventos.findFirst({
-    where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
-  });
+  const evento = await eventoGerenciavel(db, id, usuario.id);
   if (!evento) notFound();
 
   const inscricao = await db.query.inscricoes.findFirst({

@@ -527,6 +527,38 @@ export const es: Dicionario = {
       chaves: "Llaves",
       areas: "Áreas",
       checkin: "Check-in",
+      equipe: "Equipo",
+    },
+    equipe: {
+      titulo: "Equipo",
+      descricao:
+        "Invita a personas para ayudar a organizar este evento. Los colaboradores tienen acceso total al evento — menos gestionar el equipo y eliminar el evento.",
+      dono: "Dueño",
+      voce: "tú",
+      colaboradores: "Colaboradores",
+      convidar: "Invitar colaborador",
+      convidarDesc:
+        "Genera un enlace de invitación y envíaselo a la persona. Acepta, inicia sesión y empieza a ayudar en la organización.",
+      emailOpcional: "Correo (opcional)",
+      gerarConvite: "Generar invitación",
+      convitesPendentes: "Invitaciones pendientes",
+      pendente: "pendiente",
+      semEmail: "sin correo",
+      copiar: "Copiar",
+      copiado: "¡Copiado!",
+      remover: "Quitar",
+      soDonoGerencia:
+        "Solo el dueño del evento puede invitar o quitar miembros del equipo.",
+    },
+    convite: {
+      eyebrow: "Invitación",
+      titulo: "Ayudar a organizar",
+      descPre: "Te invitaron a ayudar a organizar",
+      aceitar: "Aceptar invitación",
+      entrar: "Inicia sesión para aceptar",
+      verEvento: "Ir al evento",
+      jaUsado: "Esta invitación ya fue utilizada.",
+      invalido: "Invitación inválida o expirada.",
     },
     editar: {
       verPagina: "Ver página",

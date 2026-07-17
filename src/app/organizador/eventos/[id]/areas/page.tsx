@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { areas, categorias, eventos } from "@/db/schema";
+import { areas, categorias } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
+import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { ordenarCategorias } from "@/lib/categorias/distribuicao-areas";
 import { montarCronogramaDoEvento } from "@/lib/cronograma/cronograma-areas";
 import {
@@ -20,9 +21,7 @@ export default async function PaginaAreas({
   const db = await getDb();
   const usuario = await getUsuarioAtual();
 
-  const evento = await db.query.eventos.findFirst({
-    where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
-  });
+  const evento = await eventoGerenciavel(db, id, usuario.id);
   if (!evento) notFound();
 
   const [cats, todasAreas] = await Promise.all([

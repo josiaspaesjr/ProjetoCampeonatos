@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
-import { areas, categorias, chaves, eventos, inscricoes, lotes } from "@/db/schema";
+import { areas, categorias, chaves, inscricoes, lotes } from "@/db/schema";
 import {
   SidebarOrganizador,
   type ItemNav,
@@ -12,6 +12,7 @@ import {
   type EventoEditavel,
 } from "@/components/organizador/topbar-evento";
 import { getUsuarioAtual } from "@/lib/auth";
+import { eventoGerenciavel, eventosGerenciaveis } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import { dataCurta } from "@/lib/datas";
 import { editarEvento } from "../actions";
@@ -34,16 +35,11 @@ export default async function LayoutConsoleEvento({
   const usuario = await getUsuarioAtual();
   const nav = (await getDicionario()).admin.nav;
 
-  const evento = await db.query.eventos.findFirst({
-    where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
-  });
+  const evento = await eventoGerenciavel(db, id, usuario.id);
   if (!evento) notFound();
 
   const [meusEventos, cats, lts, ars, confirmadas] = await Promise.all([
-    db.query.eventos.findMany({
-      where: eq(eventos.organizadorId, usuario.id),
-      orderBy: desc(eventos.criadoEm),
-    }),
+    eventosGerenciaveis(db, usuario.id),
     db.query.categorias.findMany({ where: eq(categorias.eventoId, id) }),
     db.query.lotes.findMany({ where: eq(lotes.eventoId, id) }),
     db.query.areas.findMany({ where: eq(areas.eventoId, id) }),
@@ -97,6 +93,7 @@ export default async function LayoutConsoleEvento({
       badge: ars.length ? String(ars.length) : undefined,
     },
     { id: "checkin", rotulo: nav.checkin, icone: "✔", href: `${base}/checkin` },
+    { id: "equipe", rotulo: nav.equipe, icone: "⧉", href: `${base}/equipe` },
   ];
 
   const editavel: EventoEditavel = {

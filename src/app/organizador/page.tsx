@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { eventos } from "@/db/schema";
 import { SkewTexto } from "@/components/marca";
 import { Badge } from "@/components/ui/badge";
 import { getUsuarioAtual } from "@/lib/auth";
+import { eventosGerenciaveis } from "@/lib/eventos/acesso";
 import { dataCurta } from "@/lib/datas";
 import { getDicionario } from "@/lib/i18n/server";
 
@@ -13,10 +12,7 @@ export default async function PainelOrganizador() {
   const usuario = await getUsuarioAtual();
   const da = (await getDicionario()).admin;
   const rotuloStatus = da.status;
-  const meusEventos = await db.query.eventos.findMany({
-    where: eq(eventos.organizadorId, usuario.id),
-    orderBy: desc(eventos.criadoEm),
-  });
+  const meusEventos = await eventosGerenciaveis(db, usuario.id);
 
   return (
     <div className="mx-auto max-w-4xl px-6 py-11">

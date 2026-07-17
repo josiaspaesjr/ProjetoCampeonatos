@@ -61,6 +61,12 @@ export const inscricaoStatusEnum = pgEnum("inscricao_status", [
   "reembolsada",
 ]);
 
+// convite de colaborador: pendente (aguarda aceite pelo link) → ativo (aceitou)
+export const colaboradorStatusEnum = pgEnum("colaborador_status", [
+  "pendente",
+  "ativo",
+]);
+
 export const pagamentoMetodoEnum = pgEnum("pagamento_metodo", [
   "pix",
   "cartao",
@@ -174,6 +180,27 @@ export const eventos = pgTable("eventos", {
   // seções do regulamento (chave → texto); só as preenchidas ficam salvas
   regulamento: jsonb("regulamento").$type<Record<string, string>>(),
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// colaboradores do evento: co-organizadores convidados por link. O dono do
+// evento (eventos.organizadorId) não vira linha aqui — é sempre dono.
+export const eventoColaboradores = pgTable("evento_colaboradores", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  eventoId: uuid("evento_id")
+    .notNull()
+    .references(() => eventos.id),
+  // e-mail convidado (só referência p/ o dono; o vínculo real é usuarioId)
+  email: text("email"),
+  // usuário que aceitou o convite (nulo enquanto pendente)
+  usuarioId: uuid("usuario_id").references(() => usuarios.id),
+  // token secreto do link de convite
+  token: text("token").notNull().unique(),
+  status: colaboradorStatusEnum("status").notNull().default("pendente"),
+  convidadoPor: uuid("convidado_por")
+    .notNull()
+    .references(() => usuarios.id),
+  criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+  aceitoEm: timestamp("aceito_em", { withTimezone: true }),
 });
 
 export const lotes = pgTable("lotes", {

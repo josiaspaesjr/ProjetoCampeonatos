@@ -2,10 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
-import { categorias, chaves, eventos, inscricoes } from "@/db/schema";
+import { categorias, chaves, inscricoes } from "@/db/schema";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { BotaoAcao } from "@/components/ui/botao-acao";
 import { getUsuarioAtual } from "@/lib/auth";
+import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import { formatoAutomatico } from "@/lib/chaves/persistencia";
 import { gerarChave, gerarChavesEmLote, publicarChaves } from "../../actions";
@@ -31,9 +32,7 @@ export default async function PaginaChaves({
   const dic = await getDicionario();
   const ch = dic.admin.chaves;
 
-  const evento = await db.query.eventos.findFirst({
-    where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
-  });
+  const evento = await eventoGerenciavel(db, id, usuario.id);
   if (!evento) notFound();
 
   const [cats, confirmadas] = await Promise.all([

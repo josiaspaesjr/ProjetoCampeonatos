@@ -1,10 +1,11 @@
 import { notFound } from "next/navigation";
-import { and, asc, eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { eventos, lotes } from "@/db/schema";
+import { lotes } from "@/db/schema";
 import { ConfirmarExclusao } from "@/components/ui/confirmar-exclusao";
 import { NovoLote } from "@/components/organizador/novo-lote";
 import { getUsuarioAtual } from "@/lib/auth";
+import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import { conflitosNaLista, diaLocalYmd } from "@/lib/lotes/vigencia";
 import { criarLote, excluirLote } from "../../actions";
@@ -69,9 +70,7 @@ export default async function LotesEvento({
     encerrado: tl.statusEncerrado,
   };
 
-  const evento = await db.query.eventos.findFirst({
-    where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
-  });
+  const evento = await eventoGerenciavel(db, id, usuario.id);
   if (!evento) notFound();
 
   const lts = await db.query.lotes.findMany({

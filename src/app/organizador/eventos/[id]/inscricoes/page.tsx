@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { asc, desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
-import { categorias, eventos, inscricoes, usuarios } from "@/db/schema";
+import { categorias, inscricoes, usuarios } from "@/db/schema";
 import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { AcaoTexto, BotaoAcao } from "@/components/ui/botao-acao";
 import { SeletorAcademia } from "@/components/inscricao/seletor-academia";
@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { getUsuarioAtual } from "@/lib/auth";
+import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import { FAIXAS } from "@/lib/categorias/cbjj";
 import { formatarCep, formatarCpf } from "@/lib/cpf";
@@ -38,9 +39,7 @@ export default async function PaginaInscricoes({
   const dic = await getDicionario();
   const t = dic.admin.inscricoes;
 
-  const evento = await db.query.eventos.findFirst({
-    where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
-  });
+  const evento = await eventoGerenciavel(db, id, usuario.id);
   if (!evento) notFound();
 
   const [lista, cats] = await Promise.all([

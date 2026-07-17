@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, eq, inArray } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
-import { categorias, chaves, eventos, inscricoes, lutas } from "@/db/schema";
+import { categorias, chaves, inscricoes, lutas } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
+import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import { calcularPodioDaChave } from "@/lib/chaves/persistencia";
 import { BracketView, type AtletaInfo } from "@/components/bracket-view";
@@ -19,9 +20,7 @@ export default async function PaginaChave({
   const usuario = await getUsuarioAtual();
   const dic = await getDicionario();
 
-  const evento = await db.query.eventos.findFirst({
-    where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
-  });
+  const evento = await eventoGerenciavel(db, id, usuario.id);
   if (!evento) notFound();
 
   const chave = await db.query.chaves.findFirst({ where: eq(chaves.id, chaveId) });

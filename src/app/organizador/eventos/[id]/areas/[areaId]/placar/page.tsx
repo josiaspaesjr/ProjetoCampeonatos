@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { chaves, eventos } from "@/db/schema";
+import { chaves } from "@/db/schema";
 import { buttonVariants } from "@/components/ui/button";
 import { getUsuarioAtual } from "@/lib/auth";
+import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import { duracaoLutaSegundos, montarFilaDaArea } from "@/lib/cronograma/fila";
 import { PlacarTablet } from "./placar-tablet";
@@ -20,9 +21,7 @@ export default async function PaginaPlacar({
   const dic = await getDicionario();
   const p = dic.admin.placar;
 
-  const evento = await db.query.eventos.findFirst({
-    where: and(eq(eventos.id, id), eq(eventos.organizadorId, usuario.id)),
-  });
+  const evento = await eventoGerenciavel(db, id, usuario.id);
   if (!evento) notFound();
 
   const fila = await montarFilaDaArea(db, areaId);

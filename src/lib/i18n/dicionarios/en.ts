@@ -527,6 +527,38 @@ export const en: Dicionario = {
       chaves: "Brackets",
       areas: "Mats",
       checkin: "Check-in",
+      equipe: "Team",
+    },
+    equipe: {
+      titulo: "Team",
+      descricao:
+        "Invite people to help organize this event. Collaborators get full access to the event — except managing the team and deleting the event.",
+      dono: "Owner",
+      voce: "you",
+      colaboradores: "Collaborators",
+      convidar: "Invite a collaborator",
+      convidarDesc:
+        "Generate an invite link and send it to the person. They accept, sign in and start helping with the organization.",
+      emailOpcional: "Email (optional)",
+      gerarConvite: "Generate invite",
+      convitesPendentes: "Pending invites",
+      pendente: "pending",
+      semEmail: "no email",
+      copiar: "Copy",
+      copiado: "Copied!",
+      remover: "Remove",
+      soDonoGerencia:
+        "Only the event owner can invite or remove team members.",
+    },
+    convite: {
+      eyebrow: "Invite",
+      titulo: "Help organize",
+      descPre: "You've been invited to help organize",
+      aceitar: "Accept invite",
+      entrar: "Sign in to accept",
+      verEvento: "Go to the event",
+      jaUsado: "This invite has already been used.",
+      invalido: "Invalid or expired invite.",
     },
     editar: {
       verPagina: "View page",
