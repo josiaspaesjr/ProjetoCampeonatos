@@ -1179,14 +1179,8 @@ export function LandingClient({
               </button>
             ))}
           </div>
-          <Link href="/acesso" className="max-md:hidden transition-colors hover:text-brand">
+          <Link href="/acesso" className="transition-colors hover:text-brand">
             {t.nav.entrar}
-          </Link>
-          <Link
-            href="/organizador"
-            className="-skew-x-9 bg-brand px-5 py-2.5 text-white"
-          >
-            <SkewTexto>{t.nav.criar}</SkewTexto>
           </Link>
         </div>
       </nav>
