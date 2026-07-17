@@ -530,7 +530,7 @@ export const en: Dicionario = {
       equipe: "Team",
     },
     equipe: {
-      titulo: "Team",
+      titulo: "Event organizing team",
       descricao:
         "Invite people to help organize this event. Collaborators get full access to the event — except managing the team and deleting the event.",
       dono: "Owner",

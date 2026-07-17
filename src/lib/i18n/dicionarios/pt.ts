@@ -535,7 +535,7 @@ export const pt = {
       equipe: "Equipe",
     },
     equipe: {
-      titulo: "Equipe",
+      titulo: "Equipe organizadora do evento",
       descricao:
         "Convide pessoas para ajudar a organizar este evento. Colaboradores têm acesso total ao evento — menos gerenciar a equipe e excluir o evento.",
       dono: "Dono",

@@ -530,7 +530,7 @@ export const es: Dicionario = {
       equipe: "Equipo",
     },
     equipe: {
-      titulo: "Equipo",
+      titulo: "Equipo organizador del evento",
       descricao:
         "Invita a personas para ayudar a organizar este evento. Los colaboradores tienen acceso total al evento — menos gestionar el equipo y eliminar el evento.",
       dono: "Dueño",
