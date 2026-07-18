@@ -187,6 +187,28 @@ export const eventos = pgTable("eventos", {
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// dias do evento: cada dia tem uma janela (início/fim em minutos desde a
+// meia-noite). O período disponível = soma das janelas × nº de áreas; o
+// gerador de áreas só estrutura se as lutas couberem, e o cronograma encaixa
+// as lutas dia a dia. Sem linhas → evento de um dia (retrocompat: ver
+// diasDoEventoOuDefault em src/lib/cronograma/dias.ts).
+export const eventoDias = pgTable(
+  "evento_dias",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventoId: uuid("evento_id")
+      .notNull()
+      .references(() => eventos.id),
+    data: date("data").notNull(),
+    // janela do dia em minutos desde a meia-noite (540 = 09:00, 1080 = 18:00)
+    inicioMinutos: integer("inicio_minutos").notNull().default(540),
+    fimMinutos: integer("fim_minutos").notNull().default(1080),
+    ordem: integer("ordem").notNull().default(0),
+  },
+  // um dia do calendário aparece no máximo uma vez por evento
+  (t) => [uniqueIndex("evento_dias_evento_data_idx").on(t.eventoId, t.data)],
+);
+
 // colaboradores do evento: co-organizadores convidados por link. O dono do
 // evento (eventos.organizadorId) não vira linha aqui — é sempre dono.
 export const eventoColaboradores = pgTable("evento_colaboradores", {

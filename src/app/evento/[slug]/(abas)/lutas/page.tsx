@@ -50,6 +50,8 @@ export default async function AbaLutas({
     ),
   );
   const areasNomes = cronograma.map((a) => a.nome);
+  // evento com mais de um dia distinto → mostra a data em cada luta
+  const multiDia = new Set(itens.map((i) => i.luta.data)).size > 1;
 
   return (
     <div className="px-6 pb-20 pt-10 md:px-12">
@@ -59,7 +61,7 @@ export default async function AbaLutas({
           {dl.subtitulo}
         </p>
       </div>
-      <LutasLista itens={itens} areas={areasNomes} />
+      <LutasLista itens={itens} areas={areasNomes} multiDia={multiDia} />
     </div>
   );
 }

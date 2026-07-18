@@ -329,6 +329,7 @@ export const en: Dicionario = {
     pun: "PEN",
     aDefinir: "TBD",
     operarPlacar: "Operate scoreboard",
+    dia: "Day",
   },
   bracket: {
     rodadaPre: "Round ",
@@ -491,6 +492,15 @@ export const en: Dicionario = {
       dataGeracaoNota: "Planned date to build the brackets — informational only.",
       detalhesCompeticao: "Competition details",
       regulamento: "Rules",
+      // event days (period with a time window per day)
+      diasEvento: "Event days",
+      diasNota:
+        "One or more days, each with a start and end time. Matches are packed into that window.",
+      diaData: "Date",
+      horaInicio: "Start",
+      horaFim: "End",
+      adicionarDia: "+ Add day",
+      removerDia: "Remove",
     },
     moedas: {
       brl: "BRL — Real (Pix)",
@@ -903,6 +913,18 @@ export const en: Dicionario = {
       informeMontar: "and build the schedule.",
       cronogramaPorArea: "Schedule by mat",
       fecharTelaCheia: "Close full screen",
+      // day configuration on the areas screen itself
+      diasEvento: "Event days",
+      diasNota:
+        "Matches are spread within each day's window. Adjust the days and times before structuring.",
+      salvarDias: "Save days",
+      // warning when the estimated matches don't fit the period
+      naoCabePre: "The estimated matches (~",
+      naoCabeMeio: " on the busiest mat) don't fit the available period (~",
+      naoCabePos: " per mat).",
+      naoCabeAreasPre: " Use at least ",
+      naoCabeAreasPos: " mats, or extend the days/times.",
+      naoCabeTempo: " Extend the daily times or add another day.",
     },
     erros: {
       soRascunhoExcluir:
@@ -911,6 +933,10 @@ export const en: Dicionario = {
         "This event already has registrations or payments recorded and can't be deleted.",
       nomeDataObrigatorios: "Event name and date are required.",
       inscricoesFecham: "Registration must close on or before the event date.",
+      numAreasInvalido: "Enter a number of mats between 1 and 40.",
+      diasObrigatorio: "Add at least one day with a time window for the event.",
+      diaJanelaInvalida:
+        "Each day needs a valid start and end, with the end after the start.",
       selecaoVazia:
         "The selection generates no divisions — pick at least one class, one sex and one belt.",
       categoriaComInscritos:

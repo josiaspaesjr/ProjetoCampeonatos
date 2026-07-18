@@ -1,8 +1,16 @@
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
-import { areas, categorias, chaves, inscricoes, lotes } from "@/db/schema";
+import {
+  areas,
+  categorias,
+  chaves,
+  eventoDias,
+  inscricoes,
+  lotes,
+} from "@/db/schema";
+import { minutosParaHHMM } from "@/lib/cronograma/dias";
 import {
   SidebarOrganizador,
   type ItemNav,
@@ -43,13 +51,17 @@ export default async function LayoutConsoleEvento({
   const evento = await eventoGerenciavel(db, id, usuario.id);
   if (!evento) notFound();
 
-  const [meusEventos, cats, lts, ars, confirmadas] = await Promise.all([
+  const [meusEventos, cats, lts, ars, confirmadas, diasRows] = await Promise.all([
     eventosGerenciaveis(db, usuario.id),
     db.query.categorias.findMany({ where: eq(categorias.eventoId, id) }),
     db.query.lotes.findMany({ where: eq(lotes.eventoId, id) }),
     db.query.areas.findMany({ where: eq(areas.eventoId, id) }),
     db.query.inscricoes.findMany({
       where: and(eq(inscricoes.eventoId, id), eq(inscricoes.status, "confirmada")),
+    }),
+    db.query.eventoDias.findMany({
+      where: eq(eventoDias.eventoId, id),
+      orderBy: asc(eventoDias.data),
     }),
   ]);
 
@@ -108,6 +120,13 @@ export default async function LayoutConsoleEvento({
     status: evento.status,
     circuito: evento.circuito ?? "",
     dataInicio: evento.dataInicio,
+    dias: diasRows.length
+      ? diasRows.map((d) => ({
+          data: d.data,
+          inicio: minutosParaHHMM(d.inicioMinutos),
+          fim: minutosParaHHMM(d.fimMinutos),
+        }))
+      : [{ data: evento.dataInicio, inicio: "09:00", fim: "18:00" }],
     inscricoesFecham: paraDatetimeLocal(evento.inscricoesFecham),
     cidade: evento.cidade ?? "",
     uf: evento.uf ?? "",

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 import { CamposDataEvento } from "@/components/organizador/campos-data-evento";
+import type { DiaEvento } from "@/components/organizador/campos-dias-evento";
 import { RegulamentoCampos } from "@/components/organizador/regulamento-campos";
 import { useNavMobile } from "@/components/organizador/nav-mobile-context";
 import { useDic } from "@/lib/i18n/client";
@@ -20,6 +21,8 @@ export interface EventoEditavel {
   status: string;
   circuito: string;
   dataInicio: string;
+  /** dias do evento (data + início/fim) para o editor de período */
+  dias: DiaEvento[];
   inscricoesFecham: string; // datetime-local ou ""
   cidade: string;
   uf: string;
@@ -186,10 +189,9 @@ export function TopbarEvento({
                   <Input name="circuito" defaultValue={evento.circuito} />
                 </div>
                 <CamposDataEvento
-                  gridClassName="grid grid-cols-1 gap-3.5 sm:grid-cols-2"
                   labelCls={labelCls}
                   fechamLabel={campos.inscricoesFecham}
-                  defaultDataInicio={evento.dataInicio}
+                  defaultDias={evento.dias}
                   defaultInscricoesFecham={evento.inscricoesFecham}
                 />
                 <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-[1fr_80px_130px]">

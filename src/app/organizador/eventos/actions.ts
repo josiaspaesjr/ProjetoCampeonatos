@@ -10,6 +10,7 @@ import {
   categorias,
   chaves,
   cupons,
+  eventoDias,
   eventos,
   inscricoes,
   lotes,
@@ -32,6 +33,11 @@ import {
   type Sexo,
 } from "@/lib/categorias/cbjj";
 import { publicarEventoCore } from "@/lib/eventos/publicacao";
+import {
+  lerDiasDoForm,
+  persistirDiasEvento,
+  validarDias,
+} from "@/lib/eventos/dias-form";
 import { lerRegulamentoDoForm } from "@/lib/regulamento";
 import { GRUPOS_PRECO_PRESETS, type LoteVariacao } from "@/lib/lotes/preco";
 import { diaLocalYmd, loteConflitante, ymdParaBR } from "@/lib/lotes/vigencia";
@@ -76,22 +82,28 @@ function precoParaCentavos(bruto: FormDataEntryValue | null): number | null {
   return Math.round(reais * 100);
 }
 
-/** inscrições não podem fechar depois do dia do evento */
+/** inscrições não podem fechar depois do último dia do evento */
 function inscricoesFechamValidas(
   inscricoesFecham: Date | null,
-  dataInicio: string,
+  ultimaData: string,
 ): boolean {
   if (!inscricoesFecham) return true;
-  return inscricoesFecham <= new Date(`${dataInicio}T23:59:59`);
+  return inscricoesFecham <= new Date(`${ultimaData}T23:59:59`);
 }
 
 export async function criarEvento(formData: FormData) {
   const db = await getDb();
   const usuario = await getUsuarioAtual();
+  const erros = (await getDicionario()).admin.erros;
 
   const nome = String(formData.get("nome") ?? "").trim();
-  const dataInicio = String(formData.get("dataInicio") ?? "");
-  if (!nome || !dataInicio) throw new Error("Nome e data são obrigatórios");
+  const dias = lerDiasDoForm(formData);
+  const erroDias = validarDias(dias);
+  if (!nome) throw new Error(erros.nomeDataObrigatorios);
+  if (erroDias) throw new Error(erros[erroDias]);
+  // dataInicio/dataFim derivam dos dias (min/max)
+  const dataInicio = dias[0].data;
+  const dataFim = dias[dias.length - 1].data;
 
   const base = slugify(nome);
   const existentes = await db.query.eventos.findMany({
@@ -103,8 +115,8 @@ export async function criarEvento(formData: FormData) {
   const inscricoesFecham = formData.get("inscricoesFecham")
     ? new Date(String(formData.get("inscricoesFecham")))
     : null;
-  if (!inscricoesFechamValidas(inscricoesFecham, dataInicio)) {
-    throw new Error("As inscrições devem fechar até a data do evento.");
+  if (!inscricoesFechamValidas(inscricoesFecham, dataFim)) {
+    throw new Error(erros.inscricoesFecham);
   }
 
   const [evento] = await db
@@ -114,6 +126,7 @@ export async function criarEvento(formData: FormData) {
       nome,
       slug,
       dataInicio,
+      dataFim,
       cidade: String(formData.get("cidade") ?? "") || null,
       uf: String(formData.get("uf") ?? "").toUpperCase() || null,
       endereco: String(formData.get("endereco") ?? "") || null,
@@ -133,11 +146,14 @@ export async function criarEvento(formData: FormData) {
     })
     .returning();
 
+  // grava os dias do evento (janelas usadas pelo gerador de áreas/cronograma)
+  await persistirDiasEvento(db, evento.id, dias);
+
   // preço informado na criação vira o 1º lote (a regra de preço vive em lotes)
   const preco = precoParaCentavos(formData.get("preco"));
   if (preco) {
     const fimLote =
-      inscricoesFecham ?? new Date(`${dataInicio}T23:59:59`);
+      inscricoesFecham ?? new Date(`${dataFim}T23:59:59`);
     await db.insert(lotes).values({
       eventoId: evento.id,
       nome: "1º lote",
@@ -198,6 +214,7 @@ export async function excluirEvento(eventoId: string) {
   await db.delete(lotes).where(eq(lotes.eventoId, eventoId));
   await db.delete(cupons).where(eq(cupons.eventoId, eventoId));
   await db.delete(areas).where(eq(areas.eventoId, eventoId));
+  await db.delete(eventoDias).where(eq(eventoDias.eventoId, eventoId));
   await db.delete(eventos).where(eq(eventos.id, eventoId));
 
   await db.insert(auditoria).values({
@@ -221,10 +238,12 @@ export async function editarEvento(eventoId: string, formData: FormData) {
   const erros = (await getDicionario()).admin.erros;
 
   const nome = String(formData.get("nome") ?? "").trim();
-  const dataInicio = String(formData.get("dataInicio") ?? "");
-  if (!nome || !dataInicio) {
-    erroVisivel(eventoId, erros.nomeDataObrigatorios);
-  }
+  const dias = lerDiasDoForm(formData);
+  const erroDias = validarDias(dias);
+  if (!nome) erroVisivel(eventoId, erros.nomeDataObrigatorios);
+  if (erroDias) erroVisivel(eventoId, erros[erroDias]);
+  const dataInicio = dias[0].data;
+  const dataFim = dias[dias.length - 1].data;
 
   let slug = evento.slug;
   if (nome !== evento.nome) {
@@ -244,7 +263,7 @@ export async function editarEvento(eventoId: string, formData: FormData) {
   const inscricoesFecham = formData.get("inscricoesFecham")
     ? new Date(String(formData.get("inscricoesFecham")))
     : null;
-  if (!inscricoesFechamValidas(inscricoesFecham, dataInicio)) {
+  if (!inscricoesFechamValidas(inscricoesFecham, dataFim)) {
     erroVisivel(eventoId, erros.inscricoesFecham);
   }
 
@@ -254,6 +273,7 @@ export async function editarEvento(eventoId: string, formData: FormData) {
       nome,
       slug,
       dataInicio,
+      dataFim,
       cidade: String(formData.get("cidade") ?? "") || null,
       uf: String(formData.get("uf") ?? "").toUpperCase() || null,
       endereco: String(formData.get("endereco") ?? "") || null,
@@ -273,6 +293,9 @@ export async function editarEvento(eventoId: string, formData: FormData) {
       regulamento: lerRegulamentoDoForm(formData),
     })
     .where(eq(eventos.id, eventoId));
+
+  // substitui os dias do evento (janelas do gerador de áreas/cronograma)
+  await persistirDiasEvento(db, eventoId, dias);
 
   revalidatePath(`/organizador/eventos/${eventoId}`);
   revalidatePath(`/evento/${slug}`);

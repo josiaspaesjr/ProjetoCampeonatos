@@ -2,21 +2,58 @@
 
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { getDb } from "@/db";
 import { areas, auditoria, categorias, eventos, lutas } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
 import { eventoGerenciavel } from "@/lib/eventos/acesso";
+import { getDicionario } from "@/lib/i18n/server";
 import {
   distribuirBalanceado,
   ordenarCategorias,
 } from "@/lib/categorias/distribuicao-areas";
 import { estimarCargaCategorias } from "@/lib/cronograma/carga-areas";
+import {
+  diasDoEventoOuDefault,
+  formatarDuracaoSegundos,
+} from "@/lib/cronograma/dias";
+import { duracaoDaCategoria } from "@/lib/cronograma/fila";
+import { verificarCapacidade, type ResultadoCapacidade } from "@/lib/cronograma/janelas";
+import {
+  lerDiasDoForm,
+  persistirDiasEvento,
+  validarDias,
+} from "@/lib/eventos/dias-form";
 import { registrarResultadoNoBanco, type PlacarLuta } from "@/lib/chaves/persistencia";
 import type { MetodoVitoria } from "@/lib/bracket";
 
 const AREAS_MIN = 1;
 const AREAS_MAX = 40;
 const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/** erros esperados da tela de Áreas viram banner (redirect com ?erro=) */
+function erroVisivelAreas(eventoId: string, mensagem: string): never {
+  redirect(
+    `/organizador/eventos/${eventoId}/areas?erro=${encodeURIComponent(mensagem)}`,
+  );
+}
+
+type AvisoAreas = Awaited<ReturnType<typeof getDicionario>>["admin"]["areas"];
+
+/** monta o aviso de "não cabe" com a demanda, a capacidade e a sugestão */
+function mensagemNaoCabe(cap: ResultadoCapacidade, ta: AvisoAreas): string {
+  const demanda = formatarDuracaoSegundos(cap.demandaMaxSegundos);
+  const capac = formatarDuracaoSegundos(cap.capacidadeAreaSegundos);
+  const base = `${ta.naoCabePre}${demanda}${ta.naoCabeMeio}${capac}${ta.naoCabePos}`;
+  const sugereAreas =
+    !cap.soAdicionandoTempo &&
+    cap.areasSugeridas != null &&
+    cap.areasSugeridas > cap.nAreas;
+  const sugestao = sugereAreas
+    ? `${ta.naoCabeAreasPre}${cap.areasSugeridas}${ta.naoCabeAreasPos}`
+    : ta.naoCabeTempo;
+  return base + sugestao;
+}
 
 async function contexto(eventoId: string) {
   const db = await getDb();
@@ -33,40 +70,72 @@ async function contexto(eventoId: string) {
  * — por isso a alocação é persistida, não só o número.
  */
 export async function estruturarAreas(eventoId: string, formData: FormData) {
-  const { db, usuario } = await contexto(eventoId);
+  const { db, usuario, evento } = await contexto(eventoId);
+  const dic = await getDicionario();
 
   const nAreas = Math.floor(Number(formData.get("numAreas")));
   if (!Number.isFinite(nAreas) || nAreas < AREAS_MIN || nAreas > AREAS_MAX) {
-    throw new Error("Informe um número de áreas entre 1 e 40");
+    erroVisivelAreas(eventoId, dic.admin.erros.numAreasInvalido);
   }
 
-  const [cats, existentes] = await Promise.all([
+  // só leitura até a validação passar — nada é gravado se não couber
+  const [cats, existentes, janelas] = await Promise.all([
     db.query.categorias.findMany({ where: eq(categorias.eventoId, eventoId) }),
     db.query.areas.findMany({
       where: eq(areas.eventoId, eventoId),
       orderBy: asc(areas.ordem),
     }),
+    diasDoEventoOuDefault(db, evento),
   ]);
-  if (!cats.length) throw new Error("Gere a grade de categorias antes");
+  if (!cats.length) erroVisivelAreas(eventoId, dic.admin.areas.gereGradeAntes);
 
+  // entradas com carga (balanceamento) e demanda real (tempo) por categoria
+  const cargas = await estimarCargaCategorias(db, eventoId, cats);
+  const entradas = cats.map((c) => ({
+    id: c.id,
+    classeIdade: c.classeIdade,
+    sexo: c.sexo,
+    faixa: c.faixa,
+    tipo: c.tipo,
+    limitePesoKg: c.limitePesoKg != null ? Number(c.limitePesoKg) : null,
+    carga: cargas.get(c.id)?.carga ?? 1,
+    demandaReal: (cargas.get(c.id)?.lutas ?? 0) * duracaoDaCategoria(c),
+  }));
+
+  // VERIFICAÇÃO DE ENCAIXE: as lutas cabem no período com N áreas?
+  const cap = verificarCapacidade(entradas, nAreas, janelas);
+  if (!cap.cabe) {
+    // não grava nada — orienta a acrescentar áreas ou dias/horas
+    erroVisivelAreas(eventoId, mensagemNaoCabe(cap, dic.admin.areas));
+  }
+
+  // --- cabe: a partir daqui, persiste ---
   // nº de áreas planejado (reflete no chip da Visão geral, badge e checklist)
   await db.update(eventos).set({ numAreas: nAreas }).where(eq(eventos.id, eventoId));
 
-  // concilia as áreas reais a N — reaproveita as existentes (preserva
-  // hora de início e intercalação), cria as que faltam, remove as sobrantes
+  // âncora do cronograma ao vivo de cada área: início do 1º dia
+  const dia1 = janelas[0];
+  const horaInicio = dia1
+    ? new Date(
+        new Date(`${dia1.data}T00:00:00`).getTime() + dia1.inicioSegundos * 1000,
+      )
+    : null;
+
+  // concilia as áreas reais a N — reaproveita as existentes (preserva a
+  // intercalação), cria as que faltam, remove as sobrantes
   const alvoIds: string[] = [];
   for (let i = 0; i < nAreas; i++) {
     const existente = existentes[i];
     if (existente) {
       await db
         .update(areas)
-        .set({ nome: `Área ${pad2(i + 1)}`, ordem: i })
+        .set({ nome: `Área ${pad2(i + 1)}`, ordem: i, horaInicio })
         .where(eq(areas.id, existente.id));
       alvoIds.push(existente.id);
     } else {
       const [nova] = await db
         .insert(areas)
-        .values({ eventoId, nome: `Área ${pad2(i + 1)}`, ordem: i })
+        .values({ eventoId, nome: `Área ${pad2(i + 1)}`, ordem: i, horaInicio })
         .returning();
       alvoIds.push(nova.id);
     }
@@ -81,19 +150,9 @@ export async function estruturarAreas(eventoId: string, formData: FormData) {
     await db.delete(areas).where(inArray(areas.id, idsExtras));
   }
 
-  // ordena a grade na ordem do dia e distribui as categorias por menor carga
-  const cargas = await estimarCargaCategorias(db, eventoId, cats);
-  const ordenadas = ordenarCategorias(
-    cats.map((c) => ({
-      id: c.id,
-      classeIdade: c.classeIdade,
-      sexo: c.sexo,
-      faixa: c.faixa,
-      tipo: c.tipo,
-      limitePesoKg: c.limitePesoKg != null ? Number(c.limitePesoKg) : null,
-      carga: cargas.get(c.id)?.carga ?? 1,
-    })),
-  );
+  // distribui reusando as MESMAS entradas do check (ordenação/carga idênticas,
+  // então a área mais cheia bate com o gargalo que foi validado)
+  const ordenadas = ordenarCategorias(entradas);
   const porArea = distribuirBalanceado(ordenadas, nAreas);
 
   const alocacoes: { id: string; areaId: string; ordem: number }[] = [];
@@ -119,6 +178,20 @@ export async function estruturarAreas(eventoId: string, formData: FormData) {
     dadosNovos: { areas: nAreas, categorias: cats.length },
   });
 
+  revalidatePath(`/organizador/eventos/${eventoId}`);
+  revalidatePath(`/organizador/eventos/${eventoId}/areas`);
+}
+
+/** salva os dias/horários do evento a partir da tela de Áreas */
+export async function salvarDiasEvento(eventoId: string, formData: FormData) {
+  const { db } = await contexto(eventoId);
+  const dic = await getDicionario();
+
+  const dias = lerDiasDoForm(formData);
+  const erro = validarDias(dias);
+  if (erro) erroVisivelAreas(eventoId, dic.admin.erros[erro]);
+
+  await persistirDiasEvento(db, eventoId, dias);
   revalidatePath(`/organizador/eventos/${eventoId}`);
   revalidatePath(`/organizador/eventos/${eventoId}/areas`);
 }

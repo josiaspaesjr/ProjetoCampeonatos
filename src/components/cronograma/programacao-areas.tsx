@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { createContext, useContext } from "react";
+import { createContext, Fragment, useContext } from "react";
 import { cn } from "@/lib/utils";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 import { useDic } from "@/lib/i18n/client";
@@ -117,13 +117,18 @@ function CardArea({
             </span>
           </div>
         </div>
-        <div className="mt-1.5 flex items-center justify-between gap-2 font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
-          <span>
+        <div className="mt-1.5 flex items-start justify-between gap-2 font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
+          <span className="shrink-0">
             {area.totalGrupos} {area.totalGrupos === 1 ? dp.grupo : dp.grupos}
           </span>
-          <span className="tnum">
-            {area.dataLabel} · {area.inicio} → {area.fim}
-          </span>
+          {/* uma linha por dia usado (janela real); 1 dia → linha única */}
+          <div className="tnum text-right">
+            {area.dias.map((d) => (
+              <div key={d.data}>
+                {d.dataLabel} · {d.inicio} → {d.fim}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -134,7 +139,21 @@ function CardArea({
             {dp.semCategorias}
           </div>
         ) : (
-          area.categorias.map((cat, i) => <BlocoCategoria key={i} cat={cat} />)
+          area.categorias.map((cat, i) => {
+            // divisória ao virar o dia (o header já anuncia o 1º dia)
+            const viraDia =
+              i > 0 && cat.diaIndex !== area.categorias[i - 1].diaIndex;
+            return (
+              <div key={i}>
+                {viraDia && (
+                  <div className="border-b border-white/10 bg-white/[0.03] px-4 py-1.5 font-cond text-[11px] font-bold uppercase tracking-[0.08em] text-brand-soft">
+                    {dp.dia} {cat.diaIndex + 1} · {cat.dataLabel}
+                  </div>
+                )}
+                <BlocoCategoria cat={cat} />
+              </div>
+            );
+          })
         )}
       </div>
 
@@ -192,14 +211,24 @@ function BlocoCategoria({ cat }: { cat: CategoriaCron }) {
       {/* LUTAS (ou roster quando a chave ainda não foi gerada) */}
       {cat.chaveGerada ? (
         <ul className="flex flex-col">
-          {cat.lutas.map((l, i) => (
-            <LinhaLuta
-              key={i}
-              luta={l}
-              catTitulo={cat.titulo}
-              catSubtitulo={cat.subtitulo}
-            />
-          ))}
+          {cat.lutas.map((l, i) => {
+            // categoria que cruza a virada de dia: marca a troca entre as lutas
+            const viraDia = i > 0 && l.diaIndex !== cat.lutas[i - 1].diaIndex;
+            return (
+              <Fragment key={i}>
+                {viraDia && (
+                  <li className="border-y border-white/10 bg-white/[0.03] px-4 py-1 font-cond text-[10px] font-bold uppercase tracking-[0.08em] text-brand-soft">
+                    {dp.dia} {l.diaIndex + 1} · {l.dataLabel}
+                  </li>
+                )}
+                <LinhaLuta
+                  luta={l}
+                  catTitulo={cat.titulo}
+                  catSubtitulo={cat.subtitulo}
+                />
+              </Fragment>
+            );
+          })}
         </ul>
       ) : (
         <div className="px-4 py-2">

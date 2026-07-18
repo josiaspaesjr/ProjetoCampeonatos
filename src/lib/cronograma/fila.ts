@@ -1,7 +1,8 @@
 import { asc, eq, inArray } from "drizzle-orm";
 import type { Db } from "@/db";
-import { areas, categorias, chaves, inscricoes, lutas } from "@/db/schema";
+import { areas, categorias, chaves, eventos, inscricoes, lutas } from "@/db/schema";
 import { idsDeBye } from "@/lib/chaves/byes";
+import { diasDoEventoOuDefault, type JanelaDia } from "./dias";
 
 /**
  * Fila de lutas e cronograma estimado por área.
@@ -77,10 +78,60 @@ export interface FilaDaArea {
   atletas: Record<string, { nome: string; academia: string | null }>;
 }
 
+/** janela de um dia como intervalo absoluto (horário local do ginásio) */
+function janelaEmDatas(j: JanelaDia): { inicio: number; fim: number } {
+  const base = new Date(`${j.data}T00:00:00`).getTime();
+  return {
+    inicio: base + j.inicioSegundos * 1000,
+    fim: base + j.fimSegundos * 1000,
+  };
+}
+
+/**
+ * Empacota durações (segundos) nas janelas dos dias, em Date absolutas,
+ * começando em "agora" (fila ao vivo do telão). Pula os dias já encerrados;
+ * dentro do dia corrente ancora no maior entre o início do dia e agora; uma luta
+ * que não cabe no resto do dia rola inteira para o próximo. Sem janelas, empacota
+ * a partir de agora em sequência (retrocompat).
+ */
+function empacotarEmDatas(
+  janelas: JanelaDia[],
+  duracoesSeg: number[],
+  agora: Date,
+): Date[] {
+  const agoraMs = agora.getTime();
+  if (!janelas.length) {
+    let c = agoraMs;
+    return duracoesSeg.map((dur) => {
+      const at = new Date(c);
+      c += dur * 1000;
+      return at;
+    });
+  }
+  const dts = janelas.map(janelaEmDatas);
+  let diaIdx = 0;
+  // pula dias cujo horário de término já passou
+  while (diaIdx < dts.length - 1 && agoraMs >= dts[diaIdx].fim) diaIdx++;
+  let cursor = Math.max(agoraMs, dts[diaIdx].inicio);
+  const horas: Date[] = [];
+  for (const dur of duracoesSeg) {
+    const durMs = dur * 1000;
+    while (diaIdx < dts.length - 1 && cursor + durMs > dts[diaIdx].fim) {
+      diaIdx++;
+      cursor = Math.max(agoraMs, dts[diaIdx].inicio);
+    }
+    horas.push(new Date(cursor));
+    cursor += durMs;
+  }
+  return horas;
+}
+
 export async function montarFilaDaArea(
   db: Db,
   areaId: string,
   agora = new Date(),
+  /** janelas dos dias (injetadas por montarFilasDoEvento p/ evitar N+1) */
+  dias?: JanelaDia[],
 ): Promise<FilaDaArea | null> {
   const area = await db.query.areas.findFirst({ where: eq(areas.id, areaId) });
   if (!area) return null;
@@ -124,20 +175,29 @@ export async function montarFilaDaArea(
     ? intercalarPorRodada(gruposPorCategoria)
     : gruposPorCategoria.flat(2);
 
-  const fila: LutaNaFila[] = [];
-  let cursor = new Date(
-    Math.max(agora.getTime(), area.horaInicio?.getTime() ?? 0),
+  // janelas dos dias do evento (carrega se não vierem injetadas)
+  const janelas =
+    dias ??
+    (await (async (): Promise<JanelaDia[]> => {
+      const evento = await db.query.eventos.findFirst({
+        where: eq(eventos.id, area.eventoId),
+      });
+      return evento ? diasDoEventoOuDefault(db, evento) : [];
+    })());
+
+  // horários estimados encaixados nas janelas dos dias, a partir de "agora"
+  const horas = empacotarEmDatas(
+    janelas,
+    ordenadas.map((o) => duracaoDaCategoria(o.categoria)),
+    agora,
   );
-  for (const { luta, categoria } of ordenadas) {
-    const horaEstimada = new Date(cursor);
-    cursor = new Date(cursor.getTime() + duracaoDaCategoria(categoria) * 1000);
-    fila.push({
-      luta,
-      categoria,
-      horaEstimada,
-      pronta: Boolean(luta.atleta1InscricaoId && luta.atleta2InscricaoId),
-    });
-  }
+
+  const fila: LutaNaFila[] = ordenadas.map(({ luta, categoria }, i) => ({
+    luta,
+    categoria,
+    horaEstimada: horas[i],
+    pronta: Boolean(luta.atleta1InscricaoId && luta.atleta2InscricaoId),
+  }));
 
   const idsInscricoes = [
     ...new Set(
@@ -164,13 +224,18 @@ export async function montarFilaDaArea(
 }
 
 export async function montarFilasDoEvento(db: Db, eventoId: string) {
-  const todasAreas = await db.query.areas.findMany({
-    where: eq(areas.eventoId, eventoId),
-    orderBy: asc(areas.ordem),
-  });
+  const [evento, todasAreas] = await Promise.all([
+    db.query.eventos.findFirst({ where: eq(eventos.id, eventoId) }),
+    db.query.areas.findMany({
+      where: eq(areas.eventoId, eventoId),
+      orderBy: asc(areas.ordem),
+    }),
+  ]);
+  // carrega as janelas dos dias uma vez e injeta em cada área (evita N+1)
+  const dias = evento ? await diasDoEventoOuDefault(db, evento) : [];
   const agora = new Date();
   const filas = await Promise.all(
-    todasAreas.map((a) => montarFilaDaArea(db, a.id, agora)),
+    todasAreas.map((a) => montarFilaDaArea(db, a.id, agora, dias)),
   );
   return filas.filter((f): f is FilaDaArea => f !== null);
 }

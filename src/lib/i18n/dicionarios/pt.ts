@@ -330,6 +330,7 @@ export const pt = {
     pun: "PUN",
     aDefinir: "A definir",
     operarPlacar: "Operar placar",
+    dia: "Dia",
   },
   bracket: {
     rodadaPre: "",
@@ -494,6 +495,15 @@ export const pt = {
       dataGeracaoNota: "Data prevista para montar as chaves — apenas informativo.",
       detalhesCompeticao: "Detalhes da competição",
       regulamento: "Regulamento",
+      // dias do evento (período com janela de horário por dia)
+      diasEvento: "Dias do evento",
+      diasNota:
+        "Um ou mais dias, cada um com horário de início e fim. As lutas são encaixadas nesse período.",
+      diaData: "Data",
+      horaInicio: "Início",
+      horaFim: "Fim",
+      adicionarDia: "+ Adicionar dia",
+      removerDia: "Remover",
     },
     moedas: {
       brl: "BRL — Real (Pix)",
@@ -911,6 +921,18 @@ export const pt = {
       informeMontar: "e montar o cronograma.",
       cronogramaPorArea: "Cronograma por área",
       fecharTelaCheia: "Fechar tela cheia",
+      // configuração dos dias na própria tela de áreas
+      diasEvento: "Dias do evento",
+      diasNota:
+        "As lutas são distribuídas dentro do horário de cada dia. Ajuste os dias e horários antes de estruturar.",
+      salvarDias: "Salvar dias",
+      // aviso quando as lutas estimadas não cabem no período
+      naoCabePre: "As lutas estimadas (~",
+      naoCabeMeio: " no tatame mais cheio) não cabem no período disponível (~",
+      naoCabePos: " por área).",
+      naoCabeAreasPre: " Use pelo menos ",
+      naoCabeAreasPos: " áreas, ou amplie os dias/horários.",
+      naoCabeTempo: " Amplie os horários dos dias ou adicione mais um dia.",
     },
     erros: {
       soRascunhoExcluir:
@@ -919,6 +941,10 @@ export const pt = {
         "Este evento já tem inscrições ou pagamentos registrados e não pode ser excluído.",
       nomeDataObrigatorios: "Nome e data do evento são obrigatórios.",
       inscricoesFecham: "As inscrições devem fechar até a data do evento.",
+      numAreasInvalido: "Informe um número de áreas entre 1 e 40.",
+      diasObrigatorio: "Informe ao menos um dia com horário para o evento.",
+      diaJanelaInvalida:
+        "Cada dia precisa de início e fim válidos, com o fim depois do início.",
       selecaoVazia:
         "Seleção não gera nenhuma categoria — marque ao menos uma classe, um sexo e uma faixa.",
       categoriaComInscritos:

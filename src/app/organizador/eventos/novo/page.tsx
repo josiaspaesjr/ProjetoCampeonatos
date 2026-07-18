@@ -72,11 +72,9 @@ export default async function NovoEvento() {
         </div>
 
         <CamposDataEvento
-          gridClassName="grid gap-[18px] sm:grid-cols-2"
           labelCls={labelCls}
           inputClassName="h-12"
           fechamLabel={dc.inscricoesFechamEm}
-          obrigatorio
         />
 
         <div className="grid gap-[18px] sm:grid-cols-[1fr_90px_220px]">

@@ -41,9 +41,12 @@ const norm = (s: string) =>
 export function LutasLista({
   itens,
   areas,
+  multiDia = false,
 }: {
   itens: LutaItem[];
   areas: string[];
+  /** evento com mais de um dia: mostra a data em cada luta */
+  multiDia?: boolean;
 }) {
   const [busca, setBusca] = useState("");
   const [area, setArea] = useState<string | null>(null);
@@ -126,7 +129,11 @@ export function LutasLista({
       ) : (
         <ul className="flex flex-col border border-white/10 bg-surface">
           {filtradas.map((it, i) => (
-            <LinhaLutaLista key={`${it.luta.hora}-${it.area}-${i}`} item={it} />
+            <LinhaLutaLista
+              key={`${it.luta.data}-${it.luta.hora}-${it.area}-${i}`}
+              item={it}
+              multiDia={multiDia}
+            />
           ))}
         </ul>
       )}
@@ -161,7 +168,13 @@ function ChipArea({
   );
 }
 
-function LinhaLutaLista({ item }: { item: LutaItem }) {
+function LinhaLutaLista({
+  item,
+  multiDia,
+}: {
+  item: LutaItem;
+  multiDia: boolean;
+}) {
   const { luta, area, catTitulo, catSubtitulo, academia1, academia2 } = item;
   const abrir = useContext(AbrirLutaCtx);
   return (
@@ -173,8 +186,13 @@ function LinhaLutaLista({ item }: { item: LutaItem }) {
         }
         className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-white/[0.04] focus-visible:bg-white/[0.04] focus-visible:outline-none"
       >
-        {/* horário + área */}
+        {/* dia (multi-dia) + horário + área */}
         <div className="w-16 shrink-0">
+          {multiDia && (
+            <div className="tnum font-cond text-[10px] uppercase tracking-[0.05em] text-brand-soft">
+              {luta.dataLabel}
+            </div>
+          )}
           <div className="disp tnum text-[16px] leading-none">{luta.hora}</div>
           <div className="mt-1 truncate font-cond text-[10px] uppercase tracking-[0.05em] text-muted-3">
             {area}

@@ -4,19 +4,23 @@ import { areas, categorias, chaves, inscricoes, lutas } from "@/db/schema";
 import { chaveDoGrupo, nomeDaClasse } from "@/lib/categorias/distribuicao-areas";
 import { idsDeBye } from "@/lib/chaves/byes";
 import { duracaoDaCategoria } from "./fila";
+import { diasDoEventoOuDefault } from "./dias";
+import { encaixarItens } from "./janelas";
 
 /**
  * Cronograma de lutas por área para a seção **Áreas** do organizador.
  *
  * Para cada área, devolve suas categorias (na ordem do dia — `ordemNaArea`) com
- * o horário previsto de início e a lista de lutas. O horário é ancorado no
- * **início do dia (09:00)** da data do evento e avança pela duração acumulada
- * das lutas anteriores **no mesmo tatame** (cada área corre em paralelo). Antes
- * das chaves existirem, mostra a lista de inscritos e estima o nº de lutas
- * (`atletas − 1`) só para manter o horário da coluna realista.
+ * o horário previsto de início e a lista de lutas. O horário respeita as
+ * **janelas dos dias do evento** (cada dia com início/fim): cada área corre em
+ * paralelo, enche a janela de um dia e, quando esgota, retoma no dia seguinte
+ * (uma luta nunca parte no meio de um dia). Antes das chaves existirem, mostra a
+ * lista de inscritos e estima o nº de lutas (`atletas − 1`) só para manter o
+ * horário da coluna realista.
  *
- * Tudo é derivado do backend (áreas, categorias, chaves, lutas e inscrições
- * confirmadas). Rótulos já vêm formatados para o cliente permanecer burro.
+ * Tudo é derivado do backend (áreas, categorias, chaves, lutas, inscrições
+ * confirmadas e dias do evento). Rótulos já vêm formatados para o cliente
+ * permanecer burro.
  */
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
@@ -36,9 +40,6 @@ const ROTULO_METODO: Record<string, string> = {
   dq: "Desqualificação",
 };
 
-/** início do dia: 09:00 (segundos desde a meia-noite) */
-const INICIO_DIA_SEGUNDOS = 9 * 3600;
-
 /** "09:00" a partir de segundos desde a meia-noite */
 function horaLabel(segundos: number): string {
   const h = Math.floor(segundos / 3600);
@@ -55,6 +56,11 @@ function dataLabel(data: string | Date): string {
   return `${pad2(data.getUTCDate())}/${pad2(data.getUTCMonth() + 1)}`;
 }
 
+/** "YYYY-MM-DD" a partir do parâmetro de data de início (string ou Date) */
+function dataInicioStr(data: string | Date): string {
+  return typeof data === "string" ? data.slice(0, 10) : data.toISOString().slice(0, 10);
+}
+
 /** rótulo do peso: último segmento do nome ("… / Pena (até 70kg)") */
 function rotuloPeso(nome: string, tipo: string): string {
   if (tipo === "absoluto") return "Absoluto";
@@ -68,6 +74,12 @@ export interface LutaCron {
   label: string;
   /** horário previsto de início ("09:12") */
   hora: string;
+  /** dia da luta ("YYYY-MM-DD") — evento multi-dia */
+  data: string;
+  /** rótulo do dia ("14/03") */
+  dataLabel: string;
+  /** índice do dia (0-based) em que a luta cai */
+  diaIndex: number;
   /** nome do atleta 1 (ou "A definir" quando o slot ainda não foi resolvido) */
   a1: string;
   a2: string;
@@ -101,6 +113,12 @@ export interface CategoriaCron {
   subtitulo: string;
   /** horário previsto de início da categoria */
   hora: string;
+  /** dia de início da categoria ("YYYY-MM-DD") */
+  data: string;
+  /** rótulo do dia de início ("14/03") */
+  dataLabel: string;
+  /** índice do dia (0-based) em que a categoria começa */
+  diaIndex: number;
   /** nº de lutas (real quando há chave; estimado — atletas−1 — quando não) */
   nLutas: number;
   /** true quando a chave já foi gerada (há lutas de verdade) */
@@ -111,18 +129,40 @@ export interface CategoriaCron {
   lutas: LutaCron[];
 }
 
+/** um dia usado pela área (para o header multi-dia) */
+export interface DiaCron {
+  /** "YYYY-MM-DD" */
+  data: string;
+  /** "14/03" */
+  dataLabel: string;
+  /** início real usado neste dia ("09:00") */
+  inicio: string;
+  /** fim real usado neste dia ("17:30") */
+  fim: string;
+}
+
 /** uma coluna (área/tatame) do cronograma */
 export interface AreaCron {
   id: string;
   nome: string;
-  /** "dd/mm" da data do evento */
+  /** rótulo da data (um dia "14/03" ou faixa "14/03–15/03") */
   dataLabel: string;
-  /** janela do tatame: início e fim previstos */
+  /** início previsto (do primeiro dia usado) */
   inicio: string;
+  /** fim previsto (do último dia usado) */
   fim: string;
+  /** dias que a área ocupa, com a janela real usada em cada um */
+  dias: DiaCron[];
   totalCats: number;
   totalGrupos: number;
   categorias: CategoriaCron[];
+}
+
+/** rótulo da faixa de datas de uma lista de dias */
+function faixaDatasLabel(dias: DiaCron[]): string {
+  if (!dias.length) return "";
+  if (dias.length === 1) return dias[0].dataLabel;
+  return `${dias[0].dataLabel}–${dias[dias.length - 1].dataLabel}`;
 }
 
 /**
@@ -140,8 +180,18 @@ export async function montarCronogramaDoEvento(
   });
   if (!todasAreas.length) return [];
 
-  const dia = dataLabel(dataInicio);
-  const inicioDia = horaLabel(INICIO_DIA_SEGUNDOS);
+  const inicioStr = dataInicioStr(dataInicio);
+  const janelas = await diasDoEventoOuDefault(db, {
+    id: eventoId,
+    dataInicio: inicioStr,
+  });
+  // dia default para colunas vazias (o header sempre mostra ao menos um dia)
+  const diaVazio: DiaCron = {
+    data: janelas[0].data,
+    dataLabel: dataLabel(janelas[0].data),
+    inicio: horaLabel(janelas[0].inicioSegundos),
+    fim: horaLabel(janelas[0].inicioSegundos),
+  };
   const areaIds = new Set(todasAreas.map((a) => a.id));
 
   const cats = await db.query.categorias.findMany({
@@ -154,9 +204,10 @@ export async function montarCronogramaDoEvento(
     return todasAreas.map((a) => ({
       id: a.id,
       nome: a.nome,
-      dataLabel: dia,
-      inicio: inicioDia,
-      fim: inicioDia,
+      dataLabel: diaVazio.dataLabel,
+      inicio: diaVazio.inicio,
+      fim: diaVazio.fim,
+      dias: [diaVazio],
       totalCats: 0,
       totalGrupos: 0,
       categorias: [],
@@ -213,9 +264,9 @@ export async function montarCronogramaDoEvento(
   return todasAreas.map((area) => {
     const catsDaArea = catsPorArea.get(area.id) ?? [];
     const gruposVistos = new Set<string>();
-    let cursor = INICIO_DIA_SEGUNDOS;
 
-    const categoriasCron: CategoriaCron[] = catsDaArea.map((c) => {
+    // metadados por categoria + nº de "unidades de luta" (reais ou estimadas)
+    const metaCats = catsDaArea.map((c) => {
       const dur = duracaoDaCategoria(c);
       const atletas = inscritosPorCat.get(c.id) ?? [];
       const nAtletas = atletas.length;
@@ -229,14 +280,63 @@ export async function montarCronogramaDoEvento(
         : new Set<string>();
       const visiveis = lutasDaChave.filter((l) => !byes.has(l.id));
       const chaveGerada = visiveis.length > 0;
+      // sem chave: estima atletas−1 lutas só para o horário ficar realista
+      const nUnidades = chaveGerada
+        ? visiveis.length
+        : Math.max(0, nAtletas - 1);
+      return { c, dur, atletas, nAtletas, grupoChave, chaveGerada, visiveis, nUnidades };
+    });
 
-      const horaCategoria = horaLabel(cursor);
+    // encaixa todas as unidades da área nas janelas dos dias, de uma vez
+    const duracoes: number[] = [];
+    for (const m of metaCats) {
+      for (let k = 0; k < m.nUnidades; k++) duracoes.push(m.dur);
+    }
+    const encaixe = encaixarItens(janelas, duracoes);
+
+    // intervalo real usado por dia (para o header multi-dia)
+    const porDia = new Map<number, { data: string; ini: number; fim: number }>();
+    encaixe.forEach((e, i) => {
+      const fimItem = e.inicioSegundos + duracoes[i];
+      const cur = porDia.get(e.diaIndex);
+      if (cur) {
+        cur.ini = Math.min(cur.ini, e.inicioSegundos);
+        cur.fim = Math.max(cur.fim, fimItem);
+      } else {
+        porDia.set(e.diaIndex, { data: e.data, ini: e.inicioSegundos, fim: fimItem });
+      }
+    });
+    const dias: DiaCron[] =
+      porDia.size > 0
+        ? [...porDia.entries()]
+            .sort((a, b) => a[0] - b[0])
+            .map(([, v]) => ({
+              data: v.data,
+              dataLabel: dataLabel(v.data),
+              inicio: horaLabel(v.ini),
+              fim: horaLabel(v.fim),
+            }))
+        : [diaVazio];
+
+    // refatia o encaixe por categoria (na ordem)
+    let ptr = 0;
+    const categoriasCron: CategoriaCron[] = metaCats.map((m) => {
+      const slotsCat = encaixe.slice(ptr, ptr + m.nUnidades);
+      ptr += m.nUnidades;
+      // início do bloco: 1ª unidade da categoria; se vazia, a posição seguinte
+      const pos =
+        slotsCat[0] ??
+        encaixe[ptr] ??
+        encaixe[encaixe.length - 1] ?? {
+          diaIndex: 0,
+          data: janelas[0].data,
+          inicioSegundos: janelas[0].inicioSegundos,
+        };
+
       let lutasCron: LutaCron[] = [];
-
-      if (chaveGerada) {
-        lutasCron = visiveis.map((l, k) => {
-          const hora = horaLabel(cursor);
-          cursor += dur;
+      if (m.chaveGerada) {
+        lutasCron = m.visiveis.map((l, k) => {
+          const p = slotsCat[k] ?? pos;
           const a1 = l.atleta1InscricaoId
             ? (nomePorInscricao.get(l.atleta1InscricaoId) ?? "—")
             : "A definir";
@@ -252,7 +352,10 @@ export async function montarCronogramaDoEvento(
                 : 0;
           return {
             label: `L${k + 1}`,
-            hora,
+            hora: horaLabel(p.inicioSegundos),
+            data: p.data,
+            dataLabel: dataLabel(p.data),
+            diaIndex: p.diaIndex,
             a1,
             a2,
             score1: l.pontos1,
@@ -267,21 +370,20 @@ export async function montarCronogramaDoEvento(
             finalizacao: l.nomeFinalizacao,
           };
         });
-      } else {
-        // sem chave: adianta o cursor pelas lutas estimadas para manter a
-        // janela da coluna realista (nenhuma linha de luta é exibida)
-        cursor += Math.max(0, nAtletas - 1) * dur;
       }
 
       return {
-        grupoChave,
-        faixa: c.faixa,
-        titulo: `${c.faixa ? cap(c.faixa) : "—"} · ${rotuloPeso(c.nome, c.tipo)}`,
-        subtitulo: `${nomeDaClasse(c.classeIdade)} · ${ROTULO_SEXO[c.sexo] ?? cap(c.sexo)} · ${nAtletas} atleta${nAtletas === 1 ? "" : "s"}`,
-        hora: horaCategoria,
-        nLutas: chaveGerada ? lutasCron.length : Math.max(0, nAtletas - 1),
-        chaveGerada,
-        atletas,
+        grupoChave: m.grupoChave,
+        faixa: m.c.faixa,
+        titulo: `${m.c.faixa ? cap(m.c.faixa) : "—"} · ${rotuloPeso(m.c.nome, m.c.tipo)}`,
+        subtitulo: `${nomeDaClasse(m.c.classeIdade)} · ${ROTULO_SEXO[m.c.sexo] ?? cap(m.c.sexo)} · ${m.nAtletas} atleta${m.nAtletas === 1 ? "" : "s"}`,
+        hora: horaLabel(pos.inicioSegundos),
+        data: pos.data,
+        dataLabel: dataLabel(pos.data),
+        diaIndex: pos.diaIndex,
+        nLutas: m.chaveGerada ? lutasCron.length : Math.max(0, m.nAtletas - 1),
+        chaveGerada: m.chaveGerada,
+        atletas: m.atletas,
         lutas: lutasCron,
       };
     });
@@ -289,9 +391,10 @@ export async function montarCronogramaDoEvento(
     return {
       id: area.id,
       nome: area.nome,
-      dataLabel: dia,
-      inicio: inicioDia,
-      fim: horaLabel(cursor),
+      dataLabel: faixaDatasLabel(dias),
+      inicio: dias[0].inicio,
+      fim: dias[dias.length - 1].fim,
+      dias,
       totalCats: catsDaArea.length,
       totalGrupos: gruposVistos.size,
       categorias: categoriasCron,

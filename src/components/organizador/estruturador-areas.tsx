@@ -17,6 +17,10 @@ import {
   type LutaSelecionada,
 } from "@/components/cronograma/programacao-areas";
 import type { AreaCron } from "@/lib/cronograma/cronograma-areas";
+import {
+  CamposDiasEvento,
+  type DiaEvento,
+} from "@/components/organizador/campos-dias-evento";
 import { useDic } from "@/lib/i18n/client";
 
 const AREAS_MIN = 1;
@@ -34,7 +38,10 @@ export function EstruturadorAreas({
   numAreasInicial,
   base,
   cronograma,
+  dias,
+  erro,
   estruturar,
+  salvarDias,
 }: {
   categorias: CategoriaView[];
   numAreasInicial: number | null;
@@ -42,7 +49,12 @@ export function EstruturadorAreas({
   base: string;
   /** cronograma real por área (persistido) — vazio quando não estruturado */
   cronograma: AreaCron[];
+  /** dias do evento (data + início/fim), para configurar aqui também */
+  dias: DiaEvento[];
+  /** aviso vindo do servidor (ex.: as lutas não cabem no período) */
+  erro?: string;
   estruturar: (formData: FormData) => void | Promise<void>;
+  salvarDias: (formData: FormData) => void | Promise<void>;
 }) {
   const [areasN, setAreasN] = useState(
     numAreasInicial ? String(numAreasInicial) : "",
@@ -109,6 +121,29 @@ export function EstruturadorAreas({
 
   return (
     <AbrirLutaCtx.Provider value={setLutaSel}>
+      {/* AVISO (ex.: as lutas não cabem no período) */}
+      {erro && (
+        <div className="flex items-start gap-3 border border-brand/40 bg-brand/10 px-[18px] py-4">
+          <span className="mt-1.5 h-2 w-2 shrink-0 -skew-x-9 bg-brand" />
+          <p className="text-[15px] font-medium leading-normal text-foreground">
+            {erro}
+          </p>
+        </div>
+      )}
+
+      {/* DIAS DO EVENTO (define o período em que as lutas são encaixadas) */}
+      <div className="relative border border-white/10 bg-surface p-[22px]">
+        <span className="absolute inset-y-0 left-0 w-[3px] bg-brand" />
+        <form action={salvarDias} className="flex flex-col gap-4">
+          <CamposDiasEvento labelCls="disp text-[22px]" defaultDias={dias} />
+          <div className="flex justify-end">
+            <BotaoAcaoBruto className="inline-flex -skew-x-9 items-center border border-white/16 px-5 py-2.5 font-cond text-[15px] font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-brand/50 hover:text-brand-soft">
+              <span className="inline-block skew-x-9">{ta.salvarDias}</span>
+            </BotaoAcaoBruto>
+          </div>
+        </form>
+      </div>
+
       {/* CARD DE CONTROLE */}
       <div className="relative border border-white/10 bg-surface">
         <span className="absolute inset-y-0 left-0 w-[3px] bg-brand" />
