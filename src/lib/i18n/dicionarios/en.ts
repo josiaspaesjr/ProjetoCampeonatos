@@ -341,6 +341,9 @@ export const en: Dicionario = {
     repescagem: "Repechage",
     grandeFinal: "Grand final",
     colocacaoFinal: "Final placement",
+    grupo: "Group",
+    playoff: "Playoff",
+    vitoriasAbrev: "W",
     aguardando: "waiting",
     bye: "bye",
     metodos: {
@@ -805,6 +808,7 @@ export const en: Dicionario = {
         exigeMin: "min.",
         atletas: "athletes",
         quandoUsar: "When to use:",
+        numJurados: "Number of judges",
       },
       regenerar: "Regenerate",
       gerarChave: "Generate bracket",

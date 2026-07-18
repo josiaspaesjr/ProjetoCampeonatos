@@ -12,7 +12,11 @@ import {
   gerarTresRepescagem,
   colocacaoConcluida,
   gerarColocacao,
+  gerarMultistage,
+  multistageConcluida,
   podioColocacao,
+  podioMultistage,
+  registrarResultadoMultistage,
   podioEliminacaoDupla,
   podioMelhorDeTres,
   podioRoundRobin,
@@ -25,6 +29,10 @@ import {
   registrarResultadoTresRepescagem,
   serieDecidida,
   tresRepescagemConcluida,
+  gerarVotacao,
+  podioVotacao,
+  votacaoConcluida,
+  type Apresentacao,
 } from "@/lib/bracket";
 import type {
   Chave as ChaveEngine,
@@ -51,6 +59,7 @@ export async function gerarChaveParaCategoria(
   db: Db,
   categoriaId: string,
   formato: FormatoSelecionavel = "auto",
+  opcoesFormato: { numJurados?: number } = {},
 ) {
   const confirmadas = await db.query.inscricoes.findMany({
     where: and(
@@ -109,30 +118,55 @@ export async function gerarChaveParaCategoria(
     case "colocacao":
       engine = gerarColocacao(participantes, { seed });
       break;
+    case "multistage":
+      engine = gerarMultistage(participantes, { seed });
+      break;
+    case "votacao_jurados":
+      engine = gerarVotacao(participantes, { seed });
+      break;
     default:
       throw new Error("formato_nao_implementado");
   }
 
+  const config =
+    formatoFinal === "votacao_jurados"
+      ? { numJurados: Math.max(1, Math.min(9, Math.round(opcoesFormato.numJurados ?? 3))) }
+      : null;
   const [chave] = await db
     .insert(chaves)
-    .values({ categoriaId, formato: formatoFinal, seedSorteio: seed })
+    .values({ categoriaId, formato: formatoFinal, seedSorteio: seed, config })
     .returning();
 
-  // uuid por luta antes do insert para remapear o encadeamento
-  const uuidPorIdLocal = new Map(engine.lutas.map((l) => [l.id, crypto.randomUUID()]));
+  await inserirLutas(db, chave.id, engine.lutas);
+  return chave;
+}
+
+/**
+ * Insere lutas do motor no banco, dando uuid a cada uma e remapeando o
+ * encadeamento (proximaLuta/proximaLutaPerdedor) dentro do lote. Usado tanto na
+ * geração quanto ao criar o playoff do multistage no meio do fluxo.
+ */
+async function inserirLutas(
+  db: Db,
+  chaveId: string,
+  engineLutas: ChaveEngine["lutas"],
+) {
+  const uuidPorIdLocal = new Map(
+    engineLutas.map((l) => [l.id, crypto.randomUUID()]),
+  );
+  const remap = (id: string | null | undefined) =>
+    id ? (uuidPorIdLocal.get(id) ?? null) : null;
   await db.insert(lutas).values(
-    engine.lutas.map((l) => ({
+    engineLutas.map((l) => ({
       id: uuidPorIdLocal.get(l.id)!,
-      chaveId: chave.id,
+      chaveId,
       rodada: l.rodada,
       posicao: l.posicao,
       atleta1InscricaoId: l.atleta1,
       atleta2InscricaoId: l.atleta2,
-      proximaLutaId: l.proximaLutaId ? uuidPorIdLocal.get(l.proximaLutaId)! : null,
+      proximaLutaId: remap(l.proximaLutaId),
       proximaLutaSlot: l.proximaLutaSlot,
-      proximaLutaPerdedorId: l.proximaLutaPerdedorId
-        ? uuidPorIdLocal.get(l.proximaLutaPerdedorId)!
-        : null,
+      proximaLutaPerdedorId: remap(l.proximaLutaPerdedorId),
       proximaLutaPerdedorSlot: l.proximaLutaPerdedorSlot ?? null,
       fase: l.fase ?? null,
       vencedorInscricaoId: l.vencedor, // bye da 1ª rodada já avançado pelo motor
@@ -140,8 +174,6 @@ export async function gerarChaveParaCategoria(
       encerradaEm: l.vencedor ? new Date() : null,
     })),
   );
-
-  return chave;
 }
 
 type LutaRow = typeof lutas.$inferSelect;
@@ -169,6 +201,8 @@ function registrarNoEngine(
       return registrarResultadoEliminacaoDupla(chave, lutaId, vencedorId, metodo);
     case "colocacao":
       return registrarResultadoColocacao(chave, lutaId, vencedorId, metodo);
+    case "multistage":
+      return registrarResultadoMultistage(chave, lutaId, vencedorId, metodo);
     default:
       return registrarResultado(chave, lutaId, vencedorId, metodo);
   }
@@ -187,6 +221,8 @@ function podioDoEngine(chave: ChaveEngine): Podio {
       return podioEliminacaoDupla(chave);
     case "colocacao":
       return podioColocacao(chave);
+    case "multistage":
+      return podioMultistage(chave);
     default:
       return calcularPodio(chave);
   }
@@ -205,6 +241,8 @@ function chaveConcluida(chave: ChaveEngine): boolean {
       return eliminacaoDuplaConcluida(chave);
     case "colocacao":
       return colocacaoConcluida(chave);
+    case "multistage":
+      return multistageConcluida(chave);
     default: {
       // eliminação: final (última rodada) decidida
       const final = chave.lutas.find((l) => l.rodada === chave.rodadas);
@@ -215,20 +253,28 @@ function chaveConcluida(chave: ChaveEngine): boolean {
 
 export function montarChaveEngine(chave: ChaveRow, linhas: LutaRow[]): ChaveEngine {
   const formato = formatoDaChave(chave);
-  // na dupla o bye é "vencedor definido com apenas um atleta" (walkover); nos
-  // demais em árvore, a detecção geométrica de idsDeBye.
-  const byes =
-    formato === "eliminacao_dupla" || formato === "colocacao"
-      ? new Set(
-          linhas
-            .filter(
-              (l) =>
-                l.vencedorInscricaoId != null &&
-                (l.atleta1InscricaoId == null) !== (l.atleta2InscricaoId == null),
-            )
-            .map((l) => l.id),
+  // na dupla/colocação o bye é "vencedor definido com apenas um atleta"
+  // (walkover); no multistage só o playoff tem bye (elim. simples); nos demais
+  // em árvore, a detecção geométrica de idsDeBye.
+  let byes: Set<string>;
+  if (formato === "eliminacao_dupla" || formato === "colocacao") {
+    byes = new Set(
+      linhas
+        .filter(
+          (l) =>
+            l.vencedorInscricaoId != null &&
+            (l.atleta1InscricaoId == null) !== (l.atleta2InscricaoId == null),
         )
-      : idsDeBye(linhas, formato);
+        .map((l) => l.id),
+    );
+  } else if (formato === "multistage") {
+    byes = idsDeBye(
+      linhas.filter((l) => l.fase === "playoff"),
+      "eliminacao_simples",
+    );
+  } else {
+    byes = idsDeBye(linhas, formato);
+  }
   return {
     formato,
     seed: chave.seedSorteio,
@@ -251,8 +297,18 @@ export function montarChaveEngine(chave: ChaveRow, linhas: LutaRow[]): ChaveEngi
   };
 }
 
+/** Apresentações (votação por jurados) a partir das linhas de luta. */
+function apresentacoesDe(linhas: LutaRow[]): Apresentacao[] {
+  return linhas
+    .filter((l) => l.fase === "apresentacao")
+    .map((l) => ({ atleta: l.atleta1InscricaoId, notas: l.notas }));
+}
+
 /** Pódio de uma chave concluída, respeitando o formato. */
 export function calcularPodioDaChave(chave: ChaveRow, linhas: LutaRow[]): Podio {
+  if (chave.formato === "votacao_jurados") {
+    return podioVotacao(apresentacoesDe(linhas));
+  }
   return podioDoEngine(montarChaveEngine(chave, linhas));
 }
 
@@ -305,8 +361,10 @@ export async function registrarResultadoNoBanco(
 
   // propaga o avanço a todas as lutas que mudaram — inclui a cascata através de
   // byes de rodadas seguintes (o bye avança sozinho e alimenta a luta adiante)
+  const idsAntes = new Set(antes.lutas.map((l) => l.id));
   for (const d of depois.lutas) {
     if (d.id === lutaId) continue;
+    if (!idsAntes.has(d.id)) continue; // luta nova (playoff do multistage) — inserida abaixo
     const a = antes.lutas.find((l) => l.id === d.id)!;
     if (
       a.atleta1 === d.atleta1 &&
@@ -327,6 +385,10 @@ export async function registrarResultadoNoBanco(
       .where(eq(lutas.id, d.id));
   }
 
+  // lutas criadas agora (playoff do multistage, gerado ao encerrar os grupos)
+  const novasLutas = depois.lutas.filter((d) => !idsAntes.has(d.id));
+  if (novasLutas.length) await inserirLutas(db, chaveId, novasLutas);
+
   const concluida = chaveConcluida(depois);
   const novoStatus = concluida ? "concluida" : "em_andamento";
   if (novoStatus !== chave.status) {
@@ -335,4 +397,43 @@ export async function registrarResultadoNoBanco(
 
   const podio = concluida ? podioDoEngine(depois) : null;
   return { podio };
+}
+
+/**
+ * Salva as notas dos jurados de uma apresentação (votação por jurados). Sanea
+ * para a escala 0–10 (1 decimal) e recomputa o status: concluída quando todos
+ * os atletas têm as notas de todos os jurados.
+ */
+export async function salvarNotasVotacao(
+  db: Db,
+  chaveId: string,
+  lutaId: string,
+  notas: number[],
+) {
+  const chave = await db.query.chaves.findFirst({ where: eq(chaves.id, chaveId) });
+  if (!chave) throw new Error("Chave não encontrada");
+  if (chave.status === "rascunho") {
+    throw new Error("Publique a chave antes de lançar notas");
+  }
+  const numJurados = chave.config?.numJurados ?? notas.length;
+  const limpas = notas
+    .slice(0, numJurados)
+    .map((n) => Math.max(0, Math.min(10, Math.round((Number(n) || 0) * 10) / 10)));
+
+  await db
+    .update(lutas)
+    .set({
+      notas: limpas,
+      encerradaEm: limpas.length >= numJurados ? new Date() : null,
+    })
+    .where(eq(lutas.id, lutaId));
+
+  const linhas = await db.query.lutas.findMany({ where: eq(lutas.chaveId, chaveId) });
+  const apres = apresentacoesDe(linhas);
+  const concluida = votacaoConcluida(apres, numJurados);
+  const novoStatus = concluida ? "concluida" : "em_andamento";
+  if (novoStatus !== chave.status) {
+    await db.update(chaves).set({ status: novoStatus }).where(eq(chaves.id, chaveId));
+  }
+  return { podio: concluida ? podioVotacao(apres) : null };
 }

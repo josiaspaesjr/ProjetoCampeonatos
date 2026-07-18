@@ -8,7 +8,7 @@ import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import { calcularPodioDaChave } from "@/lib/chaves/persistencia";
 import { BracketView, type AtletaInfo } from "@/components/bracket-view";
-import { lancarResultado } from "../../../actions";
+import { lancarResultado, salvarNotas } from "../../../actions";
 
 export default async function PaginaChave({
   params,
@@ -98,6 +98,12 @@ export default async function PaginaChave({
               ? lancarResultado.bind(null, evento.id, chave.id)
               : undefined
           }
+          acaoNotas={
+            chave.status === "publicada" || chave.status === "em_andamento"
+              ? salvarNotas.bind(null, evento.id, chave.id)
+              : undefined
+          }
+          numJurados={chave.config?.numJurados ?? undefined}
         />
       </div>
     </div>

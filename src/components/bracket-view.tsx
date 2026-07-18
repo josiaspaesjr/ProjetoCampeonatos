@@ -28,6 +28,9 @@ export interface BracketLabels {
   repescagem: string;
   grandeFinal: string;
   colocacaoFinal: string;
+  grupo: string;
+  playoff: string;
+  vitoriasAbrev: string;
   aguardando: string;
   bye: string;
   metodos: Record<string, string>;
@@ -47,6 +50,9 @@ const LABELS_PT: BracketLabels = {
   repescagem: "Repescagem",
   grandeFinal: "Grande final",
   colocacaoFinal: "Colocação final",
+  grupo: "Grupo",
+  playoff: "Playoff",
+  vitoriasAbrev: "V",
   aguardando: "aguardando",
   bye: "bye",
   metodos: {
@@ -66,6 +72,10 @@ interface Props {
   formato?: string;
   /** quando presente, lutas prontas exibem formulário de resultado */
   acaoResultado?: (formData: FormData) => Promise<void>;
+  /** votação por jurados: salva as notas de uma apresentação */
+  acaoNotas?: (formData: FormData) => Promise<void>;
+  /** votação por jurados: nº de jurados por atleta */
+  numJurados?: number;
   /** rótulos no idioma atual (padrão pt) */
   labels?: BracketLabels;
 }
@@ -857,15 +867,247 @@ function ColocacaoView({
   );
 }
 
+/** Um grupo do multistage: classificação (top-2 destacado) + os jogos. */
+function TabelaGrupo({
+  titulo,
+  matches,
+  atletas,
+  labels: L,
+  acaoResultado,
+}: {
+  titulo: string;
+  matches: LutaRow[];
+  atletas: Record<string, AtletaInfo>;
+  labels: BracketLabels;
+  acaoResultado?: (formData: FormData) => Promise<void>;
+}) {
+  const ids = [
+    ...new Set(
+      matches
+        .flatMap((l) => [l.atleta1InscricaoId, l.atleta2InscricaoId])
+        .filter((x): x is string => x != null),
+    ),
+  ];
+  const v = (id: string) => matches.filter((l) => l.vencedorInscricaoId === id).length;
+  const f = (id: string) =>
+    matches.filter((l) => l.vencedorInscricaoId === id && l.metodo === "finalizacao")
+      .length;
+  const rank = ids
+    .map((id) => ({ id, v: v(id), f: f(id) }))
+    .sort((a, b) => b.v - a.v || b.f - a.f);
+
+  return (
+    <div className="w-72 shrink-0 rounded-lg border bg-card p-4">
+      <p className="disp mb-2 text-sm uppercase tracking-[0.06em]">{titulo}</p>
+      <ol className="mb-3 divide-y divide-border/60 text-sm">
+        {rank.map((r, i) => (
+          <li
+            key={r.id}
+            className={`flex items-center justify-between gap-2 py-1.5 ${i < 2 ? "font-semibold text-success" : ""}`}
+          >
+            <span className="min-w-0 truncate">
+              <span className="mr-2 text-muted-foreground">{i + 1}º</span>
+              {atletas[r.id]?.nome ?? "?"}
+            </span>
+            <span className="shrink-0 text-xs text-muted-foreground">
+              {r.v} {L.vitoriasAbrev}
+            </span>
+          </li>
+        ))}
+      </ol>
+      <div className="space-y-2 border-t pt-2">
+        {[...matches]
+          .sort((a, b) => a.rodada - b.rodada)
+          .map((luta) => (
+            <CartaoLuta
+              key={luta.id}
+              luta={luta}
+              bye={false}
+              atletas={atletas}
+              labels={L}
+              acaoResultado={acaoResultado}
+            />
+          ))}
+      </div>
+    </div>
+  );
+}
+
+/** Multistage: fase de grupos (classificação) + playoff (bracket). */
+function MultistageView({
+  linhas,
+  atletas,
+  labels: L,
+  acaoResultado,
+}: {
+  linhas: LutaRow[];
+  atletas: Record<string, AtletaInfo>;
+  labels: BracketLabels;
+  acaoResultado?: (formData: FormData) => Promise<void>;
+}) {
+  const grupos = [
+    ...new Set(
+      linhas.filter((l) => l.fase?.startsWith("grupo:")).map((l) => l.fase!),
+    ),
+  ].sort();
+  const playoffLutas = linhas.filter((l) => l.fase === "playoff");
+  const byesPlayoff = idsDeBye(playoffLutas, "eliminacao_simples");
+
+  return (
+    <div className="space-y-8">
+      <section>
+        <p className="disp mb-3 text-sm uppercase tracking-[0.08em]">{L.grupo}s</p>
+        <div className="overflow-x-auto pb-2">
+          <div className="flex items-start gap-4">
+            {grupos.map((fase, i) => (
+              <TabelaGrupo
+                key={fase}
+                titulo={`${L.grupo} ${i + 1}`}
+                matches={linhas.filter((l) => l.fase === fase)}
+                atletas={atletas}
+                labels={L}
+                acaoResultado={acaoResultado}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {playoffLutas.length > 0 && (
+        <section>
+          <p className="disp mb-3 text-sm uppercase tracking-[0.08em] text-brand">
+            {L.playoff}
+          </p>
+          <BracketEliminacao
+            linhas={playoffLutas}
+            byes={byesPlayoff}
+            atletas={atletas}
+            labels={L}
+            acaoResultado={acaoResultado}
+          />
+        </section>
+      )}
+    </div>
+  );
+}
+
+/** Votação por jurados: ranking por soma das notas + lançamento das notas. */
+function VotacaoView({
+  linhas,
+  atletas,
+  labels: L,
+  acaoNotas,
+  numJurados = 3,
+}: {
+  linhas: LutaRow[];
+  atletas: Record<string, AtletaInfo>;
+  labels: BracketLabels;
+  acaoNotas?: (formData: FormData) => Promise<void>;
+  numJurados?: number;
+}) {
+  const apres = linhas.filter((l) => l.fase === "apresentacao" && l.atleta1InscricaoId);
+  const total = (notas: number[] | null) => (notas ?? []).reduce((s, n) => s + n, 0);
+  const maxN = (notas: number[] | null) =>
+    notas && notas.length ? Math.max(...notas) : 0;
+  const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+  const rank = [...apres].sort(
+    (a, b) => total(b.notas) - total(a.notas) || maxN(b.notas) - maxN(a.notas),
+  );
+  const medalha = (p: number) =>
+    p === 1 ? "🥇" : p === 2 ? "🥈" : p === 3 ? "🥉" : `${p}º`;
+
+  return (
+    <div className="max-w-2xl">
+      <p className="disp mb-3 text-sm uppercase tracking-[0.08em] text-brand">
+        {L.colocacaoFinal}
+      </p>
+      <ol className="divide-y divide-border rounded-lg border bg-card">
+        {rank.map((l, i) => (
+          <li key={l.id} className="px-4 py-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="flex min-w-0 items-center gap-3">
+                <span className="w-8 shrink-0 text-center font-bold tabular-nums">
+                  {medalha(i + 1)}
+                </span>
+                <span className="truncate text-sm">
+                  {atletas[l.atleta1InscricaoId!]?.nome ?? "?"}
+                </span>
+              </span>
+              <span className="disp shrink-0 text-lg tabular-nums">
+                {fmt(total(l.notas))}
+              </span>
+            </div>
+            {l.notas && l.notas.length > 0 && (
+              <p className="mt-1 pl-11 text-xs text-muted-foreground">
+                {l.notas.map(fmt).join(" · ")}
+              </p>
+            )}
+            {acaoNotas && (
+              <form
+                action={acaoNotas}
+                className="mt-2 flex flex-wrap items-center gap-2 pl-11"
+              >
+                <input type="hidden" name="lutaId" value={l.id} />
+                {Array.from({ length: numJurados }, (_, j) => (
+                  <input
+                    key={j}
+                    type="number"
+                    name="nota"
+                    min={0}
+                    max={10}
+                    step={0.1}
+                    defaultValue={l.notas?.[j] ?? ""}
+                    aria-label={`Jurado ${j + 1}`}
+                    placeholder={`J${j + 1}`}
+                    className="h-8 w-16 rounded border bg-transparent px-1 text-center text-xs"
+                  />
+                ))}
+                <BotaoAcaoBruto className="rounded bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+                  OK
+                </BotaoAcaoBruto>
+              </form>
+            )}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 export function BracketView({
   lutas: linhas,
   atletas,
   formato,
   acaoResultado,
+  acaoNotas,
+  numJurados,
   labels,
 }: Props) {
   const L = labels ?? LABELS_PT;
   if (!linhas.length) return null;
+
+  if (formato === "votacao_jurados") {
+    return (
+      <VotacaoView
+        linhas={linhas}
+        atletas={atletas}
+        labels={L}
+        acaoNotas={acaoNotas}
+        numJurados={numJurados}
+      />
+    );
+  }
+
+  if (formato === "multistage") {
+    return (
+      <MultistageView
+        linhas={linhas}
+        atletas={atletas}
+        labels={L}
+        acaoResultado={acaoResultado}
+      />
+    );
+  }
 
   if (formato === "eliminacao_dupla") {
     return (

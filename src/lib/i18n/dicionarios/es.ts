@@ -341,6 +341,9 @@ export const es: Dicionario = {
     repescagem: "Repechaje",
     grandeFinal: "Gran final",
     colocacaoFinal: "Colocación final",
+    grupo: "Grupo",
+    playoff: "Playoff",
+    vitoriasAbrev: "V",
     aguardando: "esperando",
     bye: "bye",
     metodos: {
@@ -806,6 +809,7 @@ export const es: Dicionario = {
         exigeMin: "mín.",
         atletas: "atletas",
         quandoUsar: "Cuándo usar:",
+        numJurados: "Nº de jueces",
       },
       regenerar: "Regenerar",
       gerarChave: "Generar llave",

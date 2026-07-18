@@ -31,7 +31,7 @@ export function SeletorFormato({
   regenerar = false,
   formatoAtual = null,
 }: {
-  acao: (formato: FormatoSelecionavel) => Promise<void>;
+  acao: (formato: FormatoSelecionavel, numJurados?: number) => Promise<void>;
   qtd: number;
   regenerar?: boolean;
   formatoAtual?: FormatoChaveId | null;
@@ -44,6 +44,7 @@ export function SeletorFormato({
   const [selecionado, setSelecionado] = useState<FormatoSelecionavel>(
     formatoAtual ?? "auto",
   );
+  const [numJurados, setNumJurados] = useState(3);
   const [enviando, iniciar] = useTransition();
   const enviandoRef = useRef(false);
 
@@ -77,7 +78,10 @@ export function SeletorFormato({
 
   function confirmar() {
     iniciar(async () => {
-      await acao(selecionado);
+      await acao(
+        selecionado,
+        selecionado === "votacao_jurados" ? numJurados : undefined,
+      );
       setAberto(false); // se houver redirect, a navegação já desmontou isto
     });
   }
@@ -221,7 +225,27 @@ export function SeletorFormato({
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2.5 border-t border-white/8 p-5">
+              <div className="flex items-center justify-between gap-3 border-t border-white/8 p-5">
+                <div className="min-h-[40px]">
+                  {selecionado === "votacao_jurados" && (
+                    <label className="flex items-center gap-2 font-cond text-sm uppercase tracking-[0.04em] text-muted-2">
+                      {s.numJurados}
+                      <input
+                        type="number"
+                        min={1}
+                        max={9}
+                        value={numJurados}
+                        onChange={(e) =>
+                          setNumJurados(
+                            Math.max(1, Math.min(9, Math.round(Number(e.target.value) || 1))),
+                          )
+                        }
+                        className="h-10 w-16 border border-white/16 bg-transparent px-2 text-center text-sm text-foreground"
+                      />
+                    </label>
+                  )}
+                </div>
+                <div className="flex gap-2.5">
                 <button
                   type="button"
                   onClick={fechar}
@@ -239,6 +263,7 @@ export function SeletorFormato({
                   {enviando && <Spinner className="h-3.5 w-3.5" />}
                   {regenerar ? ch.regenerar : ch.gerarChave}
                 </Button>
+                </div>
               </div>
             </div>
           </div>,

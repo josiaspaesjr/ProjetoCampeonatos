@@ -342,6 +342,9 @@ export const pt = {
     repescagem: "Repescagem",
     grandeFinal: "Grande final",
     colocacaoFinal: "Colocação final",
+    grupo: "Grupo",
+    playoff: "Playoff",
+    vitoriasAbrev: "V",
     aguardando: "aguardando",
     bye: "bye",
     metodos: {
@@ -812,6 +815,7 @@ export const pt = {
         exigeMin: "mín.",
         atletas: "atletas",
         quandoUsar: "Quando usar:",
+        numJurados: "Nº de jurados",
       },
       regenerar: "Regenerar",
       gerarChave: "Gerar chave",

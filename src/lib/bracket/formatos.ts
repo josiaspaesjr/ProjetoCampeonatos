@@ -40,8 +40,8 @@ export const FORMATOS: readonly FormatoMeta[] = [
   { id: "eliminacao_dupla", implementado: true, minAtletas: 3 },
   { id: "round_robin", implementado: true, minAtletas: 2 },
   { id: "tres_repescagem", implementado: true, minAtletas: 3, maxAtletas: 3 },
-  { id: "multistage", implementado: false, minAtletas: 6 },
-  { id: "votacao_jurados", implementado: false, minAtletas: 2 },
+  { id: "multistage", implementado: true, minAtletas: 6 },
+  { id: "votacao_jurados", implementado: true, minAtletas: 2 },
   { id: "colocacao", implementado: true, minAtletas: 2 },
   { id: "melhor_de_tres", implementado: true, minAtletas: 2, maxAtletas: 2 },
 ] as const;

@@ -22,6 +22,7 @@ import { getDicionario } from "@/lib/i18n/server";
 import {
   gerarChaveParaCategoria,
   registrarResultadoNoBanco,
+  salvarNotasVotacao,
 } from "@/lib/chaves/persistencia";
 import type { FormatoSelecionavel, MetodoVitoria } from "@/lib/bracket";
 import {
@@ -472,11 +473,12 @@ export async function gerarChave(
   eventoId: string,
   categoriaId: string,
   formato: FormatoSelecionavel = "auto",
+  numJurados?: number,
 ) {
   const { db, usuario } = await eventoDoOrganizador(eventoId);
   let chave;
   try {
-    chave = await gerarChaveParaCategoria(db, categoriaId, formato);
+    chave = await gerarChaveParaCategoria(db, categoriaId, formato, { numJurados });
   } catch (e) {
     const erros = (await getDicionario()).admin.erros;
     const codigo = e instanceof Error ? e.message : "";
@@ -638,6 +640,32 @@ export async function lancarResultado(
     entidadeId: lutaId,
     acao: "resultado_lancado",
     dadosNovos: { vencedorId, metodo },
+  });
+
+  revalidatePath(`/organizador/eventos/${eventoId}/chaves/${chaveId}`);
+}
+
+/** Salva as notas dos jurados de uma apresentação (votação por jurados). */
+export async function salvarNotas(
+  eventoId: string,
+  chaveId: string,
+  formData: FormData,
+) {
+  const { db, usuario } = await eventoDoOrganizador(eventoId);
+  const lutaId = String(formData.get("lutaId") ?? "");
+  const notas = formData
+    .getAll("nota")
+    .map((v) => parseFloat(String(v).replace(",", ".")))
+    .filter((n) => !Number.isNaN(n));
+
+  await salvarNotasVotacao(db, chaveId, lutaId, notas);
+
+  await db.insert(auditoria).values({
+    usuarioId: usuario.id,
+    entidade: "luta",
+    entidadeId: lutaId,
+    acao: "notas_lancadas",
+    dadosNovos: { notas },
   });
 
   revalidatePath(`/organizador/eventos/${eventoId}/chaves/${chaveId}`);

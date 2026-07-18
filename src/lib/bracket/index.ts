@@ -38,3 +38,18 @@ export {
   podioColocacao,
   rankingColocacao,
 } from "./placement";
+export {
+  gerarMultistage,
+  registrarResultadoMultistage,
+  multistageConcluida,
+  podioMultistage,
+  numeroDeGrupos,
+} from "./multistage";
+export {
+  gerarVotacao,
+  rankingVotacao,
+  votacaoConcluida,
+  podioVotacao,
+  type Apresentacao,
+  type LinhaRankingVotacao,
+} from "./voting";

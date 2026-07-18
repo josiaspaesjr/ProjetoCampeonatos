@@ -373,6 +373,8 @@ export const chaves = pgTable("chaves", {
     .references(() => categorias.id),
   formato: chaveFormatoEnum("formato").notNull().default("eliminacao_simples"),
   status: chaveStatusEnum("status").notNull().default("rascunho"),
+  // config específica do formato (ex.: { numJurados } na votação por jurados)
+  config: jsonb("config").$type<{ numJurados?: number }>(),
   // seed do sorteio — torna a geração reproduzível e auditável
   seedSorteio: text("seed_sorteio").notNull(),
   geradaEm: timestamp("gerada_em", { withTimezone: true }).notNull().defaultNow(),
@@ -405,6 +407,8 @@ export const lutas = pgTable("lutas", {
   vantagens2: integer("vantagens2").notNull().default(0),
   punicoes2: integer("punicoes2").notNull().default(0),
   nomeFinalizacao: text("nome_finalizacao"),
+  // notas dos jurados (votação por jurados): uma nota por jurado, ex.: [8.5, 9, 7.5]
+  notas: jsonb("notas").$type<number[]>(),
   encerradaEm: timestamp("encerrada_em", { withTimezone: true }),
 });
 
