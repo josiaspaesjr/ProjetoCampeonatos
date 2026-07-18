@@ -27,6 +27,10 @@ export const pt = {
     lutas: "lutas",
     vnt: "VNT",
     pun: "PUN",
+    semLutas: "Sem lutas pendentes",
+    semCronograma:
+      "O cronograma aparece aqui quando o organizador distribuir as chaves pelas áreas.",
+    subtituloTelao: "Horários estimados · atualiza sozinho",
   },
   evento: {
     todosEventos: "Todos os eventos",

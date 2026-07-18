@@ -28,6 +28,10 @@ export const en: Dicionario = {
     lutas: "matches",
     vnt: "ADV",
     pun: "PEN",
+    semLutas: "No matches pending",
+    semCronograma:
+      "The schedule appears here once the organizer assigns the brackets to the areas.",
+    subtituloTelao: "Estimated times · auto-updates",
   },
   evento: {
     todosEventos: "All events",

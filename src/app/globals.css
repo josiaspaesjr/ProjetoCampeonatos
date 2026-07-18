@@ -214,6 +214,15 @@
     transform: scale(1);
   }
 }
+/* barra de progresso da rotação do telão (preenche da esquerda p/ direita) */
+@keyframes telao-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
 
 @layer base {
   * {

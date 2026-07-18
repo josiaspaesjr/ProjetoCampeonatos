@@ -28,6 +28,10 @@ export const es: Dicionario = {
     lutas: "luchas",
     vnt: "VNT",
     pun: "PUN",
+    semLutas: "Sin luchas pendientes",
+    semCronograma:
+      "El cronograma aparece aquí cuando el organizador distribuya las llaves por las áreas.",
+    subtituloTelao: "Horarios estimados · se actualiza solo",
   },
   evento: {
     todosEventos: "Todos los eventos",
