@@ -55,9 +55,9 @@ export default async function VisaoGeralEvento({
 
   const agora = new Date();
   const confirmadas = inscritos.filter((i) => i.status === "confirmada");
-  const equipes = new Set(
-    confirmadas.map((i) => i.academiaNome).filter(Boolean),
-  ).size;
+  const pendentes = inscritos.filter((i) => i.status === "pendente_pagamento");
+  // inscrições "ativas" no card: confirmadas + pendentes (exclui canceladas/reembolsadas)
+  const inscritasAtivas = confirmadas.length + pendentes.length;
   const vigente = lts.find((l) => l.inicio <= agora && agora <= l.fim);
   const receitaCentavos = pgs.reduce(
     (soma, p) => soma + p.valorLiquidoOrganizadorCentavos,
@@ -114,8 +114,20 @@ export default async function VisaoGeralEvento({
   const stats = [
     {
       rotulo: dic.admin.nav.inscricoes,
-      valor: String(confirmadas.length),
-      sub: `${da.emEquipes} ${equipes} ${equipes === 1 ? da.equipe : da.equipes}`,
+      valor: String(inscritasAtivas),
+      sub: (
+        <>
+          <span className="text-success">
+            {confirmadas.length}{" "}
+            {confirmadas.length === 1 ? da.confirmada : da.confirmadas}
+          </span>
+          {" · "}
+          <span className="text-brand-soft">
+            {pendentes.length}{" "}
+            {pendentes.length === 1 ? da.pendente : da.pendentes}
+          </span>
+        </>
+      ),
       destaque: false,
     },
     {

@@ -616,6 +616,7 @@ export const pt = {
       equipes: "equipes",
       confirmada: "confirmada",
       confirmadas: "confirmadas",
+      pendentes: "pendentes",
       nenhumaInscricao:
         "Nenhuma inscrição ainda — divulgue a página pública do evento.",
       semEquipe: "Sem equipe",
