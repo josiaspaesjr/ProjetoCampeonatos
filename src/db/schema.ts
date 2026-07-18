@@ -432,6 +432,14 @@ export const lutas = pgTable("lutas", {
   // notas dos jurados (votação por jurados): uma nota por jurado, ex.: [8.5, 9, 7.5]
   notas: jsonb("notas").$type<number[]>(),
   encerradaEm: timestamp("encerrada_em", { withTimezone: true }),
+  // estado do cronômetro da luta corrente — só o tablet do organizador escreve
+  // (em iniciar/pausar/zerar/encerrar); o placar/telão espelha. Pode ser negativo
+  // (overtime). Nulo = relógio ainda não iniciado nesta luta.
+  cronometroRestanteSeg: integer("cronometro_restante_seg"),
+  cronometroRodando: boolean("cronometro_rodando").notNull().default(false),
+  cronometroAtualizadoEm: timestamp("cronometro_atualizado_em", {
+    withTimezone: true,
+  }),
 });
 
 // toda mutação sensível (troca de categoria, correção de resultado,

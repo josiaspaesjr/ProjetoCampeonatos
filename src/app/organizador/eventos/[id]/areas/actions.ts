@@ -219,6 +219,31 @@ export async function salvarPlacarParcial(
     .where(eq(lutas.id, lutaId));
 }
 
+/**
+ * Persiste o estado do cronômetro da luta corrente para o telão/placar público
+ * espelhar. Chamado pelo tablet SÓ nos eventos de controle (iniciar/pausar/
+ * zerar/encerrar) — nunca a cada segundo. `restanteSeg` pode ser negativo
+ * (overtime). Luta já decidida é ignorada.
+ */
+export async function salvarCronometro(
+  eventoId: string,
+  lutaId: string,
+  c: { restanteSeg: number; rodando: boolean },
+) {
+  const { db } = await contexto(eventoId);
+  const luta = await db.query.lutas.findFirst({ where: eq(lutas.id, lutaId) });
+  if (!luta || luta.vencedorInscricaoId) return;
+
+  await db
+    .update(lutas)
+    .set({
+      cronometroRestanteSeg: Math.round(c.restanteSeg),
+      cronometroRodando: c.rodando,
+      cronometroAtualizadoEm: new Date(),
+    })
+    .where(eq(lutas.id, lutaId));
+}
+
 /** encerra a luta a partir do placar do tablet — mesmo caminho do motor */
 export async function encerrarLutaDoPlacar(
   eventoId: string,

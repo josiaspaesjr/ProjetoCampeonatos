@@ -31,7 +31,7 @@ export default async function Telao({
           Cronograma ao vivo · horários estimados · atualiza sozinho
         </p>
       </div>
-      <CronogramaGrade filas={filas} />
+      <CronogramaGrade filas={filas} slug={evento.slug} />
     </div>
   );
 }

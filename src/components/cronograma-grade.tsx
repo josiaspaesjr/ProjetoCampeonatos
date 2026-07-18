@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 import { duracaoDaCategoria, type FilaDaArea } from "@/lib/cronograma/fila";
+import { forca, hora, rotuloCat } from "@/lib/cronograma/telao-format";
 
 /**
  * Grade ao vivo do **modo telão** (`/telao`, tela cheia projetada no ginásio).
@@ -10,19 +12,11 @@ import { duracaoDaCategoria, type FilaDaArea } from "@/lib/cronograma/fila";
  *
  * Adota a mesma linguagem visual da seção Áreas / aba Cronograma (barra de
  * acento vermelha, badge de horário inclinado, swatch de faixa, disp/cond).
- * O `AutoRefresh` mantém placar e horários atualizados sozinhos.
+ * O `AutoRefresh` mantém placar e horários atualizados sozinhos. Com `slug`, o
+ * nome de cada área vira link para seu placar em tela cheia.
  */
 
-const hora = (d: Date) =>
-  d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-
-/** último(s) segmento(s) do nome da categoria ("… / Preta / Pena" → "Preta Pena") */
-const rotuloCat = (nome: string) => nome.split(" / ").slice(-2).join(" ");
-
-/** placar de um slot (pontos, desempate por vantagens) */
-const forca = (p: number, v: number) => p * 1000 + v;
-
-function ColunaArea({ fila }: { fila: FilaDaArea }) {
+function ColunaArea({ fila, slug }: { fila: FilaDaArea; slug?: string }) {
   const emAndamento =
     fila.fila.find(
       (i) =>
@@ -44,9 +38,18 @@ function ColunaArea({ fila }: { fila: FilaDaArea }) {
 
       {/* HEADER */}
       <div className="flex items-baseline justify-between gap-3 border-b border-white/10 px-5 pb-3 pt-5">
-        <span className="disp tnum min-w-0 truncate text-[26px] leading-none md:text-[34px]">
-          {fila.area.nome}
-        </span>
+        {slug ? (
+          <Link
+            href={`/evento/${slug}/telao/${fila.area.id}`}
+            className="disp tnum min-w-0 truncate text-[26px] leading-none transition-colors hover:text-brand md:text-[34px]"
+          >
+            {fila.area.nome}
+          </Link>
+        ) : (
+          <span className="disp tnum min-w-0 truncate text-[26px] leading-none md:text-[34px]">
+            {fila.area.nome}
+          </span>
+        )}
         {fila.fila.length > 0 && (
           <span className="shrink-0 font-cond text-[13px] uppercase tracking-[0.04em] text-muted-3">
             <span className="tnum">{fila.fila.length}</span> luta
@@ -159,7 +162,13 @@ function AtletaTatame({
 }
 
 /** Grade de áreas do telão (colunas lado a lado numa tela ampla). */
-export function CronogramaGrade({ filas }: { filas: FilaDaArea[] }) {
+export function CronogramaGrade({
+  filas,
+  slug,
+}: {
+  filas: FilaDaArea[];
+  slug?: string;
+}) {
   return (
     <>
       <AutoRefresh segundos={5} />
@@ -167,7 +176,7 @@ export function CronogramaGrade({ filas }: { filas: FilaDaArea[] }) {
         className={`grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 ${filas.length > 2 ? "xl:grid-cols-3" : ""}`}
       >
         {filas.map((f) => (
-          <ColunaArea key={f.area.id} fila={f} />
+          <ColunaArea key={f.area.id} fila={f} slug={slug} />
         ))}
         {filas.length === 0 && (
           <p className="font-cond text-[15px] uppercase tracking-[0.04em] text-muted-3">

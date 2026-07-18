@@ -65,6 +65,7 @@ export default async function PaginaAreas({
       categorias={categoriasView}
       numAreasInicial={evento.numAreas ?? (todasAreas.length || null)}
       base={`/organizador/eventos/${id}`}
+      slugPublico={evento.slug}
       cronograma={cronograma}
       dias={dias}
       erro={erro}

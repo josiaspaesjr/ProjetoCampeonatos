@@ -127,6 +127,13 @@
       "when": 1784402215858,
       "tag": "0017_safe_caretaker",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1784411863248,
+      "tag": "0018_jittery_jean_grey",
+      "breakpoints": true
     }
   ]
 }

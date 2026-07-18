@@ -38,6 +38,7 @@ export function EstruturadorAreas({
   categorias,
   numAreasInicial,
   base,
+  slugPublico,
   cronograma,
   dias,
   erro,
@@ -48,6 +49,8 @@ export function EstruturadorAreas({
   numAreasInicial: number | null;
   /** caminho base do evento, ex.: `/organizador/eventos/:id` */
   base: string;
+  /** slug público do evento — habilita "Abrir placar (tela cheia)" por área */
+  slugPublico?: string;
   /** cronograma real por área (persistido) — vazio quando não estruturado */
   cronograma: AreaCron[];
   /** dias do evento (data + início/fim), para configurar aqui também */
@@ -282,6 +285,7 @@ export function EstruturadorAreas({
             cronograma={cronograma}
             layout="colunas"
             base={base}
+            slugPublico={slugPublico}
             full={false}
           />
         </>
@@ -317,6 +321,7 @@ export function EstruturadorAreas({
             cronograma={cronograma}
             layout="colunas"
             base={base}
+            slugPublico={slugPublico}
             full
           />
         </div>

@@ -33,6 +33,15 @@ export function duracaoLutaSegundos(faixa: string | null): number {
 }
 
 /**
+ * Tempo regulamentar puro da luta (sem a transição) — é o que o cronômetro do
+ * placar conta. Usado pelo tablet do organizador e pelo telão da área, para que
+ * ambos partam exatamente da mesma base.
+ */
+export function tempoDeLutaSegundos(faixa: string | null): number {
+  return duracaoLutaSegundos(faixa) - TRANSICAO_SEGUNDOS;
+}
+
+/**
  * Duração estimada por luta da categoria: o organizador pode definir um valor
  * próprio (equivalente ao "estimated time per match" do scoreboard); nulo cai
  * na tabela regulamentar da faixa.

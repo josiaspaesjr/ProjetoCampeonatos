@@ -6,6 +6,7 @@ import type { MetodoVitoria } from "@/lib/bracket";
 import { useDic } from "@/lib/i18n/client";
 import {
   encerrarLutaDoPlacar,
+  salvarCronometro,
   salvarPlacarParcial,
 } from "../../actions";
 
@@ -19,6 +20,12 @@ interface Props {
   atleta2: { id: string; nome: string; academia: string | null };
   /** parcial persistido — sobrevive a recarga do tablet no meio da luta */
   placarInicial?: { l1: Lado; l2: Lado };
+  /** cronômetro persistido — restaura o relógio ao recarregar e alimenta o telão */
+  cronometroInicial?: {
+    restanteSeg: number | null;
+    rodando: boolean;
+    atualizadoEmMs: number | null;
+  };
 }
 
 interface Lado {
@@ -44,6 +51,7 @@ export function PlacarTablet({
   atleta1,
   atleta2,
   placarInicial,
+  cronometroInicial,
 }: Props) {
   const router = useRouter();
   const dic = useDic();
@@ -54,7 +62,13 @@ export function PlacarTablet({
   );
   const lado1 = placar.l1;
   const lado2 = placar.l2;
-  const [restante, setRestante] = useState(duracaoSegundos);
+  // ao recarregar o tablet, o relógio retoma no último valor salvo, porém
+  // PAUSADO — o organizador aperta iniciar quando quiser (não mostra tempo
+  // defasado nem depende de Date.now no render). O telão é quem espelha o tempo
+  // rodando com precisão (CronometroTelao).
+  const [restante, setRestante] = useState(
+    cronometroInicial?.restanteSeg ?? duracaoSegundos,
+  );
   const [rodando, setRodando] = useState(false);
   const [encerrando, setEncerrando] = useState(false);
   const [metodo, setMetodo] = useState<MetodoVitoria>("pontos");
@@ -115,8 +129,31 @@ export function PlacarTablet({
     return "";
   };
 
+  // grava o âncora do relógio (só em iniciar/pausar/zerar/encerrar) p/ o telão
+  const persistirRelogio = (restanteSeg: number, emAndamento: boolean) => {
+    startTransition(() => {
+      void salvarCronometro(eventoId, lutaId, {
+        restanteSeg,
+        rodando: emAndamento,
+      });
+    });
+  };
+
+  const alternarRelogio = () => {
+    const novo = !rodando;
+    setRodando(novo);
+    persistirRelogio(restante, novo);
+  };
+
+  const zerarRelogio = () => {
+    setRodando(false);
+    setRestante(duracaoSegundos);
+    persistirRelogio(duracaoSegundos, false);
+  };
+
   const abrirEncerramento = () => {
     setRodando(false);
+    persistirRelogio(restante, false);
     const sugerido = sugerirVencedor();
     setVencedorId(sugerido);
     setMetodo(
@@ -197,13 +234,13 @@ export function PlacarTablet({
             {fmt(restante)}
           </span>
           <button
-            onClick={() => setRodando((r) => !r)}
+            onClick={alternarRelogio}
             className="rounded-lg bg-white/20 px-4 py-2 text-sm font-medium hover:bg-white/30"
           >
             {rodando ? t.pausar : t.iniciar}
           </button>
           <button
-            onClick={() => { setRodando(false); setRestante(duracaoSegundos); }}
+            onClick={zerarRelogio}
             className="rounded-lg bg-white/10 px-3 py-2 text-sm hover:bg-white/20"
           >
             {t.zerar}

@@ -7,7 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { getUsuarioAtual } from "@/lib/auth";
 import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
-import { duracaoLutaSegundos, montarFilaDaArea } from "@/lib/cronograma/fila";
+import { montarFilaDaArea, tempoDeLutaSegundos } from "@/lib/cronograma/fila";
 import { PlacarTablet } from "./placar-tablet";
 
 export default async function PaginaPlacar({
@@ -71,7 +71,7 @@ export default async function PaginaPlacar({
         chaveId={chave!.id}
         lutaId={proxima.luta.id}
         categoriaNome={proxima.categoria.nome}
-        duracaoSegundos={duracaoLutaSegundos(proxima.categoria.faixa) - 60}
+        duracaoSegundos={tempoDeLutaSegundos(proxima.categoria.faixa)}
         atleta1={{ id: a1, ...fila.atletas[a1] }}
         atleta2={{ id: a2, ...fila.atletas[a2] }}
         placarInicial={{
@@ -85,6 +85,11 @@ export default async function PaginaPlacar({
             vantagens: proxima.luta.vantagens2,
             punicoes: proxima.luta.punicoes2,
           },
+        }}
+        cronometroInicial={{
+          restanteSeg: proxima.luta.cronometroRestanteSeg,
+          rodando: proxima.luta.cronometroRodando,
+          atualizadoEmMs: proxima.luta.cronometroAtualizadoEm?.getTime() ?? null,
         }}
       />
     </div>
