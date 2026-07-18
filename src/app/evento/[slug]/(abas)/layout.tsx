@@ -8,6 +8,7 @@ import {
 import { AvisoPendencias } from "@/components/aviso-pendencias";
 import { Logo, SkewTexto } from "@/components/marca";
 import { AbasEvento } from "@/components/evento/abas-evento";
+import { MenuUsuarioServer } from "@/components/menu-usuario-server";
 import { dataCompleta } from "@/lib/datas";
 import { getDicionario } from "@/lib/i18n/server";
 import { SeletorIdioma } from "@/lib/i18n/client";
@@ -40,7 +41,7 @@ export default async function LayoutEvento({
           >
             ← {dic.evento.todosEventos}
           </Link>
-          <SeletorIdioma />
+          <SeletorIdioma className="max-sm:hidden" />
           {inscricoesAbertas && (
             <Link
               href={`/evento/${evento.slug}/inscricao`}
@@ -49,6 +50,7 @@ export default async function LayoutEvento({
               <SkewTexto>{dic.evento.inscrever}</SkewTexto>
             </Link>
           )}
+          <MenuUsuarioServer />
         </div>
       </nav>
 
