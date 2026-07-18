@@ -70,7 +70,7 @@ export function TopbarEvento({
   const [aberto, setAberto] = useState(false);
   // key força o form a recriar (descarta o rascunho) a cada abertura
   const [geracao, setGeracao] = useState(0);
-  const { setAberto: setMenuAberto } = useNavMobile();
+  const { setAberto: setMenuAberto, colapsado, setColapsado } = useNavMobile();
   const dic = useDic().admin;
   const { campos, nav, comum, editar: ed } = dic;
 
@@ -98,6 +98,18 @@ export function TopbarEvento({
             onClick={() => setMenuAberto(true)}
             aria-label={comum.abrirMenu}
             className="flex h-10 w-10 shrink-0 flex-col items-center justify-center gap-[5px] border border-white/16 transition-colors hover:border-white/35 lg:hidden"
+          >
+            <span className="block h-[2px] w-5 bg-foreground" />
+            <span className="block h-[2px] w-5 bg-foreground" />
+            <span className="block h-[2px] w-5 bg-foreground" />
+          </button>
+          {/* desktop: recolher/expandir a sidebar */}
+          <button
+            type="button"
+            onClick={() => setColapsado(!colapsado)}
+            aria-label={colapsado ? comum.abrirMenu : comum.fecharMenu}
+            aria-pressed={colapsado}
+            className="hidden h-10 w-10 shrink-0 flex-col items-center justify-center gap-[5px] border border-white/16 transition-colors hover:border-white/35 lg:flex"
           >
             <span className="block h-[2px] w-5 bg-foreground" />
             <span className="block h-[2px] w-5 bg-foreground" />

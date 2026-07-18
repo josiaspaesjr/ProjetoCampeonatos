@@ -39,7 +39,7 @@ export function SidebarOrganizador({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { aberto, setAberto } = useNavMobile();
+  const { aberto, setAberto, colapsado } = useNavMobile();
   const nav = useDic().admin.nav;
   const ativo = eventos.find((e) => e.id === eventoId);
   const fechar = () => setAberto(false);
@@ -141,9 +141,16 @@ export function SidebarOrganizador({
 
   return (
     <>
-      {/* desktop: sidebar fixa */}
-      <aside className="sticky top-[57px] hidden h-[calc(100vh-57px)] flex-col self-start border-r border-white/8 bg-ink lg:flex">
-        {conteudo}
+      {/* desktop: sidebar fixa (recolhe/expande pela grade do console — o
+          wrapper interno tem largura fixa p/ deslizar limpo sob overflow-hidden.
+          quando recolhida, `inert` a tira do foco/leitor de tela) */}
+      <aside
+        inert={colapsado}
+        className="sticky top-[57px] hidden h-[calc(100vh-57px)] self-start overflow-hidden bg-ink lg:block"
+      >
+        <div className="flex h-full w-[248px] flex-col border-r border-white/8">
+          {conteudo}
+        </div>
       </aside>
 
       {/* mobile: drawer off-canvas */}
