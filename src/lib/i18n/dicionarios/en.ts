@@ -612,6 +612,8 @@ export const en: Dicionario = {
       confirmada: "confirmed",
       confirmadas: "confirmed",
       pendentes: "pending",
+      inativa: "inactive",
+      inativas: "inactive",
       nenhumaInscricao:
         "No registrations yet — share the event's public page.",
       semEquipe: "No team",

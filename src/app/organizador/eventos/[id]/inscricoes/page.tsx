@@ -38,6 +38,7 @@ export default async function PaginaInscricoes({
   const usuario = await getUsuarioAtual();
   const dic = await getDicionario();
   const t = dic.admin.inscricoes;
+  const ov = dic.admin.overview;
 
   const evento = await eventoGerenciavel(db, id, usuario.id);
   if (!evento) notFound();
@@ -54,6 +55,15 @@ export default async function PaginaInscricoes({
   ]);
   const abertas = cats.filter((c) => c.status === "aberta");
   const nomeCategoria = new Map(cats.map((c) => [c.id, c.nome]));
+
+  // contadores do topo: inscritos ativos = confirmadas + pendentes; as
+  // canceladas/reembolsadas aparecem na lista, mas contam à parte ("inativas").
+  const nConfirmadas = lista.filter((i) => i.status === "confirmada").length;
+  const nPendentes = lista.filter((i) => i.status === "pendente_pagamento").length;
+  const nAtivas = nConfirmadas + nPendentes;
+  const nInativas = lista.length - nAtivas;
+  const contar = (n: number, sing: string, plur: string) =>
+    `${n} ${n === 1 ? sing : plur}`;
 
   // CPF/endereço ficam no perfil (usuarios); carrega em lote os das inscrições
   const usuarioIds = [...new Set(lista.map((i) => i.usuarioId))];
@@ -93,8 +103,24 @@ export default async function PaginaInscricoes({
   return (
     <div className="space-y-10">
       <p className="font-cond text-[15px] uppercase tracking-[0.05em] text-muted-2">
-        {lista.length}{" "}
-        {lista.length === 1 ? t.inscricaoSing : t.inscricaoPlur} {t.noTotal}
+        <span className="text-foreground">{nAtivas}</span>{" "}
+        {nAtivas === 1 ? t.inscricaoSing : t.inscricaoPlur}
+        {" · "}
+        <span className="text-success">
+          {contar(nConfirmadas, ov.confirmada, ov.confirmadas)}
+        </span>
+        {" · "}
+        <span className="text-warning-foreground">
+          {contar(nPendentes, ov.pendente, ov.pendentes)}
+        </span>
+        {nInativas > 0 && (
+          <>
+            {" · "}
+            <span className="text-muted-3">
+              {contar(nInativas, ov.inativa, ov.inativas)}
+            </span>
+          </>
+        )}
       </p>
 
       {esvaziadas.length > 0 && (
