@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Logo, SkewTexto } from "@/components/marca";
+import { MenuUsuario } from "@/components/menu-usuario";
 import { useIdioma } from "@/lib/i18n/client";
+import type { PropsMenuUsuario } from "@/lib/menu-usuario";
 import { cn } from "@/lib/utils";
 import type { RankingGeral } from "@/lib/ranking";
 
@@ -1134,10 +1136,12 @@ export function LandingClient({
   stats,
   ranking,
   bracket,
+  menu,
 }: {
   stats: StatLanding[];
   ranking: RankingGeral;
   bracket: BracketVivo;
+  menu: PropsMenuUsuario;
 }) {
   const { locale: lang, trocar: trocarLang } = useIdioma();
   const [abaRanking, setAbaRanking] = useState<keyof RankingGeral>("adulto");
@@ -1163,7 +1167,7 @@ export function LandingClient({
           <Link href="/eventos" className="max-md:hidden transition-colors hover:text-brand">
             {t.nav.eventos}
           </Link>
-          <div className="flex items-center border border-white/16">
+          <div className="flex items-center border border-white/16 max-sm:hidden">
             {LANGS.map((l) => (
               <button
                 key={l.id}
@@ -1179,9 +1183,7 @@ export function LandingClient({
               </button>
             ))}
           </div>
-          <Link href="/acesso" className="transition-colors hover:text-brand">
-            {t.nav.entrar}
-          </Link>
+          <MenuUsuario {...menu} />
         </div>
       </nav>
 

@@ -2,6 +2,9 @@ import { eq, inArray, ne } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, chaves, eventos, inscricoes, lutas } from "@/db/schema";
 import { calcularRankingGeral } from "@/lib/ranking";
+import { propsDoMenu } from "@/lib/menu-usuario";
+import { perfilDeAcesso } from "@/lib/perfil-acesso";
+import { supabaseConfigurado } from "@/lib/supabase/server";
 import { AvisoPendencias } from "@/components/aviso-pendencias";
 import {
   LandingClient,
@@ -92,14 +95,17 @@ async function buscarBracketVivo(): Promise<BracketVivo> {
 export default async function Home() {
   const db = await getDb();
 
-  const [todosEventos, confirmadas, ranking, bracket] = await Promise.all([
+  const [todosEventos, confirmadas, ranking, bracket, perfil] = await Promise.all([
     db.query.eventos.findMany({ where: ne(eventos.status, "rascunho") }),
     db.query.inscricoes.findMany({
       where: eq(inscricoes.status, "confirmada"),
     }),
     calcularRankingGeral(db),
     buscarBracketVivo(),
+    perfilDeAcesso(),
   ]);
+
+  const menu = propsDoMenu(perfil, supabaseConfigurado());
 
   const totalAtletas = new Set(confirmadas.map((i) => i.usuarioId)).size;
   const totalEquipes = new Set(
@@ -116,7 +122,7 @@ export default async function Home() {
   return (
     <>
       <AvisoPendencias />
-      <LandingClient stats={stats} ranking={ranking} bracket={bracket} />
+      <LandingClient stats={stats} ranking={ranking} bracket={bracket} menu={menu} />
     </>
   );
 }

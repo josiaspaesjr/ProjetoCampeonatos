@@ -4,6 +4,7 @@ import { asc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { eventos, inscricoes, lotes } from "@/db/schema";
 import { Logo, SkewTexto } from "@/components/marca";
+import { MenuUsuarioServer } from "@/components/menu-usuario-server";
 import { dataCurta, diaMesPartes } from "@/lib/datas";
 import { getDicionario } from "@/lib/i18n/server";
 import { SeletorIdioma } from "@/lib/i18n/client";
@@ -102,8 +103,8 @@ export default async function CatalogoEventos() {
       {/* NAV */}
       <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-white/8 bg-ink/90 px-6 py-4 backdrop-blur-xl md:px-12">
         <Logo />
-        <div className="flex items-center gap-8 font-cond text-base font-semibold uppercase tracking-[0.04em]">
-          <Link href="/eventos" className="text-brand">
+        <div className="flex items-center gap-6 font-cond text-base font-semibold uppercase tracking-[0.04em]">
+          <Link href="/eventos" className="max-sm:hidden text-brand">
             {dic.nav.eventos}
           </Link>
           <Link href="/#ranking" className="max-md:hidden transition-colors hover:text-brand">
@@ -112,10 +113,14 @@ export default async function CatalogoEventos() {
           <Link href="/#aovivo" className="max-md:hidden transition-colors hover:text-brand">
             {dc.aoVivo}
           </Link>
-          <SeletorIdioma />
-          <Link href="/organizador" className="-skew-x-9 bg-brand px-5 py-2.5 text-white">
+          <SeletorIdioma className="max-sm:hidden" />
+          <Link
+            href="/organizador"
+            className="max-sm:hidden -skew-x-9 bg-brand px-5 py-2.5 text-white"
+          >
             <SkewTexto>{dc.criarEvento}</SkewTexto>
           </Link>
+          <MenuUsuarioServer />
         </div>
       </nav>
 

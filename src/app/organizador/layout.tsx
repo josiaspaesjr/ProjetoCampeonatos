@@ -1,9 +1,6 @@
 import Link from "next/link";
-import { sair } from "@/app/entrar/actions";
 import { MarcaBloco } from "@/components/marca";
-import { AcaoTexto } from "@/components/ui/botao-acao";
-import { getUsuarioSessao } from "@/lib/auth";
-import { supabaseConfigurado } from "@/lib/supabase/server";
+import { MenuUsuarioServer } from "@/components/menu-usuario-server";
 import { getDicionario } from "@/lib/i18n/server";
 
 export default async function OrganizadorLayout({
@@ -11,7 +8,6 @@ export default async function OrganizadorLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const usuario = await getUsuarioSessao();
   const da = (await getDicionario()).admin;
 
   return (
@@ -27,21 +23,7 @@ export default async function OrganizadorLayout({
               / {da.organizador}
             </span>
           </Link>
-          {supabaseConfigurado() && usuario ? (
-            <form
-              action={sair}
-              className="flex items-center gap-5 font-cond text-[15px] uppercase tracking-[0.06em] text-muted-2"
-            >
-              <span>{usuario.nome}</span>
-              <AcaoTexto className="uppercase transition-colors hover:text-foreground">
-                {da.sair}
-              </AcaoTexto>
-            </form>
-          ) : (
-            <span className="font-cond text-[15px] uppercase tracking-[0.06em] text-muted-2">
-              {usuario?.nome ?? da.orgDev}
-            </span>
-          )}
+          <MenuUsuarioServer />
         </div>
       </header>
       <main className="w-full">{children}</main>

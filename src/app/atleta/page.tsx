@@ -4,9 +4,8 @@ import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { academias } from "@/db/schema";
-import { sair } from "@/app/entrar/actions";
 import { Logo } from "@/components/marca";
-import { AcaoTexto } from "@/components/ui/botao-acao";
+import { MenuUsuarioServer } from "@/components/menu-usuario-server";
 import { historicoDoAtleta, type Colocacao } from "@/lib/atleta";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 import { dataCurta } from "@/lib/datas";
@@ -46,7 +45,7 @@ export default async function AreaAtleta() {
     redirect(supabaseConfigurado() ? "/entrar?next=/atleta" : "/");
   }
 
-  const { usuario, ehOrganizador } = perfil;
+  const { usuario } = perfil;
   const db = await getDb();
   const { participacoes, resumo } = await historicoDoAtleta(db, usuario.id);
 
@@ -75,27 +74,7 @@ export default async function AreaAtleta() {
           <Link href="/eventos" className="max-sm:hidden transition-colors hover:text-brand">
             Eventos
           </Link>
-          <Link
-            href="/minhas-inscricoes"
-            className="max-sm:hidden text-muted-2 transition-colors hover:text-brand"
-          >
-            Inscrições
-          </Link>
-          {ehOrganizador && (
-            <Link
-              href="/organizador"
-              className="text-muted-2 transition-colors hover:text-brand"
-            >
-              Painel
-            </Link>
-          )}
-          {supabaseConfigurado() && (
-            <form action={sair}>
-              <AcaoTexto className="uppercase text-muted-2 transition-colors hover:text-foreground">
-                Sair
-              </AcaoTexto>
-            </form>
-          )}
+          <MenuUsuarioServer />
         </div>
       </nav>
 

@@ -1,7 +1,8 @@
 import { AvisoPendencias } from "@/components/aviso-pendencias";
 import { Logo } from "@/components/marca";
 import { PublicNav } from "@/components/public-nav";
-import { getUsuarioSessao } from "@/lib/auth";
+import { propsDoMenu } from "@/lib/menu-usuario";
+import { perfilDeAcesso } from "@/lib/perfil-acesso";
 import { supabaseConfigurado } from "@/lib/supabase/server";
 
 export async function PublicShell({
@@ -11,15 +12,15 @@ export async function PublicShell({
   children: React.ReactNode;
   largura?: string;
 }) {
-  const usuario = await getUsuarioSessao();
-  const comAuth = supabaseConfigurado();
+  const perfil = await perfilDeAcesso();
+  const menu = propsDoMenu(perfil, supabaseConfigurado());
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-50 border-b border-white/8 bg-ink/90 backdrop-blur-xl">
         <div className="relative flex items-center justify-between px-6 py-4 md:px-12">
           <Logo tamanho={30} />
-          <PublicNav usuarioNome={usuario?.nome ?? null} comAuth={comAuth} />
+          <PublicNav menu={menu} />
         </div>
       </header>
       <AvisoPendencias />
