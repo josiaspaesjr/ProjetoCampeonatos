@@ -8,6 +8,7 @@ import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import { calcularPodioDaChave } from "@/lib/chaves/persistencia";
 import { BracketView, type AtletaInfo } from "@/components/bracket-view";
+import { Podio } from "@/components/podio";
 import { lancarResultado, salvarNotas } from "../../../actions";
 
 export default async function PaginaChave({
@@ -69,15 +70,12 @@ export default async function PaginaChave({
       </div>
 
       {podio && (
-        <div className="mt-4 rounded-xl border border-success/30 bg-success/10 p-5">
-          <p className="font-semibold text-success">{dic.chavesTab.podio}</p>
-          <ol className="mt-2 space-y-1 text-sm">
-            <li>🥇 {podio.primeiro && atletas[podio.primeiro]?.nome}</li>
-            <li>🥈 {podio.segundo && atletas[podio.segundo]?.nome}</li>
-            {podio.terceiros.map((t) => (
-              <li key={t}>🥉 {atletas[t]?.nome}</li>
-            ))}
-          </ol>
+        <div className="mt-4">
+          <Podio
+            podio={podio}
+            atletas={atletas}
+            labels={{ podio: dic.chavesTab.podio, campeao: dic.chavesTab.campeao }}
+          />
         </div>
       )}
 

@@ -312,6 +312,7 @@ export const es: Dicionario = {
     nota: "Los horarios son estimados y cambian en tiempo real según avanzan los combates. Toca una división para ver la llave completa.",
     todasAsChaves: "Todas las llaves",
     podio: "Podio",
+    campeao: "Campeón",
   },
   lutasTab: {
     titulo: "Combates",

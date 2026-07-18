@@ -7,6 +7,7 @@ import { calcularPodioDaChave } from "@/lib/chaves/persistencia";
 import { getEventoPublico } from "@/lib/evento-publico";
 import { getDicionario } from "@/lib/i18n/server";
 import { BracketView, type AtletaInfo } from "@/components/bracket-view";
+import { Podio } from "@/components/podio";
 
 export default async function ChavePublica({
   params,
@@ -66,15 +67,12 @@ export default async function ChavePublica({
       <h1 className="disp mt-2 text-[40px]">{categoria.nome}</h1>
 
       {podio && (
-        <div className="mt-4 rounded-xl border border-success/30 bg-success/10 p-5">
-          <p className="font-semibold text-success">{dic.chavesTab.podio}</p>
-          <ol className="mt-2 space-y-1 text-sm">
-            <li>🥇 {podio.primeiro && atletas[podio.primeiro]?.nome}</li>
-            <li>🥈 {podio.segundo && atletas[podio.segundo]?.nome}</li>
-            {podio.terceiros.map((t) => (
-              <li key={t}>🥉 {atletas[t]?.nome}</li>
-            ))}
-          </ol>
+        <div className="mt-6">
+          <Podio
+            podio={podio}
+            atletas={atletas}
+            labels={{ podio: dic.chavesTab.podio, campeao: dic.chavesTab.campeao }}
+          />
         </div>
       )}
 

@@ -312,6 +312,7 @@ export const en: Dicionario = {
     nota: "Times are estimates and change in real time as matches progress. Tap a division to see the full bracket.",
     todasAsChaves: "All brackets",
     podio: "Podium",
+    campeao: "Champion",
   },
   lutasTab: {
     titulo: "Matches",

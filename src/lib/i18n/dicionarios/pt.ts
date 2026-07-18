@@ -313,6 +313,7 @@ export const pt = {
     nota: "Horários são estimativas e mudam em tempo real conforme o andamento das lutas. Toque numa divisão para ver a chave completa.",
     todasAsChaves: "Todas as chaves",
     podio: "Pódio",
+    campeao: "Campeão",
   },
   lutasTab: {
     titulo: "Lutas",
