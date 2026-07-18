@@ -1,5 +1,5 @@
 /**
- * Gerador de grade de categorias no padrão CBJJ/IBJJF (com kimono).
+ * Gerador de grade de categorias no padrão CBJJ/IBJJF.
  *
  * Cobre Kids (Pré-Mirim a Infanto-Juvenil), Juvenil, Adulto e Masters 1–7.
  *
@@ -7,8 +7,14 @@
  * laranja (10+), verde (13+) — cada classe de idade só aceita as faixas
  * permitidas para ela.
  *
- * ATENÇÃO: limites de peso conferidos com a tabela oficial vigente devem ser
- * revisados pelo organizador antes de publicar o evento — a tabela é editável.
+ * PESO: há duas tabelas oficiais IBJJF — **com kimono (Gi)** e **sem kimono
+ * (No-Gi)**, esta ~2–3 kg mais leve por divisão. O gerador escolhe a tabela
+ * pela modalidade do evento (`comKimono`); Kids usa a mesma tabela nas duas
+ * modalidades (convenção regional editável — a IBJJF não publica peso No-Gi
+ * distinto para as classes infantis).
+ *
+ * ATENÇÃO: os limites são editáveis; o organizador deve conferir com a tabela
+ * oficial vigente antes de publicar o evento.
  */
 
 export type Sexo = "masculino" | "feminino";
@@ -117,9 +123,61 @@ const PESOS_JUVENIL_FEMININO: CategoriaPeso[] = [
   { nome: "Super-Pesado", limiteKg: null },
 ];
 
+/** Adulto/Master masculino, sem kimono (No-Gi, tabela IBJJF) */
+const PESOS_MASCULINO_NOGI: CategoriaPeso[] = [
+  { nome: "Galo", limiteKg: 55.5 },
+  { nome: "Pluma", limiteKg: 61.5 },
+  { nome: "Pena", limiteKg: 67.5 },
+  { nome: "Leve", limiteKg: 73.5 },
+  { nome: "Médio", limiteKg: 79.5 },
+  { nome: "Meio-Pesado", limiteKg: 85.5 },
+  { nome: "Pesado", limiteKg: 91.5 },
+  { nome: "Super-Pesado", limiteKg: 97.5 },
+  { nome: "Pesadíssimo", limiteKg: null },
+];
+
+/** Adulto/Master feminino, sem kimono (No-Gi, tabela IBJJF) */
+const PESOS_FEMININO_NOGI: CategoriaPeso[] = [
+  { nome: "Galo", limiteKg: 46.5 },
+  { nome: "Pluma", limiteKg: 51.5 },
+  { nome: "Pena", limiteKg: 56.5 },
+  { nome: "Leve", limiteKg: 61.5 },
+  { nome: "Médio", limiteKg: 66.5 },
+  { nome: "Meio-Pesado", limiteKg: 71.5 },
+  { nome: "Pesado", limiteKg: 76.5 },
+  { nome: "Super-Pesado", limiteKg: null },
+];
+
+/** Juvenil masculino, sem kimono (No-Gi, tabela IBJJF) */
+const PESOS_JUVENIL_MASCULINO_NOGI: CategoriaPeso[] = [
+  { nome: "Galo", limiteKg: 51.5 },
+  { nome: "Pluma", limiteKg: 56.5 },
+  { nome: "Pena", limiteKg: 61.5 },
+  { nome: "Leve", limiteKg: 66.5 },
+  { nome: "Médio", limiteKg: 71.5 },
+  { nome: "Meio-Pesado", limiteKg: 76.5 },
+  { nome: "Pesado", limiteKg: 81.5 },
+  { nome: "Super-Pesado", limiteKg: 86.5 },
+  { nome: "Pesadíssimo", limiteKg: null },
+];
+
+/** Juvenil feminino, sem kimono (No-Gi, tabela IBJJF) */
+const PESOS_JUVENIL_FEMININO_NOGI: CategoriaPeso[] = [
+  { nome: "Galo", limiteKg: 42.5 },
+  { nome: "Pluma", limiteKg: 46.5 },
+  { nome: "Pena", limiteKg: 50.5 },
+  { nome: "Leve", limiteKg: 54.5 },
+  { nome: "Médio", limiteKg: 58.5 },
+  { nome: "Meio-Pesado", limiteKg: 62.5 },
+  { nome: "Pesado", limiteKg: 66.5 },
+  { nome: "Super-Pesado", limiteKg: null },
+];
+
 /**
  * Kids: tabela única por classe de idade (masculino e feminino), prática
  * comum em eventos regionais — o organizador ajusta/remove o que não usar.
+ * A IBJJF não publica peso No-Gi distinto para kids, então vale para as duas
+ * modalidades.
  */
 const PESOS_KIDS: Record<string, CategoriaPeso[]> = {
   pre_mirim: [
@@ -165,12 +223,28 @@ const PESOS_KIDS: Record<string, CategoriaPeso[]> = {
   ],
 };
 
-export function tabelaPesos(classeId: string, sexo: Sexo): CategoriaPeso[] {
+/**
+ * Tabela de pesos de uma classe/sexo. `comKimono` escolhe entre Gi (padrão) e
+ * No-Gi; Kids usa a mesma tabela nas duas modalidades.
+ */
+export function tabelaPesos(
+  classeId: string,
+  sexo: Sexo,
+  comKimono = true,
+): CategoriaPeso[] {
   if (PESOS_KIDS[classeId]) return PESOS_KIDS[classeId];
   if (classeId === "juvenil") {
-    return sexo === "masculino" ? PESOS_JUVENIL_MASCULINO : PESOS_JUVENIL_FEMININO;
+    if (comKimono) {
+      return sexo === "masculino" ? PESOS_JUVENIL_MASCULINO : PESOS_JUVENIL_FEMININO;
+    }
+    return sexo === "masculino"
+      ? PESOS_JUVENIL_MASCULINO_NOGI
+      : PESOS_JUVENIL_FEMININO_NOGI;
   }
-  return sexo === "masculino" ? PESOS_MASCULINO : PESOS_FEMININO;
+  if (comKimono) {
+    return sexo === "masculino" ? PESOS_MASCULINO : PESOS_FEMININO;
+  }
+  return sexo === "masculino" ? PESOS_MASCULINO_NOGI : PESOS_FEMININO_NOGI;
 }
 
 export interface CategoriaGerada {
@@ -189,6 +263,8 @@ export interface SelecaoGrade {
   sexos: Sexo[];
   faixas: Faixa[];
   incluirAbsoluto: boolean;
+  /** true (padrão) = tabela Gi; false = tabela No-Gi */
+  comKimono?: boolean;
 }
 
 const rotuloSexo: Record<Sexo, string> = {
@@ -203,6 +279,10 @@ function capitalizar(s: string): string {
 /** produto cartesiano classes × sexos × faixas × pesos da seleção */
 export function gerarGrade(selecao: SelecaoGrade): CategoriaGerada[] {
   const resultado: CategoriaGerada[] = [];
+  const comKimono = selecao.comKimono ?? true;
+  // No-Gi ganha marca no nome para não colidir com o Gi em eventos que rodam
+  // as duas modalidades (Gi fica sem marca — é o padrão histórico).
+  const marcaNogi = comKimono ? "" : " No-Gi";
 
   for (const classeId of selecao.classes) {
     const classe = CLASSES_IDADE.find((c) => c.id === classeId);
@@ -212,9 +292,9 @@ export function gerarGrade(selecao: SelecaoGrade): CategoriaGerada[] {
       for (const faixa of selecao.faixas) {
         if (!classe.faixas.includes(faixa)) continue;
 
-        for (const peso of tabelaPesos(classeId, sexo)) {
+        for (const peso of tabelaPesos(classeId, sexo, comKimono)) {
           resultado.push({
-            nome: `${classe.nome} / ${rotuloSexo[sexo]} / ${capitalizar(faixa)} / ${peso.nome}${peso.limiteKg ? ` (até ${peso.limiteKg}kg)` : ""}`,
+            nome: `${classe.nome} / ${rotuloSexo[sexo]} / ${capitalizar(faixa)} / ${peso.nome}${peso.limiteKg ? ` (até ${peso.limiteKg}kg)` : ""}${marcaNogi}`,
             tipo: "peso",
             sexo,
             faixa,
@@ -227,7 +307,7 @@ export function gerarGrade(selecao: SelecaoGrade): CategoriaGerada[] {
 
         if (selecao.incluirAbsoluto) {
           resultado.push({
-            nome: `${classe.nome} / ${rotuloSexo[sexo]} / ${capitalizar(faixa)} / Absoluto`,
+            nome: `${classe.nome} / ${rotuloSexo[sexo]} / ${capitalizar(faixa)} / Absoluto${marcaNogi}`,
             tipo: "absoluto",
             sexo,
             faixa,

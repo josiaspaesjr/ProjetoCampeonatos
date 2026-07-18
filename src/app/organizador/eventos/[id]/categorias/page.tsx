@@ -103,7 +103,10 @@ export default async function CategoriasEvento({
       )}
 
       {/* GERADOR CBJJ */}
-      <GeradorGrade gerar={gerarCategoriasCbjj.bind(null, evento.id)} />
+      <GeradorGrade
+        modalidade={evento.modalidade}
+        gerar={gerarCategoriasCbjj.bind(null, evento.id)}
+      />
 
       {/* GRADE GERADA */}
       <div>

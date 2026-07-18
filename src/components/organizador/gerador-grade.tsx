@@ -66,8 +66,10 @@ const miniAcao =
 
 export function GeradorGrade({
   gerar,
+  modalidade,
 }: {
   gerar: (formData: FormData) => void | Promise<void>;
+  modalidade: "gi" | "nogi" | "gi_nogi";
 }) {
   // abre já na seleção mais comum (adulto, ambos os sexos, branca + azul)
   const [classes, setClasses] = useState<Set<string>>(new Set(["adulto"]));
@@ -78,6 +80,9 @@ export function GeradorGrade({
     new Set<Faixa>(["branca", "azul"]),
   );
   const [absoluto, setAbsoluto] = useState(false);
+  // tabela de peso: Gi por padrão; No-Gi automático em evento só No-Gi. Em
+  // evento Gi+No-Gi o organizador alterna e gera cada tabela.
+  const [comKimono, setComKimono] = useState(modalidade !== "nogi");
   const d = useDic();
   const ger = d.admin.gerador;
 
@@ -111,7 +116,7 @@ export function GeradorGrade({
       if (!classe) continue;
       const faixasValidas = [...faixas].filter((f) => classe.faixas.includes(f));
       for (const sexo of sexos) {
-        const nPesos = tabelaPesos(classeId, sexo).length;
+        const nPesos = tabelaPesos(classeId, sexo, comKimono).length;
         contagensPeso.push(nPesos);
         total += faixasValidas.length * (nPesos + (absoluto ? 1 : 0));
       }
@@ -125,12 +130,51 @@ export function GeradorGrade({
       pesos: min === max ? String(min) : `${min}–${max}`,
       total,
     };
-  }, [classes, sexos, faixas, absoluto]);
+  }, [classes, sexos, faixas, absoluto, comKimono]);
 
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
       {/* SELEÇÃO */}
       <div className="flex flex-col gap-5">
+        {/* TABELA DE PESO (Gi / No-Gi) */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <span className="font-cond text-[13px] font-semibold uppercase tracking-[0.1em] text-muted-3">
+            {ger.tabelaPeso}
+          </span>
+          {modalidade === "gi_nogi" ? (
+            <>
+              <div className="flex gap-2">
+                {(
+                  [
+                    [true, ger.comKimono],
+                    [false, ger.semKimono],
+                  ] as [boolean, string][]
+                ).map(([val, rotulo]) => (
+                  <button
+                    key={rotulo}
+                    type="button"
+                    onClick={() => setComKimono(val)}
+                    className={cn(
+                      chipBase,
+                      "px-3.5 py-2 text-[13px]",
+                      comKimono === val ? chipAtivo : chipInativo,
+                    )}
+                  >
+                    {rotulo}
+                  </button>
+                ))}
+              </div>
+              <span className="font-cond text-xs text-muted-3">
+                {ger.giNogiNota}
+              </span>
+            </>
+          ) : (
+            <span className="border border-white/14 px-3.5 py-2 font-cond text-[13px] font-semibold uppercase tracking-[0.04em] text-text-2">
+              {comKimono ? ger.comKimono : ger.semKimono}
+            </span>
+          )}
+        </div>
+
         {/* PRESETS */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
@@ -346,6 +390,11 @@ export function GeradorGrade({
               <input key={f} type="hidden" name="faixas" value={f} />
             ))}
             {absoluto && <input type="hidden" name="incluirAbsoluto" value="on" />}
+            <input
+              type="hidden"
+              name="comKimono"
+              value={comKimono ? "gi" : "nogi"}
+            />
             <BotaoAcaoBruto
               disabled={resumo.total === 0}
               className="flex w-full items-center justify-center bg-brand py-4 font-cond text-lg font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d] disabled:cursor-not-allowed disabled:opacity-40"

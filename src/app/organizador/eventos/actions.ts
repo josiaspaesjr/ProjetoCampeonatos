@@ -279,14 +279,24 @@ export async function editarEvento(eventoId: string, formData: FormData) {
 }
 
 export async function gerarCategoriasCbjj(eventoId: string, formData: FormData) {
-  const { db } = await eventoDoOrganizador(eventoId);
+  const { db, evento } = await eventoDoOrganizador(eventoId);
   const erros = (await getDicionario()).admin.erros;
+
+  // A modalidade do evento manda na tabela de peso: Gi → com kimono, No-Gi →
+  // sem kimono. Só o evento "gi_nogi" (ambos) respeita a escolha do gerador.
+  const comKimono =
+    evento.modalidade === "gi"
+      ? true
+      : evento.modalidade === "nogi"
+        ? false
+        : formData.get("comKimono") !== "nogi";
 
   const selecao: SelecaoGrade = {
     classes: formData.getAll("classes").map(String),
     sexos: formData.getAll("sexos").map(String) as Sexo[],
     faixas: formData.getAll("faixas").map(String) as Faixa[],
     incluirAbsoluto: formData.get("incluirAbsoluto") === "on",
+    comKimono,
   };
 
   const grade = gerarGrade(selecao);

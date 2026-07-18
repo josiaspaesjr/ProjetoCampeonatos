@@ -90,3 +90,63 @@ describe("gerarGrade com kids", () => {
     expect(new Set(compativeis.map((c) => c.classeIdade))).toEqual(new Set(["mirim"]));
   });
 });
+
+describe("tabela No-Gi (sem kimono)", () => {
+  it("adulto/juvenil: No-Gi é mais leve que Gi em toda divisão limitada", () => {
+    for (const classe of ["adulto", "juvenil"]) {
+      for (const sexo of ["masculino", "feminino"] as const) {
+        const gi = tabelaPesos(classe, sexo, true);
+        const nogi = tabelaPesos(classe, sexo, false);
+        expect(nogi).toHaveLength(gi.length);
+        for (let i = 0; i < gi.length; i++) {
+          expect(nogi[i].nome).toBe(gi[i].nome); // mesmos nomes de divisão
+          if (gi[i].limiteKg == null) expect(nogi[i].limiteKg).toBeNull();
+          else expect(nogi[i].limiteKg!).toBeLessThan(gi[i].limiteKg!);
+        }
+      }
+    }
+  });
+
+  it("valores oficiais IBJJF conferidos (kg do 'Leve'/'Galo')", () => {
+    const leve = (c: string, s: "masculino" | "feminino") =>
+      tabelaPesos(c, s, false).find((p) => p.nome === "Leve")!.limiteKg;
+    expect(leve("adulto", "masculino")).toBe(73.5);
+    expect(leve("adulto", "feminino")).toBe(61.5);
+    const galoJuvM = tabelaPesos("juvenil", "masculino", false).find(
+      (p) => p.nome === "Galo",
+    )!.limiteKg;
+    expect(galoJuvM).toBe(51.5);
+  });
+
+  it("kids usa a mesma tabela em Gi e No-Gi", () => {
+    for (const classe of ["pre_mirim", "mirim", "infantil", "infanto_juvenil"]) {
+      expect(tabelaPesos(classe, "masculino", false)).toEqual(
+        tabelaPesos(classe, "masculino", true),
+      );
+    }
+  });
+
+  it("gerarGrade No-Gi usa limites No-Gi e marca o nome; Gi fica sem marca", () => {
+    const nogi = gerarGrade({
+      classes: ["adulto"],
+      sexos: ["masculino"],
+      faixas: ["preta"],
+      incluirAbsoluto: true,
+      comKimono: false,
+    });
+    expect(nogi.find((c) => c.nome.includes("Leve"))!.limitePesoKg).toBe(73.5);
+    expect(nogi.every((c) => c.nome.endsWith("No-Gi"))).toBe(true);
+    expect(nogi.find((c) => c.tipo === "absoluto")!.nome).toContain("Absoluto No-Gi");
+  });
+
+  it("gerarGrade sem comKimono explícito mantém Gi (retrocompatível)", () => {
+    const grade = gerarGrade({
+      classes: ["adulto"],
+      sexos: ["masculino"],
+      faixas: ["preta"],
+      incluirAbsoluto: false,
+    });
+    expect(grade.find((c) => c.nome.includes("Leve"))!.limitePesoKg).toBe(76);
+    expect(grade.some((c) => c.nome.includes("No-Gi"))).toBe(false);
+  });
+});
