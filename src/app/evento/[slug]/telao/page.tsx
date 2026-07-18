@@ -41,7 +41,7 @@ export default async function Telao({
   return (
     <main
       id="placar-root"
-      className="flex min-h-screen flex-col overflow-hidden bg-background text-foreground"
+      className="flex h-screen flex-col overflow-hidden bg-background text-foreground"
     >
       <AutoRefresh segundos={15} />
       <BotaoTelaCheia />
