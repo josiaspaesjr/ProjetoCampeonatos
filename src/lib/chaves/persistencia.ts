@@ -73,13 +73,23 @@ export async function gerarChaveParaCategoria(
     throw new Error("chave_min_inscricoes");
   }
 
-  // regeneração permitida apenas em rascunho
+  // Regeneração é permitida enquanto a chave não estiver "em andamento" — ou
+  // seja, enquanto nenhuma luta tiver resultado lançado. O status já é o proxy
+  // fiel disso: só vira em_andamento/concluida ao registrar um resultado real
+  // (byes da geração não mexem no status). Uma chave publicada sem resultados
+  // pode ser regenerada e permanece publicada.
   const existente = await db.query.chaves.findFirst({
     where: eq(chaves.categoriaId, categoriaId),
   });
+  let statusInicial: "rascunho" | "publicada" = "rascunho";
+  let publicadaEm: Date | null = null;
   if (existente) {
-    if (existente.status !== "rascunho") {
-      throw new Error("chave_publicada");
+    if (existente.status === "em_andamento" || existente.status === "concluida") {
+      throw new Error("chave_em_andamento");
+    }
+    if (existente.status === "publicada") {
+      statusInicial = "publicada";
+      publicadaEm = existente.publicadaEm ?? new Date();
     }
     await db.delete(lutas).where(eq(lutas.chaveId, existente.id));
     await db.delete(chaves).where(eq(chaves.id, existente.id));
@@ -134,7 +144,14 @@ export async function gerarChaveParaCategoria(
       : null;
   const [chave] = await db
     .insert(chaves)
-    .values({ categoriaId, formato: formatoFinal, seedSorteio: seed, config })
+    .values({
+      categoriaId,
+      formato: formatoFinal,
+      seedSorteio: seed,
+      config,
+      status: statusInicial,
+      publicadaEm,
+    })
     .returning();
 
   await inserirLutas(db, chave.id, engine.lutas);

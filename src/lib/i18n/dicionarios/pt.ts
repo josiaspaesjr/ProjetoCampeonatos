@@ -751,7 +751,7 @@ export const pt = {
       } as Record<string, string>,
       semChave: "Sem chave",
       intro:
-        "Categorias sem inscrições confirmadas ficam ocultas. Gere em rascunho, revise e publique — depois de publicada a chave não pode ser regenerada.",
+        "Categorias sem inscrições confirmadas ficam ocultas. Gere em rascunho, revise e publique — a chave pode ser regenerada até que alguma luta tenha resultado.",
       gerar: "Gerar",
       chaveSing: "chave",
       chavePlur: "chaves",
@@ -816,6 +816,8 @@ export const pt = {
         atletas: "atletas",
         quandoUsar: "Quando usar:",
         numJurados: "Nº de jurados",
+        avisoRegerarPublicada:
+          "Esta chave está publicada. Regenerar substitui o chaveamento atual (o sorteio muda) e mantém a chave publicada. Só é possível enquanto nenhuma luta tiver resultado.",
       },
       regenerar: "Regenerar",
       gerarChave: "Gerar chave",
@@ -934,7 +936,8 @@ export const pt = {
       chave: {
         chave_min_inscricoes:
           "A categoria precisa de ao menos 2 inscrições confirmadas",
-        chave_publicada: "Chave publicada não pode ser regenerada",
+        chave_em_andamento:
+          "Chave em andamento não pode ser regenerada — já há resultado lançado",
       } as Record<string, string>,
       nenhumaAguardandoChave:
         "Nenhuma categoria aguardando chave (2+ confirmados e sem chave gerada)",

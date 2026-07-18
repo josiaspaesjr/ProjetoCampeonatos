@@ -745,7 +745,7 @@ export const es: Dicionario = {
       },
       semChave: "Sin llave",
       intro:
-        "Las categorías sin inscripciones confirmadas quedan ocultas. Genera en borrador, revisa y publica — una vez publicada la llave no se puede regenerar.",
+        "Las categorías sin inscripciones confirmadas quedan ocultas. Genera en borrador, revisa y publica — la llave se puede regenerar hasta que un combate tenga resultado.",
       gerar: "Generar",
       chaveSing: "llave",
       chavePlur: "llaves",
@@ -810,6 +810,8 @@ export const es: Dicionario = {
         atletas: "atletas",
         quandoUsar: "Cuándo usar:",
         numJurados: "Nº de jueces",
+        avisoRegerarPublicada:
+          "Esta llave está publicada. Regenerar reemplaza el cuadro actual (el sorteo cambia) y la mantiene publicada. Solo es posible mientras ningún combate tenga resultado.",
       },
       regenerar: "Regenerar",
       gerarChave: "Generar llave",
@@ -928,7 +930,8 @@ export const es: Dicionario = {
       chave: {
         chave_min_inscricoes:
           "La categoría necesita al menos 2 inscripciones confirmadas",
-        chave_publicada: "Una llave publicada no se puede regenerar",
+        chave_em_andamento:
+          "Una llave en curso no se puede regenerar — ya hay un resultado registrado",
       },
       nenhumaAguardandoChave:
         "Ninguna categoría esperando llave (2+ confirmados y sin llave generada)",

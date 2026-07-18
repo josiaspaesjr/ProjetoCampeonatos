@@ -119,14 +119,18 @@ export default async function PaginaChaves({
               </div>
               <div className="flex shrink-0 flex-wrap items-center gap-3 max-sm:w-full">
                 <Badge variant={variante}>{rotulo}</Badge>
-                {qtd >= 2 && (!chave || chave.status === "rascunho") && (
-                  <SeletorFormato
-                    acao={gerarChave.bind(null, evento.id, c.id)}
-                    qtd={qtd}
-                    regenerar={!!chave}
-                    formatoAtual={chave?.formato ?? null}
-                  />
-                )}
+                {qtd >= 2 &&
+                  (!chave ||
+                    chave.status === "rascunho" ||
+                    chave.status === "publicada") && (
+                    <SeletorFormato
+                      acao={gerarChave.bind(null, evento.id, c.id)}
+                      qtd={qtd}
+                      regenerar={!!chave}
+                      publicada={chave?.status === "publicada"}
+                      formatoAtual={chave?.formato ?? null}
+                    />
+                  )}
                 {chave && (
                   <Link
                     href={`/organizador/eventos/${evento.id}/chaves/${chave.id}`}

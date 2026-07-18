@@ -744,7 +744,7 @@ export const en: Dicionario = {
       },
       semChave: "No bracket",
       intro:
-        "Divisions without confirmed registrations are hidden. Generate as draft, review and publish — once published a bracket can't be regenerated.",
+        "Divisions without confirmed registrations are hidden. Generate as draft, review and publish — a bracket can be regenerated until a match has a result.",
       gerar: "Generate",
       chaveSing: "bracket",
       chavePlur: "brackets",
@@ -809,6 +809,8 @@ export const en: Dicionario = {
         atletas: "athletes",
         quandoUsar: "When to use:",
         numJurados: "Number of judges",
+        avisoRegerarPublicada:
+          "This bracket is published. Regenerating replaces the current bracket (the draw changes) and keeps it published. Only possible while no match has a result.",
       },
       regenerar: "Regenerate",
       gerarChave: "Generate bracket",
@@ -926,7 +928,8 @@ export const en: Dicionario = {
       chave: {
         chave_min_inscricoes:
           "The division needs at least 2 confirmed registrations",
-        chave_publicada: "A published bracket can't be regenerated",
+        chave_em_andamento:
+          "A bracket in progress can't be regenerated — a result was already recorded",
       },
       nenhumaAguardandoChave:
         "No division awaiting a bracket (2+ confirmed and no bracket yet)",

@@ -29,11 +29,14 @@ export function SeletorFormato({
   acao,
   qtd,
   regenerar = false,
+  publicada = false,
   formatoAtual = null,
 }: {
   acao: (formato: FormatoSelecionavel, numJurados?: number) => Promise<void>;
   qtd: number;
   regenerar?: boolean;
+  /** chave já publicada (sem resultados) — mostra aviso antes de substituir */
+  publicada?: boolean;
   formatoAtual?: FormatoChaveId | null;
 }) {
   const ch = useDic().admin.chaves;
@@ -135,6 +138,11 @@ export function SeletorFormato({
               </div>
 
               <div className="grid min-h-0 flex-1 gap-3 overflow-y-auto p-5">
+                {regenerar && publicada && (
+                  <p className="rounded-md bg-warning/15 px-4 py-3 text-sm text-warning-foreground">
+                    {s.avisoRegerarPublicada}
+                  </p>
+                )}
                 {/* Card Automático — padrão destacado */}
                 <button
                   type="button"

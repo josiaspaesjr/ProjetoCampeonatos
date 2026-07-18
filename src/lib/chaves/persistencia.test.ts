@@ -5,7 +5,10 @@ import { migrate } from "drizzle-orm/pglite/migrator";
 import { beforeAll, describe, expect, it } from "vitest";
 import type { Db } from "@/db";
 import * as schema from "@/db/schema";
-import { gerarChaveParaCategoria } from "./persistencia";
+import {
+  gerarChaveParaCategoria,
+  registrarResultadoNoBanco,
+} from "./persistencia";
 
 /**
  * Regra: **só gera chave com atleta pago** — na geração, entram apenas as
@@ -132,6 +135,89 @@ describe("gerarChaveParaCategoria — só entra quem pagou (confirmada)", () => 
     const { categoriaId } = await criarCategoriaCom(0, 2);
     await expect(gerarChaveParaCategoria(db, categoriaId)).rejects.toThrow(
       /chave_min_inscricoes/,
+    );
+  });
+});
+
+/**
+ * Regra: regenerar é permitido enquanto a chave **não estiver em andamento** —
+ * ou seja, enquanto nenhuma luta tiver resultado. Rascunho e publicada (sem
+ * resultado) regeneram; após lançar um resultado (em_andamento) ou concluir,
+ * o sistema bloqueia. Uma chave publicada continua publicada ao regenerar.
+ */
+describe("gerarChaveParaCategoria — regeneração", () => {
+  it("rascunho: regenera e recria a chave (novo sorteio, segue rascunho)", async () => {
+    const { categoriaId } = await criarCategoriaCom(4, 0);
+    const primeira = await gerarChaveParaCategoria(db, categoriaId);
+    const segunda = await gerarChaveParaCategoria(db, categoriaId);
+
+    expect(segunda.id).not.toBe(primeira.id); // deletou e recriou
+    expect(segunda.status).toBe("rascunho");
+    // a antiga sumiu — só existe uma chave por categoria (categoriaId é unique)
+    const todas = await db.query.chaves.findMany({
+      where: eq(schema.chaves.categoriaId, categoriaId),
+    });
+    expect(todas).toHaveLength(1);
+    expect(todas[0].id).toBe(segunda.id);
+  });
+
+  it("publicada sem resultado: regenera e permanece publicada", async () => {
+    const { categoriaId } = await criarCategoriaCom(4, 0);
+    const chave = await gerarChaveParaCategoria(db, categoriaId);
+    await db
+      .update(schema.chaves)
+      .set({ status: "publicada", publicadaEm: new Date() })
+      .where(eq(schema.chaves.id, chave.id));
+
+    const regenerada = await gerarChaveParaCategoria(db, categoriaId);
+    expect(regenerada.id).not.toBe(chave.id);
+    expect(regenerada.status).toBe("publicada");
+    expect(regenerada.publicadaEm).not.toBeNull();
+  });
+
+  it("em andamento (alguma luta com resultado): não regenera", async () => {
+    const { categoriaId, confirmadas } = await criarCategoriaCom(3, 0);
+    const chave = await gerarChaveParaCategoria(db, categoriaId); // round robin
+    await db
+      .update(schema.chaves)
+      .set({ status: "publicada", publicadaEm: new Date() })
+      .where(eq(schema.chaves.id, chave.id));
+
+    // lança um resultado real → chave vira em_andamento
+    const linhas = await db.query.lutas.findMany({
+      where: eq(schema.lutas.chaveId, chave.id),
+    });
+    const luta = linhas.find(
+      (l) => l.atleta1InscricaoId && l.atleta2InscricaoId,
+    )!;
+    await registrarResultadoNoBanco(
+      db,
+      chave.id,
+      luta.id,
+      luta.atleta1InscricaoId!,
+      "pontos",
+    );
+    const depois = await db.query.chaves.findFirst({
+      where: eq(schema.chaves.id, chave.id),
+    });
+    expect(depois?.status).toBe("em_andamento");
+    expect(confirmadas).toContain(luta.atleta1InscricaoId);
+
+    await expect(gerarChaveParaCategoria(db, categoriaId)).rejects.toThrow(
+      /chave_em_andamento/,
+    );
+  });
+
+  it("concluída: não regenera", async () => {
+    const { categoriaId } = await criarCategoriaCom(4, 0);
+    const chave = await gerarChaveParaCategoria(db, categoriaId);
+    await db
+      .update(schema.chaves)
+      .set({ status: "concluida" })
+      .where(eq(schema.chaves.id, chave.id));
+
+    await expect(gerarChaveParaCategoria(db, categoriaId)).rejects.toThrow(
+      /chave_em_andamento/,
     );
   });
 });
