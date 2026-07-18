@@ -8,7 +8,8 @@ import { BotaoAcao } from "@/components/ui/botao-acao";
 import { getUsuarioAtual } from "@/lib/auth";
 import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
-import { formatoAutomatico } from "@/lib/chaves/persistencia";
+import { formatoAutomatico } from "@/lib/bracket";
+import { SeletorFormato } from "@/components/chaves/seletor-formato";
 import { gerarChave, gerarChavesEmLote, publicarChaves } from "../../actions";
 
 const VARIANTE_CHAVE: Record<string, BadgeProps["variant"]> = {
@@ -111,19 +112,20 @@ export default async function PaginaChaves({
                   {qtd} {qtd === 1 ? ch.confirmadoSing : ch.confirmadoPlur}
                   {qtd === 1 && ` — ${ch.insuficiente}`}
                   {chave
-                    ? ` · ${chave.formato === "round_robin" ? ch.formatoRR : ch.formatoElim}`
+                    ? ` · ${ch.formatos[chave.formato]?.nome ?? chave.formato}`
                     : qtd >= 2 &&
-                      ` · ${ch.formatoSugerido} ${formatoAutomatico(qtd) === "round_robin" ? ch.formatoRR : ch.formatoElim}`}
+                      ` · ${ch.formatoSugerido} ${ch.formatos[formatoAutomatico(qtd)].nome}`}
                 </p>
               </div>
               <div className="flex shrink-0 flex-wrap items-center gap-3 max-sm:w-full">
                 <Badge variant={variante}>{rotulo}</Badge>
                 {qtd >= 2 && (!chave || chave.status === "rascunho") && (
-                  <form action={gerarChave.bind(null, evento.id, c.id)}>
-                    <BotaoAcao variant="outline" size="sm">
-                      {chave ? ch.regenerar : ch.gerarChave}
-                    </BotaoAcao>
-                  </form>
+                  <SeletorFormato
+                    acao={gerarChave.bind(null, evento.id, c.id)}
+                    qtd={qtd}
+                    regenerar={!!chave}
+                    formatoAtual={chave?.formato ?? null}
+                  />
                 )}
                 {chave && (
                   <Link

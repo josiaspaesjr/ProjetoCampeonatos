@@ -23,7 +23,7 @@ import {
   gerarChaveParaCategoria,
   registrarResultadoNoBanco,
 } from "@/lib/chaves/persistencia";
-import type { MetodoVitoria } from "@/lib/bracket";
+import type { FormatoSelecionavel, MetodoVitoria } from "@/lib/bracket";
 import {
   gerarGrade,
   type Faixa,
@@ -468,11 +468,15 @@ export async function encerrarInscricoes(eventoId: string) {
   revalidatePath(`/organizador/eventos/${eventoId}`);
 }
 
-export async function gerarChave(eventoId: string, categoriaId: string) {
+export async function gerarChave(
+  eventoId: string,
+  categoriaId: string,
+  formato: FormatoSelecionavel = "auto",
+) {
   const { db, usuario } = await eventoDoOrganizador(eventoId);
   let chave;
   try {
-    chave = await gerarChaveParaCategoria(db, categoriaId);
+    chave = await gerarChaveParaCategoria(db, categoriaId, formato);
   } catch (e) {
     const erros = (await getDicionario()).admin.erros;
     const codigo = e instanceof Error ? e.message : "";
@@ -487,7 +491,7 @@ export async function gerarChave(eventoId: string, categoriaId: string) {
     entidade: "chave",
     entidadeId: chave.id,
     acao: "chave_gerada",
-    dadosNovos: { categoriaId, seed: chave.seedSorteio },
+    dadosNovos: { categoriaId, formato: chave.formato, seed: chave.seedSorteio },
   });
   revalidatePath(`/organizador/eventos/${eventoId}/chaves`);
 }

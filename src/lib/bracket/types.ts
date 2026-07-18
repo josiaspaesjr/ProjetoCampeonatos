@@ -5,6 +5,8 @@
  * Entrada: lista de inscritos + opções. Saída: árvore de lutas.
  */
 
+import type { FormatoChaveId } from "./formatos";
+
 export interface Inscrito {
   id: string;
   nome?: string;
@@ -31,6 +33,12 @@ export interface Luta {
   proximaLutaId: string | null;
   /** slot que o vencedor ocupa na próxima luta: 1 ou 2 */
   proximaLutaSlot: 1 | 2 | null;
+  /** rota do perdedor (eliminação dupla): id da luta que recebe quem perde */
+  proximaLutaPerdedorId?: string | null;
+  /** slot que o perdedor ocupa na luta de destino: 1 ou 2 */
+  proximaLutaPerdedorSlot?: 1 | 2 | null;
+  /** fase da chave: "wb" (vencedores), "lb" (perdedores), "gf" (grande final) */
+  fase?: string | null;
   vencedor: string | null;
   metodo: MetodoVitoria | null;
   /** true quando a luta foi decidida por bye (sem oponente) */
@@ -38,7 +46,7 @@ export interface Luta {
 }
 
 export interface Chave {
-  formato: "eliminacao_simples" | "round_robin";
+  formato: FormatoChaveId;
   /** seed usada no sorteio — mesma seed + mesmos inscritos = mesma chave */
   seed: string;
   /** total de rodadas (log2 do tamanho da chave) */

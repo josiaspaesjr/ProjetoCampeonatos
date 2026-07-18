@@ -3,13 +3,36 @@ import type { Db } from "@/db";
 import { chaves, inscricoes, lutas } from "@/db/schema";
 import {
   calcularPodio,
+  eliminacaoDuplaConcluida,
+  formatoAutomatico,
+  gerarEliminacaoDupla,
   gerarEliminacaoSimples,
+  gerarMelhorDeTres,
   gerarRoundRobin,
+  gerarTresRepescagem,
+  colocacaoConcluida,
+  gerarColocacao,
+  podioColocacao,
+  podioEliminacaoDupla,
+  podioMelhorDeTres,
   podioRoundRobin,
+  podioTresRepescagem,
   registrarResultado,
+  registrarResultadoColocacao,
+  registrarResultadoEliminacaoDupla,
+  registrarResultadoMelhorDeTres,
   registrarResultadoRoundRobin,
+  registrarResultadoTresRepescagem,
+  serieDecidida,
+  tresRepescagemConcluida,
 } from "@/lib/bracket";
-import type { Chave as ChaveEngine, MetodoVitoria, Podio } from "@/lib/bracket";
+import type {
+  Chave as ChaveEngine,
+  FormatoChaveId,
+  FormatoSelecionavel,
+  MetodoVitoria,
+  Podio,
+} from "@/lib/bracket";
 import { idsDeBye } from "@/lib/chaves/byes";
 
 /**
@@ -21,20 +44,13 @@ import { idsDeBye } from "@/lib/chaves/byes";
  * (validações e avanço) e o diff volta para as linhas afetadas.
  */
 
-export type FormatoChave = "eliminacao_simples" | "round_robin";
-
-/**
- * Regra automática de formato por tamanho da divisão (padrão CBJJ):
- * até 3 atletas → todos contra todos; 4+ → eliminação simples.
- */
-export function formatoAutomatico(qtdInscritos: number): FormatoChave {
-  return qtdInscritos <= 3 ? "round_robin" : "eliminacao_simples";
-}
+/** Alias local do id de formato; regras/metadados vivem em @/lib/bracket/formatos. */
+export type FormatoChave = FormatoChaveId;
 
 export async function gerarChaveParaCategoria(
   db: Db,
   categoriaId: string,
-  formato: FormatoChave | "auto" = "auto",
+  formato: FormatoSelecionavel = "auto",
 ) {
   const confirmadas = await db.query.inscricoes.findMany({
     where: and(
@@ -60,7 +76,7 @@ export async function gerarChaveParaCategoria(
     await db.delete(chaves).where(eq(chaves.id, existente.id));
   }
 
-  const formatoFinal =
+  const formatoFinal: FormatoChaveId =
     formato === "auto" ? formatoAutomatico(confirmadas.length) : formato;
 
   const seed = crypto.randomUUID();
@@ -69,10 +85,33 @@ export async function gerarChaveParaCategoria(
     nome: i.nomeAtleta,
     academiaId: i.academiaId,
   }));
-  const engine =
-    formatoFinal === "round_robin"
-      ? gerarRoundRobin(participantes, { seed })
-      : gerarEliminacaoSimples(participantes, { seed });
+  // dispatch por formato — cada fase liga o motor do seu formato aqui.
+  // formatos ainda sem motor caem no erro neutro (a UI só oferece os prontos).
+  let engine: ChaveEngine;
+  switch (formatoFinal) {
+    case "round_robin":
+      engine = gerarRoundRobin(participantes, { seed });
+      break;
+    case "eliminacao_simples":
+      engine = gerarEliminacaoSimples(participantes, { seed });
+      break;
+    case "melhor_de_tres":
+      if (participantes.length !== 2) throw new Error("chave_formato_exige_2");
+      engine = gerarMelhorDeTres(participantes, { seed });
+      break;
+    case "tres_repescagem":
+      if (participantes.length !== 3) throw new Error("chave_formato_exige_3");
+      engine = gerarTresRepescagem(participantes, { seed });
+      break;
+    case "eliminacao_dupla":
+      engine = gerarEliminacaoDupla(participantes, { seed });
+      break;
+    case "colocacao":
+      engine = gerarColocacao(participantes, { seed });
+      break;
+    default:
+      throw new Error("formato_nao_implementado");
+  }
 
   const [chave] = await db
     .insert(chaves)
@@ -91,6 +130,11 @@ export async function gerarChaveParaCategoria(
       atleta2InscricaoId: l.atleta2,
       proximaLutaId: l.proximaLutaId ? uuidPorIdLocal.get(l.proximaLutaId)! : null,
       proximaLutaSlot: l.proximaLutaSlot,
+      proximaLutaPerdedorId: l.proximaLutaPerdedorId
+        ? uuidPorIdLocal.get(l.proximaLutaPerdedorId)!
+        : null,
+      proximaLutaPerdedorSlot: l.proximaLutaPerdedorSlot ?? null,
+      fase: l.fase ?? null,
       vencedorInscricaoId: l.vencedor, // bye da 1ª rodada já avançado pelo motor
       // byes de rodadas seguintes ainda não têm vencedor: encerram só ao avançar
       encerradaEm: l.vencedor ? new Date() : null,
@@ -103,13 +147,88 @@ export async function gerarChaveParaCategoria(
 type LutaRow = typeof lutas.$inferSelect;
 type ChaveRow = { seedSorteio: string; formato: string };
 
-function formatoDaChave(chave: ChaveRow): FormatoChave {
-  return chave.formato === "round_robin" ? "round_robin" : "eliminacao_simples";
+function formatoDaChave(chave: ChaveRow): FormatoChaveId {
+  return chave.formato as FormatoChaveId;
+}
+
+/** Aplica o resultado no motor do formato (validações e avanço próprios dele). */
+function registrarNoEngine(
+  chave: ChaveEngine,
+  lutaId: string,
+  vencedorId: string,
+  metodo: MetodoVitoria,
+): ChaveEngine {
+  switch (chave.formato) {
+    case "round_robin":
+      return registrarResultadoRoundRobin(chave, lutaId, vencedorId, metodo);
+    case "melhor_de_tres":
+      return registrarResultadoMelhorDeTres(chave, lutaId, vencedorId, metodo);
+    case "tres_repescagem":
+      return registrarResultadoTresRepescagem(chave, lutaId, vencedorId, metodo);
+    case "eliminacao_dupla":
+      return registrarResultadoEliminacaoDupla(chave, lutaId, vencedorId, metodo);
+    case "colocacao":
+      return registrarResultadoColocacao(chave, lutaId, vencedorId, metodo);
+    default:
+      return registrarResultado(chave, lutaId, vencedorId, metodo);
+  }
+}
+
+/** Pódio segundo a regra do formato. */
+function podioDoEngine(chave: ChaveEngine): Podio {
+  switch (chave.formato) {
+    case "round_robin":
+      return podioRoundRobin(chave);
+    case "melhor_de_tres":
+      return podioMelhorDeTres(chave);
+    case "tres_repescagem":
+      return podioTresRepescagem(chave);
+    case "eliminacao_dupla":
+      return podioEliminacaoDupla(chave);
+    case "colocacao":
+      return podioColocacao(chave);
+    default:
+      return calcularPodio(chave);
+  }
+}
+
+/** Chave concluída segundo a regra do formato. */
+function chaveConcluida(chave: ChaveEngine): boolean {
+  switch (chave.formato) {
+    case "round_robin":
+      return chave.lutas.every((l) => l.vencedor !== null);
+    case "melhor_de_tres":
+      return serieDecidida(chave);
+    case "tres_repescagem":
+      return tresRepescagemConcluida(chave);
+    case "eliminacao_dupla":
+      return eliminacaoDuplaConcluida(chave);
+    case "colocacao":
+      return colocacaoConcluida(chave);
+    default: {
+      // eliminação: final (última rodada) decidida
+      const final = chave.lutas.find((l) => l.rodada === chave.rodadas);
+      return !!final && final.vencedor !== null;
+    }
+  }
 }
 
 export function montarChaveEngine(chave: ChaveRow, linhas: LutaRow[]): ChaveEngine {
   const formato = formatoDaChave(chave);
-  const byes = idsDeBye(linhas, formato);
+  // na dupla o bye é "vencedor definido com apenas um atleta" (walkover); nos
+  // demais em árvore, a detecção geométrica de idsDeBye.
+  const byes =
+    formato === "eliminacao_dupla" || formato === "colocacao"
+      ? new Set(
+          linhas
+            .filter(
+              (l) =>
+                l.vencedorInscricaoId != null &&
+                (l.atleta1InscricaoId == null) !== (l.atleta2InscricaoId == null),
+            )
+            .map((l) => l.id),
+        )
+      : idsDeBye(linhas, formato);
   return {
     formato,
     seed: chave.seedSorteio,
@@ -122,6 +241,9 @@ export function montarChaveEngine(chave: ChaveRow, linhas: LutaRow[]): ChaveEngi
       atleta2: l.atleta2InscricaoId,
       proximaLutaId: l.proximaLutaId,
       proximaLutaSlot: (l.proximaLutaSlot ?? null) as 1 | 2 | null,
+      proximaLutaPerdedorId: l.proximaLutaPerdedorId,
+      proximaLutaPerdedorSlot: (l.proximaLutaPerdedorSlot ?? null) as 1 | 2 | null,
+      fase: l.fase,
       vencedor: l.vencedorInscricaoId,
       metodo: l.metodo,
       bye: byes.has(l.id),
@@ -131,10 +253,7 @@ export function montarChaveEngine(chave: ChaveRow, linhas: LutaRow[]): ChaveEngi
 
 /** Pódio de uma chave concluída, respeitando o formato. */
 export function calcularPodioDaChave(chave: ChaveRow, linhas: LutaRow[]): Podio {
-  const engine = montarChaveEngine(chave, linhas);
-  return engine.formato === "round_robin"
-    ? podioRoundRobin(engine)
-    : calcularPodio(engine);
+  return podioDoEngine(montarChaveEngine(chave, linhas));
 }
 
 export interface PlacarLuta {
@@ -165,10 +284,7 @@ export async function registrarResultadoNoBanco(
   const antes = montarChaveEngine(chave, linhas);
 
   // o motor valida (vencedor pertence à luta, correção bloqueada etc.) e avança
-  const depois =
-    antes.formato === "round_robin"
-      ? registrarResultadoRoundRobin(antes, lutaId, vencedorId, metodo)
-      : registrarResultado(antes, lutaId, vencedorId, metodo);
+  const depois = registrarNoEngine(antes, lutaId, vencedorId, metodo);
 
   const lutaDecidida = depois.lutas.find((l) => l.id === lutaId)!;
   await db
@@ -211,19 +327,12 @@ export async function registrarResultadoNoBanco(
       .where(eq(lutas.id, d.id));
   }
 
-  const concluida =
-    depois.formato === "round_robin"
-      ? depois.lutas.every((l) => l.vencedor !== null)
-      : depois.lutas.find((l) => l.rodada === depois.rodadas)!.vencedor !== null;
+  const concluida = chaveConcluida(depois);
   const novoStatus = concluida ? "concluida" : "em_andamento";
   if (novoStatus !== chave.status) {
     await db.update(chaves).set({ status: novoStatus }).where(eq(chaves.id, chaveId));
   }
 
-  const podio = concluida
-    ? depois.formato === "round_robin"
-      ? podioRoundRobin(depois)
-      : calcularPodio(depois)
-    : null;
+  const podio = concluida ? podioDoEngine(depois) : null;
   return { podio };
 }

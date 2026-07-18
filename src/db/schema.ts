@@ -85,6 +85,11 @@ export const chaveFormatoEnum = pgEnum("chave_formato", [
   "eliminacao_simples",
   "eliminacao_dupla",
   "round_robin",
+  "melhor_de_tres",
+  "tres_repescagem",
+  "colocacao",
+  "multistage",
+  "votacao_jurados",
 ]);
 
 export const chaveStatusEnum = pgEnum("chave_status", [
@@ -386,6 +391,11 @@ export const lutas = pgTable("lutas", {
   proximaLutaId: uuid("proxima_luta_id"),
   // em qual slot da próxima luta o vencedor entra: 1 ou 2
   proximaLutaSlot: integer("proxima_luta_slot"),
+  // rota do perdedor (eliminação dupla): para onde o perdedor cai e em qual slot
+  proximaLutaPerdedorId: uuid("proxima_luta_perdedor_id"),
+  proximaLutaPerdedorSlot: integer("proxima_luta_perdedor_slot"),
+  // fase da chave (eliminação dupla): "wb" (vencedores), "lb" (perdedores), "gf" (grande final)
+  fase: text("fase"),
   vencedorInscricaoId: uuid("vencedor_inscricao_id").references(() => inscricoes.id),
   metodo: lutaMetodoEnum("metodo"),
   pontos1: integer("pontos1").notNull().default(0),

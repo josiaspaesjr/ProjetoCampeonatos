@@ -92,6 +92,7 @@ export default async function PaginaChave({
           lutas={linhas}
           atletas={atletas}
           formato={chave.formato}
+          labels={dic.bracket}
           acaoResultado={
             chave.status === "publicada" || chave.status === "em_andamento"
               ? lancarResultado.bind(null, evento.id, chave.id)
