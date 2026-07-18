@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { Eyebrow } from "@/components/marca";
 import { Spinner } from "@/components/ui/botao-acao";
@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect } from "@/components/ui/native-select";
 import { CLASSES_IDADE, FAIXAS } from "@/lib/categorias/cbjj";
 import { PAISES, nomePaisLocale } from "@/lib/paises";
-import { formatarCep, formatarCpf, validarCpf } from "@/lib/cpf";
+import { formatarCep, formatarCpf, soDigitos, validarCpf } from "@/lib/cpf";
+import { buscarCep } from "@/lib/cep";
 import {
   categoriaCompativel,
   idadeNoAnoDoEvento,
@@ -151,6 +152,11 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
   const [bairro, setBairro] = useState(perfil?.bairro ?? "");
   const [cidade, setCidade] = useState(perfil?.cidade ?? "");
   const [uf, setUf] = useState(perfil?.uf ?? "");
+  const [cepStatus, setCepStatus] = useState<
+    "idle" | "carregando" | "nao_encontrado" | "erro"
+  >("idle");
+  const cepAbortRef = useRef<AbortController | null>(null);
+  const ultimoCepRef = useRef("");
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState<"pagar_agora" | "pagar_depois" | null>(
@@ -207,6 +213,47 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
       setter(v);
       setCategoriaId(null);
     };
+
+  // Ao completar os 8 dígitos do CEP (só Brasil), consulta o ViaCEP e
+  // preenche endereço/bairro/cidade/UF. Número e complemento seguem manuais.
+  async function buscarEnderecoPorCep(digitos: string) {
+    ultimoCepRef.current = digitos;
+    cepAbortRef.current?.abort();
+    const ctrl = new AbortController();
+    cepAbortRef.current = ctrl;
+    setCepStatus("carregando");
+    try {
+      const end = await buscarCep(digitos, ctrl.signal);
+      if (ctrl.signal.aborted) return;
+      if (!end) {
+        setCepStatus("nao_encontrado");
+        return;
+      }
+      setCepStatus("idle");
+      // CEPs "gerais" vêm sem logradouro/bairro; não apagar o que já existe.
+      if (end.logradouro) setLogradouro(end.logradouro);
+      if (end.bairro) setBairro(end.bairro);
+      if (end.cidade) setCidade(end.cidade);
+      if (end.uf) setUf(end.uf);
+      // leva o foco pro que ainda falta preencher
+      document.getElementById("insc-numero")?.focus();
+    } catch (e) {
+      if (ctrl.signal.aborted || (e as Error)?.name === "AbortError") return;
+      setCepStatus("erro");
+    }
+  }
+
+  function aoMudarCep(valor: string) {
+    const formatado = formatarCep(valor);
+    setCep(formatado);
+    const digitos = soDigitos(formatado);
+    if (ehBrasil && digitos.length === 8) {
+      if (digitos !== ultimoCepRef.current) buscarEnderecoPorCep(digitos);
+    } else {
+      ultimoCepRef.current = "";
+      if (cepStatus !== "idle") setCepStatus("idle");
+    }
+  }
 
   const labelCls =
     "mb-[9px] block font-cond text-[13px] font-semibold uppercase tracking-[0.08em] text-muted-2";
@@ -400,8 +447,24 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
                 placeholder="00000-000"
                 maxLength={9}
                 value={cep}
-                onChange={(e) => setCep(formatarCep(e.target.value))}
+                onChange={(e) => aoMudarCep(e.target.value)}
+                aria-busy={cepStatus === "carregando"}
               />
+              {cepStatus === "carregando" && (
+                <p className="mt-1.5 flex items-center gap-1.5 font-cond text-[13px] text-muted-3">
+                  <Spinner className="h-3 w-3" /> {di.cepBuscando}
+                </p>
+              )}
+              {cepStatus === "nao_encontrado" && (
+                <p className="mt-1.5 font-cond text-[13px] text-destructive">
+                  {di.cepNaoEncontrado}
+                </p>
+              )}
+              {cepStatus === "erro" && (
+                <p className="mt-1.5 font-cond text-[13px] text-warning-foreground">
+                  {di.cepErro}
+                </p>
+              )}
             </div>
             <div>
               <label className={labelCls} htmlFor="insc-logradouro">
