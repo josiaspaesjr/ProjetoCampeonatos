@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
+import { AutoRefresh } from "@/components/auto-refresh";
 import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import {
   classesEmOrdem,
@@ -121,6 +122,10 @@ export function EstruturadorAreas({
 
   return (
     <AbrirLutaCtx.Provider value={setLutaSel}>
+      {/* reajuste ao vivo: com cronograma na tela, re-busca o servidor (soft,
+          preserva o estado do cliente) para os horários acompanharem as lutas */}
+      {estruturado && <AutoRefresh segundos={30} />}
+
       {/* AVISO (ex.: as lutas não cabem no período) */}
       {erro && (
         <div className="flex items-start gap-3 border border-brand/40 bg-brand/10 px-[18px] py-4">

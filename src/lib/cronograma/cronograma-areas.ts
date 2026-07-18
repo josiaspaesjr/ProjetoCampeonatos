@@ -5,7 +5,8 @@ import { chaveDoGrupo, nomeDaClasse } from "@/lib/categorias/distribuicao-areas"
 import { idsDeBye } from "@/lib/chaves/byes";
 import { duracaoDaCategoria } from "./fila";
 import { diasDoEventoOuDefault } from "./dias";
-import { encaixarItens } from "./janelas";
+import { encaixarComProgresso, type ItemProgresso } from "./janelas";
+import { localizarNoEixo, paredeSegundos } from "./relogio";
 
 /**
  * Cronograma de lutas por área para a seção **Áreas** do organizador.
@@ -173,6 +174,8 @@ export async function montarCronogramaDoEvento(
   db: Db,
   eventoId: string,
   dataInicio: string | Date,
+  /** "agora" injetável (testes); reancora as lutas pendentes no tempo real */
+  agora: Date = new Date(),
 ): Promise<AreaCron[]> {
   const todasAreas = await db.query.areas.findMany({
     where: eq(areas.eventoId, eventoId),
@@ -287,17 +290,33 @@ export async function montarCronogramaDoEvento(
       return { c, dur, atletas, nAtletas, grupoChave, chaveGerada, visiveis, nUnidades };
     });
 
-    // encaixa todas as unidades da área nas janelas dos dias, de uma vez
-    const duracoes: number[] = [];
+    // encaixa todas as unidades da área nas janelas, reancorando no tempo real:
+    // lutas encerradas usam o término real (encerradaEm); as pendentes partem do
+    // momento em que a área ficou livre (ou "agora"), somando a estimativa.
+    const itens: ItemProgresso[] = [];
     for (const m of metaCats) {
-      for (let k = 0; k < m.nUnidades; k++) duracoes.push(m.dur);
+      if (m.chaveGerada) {
+        for (const l of m.visiveis) {
+          const fimReal = l.encerradaEm
+            ? localizarNoEixo(janelas, paredeSegundos(l.encerradaEm))
+            : null;
+          itens.push({ duracao: m.dur, fimReal });
+        }
+      } else {
+        // sem chave: unidades estimadas, sempre pendentes
+        for (let k = 0; k < m.nUnidades; k++) {
+          itens.push({ duracao: m.dur, fimReal: null });
+        }
+      }
     }
-    const encaixe = encaixarItens(janelas, duracoes);
+    const agoraPonto = localizarNoEixo(janelas, paredeSegundos(agora));
+    const encaixe = encaixarComProgresso(janelas, itens, agoraPonto);
 
     // intervalo real usado por dia (para o header multi-dia)
     const porDia = new Map<number, { data: string; ini: number; fim: number }>();
     encaixe.forEach((e, i) => {
-      const fimItem = e.inicioSegundos + duracoes[i];
+      // slot encerrado: o "fim" é o próprio horário real (não soma a estimativa)
+      const fimItem = e.real ? e.inicioSegundos : e.inicioSegundos + itens[i].duracao;
       const cur = porDia.get(e.diaIndex);
       if (cur) {
         cur.ini = Math.min(cur.ini, e.inicioSegundos);

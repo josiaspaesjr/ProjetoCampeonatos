@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  encaixarComProgresso,
   encaixarItens,
   verificarCapacidade,
+  type Ancora,
   type CatCapacidade,
+  type ItemProgresso,
 } from "./janelas";
 import type { JanelaDia } from "./dias";
 
@@ -51,6 +54,95 @@ describe("encaixarItens", () => {
 
   it("lista de durações vazia devolve vazio", () => {
     expect(encaixarItens([dia("d1", 0, 3600)], [])).toEqual([]);
+  });
+
+  it("âncora de início: empacota a partir dela, não do início do dia", () => {
+    const r = encaixarItens([dia("d1", 0, 36000)], [1800, 1800], {
+      diaIndex: 0,
+      segundos: 600,
+    });
+    expect(r.map((i) => i.inicioSegundos)).toEqual([600, 2400]);
+  });
+
+  it("âncora além do fim de um dia intermediário rola para o próximo", () => {
+    const r = encaixarItens([dia("d1", 0, 3600), dia("d2", 0, 3600)], [1800], {
+      diaIndex: 0,
+      segundos: 3600,
+    });
+    expect(r[0]).toMatchObject({ diaIndex: 1, inicioSegundos: 0 });
+  });
+});
+
+describe("encaixarComProgresso", () => {
+  const prog = (duracao: number, fimReal: Ancora | null = null): ItemProgresso => ({
+    duracao,
+    fimReal,
+  });
+
+  it("luta encerrada cedo adianta as pendentes seguintes", () => {
+    // 3 lutas de 1800s; a 1ª terminou às 600s → as seguintes partem de 600
+    const janelas = [dia("d1", 0, 36000)];
+    const r = encaixarComProgresso(
+      janelas,
+      [prog(1800, { diaIndex: 0, segundos: 600 }), prog(1800), prog(1800)],
+      { diaIndex: 0, segundos: 600 },
+    );
+    expect(r.map((s) => [s.inicioSegundos, s.real])).toEqual([
+      [600, true], // encerrada: mostra o término real
+      [600, false], // pendente reancorada (estático daria 1800)
+      [2400, false], // (estático daria 3600)
+    ]);
+  });
+
+  it("sem nada encerrado degrada exatamente para encaixarItens", () => {
+    const janelas = [dia("d1", 0, 36000), dia("d2", 0, 36000)];
+    const duracoes = [1800, 1800, 1800];
+    const r = encaixarComProgresso(
+      janelas,
+      duracoes.map((d) => prog(d)),
+      { diaIndex: 0, segundos: 0 },
+    );
+    const base = encaixarItens(janelas, duracoes);
+    expect(r.map((s) => [s.diaIndex, s.inicioSegundos])).toEqual(
+      base.map((b) => [b.diaIndex, b.inicioSegundos]),
+    );
+    expect(r.every((s) => !s.real)).toBe(true);
+  });
+
+  it("a 1ª pendente nunca fica no passado: agora empurra o piso", () => {
+    const r = encaixarComProgresso(
+      [dia("d1", 0, 36000)],
+      [prog(1800, { diaIndex: 0, segundos: 60 }), prog(1800)],
+      { diaIndex: 0, segundos: 7200 }, // já são 02:00 de janela
+    );
+    expect(r[1].inicioSegundos).toBe(7200); // não 60
+  });
+
+  it("encerradas fora de ordem: cada uma mostra seu término, piso pega o maior", () => {
+    const r = encaixarComProgresso(
+      [dia("d1", 0, 36000)],
+      [
+        prog(1800, { diaIndex: 0, segundos: 1000 }),
+        prog(1800, { diaIndex: 0, segundos: 500 }),
+        prog(1800),
+      ],
+      { diaIndex: 0, segundos: 1000 },
+    );
+    expect(r.map((s) => s.inicioSegundos)).toEqual([1000, 500, 1000]);
+    expect(r.map((s) => s.real)).toEqual([true, true, false]);
+  });
+
+  it("multi-dia: pendente que estoura o dia corrente rola inteira para o próximo", () => {
+    const r = encaixarComProgresso(
+      [dia("d1", 0, 3600), dia("d2", 0, 3600)],
+      [prog(1800, { diaIndex: 0, segundos: 3000 }), prog(1800), prog(1800)],
+      { diaIndex: 0, segundos: 3000 },
+    );
+    expect(r.map((s) => [s.diaIndex, s.inicioSegundos])).toEqual([
+      [0, 3000], // encerrada (real) no dia 0
+      [1, 0], // não cabe no resto do d0 → rola para o d1
+      [1, 1800],
+    ]);
   });
 });
 

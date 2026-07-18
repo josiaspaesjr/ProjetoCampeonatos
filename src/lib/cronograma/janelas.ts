@@ -26,6 +26,27 @@ export interface ItemEncaixado {
   overflow: boolean;
 }
 
+/** ponto no eixo do motor: dia (0-based) + segundos desde a meia-noite desse dia */
+export interface Ancora {
+  diaIndex: number;
+  segundos: number;
+}
+
+/** BIG > 86400: ao comparar âncoras, o dia sempre domina os segundos */
+const BIG_DIA = 200000;
+
+/** escalar monotônico de uma âncora (para comparar entre dias) */
+function escalar(a: Ancora): number {
+  return a.diaIndex * BIG_DIA + a.segundos;
+}
+
+/** maior de duas âncoras; null conta como "ausente" */
+function maxAncora(a: Ancora | null, b: Ancora | null): Ancora | null {
+  if (!a) return b;
+  if (!b) return a;
+  return escalar(a) >= escalar(b) ? a : b;
+}
+
 /**
  * Encaixa uma sequência de lutas (durações em segundos, na ordem) nas janelas
  * dos dias. Cada luta é **atômica**: se não cabe no que resta do dia e há um
@@ -33,10 +54,16 @@ export interface ItemEncaixado {
  * há mais dias, fica no último além do horário de término e marca `overflow`
  * (nunca se perde uma luta). Uma luta maior que um dia inteiro também marca
  * `overflow`.
+ *
+ * Com `inicioAncora`, o cursor começa nesse ponto (nunca antes do início do dia
+ * ancorado) em vez de `janelas[0].inicioSegundos` — é o que permite reancorar as
+ * lutas pendentes no progresso real (ver `encaixarComProgresso`). Sem o 3º
+ * argumento, o comportamento é idêntico ao anterior.
  */
 export function encaixarItens(
   janelas: JanelaDia[],
   duracoes: number[],
+  inicioAncora?: Ancora,
 ): ItemEncaixado[] {
   const resultado: ItemEncaixado[] = [];
   if (!janelas.length) {
@@ -51,6 +78,20 @@ export function encaixarItens(
 
   let diaIndex = 0;
   let cursor = janelas[0].inicioSegundos;
+
+  if (inicioAncora) {
+    diaIndex = Math.min(Math.max(inicioAncora.diaIndex, 0), janelas.length - 1);
+    // não começa antes do início do dia ancorado
+    cursor = Math.max(inicioAncora.segundos, janelas[diaIndex].inicioSegundos);
+    // pula dias cujo fim a âncora já ultrapassou (área atrasada / gap noturno)
+    while (
+      diaIndex < janelas.length - 1 &&
+      cursor >= janelas[diaIndex].fimSegundos
+    ) {
+      diaIndex++;
+      cursor = janelas[diaIndex].inicioSegundos;
+    }
+  }
 
   for (const dur of duracoes) {
     // rola para o próximo dia enquanto a luta não couber no resto do atual
@@ -73,6 +114,86 @@ export function encaixarItens(
   }
 
   return resultado;
+}
+
+/** item para o encaixe com progresso real */
+export interface ItemProgresso {
+  /** duração estimada (s) — usada só enquanto a luta está pendente */
+  duracao: number;
+  /** término real no eixo do motor quando a luta já encerrou; senão null */
+  fimReal: Ancora | null;
+}
+
+/** slot resultante do encaixe com progresso */
+export interface SlotProgresso extends ItemEncaixado {
+  /** true quando o horário veio do término real (histórico), não da estimativa */
+  real: boolean;
+}
+
+/**
+ * Encaixa as lutas reancorando pelo progresso **real** da área:
+ * - lutas encerradas (`fimReal`) exibem o próprio término real;
+ * - as pendentes reancoram a partir de `max(maior término real, agora)` e
+ *   empacotam suas durações estimadas nas janelas (regras de `encaixarItens`).
+ *
+ * Assim, uma luta que termina antes do estimado adianta as seguintes. Sem
+ * nenhuma luta encerrada, `piso` é indefinido e o resultado degrada
+ * **exatamente** para `encaixarItens` (sem regressão em evento que não começou).
+ */
+export function encaixarComProgresso(
+  janelas: JanelaDia[],
+  itens: ItemProgresso[],
+  agora: Ancora | null,
+): SlotProgresso[] {
+  if (!janelas.length) {
+    return itens.map(() => ({
+      diaIndex: 0,
+      data: "",
+      inicioSegundos: 0,
+      overflow: true,
+      real: false,
+    }));
+  }
+
+  // "área livre" = maior término real entre as encerradas (max ignora ordem)
+  let libre: Ancora | null = null;
+  for (const it of itens) {
+    if (it.fimReal) libre = maxAncora(libre, it.fimReal);
+  }
+  // piso das pendentes; sem nada encerrado, fica indefinido → encaixe estático
+  const piso: Ancora | undefined = libre
+    ? (maxAncora(libre, agora) ?? undefined)
+    : undefined;
+
+  // empacota SÓ as pendentes (subsequência, ordem preservada) a partir do piso
+  const pendentes = itens.filter((it) => it.fimReal === null);
+  const encaixePend = encaixarItens(
+    janelas,
+    pendentes.map((p) => p.duracao),
+    piso,
+  );
+
+  // costura de volta na ordem original das lutas
+  const out: SlotProgresso[] = [];
+  let pp = 0;
+  for (const it of itens) {
+    if (it.fimReal) {
+      const diaIndex = Math.min(
+        Math.max(it.fimReal.diaIndex, 0),
+        janelas.length - 1,
+      );
+      out.push({
+        diaIndex,
+        data: janelas[diaIndex].data,
+        inicioSegundos: it.fimReal.segundos,
+        overflow: false,
+        real: true,
+      });
+    } else {
+      out.push({ ...encaixePend[pp++], real: false });
+    }
+  }
+  return out;
 }
 
 /** categoria com carga (balanceamento) e demanda real (tempo) para o check */
