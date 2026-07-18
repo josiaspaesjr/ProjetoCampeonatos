@@ -850,15 +850,33 @@ function ColocacaoView({
         <div className="overflow-x-auto pb-2">
           <div className="flex gap-6">
             {cols.map((c) => (
-              <ColunaLutas
-                key={c.rodada}
-                titulo={rotuloRodada(c.rodada, cols.length, "round_robin", L)}
-                lutas={c.lutas}
-                byes={byes}
-                atletas={atletas}
-                labels={L}
-                acaoResultado={acaoResultado}
-              />
+              <div key={c.rodada} className="w-60 shrink-0">
+                <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {rotuloRodada(c.rodada, cols.length, "round_robin", L)}
+                </p>
+                <div className="flex flex-col justify-around gap-4">
+                  {c.lutas.map((luta) => {
+                    const m = luta.fase?.match(/^col:(\d+)$/);
+                    const pos = m ? Number(m[1]) : null;
+                    return (
+                      <div key={luta.id}>
+                        {pos && (
+                          <p className="mb-1 text-center font-cond text-[10px] font-bold uppercase tracking-[0.08em] text-brand">
+                            {pos}º / {pos + 1}º
+                          </p>
+                        )}
+                        <CartaoLuta
+                          luta={luta}
+                          bye={byes.has(luta.id)}
+                          atletas={atletas}
+                          labels={L}
+                          acaoResultado={acaoResultado}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             ))}
           </div>
         </div>

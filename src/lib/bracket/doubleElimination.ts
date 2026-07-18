@@ -1,4 +1,4 @@
-import { criarRng, embaralhar } from "./rng";
+import { agruparPorChave, criarRng, embaralhar } from "./rng";
 import type {
   Chave,
   Inscrito,
@@ -142,7 +142,11 @@ export function gerarEliminacaoDupla(
   const size = 1 << k;
 
   const ordem = ordemSeeds(size);
-  const sorteados = embaralhar(inscritos, rng);
+  // agrupa por academia → seeds consecutivos → seeding padrão espalha por quartas
+  const sorteados =
+    opcoes.separarAcademias ?? true
+      ? agruparPorChave(inscritos, rng, (a, i) => a.academiaId ?? `_${i}`)
+      : embaralhar(inscritos, rng);
   const slots = ordem.map((s) => (s <= N ? sorteados[s - 1].id : null));
 
   const lutas: Luta[] = [];

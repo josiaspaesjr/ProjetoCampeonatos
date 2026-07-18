@@ -1,4 +1,4 @@
-import { criarRng, embaralhar } from "./rng";
+import { agruparPorChave, criarRng } from "./rng";
 import {
   calcularPodio,
   gerarEliminacaoSimples,
@@ -49,10 +49,12 @@ export function gerarMultistage(
   }
 
   const rng = criarRng(opcoes.seed);
-  const sorteados = embaralhar(inscritos, rng);
+  // agrupa por academia antes de distribuir por `i % g` → cada academia é
+  // repartida entre grupos diferentes (colegas raramente no mesmo grupo)
+  const sorteados = agruparPorChave(inscritos, rng, (a, i) => a.academiaId ?? `_${i}`);
   const g = numeroDeGrupos(sorteados.length);
 
-  // distribui em serpentina (round-robin) para equilibrar tamanhos
+  // distribui por rodízio de grupos, mantendo os blocos de academia
   const grupos: Inscrito[][] = Array.from({ length: g }, () => []);
   sorteados.forEach((a, i) => grupos[i % g].push(a));
 

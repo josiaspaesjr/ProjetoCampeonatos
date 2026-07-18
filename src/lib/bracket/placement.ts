@@ -1,4 +1,4 @@
-import { criarRng, embaralhar } from "./rng";
+import { agruparPorChave, criarRng, embaralhar } from "./rng";
 import {
   ordemSeeds,
   registrarResultadoEliminacaoDupla,
@@ -36,7 +36,10 @@ export function gerarColocacao(
   while (1 << k < N) k++;
   const size = 1 << k;
   const ordem = ordemSeeds(size);
-  const sorteados = embaralhar(inscritos, rng);
+  const sorteados =
+    opcoes.separarAcademias ?? true
+      ? agruparPorChave(inscritos, rng, (a, i) => a.academiaId ?? `_${i}`)
+      : embaralhar(inscritos, rng);
   const slots = ordem.map((s) => (s <= N ? sorteados[s - 1].id : null));
 
   const lutas: Luta[] = [];

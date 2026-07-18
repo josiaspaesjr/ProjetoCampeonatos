@@ -61,6 +61,26 @@ describe("gerarMultistage", () => {
       gerarMultistage(inscritos(8), { seed: "x" }),
     );
   });
+
+  it("reparte colegas de academia entre grupos diferentes", () => {
+    // 8 atletas, 2 academias de 4 → 2 grupos → cada grupo com as duas academias
+    const insc = [
+      ...Array.from({ length: 4 }, (_, i) => ({ id: `a${i}`, academiaId: "A" })),
+      ...Array.from({ length: 4 }, (_, i) => ({ id: `b${i}`, academiaId: "B" })),
+    ];
+    const chave = gerarMultistage(insc, { seed: "s" });
+    const fases = [...new Set(chave.lutas.map((l) => l.fase!))];
+    for (const fase of fases) {
+      const ids = new Set(
+        chave.lutas
+          .filter((l) => l.fase === fase)
+          .flatMap((l) => [l.atleta1, l.atleta2])
+          .filter((x): x is string => x != null),
+      );
+      const academias = new Set([...ids].map((id) => (id.startsWith("a") ? "A" : "B")));
+      expect(academias.size).toBe(2); // o grupo tem atletas das duas academias
+    }
+  });
 });
 
 describe("grupos → playoff → pódio", () => {

@@ -39,3 +39,26 @@ export function embaralhar<T>(itens: readonly T[], rng: () => number): T[] {
   }
   return copia;
 }
+
+/**
+ * Embaralha e agrupa por chave (ex.: academia) em blocos contíguos, maiores
+ * primeiro. Assim, ao mapear para seeds consecutivos, o seeding padrão espalha
+ * cada academia por quartas diferentes (eliminação dupla/colocação); e na
+ * distribuição por `i % nGrupos` (multistage) cada academia é repartida entre
+ * grupos. Determinístico pelo rng.
+ */
+export function agruparPorChave<T>(
+  itens: readonly T[],
+  rng: () => number,
+  chave: (item: T, i: number) => string,
+): T[] {
+  const base = embaralhar(itens, rng);
+  const buckets = new Map<string, T[]>();
+  base.forEach((item, i) => {
+    const k = chave(item, i);
+    const b = buckets.get(k);
+    if (b) b.push(item);
+    else buckets.set(k, [item]);
+  });
+  return [...buckets.values()].sort((a, b) => b.length - a.length).flat();
+}
