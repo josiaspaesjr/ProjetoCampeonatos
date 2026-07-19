@@ -33,20 +33,29 @@ export function CronometroTelao({
   useEffect(() => {
     const calc = () => {
       const base = restanteSeg ?? duracaoBaseSeg;
-      if (rodando && atualizadoEmMs != null) {
-        return base - (Date.now() - atualizadoEmMs) / 1000;
-      }
-      return base;
+      const bruto =
+        rodando && atualizadoEmMs != null
+          ? base - (Date.now() - atualizadoEmMs) / 1000
+          : base;
+      // Nunca abaixo de 00:00: um relógio deixado "rodando" com âncora antiga
+      // (ou dado semeado/abandonado) pararia em 00:00 em vez de virar um
+      // negativo crescente sem sentido (-22:49…). O tablet controla a luta ao
+      // vivo e reancoraria o relógio; aqui é read-only.
+      return Math.max(0, bruto);
     };
     setSeg(calc());
     if (!rodando) return;
-    const id = setInterval(() => setSeg(calc()), 1000);
+    const id = setInterval(() => {
+      const v = calc();
+      setSeg(v);
+      if (v <= 0) clearInterval(id); // chegou a 00:00 — não há mais o que contar
+    }, 1000);
     return () => clearInterval(id);
   }, [restanteSeg, rodando, atualizadoEmMs, duracaoBaseSeg]);
 
   return (
     <span
-      className={cn("disp tnum tabular-nums", seg < 0 && "text-brand", className)}
+      className={cn("disp tnum tabular-nums", seg <= 0 && "text-brand", className)}
     >
       {fmtRelogio(seg)}
     </span>
