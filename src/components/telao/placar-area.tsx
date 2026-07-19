@@ -31,9 +31,9 @@ export async function PlacarArea({
     (id && fila.atletas[id]?.academia) || "";
 
   return (
-    <div className="flex min-h-screen flex-col gap-3 p-3 md:gap-5 md:p-6">
+    <div className="flex h-screen flex-col gap-3 overflow-hidden p-3 md:gap-4 md:p-5">
       {/* BARRA SUPERIOR — categoria + cronômetro (estilo do tablet) */}
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-2xl bg-zinc-900 px-6 py-4 text-white md:px-8 md:py-6">
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-2xl bg-zinc-900 px-6 py-4 text-white md:px-8 md:py-5">
         <div className="min-w-0">
           <div className="truncate font-cond text-xs font-semibold uppercase tracking-[0.16em] text-brand md:text-sm">
             {evento.nome} · {fila.area.nome}
@@ -54,14 +54,14 @@ export async function PlacarArea({
               emAndamento.luta.cronometroAtualizadoEm?.getTime() ?? null
             }
             duracaoBaseSeg={tempoDeLutaSegundos(emAndamento.categoria.faixa)}
-            className="text-[clamp(56px,11vw,132px)] leading-none"
+            className="text-[clamp(44px,min(10vw,15vh),120px)] leading-none"
           />
         )}
       </div>
 
       {/* PLACAR — dois lados azul × vermelho (mesmo do tablet, ampliado) */}
       {emAndamento ? (
-        <div className="flex flex-1 flex-col gap-3 md:flex-row md:gap-5">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 md:flex-row md:gap-5">
           <LadoTatame
             nome={nome(emAndamento.luta.atleta1InscricaoId)}
             academia={academia(emAndamento.luta.atleta1InscricaoId)}
@@ -82,7 +82,7 @@ export async function PlacarArea({
           />
         </div>
       ) : (
-        <div className="flex flex-1 items-center justify-center rounded-2xl bg-surface">
+        <div className="flex min-h-0 flex-1 items-center justify-center rounded-2xl bg-surface">
           <p className="disp text-[clamp(32px,5vw,64px)] text-white/25">
             {fila.fila.length === 0 ? t.areaConcluida : t.aguardandoLuta}
           </p>
@@ -144,7 +144,9 @@ function LadoTatame({
   return (
     <div
       className={cn(
-        "flex flex-1 flex-col justify-center rounded-2xl p-6 text-white md:p-10",
+        // min-w-0 é o que deixa o `truncate` do nome funcionar dentro do flex —
+        // sem ele, nomes longos empurram a largura e estouram a tela.
+        "flex min-w-0 flex-1 flex-col justify-center overflow-hidden rounded-2xl p-6 text-white md:p-8",
         cor,
       )}
     >
@@ -157,7 +159,7 @@ function LadoTatame({
         </div>
       )}
       <div className="mt-4 flex items-end justify-between gap-6">
-        <span className="disp tnum leading-[0.78] text-[clamp(96px,19vw,300px)]">
+        <span className="disp tnum leading-[0.78] text-[clamp(64px,min(18vw,30vh),280px)]">
           {pontos}
         </span>
         <div className="mb-2 shrink-0 space-y-1 text-right font-cond text-lg uppercase tracking-[0.04em] text-white/80 md:text-2xl">
