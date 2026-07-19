@@ -9,6 +9,7 @@ import { getUsuarioAtual } from "@/lib/auth";
 import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import { formatoAutomatico } from "@/lib/bracket";
+import { ordenarCategoriasExibicao } from "@/lib/categorias/distribuicao-areas";
 import { SeletorFormato } from "@/components/chaves/seletor-formato";
 import { GerarLoteDialog } from "@/components/chaves/gerar-lote-dialog";
 import {
@@ -63,7 +64,10 @@ export default async function PaginaChaves({
     contagem.set(i.categoriaId, (contagem.get(i.categoriaId) ?? 0) + 1);
   }
 
-  const comInscritos = cats.filter((c) => (contagem.get(c.id) ?? 0) > 0);
+  // ordem canônica de exibição (classe → sexo F→M → faixa → peso)
+  const comInscritos = ordenarCategoriasExibicao(
+    cats.filter((c) => (contagem.get(c.id) ?? 0) > 0),
+  );
   const rascunhos = todasChaves.filter((c) => c.status === "rascunho").length;
   // 1 atleta já é elegível (vira campeão por W.O.)
   const pendentes = comInscritos.filter(

@@ -4,6 +4,7 @@ import { getDb } from "@/db";
 import { categorias, chaves, inscricoes } from "@/db/schema";
 import { getEventoPublico } from "@/lib/evento-publico";
 import { getDicionario } from "@/lib/i18n/server";
+import { ordenarCategoriasExibicao } from "@/lib/categorias/distribuicao-areas";
 import { CategoriasFiltro } from "../categorias-filtro";
 
 export default async function AbaCategorias({
@@ -18,10 +19,13 @@ export default async function AbaCategorias({
   const dcat = (await getDicionario()).categorias;
 
   const db = await getDb();
-  const cats = await db.query.categorias.findMany({
-    where: eq(categorias.eventoId, evento.id),
-    orderBy: asc(categorias.nome),
-  });
+  // ordem canônica de exibição: classe → sexo (feminino primeiro) → faixa → peso
+  const cats = ordenarCategoriasExibicao(
+    await db.query.categorias.findMany({
+      where: eq(categorias.eventoId, evento.id),
+      orderBy: asc(categorias.nome),
+    }),
+  );
   const catIds = cats.map((c) => c.id);
 
   const [confirmadas, chavesRows] = await Promise.all([

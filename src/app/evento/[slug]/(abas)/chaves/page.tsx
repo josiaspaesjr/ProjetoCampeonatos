@@ -7,6 +7,7 @@ import { getEventoPublico } from "@/lib/evento-publico";
 import { getDicionario } from "@/lib/i18n/server";
 import { montarFilasDoEvento } from "@/lib/cronograma/fila";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { compararCategoriasExibicao } from "@/lib/categorias/distribuicao-areas";
 
 const quando = (d: Date) =>
   d.toLocaleString("pt-BR", {
@@ -79,19 +80,14 @@ export default async function AbaChaves({
     }
   }
 
-  // agendadas primeiro (por horário), depois as sem tatame (por nome)
+  // ordem canônica de exibição: classe → sexo (feminino primeiro) → faixa → peso
   const linhas = catsPublicadas
     .map((c) => ({
       c,
       inscritos: inscritosPorCat.get(c.id) ?? 0,
       ag: agenda.get(c.id) ?? null,
     }))
-    .sort((a, b) => {
-      if (a.ag && b.ag) return a.ag.inicio.getTime() - b.ag.inicio.getTime();
-      if (a.ag) return -1;
-      if (b.ag) return 1;
-      return a.c.nome.localeCompare(b.c.nome);
-    });
+    .sort((a, b) => compararCategoriasExibicao(a.c, b.c));
 
   return (
     <div className="px-6 pb-20 pt-10 md:px-12">

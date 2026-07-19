@@ -90,6 +90,52 @@ export function ordenarCategorias<T extends CategoriaOrdenavel>(cats: T[]): T[] 
   );
 }
 
+/** categoria mínima para ordenar na exibição (peso aceita number|string do DB) */
+export interface CategoriaExibivel {
+  classeIdade: string;
+  sexo: string;
+  faixa: string | null;
+  tipo: string;
+  limitePesoKg: number | string | null;
+}
+
+/** sexo na exibição: **feminino antes de masculino** */
+const sexoExibicaoRank = (sexo: string) => (sexo === "feminino" ? 0 : 1);
+
+/** peso ordenável na exibição: leve→pesado, pesadíssimo, absoluto por último */
+function pesoExibicaoRank(c: CategoriaExibivel): number {
+  if (c.tipo === "absoluto") return 1_000_000;
+  if (c.limitePesoKg == null) return 999_999;
+  return Number(c.limitePesoKg);
+}
+
+/**
+ * Comparador **canônico de exibição** de categorias: classe de idade (ordem
+ * CBJJ) → sexo (feminino antes de masculino) → faixa (branca→preta) → peso
+ * (leve→pesado). É a ordem única de APRESENTAÇÃO usada nas listas (categorias,
+ * chaves, páginas públicas). NÃO confundir com `ordenarCategorias` (ondas
+ * extremos→meio), que é a ordem do dia p/ distribuir/agendar as áreas.
+ */
+export function compararCategoriasExibicao(
+  a: CategoriaExibivel,
+  b: CategoriaExibivel,
+): number {
+  return (
+    (IDX_CLASSE.get(a.classeIdade) ?? 999) -
+      (IDX_CLASSE.get(b.classeIdade) ?? 999) ||
+    sexoExibicaoRank(a.sexo) - sexoExibicaoRank(b.sexo) ||
+    (IDX_FAIXA.get(a.faixa ?? "") ?? 99) - (IDX_FAIXA.get(b.faixa ?? "") ?? 99) ||
+    pesoExibicaoRank(a) - pesoExibicaoRank(b)
+  );
+}
+
+/** ordena uma lista de categorias pela ordem canônica de exibição */
+export function ordenarCategoriasExibicao<T extends CategoriaExibivel>(
+  cats: T[],
+): T[] {
+  return [...cats].sort(compararCategoriasExibicao);
+}
+
 /**
  * Aloca as categorias (já na ordem do dia) nas N áreas por **menor carga**:
  * cada categoria vai para a área menos carregada no momento (empate → menor

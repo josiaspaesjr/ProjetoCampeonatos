@@ -5,8 +5,9 @@ import { categorias } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
 import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
-import { CLASSES_IDADE, FAIXAS } from "@/lib/categorias/cbjj";
+import { CLASSES_IDADE } from "@/lib/categorias/cbjj";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { ordenarCategoriasExibicao } from "@/lib/categorias/distribuicao-areas";
 import { GRUPOS_PRECO_PRESETS } from "@/lib/lotes/preco";
 import { GeradorGrade } from "@/components/organizador/gerador-grade";
 import { SeletorGrupoPreco } from "@/components/organizador/seletor-grupo-preco";
@@ -19,19 +20,7 @@ import {
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-// ordens canônicas do gerador (classe → sexo → faixa → peso)
-const ORDEM_CLASSE = new Map(CLASSES_IDADE.map((c, i) => [c.id, i]));
-const ORDEM_FAIXA = new Map(FAIXAS.map((f, i) => [f as string, i]));
 const CLASSE_POR_ID = new Map(CLASSES_IDADE.map((c) => [c.id, c]));
-
-type Categoria = typeof categorias.$inferSelect;
-
-/** peso vira número ordenável: leves→pesados, pesadíssimo, e absoluto por último */
-function rankPeso(c: Categoria): number {
-  if (c.tipo === "absoluto") return 1_000_000;
-  if (c.limitePesoKg == null) return 999_999;
-  return Number(c.limitePesoKg);
-}
 
 /** último trecho do nome ("… / Leve (até 76kg)" → "Leve · 76kg") */
 function rotuloPeso(nome: string): string {
@@ -80,16 +69,8 @@ export default async function CategoriasEvento({
   // grupos de preço: presets fixos (mesma lista do select de variação do lote)
   const grupos = [...GRUPOS_PRECO_PRESETS];
 
-  // ordena na mesma sequência em que o gerador apresenta
-  const ordenadas = [...cats].sort(
-    (a, b) =>
-      (ORDEM_CLASSE.get(a.classeIdade) ?? 999) -
-        (ORDEM_CLASSE.get(b.classeIdade) ?? 999) ||
-      (a.sexo === b.sexo ? 0 : a.sexo === "masculino" ? -1 : 1) ||
-      (ORDEM_FAIXA.get(a.faixa ?? "") ?? 999) -
-        (ORDEM_FAIXA.get(b.faixa ?? "") ?? 999) ||
-      rankPeso(a) - rankPeso(b),
-  );
+  // ordem canônica de exibição: classe → sexo (feminino primeiro) → faixa → peso
+  const ordenadas = ordenarCategoriasExibicao(cats);
 
   // nível 1: blocos por classe + sexo
   const blocos = agrupar(ordenadas, (c) => `${c.classeIdade}|${c.sexo}`);

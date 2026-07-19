@@ -5,6 +5,7 @@ import { categorias, chaves, inscricoes } from "@/db/schema";
 import { getEventoPublico } from "@/lib/evento-publico";
 import { dataCompleta } from "@/lib/datas";
 import { getDicionario } from "@/lib/i18n/server";
+import { ordenarCategoriasExibicao } from "@/lib/categorias/distribuicao-areas";
 import {
   AtletasLista,
   type AtletaCard,
@@ -57,7 +58,8 @@ export default async function AbaAtletas({
     else porCat.set(i.categoriaId, [i]);
   }
 
-  const divisoes: DivisaoAtletas[] = cats
+  // ordem canônica de exibição: classe → sexo (feminino primeiro) → faixa → peso
+  const divisoes: DivisaoAtletas[] = ordenarCategoriasExibicao(cats)
     .filter((c) => porCat.has(c.id))
     .map((c) => {
       const lista = porCat.get(c.id)!;
@@ -82,8 +84,7 @@ export default async function AbaAtletas({
           : null,
         atletas,
       };
-    })
-    .sort((a, b) => a.titulo.localeCompare(b.titulo, "pt-BR"));
+    });
 
   const totalConfirmados = inscs.filter((i) => i.status === "confirmada").length;
   const totalPendentes = inscs.length - totalConfirmados;

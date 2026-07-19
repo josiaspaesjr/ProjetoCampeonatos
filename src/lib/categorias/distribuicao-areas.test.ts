@@ -7,6 +7,7 @@ import {
   distribuirBalanceado,
   ondaDaClasse,
   ordenarCategorias,
+  ordenarCategoriasExibicao,
   type CategoriaComCarga,
   type CategoriaOrdenavel,
 } from "./distribuicao-areas";
@@ -32,6 +33,57 @@ function cat(
     ...extra,
   };
 }
+
+describe("ordenarCategoriasExibicao (ordem canônica das listas)", () => {
+  it("classe de idade primeiro (ordem CBJJ, não ondas)", () => {
+    const cats = ordenarCategoriasExibicao([
+      cat("master7", "master7", "branca"),
+      cat("adulto", "adulto", "branca"),
+      cat("kid", "pre_mirim", "branca"),
+    ]);
+    // age order: pré-mirim → adulto → master7 (adulto NÃO vai por último aqui)
+    expect(cats.map((c) => c.classeIdade)).toEqual([
+      "pre_mirim",
+      "adulto",
+      "master7",
+    ]);
+  });
+
+  it("dentro da classe, feminino antes de masculino", () => {
+    const cats = ordenarCategoriasExibicao([
+      cat("m", "adulto", "azul", "masculino"),
+      cat("f", "adulto", "azul", "feminino"),
+    ]);
+    expect(cats.map((c) => c.sexo)).toEqual(["feminino", "masculino"]);
+  });
+
+  it("depois faixa (branca→preta) e por fim peso (leve→pesado)", () => {
+    const cats = ordenarCategoriasExibicao([
+      cat("preta", "adulto", "preta", "masculino", { limitePesoKg: 70 }),
+      cat("branca-pesado", "adulto", "branca", "masculino", { limitePesoKg: 94 }),
+      cat("branca-leve", "adulto", "branca", "masculino", { limitePesoKg: 64 }),
+    ]);
+    expect(cats.map((c) => c.id)).toEqual([
+      "branca-leve",
+      "branca-pesado",
+      "preta",
+    ]);
+  });
+
+  it("prioridade: classe > sexo > faixa > peso", () => {
+    const cats = ordenarCategoriasExibicao([
+      cat("adulto-m-branca", "adulto", "branca", "masculino"),
+      cat("adulto-f-preta", "adulto", "preta", "feminino"),
+      cat("kid-m-preta", "pre_mirim", "preta", "masculino"),
+    ]);
+    // pré-mirim (classe) antes de adulto; dentro do adulto, feminino antes
+    expect(cats.map((c) => c.id)).toEqual([
+      "kid-m-preta",
+      "adulto-f-preta",
+      "adulto-m-branca",
+    ]);
+  });
+});
 
 describe("ondaDaClasse", () => {
   it("extremos da régua CBJJ correm cedo (onda 0)", () => {

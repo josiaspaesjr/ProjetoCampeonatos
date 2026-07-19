@@ -7,6 +7,7 @@ import { Logo } from "@/components/marca";
 import { dataCurta } from "@/lib/datas";
 import { getAtletaAtual } from "@/lib/sessao";
 import { getDicionario } from "@/lib/i18n/server";
+import { ordenarCategoriasExibicao } from "@/lib/categorias/distribuicao-areas";
 import { criarInscricao } from "./actions";
 import { FormInscricao } from "./form-inscricao";
 
@@ -25,7 +26,7 @@ export default async function PaginaInscricao({
   if (!evento) notFound();
 
   const agora = new Date();
-  const [cats, todosLotes, atleta] = await Promise.all([
+  const [catsRaw, todosLotes, atleta] = await Promise.all([
     db.query.categorias.findMany({
       where: and(eq(categorias.eventoId, evento.id), eq(categorias.status, "aberta")),
       orderBy: asc(categorias.nome),
@@ -36,6 +37,8 @@ export default async function PaginaInscricao({
     }),
     getAtletaAtual(),
   ]);
+  // ordem canônica de exibição: classe → sexo (feminino primeiro) → faixa → peso
+  const cats = ordenarCategoriasExibicao(catsRaw);
 
   // academia atual do atleta logado, para pré-selecionar no formulário
   const academiaAtleta = atleta?.academiaId
