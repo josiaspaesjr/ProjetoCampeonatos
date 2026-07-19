@@ -129,10 +129,10 @@ function CardArea({
           <span className="shrink-0">
             {area.totalGrupos} {area.totalGrupos === 1 ? dp.grupo : dp.grupos}
           </span>
-          {/* uma linha por dia usado (janela real); 1 dia → linha única */}
+          {/* uma linha por janela usada (manhã/tarde contam separado) */}
           <div className="tnum text-right">
-            {area.dias.map((d) => (
-              <div key={d.data}>
+            {area.dias.map((d, i) => (
+              <div key={i}>
                 {d.dataLabel} · {d.inicio} → {d.fim}
               </div>
             ))}
@@ -148,14 +148,24 @@ function CardArea({
           </div>
         ) : (
           area.categorias.map((cat, i) => {
-            // divisória ao virar o dia (o header já anuncia o 1º dia)
-            const viraDia =
-              i > 0 && cat.diaIndex !== area.categorias[i - 1].diaIndex;
+            // divisória ao virar o dia OU ao retomar após o intervalo (mesma
+            // data, janela diferente). O header já anuncia o 1º dia.
+            const ant = i > 0 ? area.categorias[i - 1] : null;
+            const novoDia = ant != null && cat.data !== ant.data;
+            const aposIntervalo =
+              ant != null &&
+              cat.data === ant.data &&
+              cat.diaIndex !== ant.diaIndex;
             return (
               <div key={i}>
-                {viraDia && (
+                {novoDia && (
                   <div className="border-b border-white/10 bg-white/[0.03] px-4 py-1.5 font-cond text-[11px] font-bold uppercase tracking-[0.08em] text-brand-soft">
-                    {dp.dia} {cat.diaIndex + 1} · {cat.dataLabel}
+                    {dp.dia} {cat.diaNumero} · {cat.dataLabel}
+                  </div>
+                )}
+                {aposIntervalo && (
+                  <div className="border-b border-white/10 bg-white/[0.02] px-4 py-1.5 font-cond text-[11px] font-bold uppercase tracking-[0.08em] text-muted-3">
+                    {dp.aposIntervalo} · {cat.hora}
                   </div>
                 )}
                 <BlocoCategoria cat={cat} />
@@ -229,13 +239,21 @@ function BlocoCategoria({ cat }: { cat: CategoriaCron }) {
       {cat.chaveGerada ? (
         <ul className="flex flex-col">
           {cat.lutas.map((l, i) => {
-            // categoria que cruza a virada de dia: marca a troca entre as lutas
-            const viraDia = i > 0 && l.diaIndex !== cat.lutas[i - 1].diaIndex;
+            // categoria que cruza a virada de dia ou o intervalo: marca a troca
+            const ant = i > 0 ? cat.lutas[i - 1] : null;
+            const novoDia = ant != null && l.data !== ant.data;
+            const aposIntervalo =
+              ant != null && l.data === ant.data && l.diaIndex !== ant.diaIndex;
             return (
               <Fragment key={i}>
-                {viraDia && (
+                {novoDia && (
                   <li className="border-y border-white/10 bg-white/[0.03] px-4 py-1 font-cond text-[10px] font-bold uppercase tracking-[0.08em] text-brand-soft">
-                    {dp.dia} {l.diaIndex + 1} · {l.dataLabel}
+                    {dp.dia} {l.diaNumero} · {l.dataLabel}
+                  </li>
+                )}
+                {aposIntervalo && (
+                  <li className="border-y border-white/10 bg-white/[0.02] px-4 py-1 font-cond text-[10px] font-bold uppercase tracking-[0.08em] text-muted-3">
+                    {dp.aposIntervalo} · {l.hora}
                   </li>
                 )}
                 <LinhaLuta

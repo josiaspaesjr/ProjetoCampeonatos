@@ -71,6 +71,21 @@ describe("encaixarItens", () => {
     });
     expect(r[0]).toMatchObject({ diaIndex: 1, inicioSegundos: 0 });
   });
+
+  it("pula o intervalo entre duas janelas do mesmo dia (manhã/tarde)", () => {
+    // manhã 09:00–12:00 e tarde 14:00–18:00, mesma data. Lutas de 1h: 3 cabem
+    // na manhã; a 4ª rola para a tarde (14:00), nunca para o intervalo (12–14).
+    const manha = dia("2026-10-24", 9 * 3600, 12 * 3600);
+    const tarde = dia("2026-10-24", 14 * 3600, 18 * 3600);
+    const r = encaixarItens([manha, tarde], Array(4).fill(3600));
+    expect(r.map((i) => [i.diaIndex, i.inicioSegundos])).toEqual([
+      [0, 9 * 3600], // 09:00
+      [0, 10 * 3600], // 10:00
+      [0, 11 * 3600], // 11:00
+      [1, 14 * 3600], // NÃO 12:00 — salta o intervalo e retoma às 14:00
+    ]);
+    expect(r.every((i) => !i.overflow)).toBe(true);
+  });
 });
 
 describe("encaixarComProgresso", () => {
@@ -130,6 +145,25 @@ describe("encaixarComProgresso", () => {
     );
     expect(r.map((s) => s.inicioSegundos)).toEqual([1000, 500, 1000]);
     expect(r.map((s) => s.real)).toEqual([true, true, false]);
+  });
+
+  it("reajuste ao vivo respeita o intervalo: pendente rola p/ a tarde", () => {
+    // manhã 09–12 e tarde 14–18. A 1ª luta encerrou 10:30; restam 2 pendentes de
+    // 1h. Uma cabe na manhã (10:30–11:30); a outra não cabe até 12:00 e rola para
+    // 14:00 (tarde), nunca para o intervalo (12–14). "agora" = 10:30.
+    const manha = dia("2026-10-24", 9 * 3600, 12 * 3600);
+    const tarde = dia("2026-10-24", 14 * 3600, 18 * 3600);
+    const dez30: Ancora = { diaIndex: 0, segundos: 10 * 3600 + 1800 };
+    const r = encaixarComProgresso(
+      [manha, tarde],
+      [prog(3600, dez30), prog(3600), prog(3600)],
+      dez30,
+    );
+    expect(r.map((s) => [s.diaIndex, s.inicioSegundos])).toEqual([
+      [0, 10 * 3600 + 1800], // encerrada 10:30 (real)
+      [0, 10 * 3600 + 1800], // pendente reancora 10:30 → termina 11:30 (cabe na manhã)
+      [1, 14 * 3600], // não cabe até 12:00 → tarde às 14:00 (pula o intervalo)
+    ]);
   });
 
   it("multi-dia: pendente que estoura o dia corrente rola inteira para o próximo", () => {

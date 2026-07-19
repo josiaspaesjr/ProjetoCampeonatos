@@ -42,20 +42,40 @@ export function paredeSegundos(
   return { data, segundos };
 }
 
+/** (dataA, segA) < (dataB, segB) no eixo absoluto (data domina os segundos) */
+function menor(dataA: string, segA: number, dataB: string, segB: number): boolean {
+  return dataA !== dataB ? dataA < dataB : segA < segB;
+}
+
 /**
- * Posiciona uma hora de parede no eixo das janelas (dia + segundos). Casa a data
- * com um dos dias; fora do período, faz clamp no primeiro/último dia — o motor
- * garante que o cursor nunca comece antes do início do dia ancorado.
+ * Posiciona uma hora de parede no eixo das janelas (índice da janela +
+ * segundos). Um mesmo dia pode ter várias janelas (manhã/tarde), então não
+ * basta casar a data: escolhe a **primeira janela cujo fim ainda não passou**
+ * em relação a "agora" —
+ * - agora dentro de uma janela → mantém o offset real (segundos de parede);
+ * - agora antes dela (dia futuro ou no intervalo) → começa no início da janela,
+ *   pulando o tempo livre entre janelas;
+ * - agora depois de todas → último dia (o motor trata como overflow).
+ *
+ * Assim o reajuste ao vivo nunca reancora uma luta pendente no intervalo entre
+ * as janelas nem numa janela já encerrada.
  */
 export function localizarNoEixo(
   janelas: JanelaDia[],
   parede: { data: string; segundos: number },
 ): Ancora {
-  const i = janelas.findIndex((j) => j.data === parede.data);
-  if (i >= 0) return { diaIndex: i, segundos: parede.segundos };
-  // antes do 1º dia → início do período; depois → último dia
-  if (parede.data < janelas[0].data) {
-    return { diaIndex: 0, segundos: janelas[0].inicioSegundos };
+  for (let i = 0; i < janelas.length; i++) {
+    const j = janelas[i];
+    // primeira janela cujo fim (absoluto) é depois de "agora"
+    if (menor(parede.data, parede.segundos, j.data, j.fimSegundos)) {
+      // agora antes do início desta janela → ancora no início dela
+      if (!menor(j.data, j.inicioSegundos, parede.data, parede.segundos)) {
+        return { diaIndex: i, segundos: j.inicioSegundos };
+      }
+      // agora dentro desta janela → preserva o offset real
+      return { diaIndex: i, segundos: parede.segundos };
+    }
   }
+  // depois de todas as janelas → último dia
   return { diaIndex: janelas.length - 1, segundos: parede.segundos };
 }

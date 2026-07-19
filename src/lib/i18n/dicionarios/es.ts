@@ -355,6 +355,7 @@ export const es: Dicionario = {
     aDefinir: "Por definir",
     operarPlacar: "Operar marcador",
     dia: "Día",
+    aposIntervalo: "Tras el intervalo",
   },
   bracket: {
     rodadaPre: "Ronda ",
@@ -517,10 +518,10 @@ export const es: Dicionario = {
       dataGeracaoNota: "Fecha prevista para armar las llaves — solo informativo.",
       detalhesCompeticao: "Detalles de la competición",
       regulamento: "Reglamento",
-      // días del evento (período con franja horaria por día)
+      // días del evento (una o más franjas horarias por día)
       diasEvento: "Días del evento",
       diasNota:
-        "Uno o más días, cada uno con hora de inicio y fin. Las luchas se acomodan en esa franja.",
+        "Una o más franjas por día — repite la fecha para separar mañana y tarde. Las luchas se acomodan en las franjas; el intervalo entre ellas queda libre.",
       diaData: "Fecha",
       horaInicio: "Inicio",
       horaFim: "Fin",
@@ -946,7 +947,7 @@ export const es: Dicionario = {
       // configuración de los días en la propia pantalla de áreas
       diasEvento: "Días del evento",
       diasNota:
-        "Las luchas se distribuyen dentro del horario de cada día. Ajusta los días y horarios antes de estructurar.",
+        "Las luchas se distribuyen dentro de las franjas de cada día. Repite la fecha para tener mañana y tarde — el intervalo entre ellas queda sin luchas. Ajusta antes de estructurar.",
       salvarDias: "Guardar días",
       // aviso cuando las luchas estimadas no caben en el período
       naoCabePre: "Las luchas estimadas (~",
@@ -967,6 +968,8 @@ export const es: Dicionario = {
       diasObrigatorio: "Indica al menos un día con horario para el evento.",
       diaJanelaInvalida:
         "Cada día necesita inicio y fin válidos, con el fin después del inicio.",
+      diaJanelaSobreposta:
+        "Las franjas del mismo día no pueden solaparse — deja un intervalo entre ellas.",
       selecaoVazia:
         "La selección no genera ninguna categoría — marca al menos una clase, un sexo y un cinturón.",
       categoriaComInscritos:

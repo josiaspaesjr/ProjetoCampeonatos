@@ -5,11 +5,13 @@ import { eventoDias } from "@/db/schema";
 /**
  * Dias do evento e suas janelas de horário.
  *
- * Cada dia tem uma janela (início/fim). O período total disponível é a soma das
- * janelas de todos os dias — é contra isso que o gerador de áreas verifica se
- * as lutas cabem, e é isso que o cronograma usa para encaixar as lutas dia a
- * dia. Internamente tudo trabalha em **segundos desde a meia-noite** (como o
- * resto do cronograma), sem fuso horário.
+ * Cada linha é uma **janela** (início/fim); um mesmo dia de calendário pode ter
+ * mais de uma janela (ex.: manhã e tarde), e o intervalo entre elas fica livre
+ * de lutas. O período total disponível é a soma de todas as janelas — é contra
+ * isso que o gerador de áreas verifica se as lutas cabem, e é isso que o
+ * cronograma usa para encaixar as lutas janela a janela. Internamente tudo
+ * trabalha em **segundos desde a meia-noite** (como o resto do cronograma), sem
+ * fuso horário.
  */
 
 /** janela de um dia do evento, em segundos desde a meia-noite */
@@ -59,10 +61,11 @@ export function formatarDuracaoSegundos(seg: number): string {
 
 /**
  * Normaliza as linhas de `evento_dias` em janelas (segundos desde a meia-noite),
- * ordenadas por data. Quando o evento não tem dias configurados, devolve um
- * único dia "aberto" ancorado na data de início (09:00–23:59): o cronograma
- * continua idêntico ao comportamento anterior e o gerador de áreas não bloqueia
- * eventos que nunca configuraram o período.
+ * ordenadas por (data, início) — no mesmo dia, a manhã vem antes da tarde, que é
+ * a ordem em que o cronograma preenche as janelas. Quando o evento não tem dias
+ * configurados, devolve um único dia "aberto" ancorado na data de início
+ * (09:00–23:59): o cronograma continua idêntico ao comportamento anterior e o
+ * gerador de áreas não bloqueia eventos que nunca configuraram o período.
  */
 export function normalizarDias(
   rows: DiaRow[],
@@ -78,7 +81,10 @@ export function normalizarDias(
     ];
   }
   return [...rows]
-    .sort((a, b) => a.data.localeCompare(b.data))
+    .sort(
+      (a, b) =>
+        a.data.localeCompare(b.data) || a.inicioMinutos - b.inicioMinutos,
+    )
     .map((d) => ({
       data: d.data,
       inicioSegundos: d.inicioMinutos * 60,
@@ -93,7 +99,7 @@ export async function diasDoEventoOuDefault(
 ): Promise<JanelaDia[]> {
   const rows = await db.query.eventoDias.findMany({
     where: eq(eventoDias.eventoId, evento.id),
-    orderBy: asc(eventoDias.data),
+    orderBy: [asc(eventoDias.data), asc(eventoDias.inicioMinutos)],
   });
   return normalizarDias(rows, evento);
 }

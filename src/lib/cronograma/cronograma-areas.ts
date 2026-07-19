@@ -79,8 +79,10 @@ export interface LutaCron {
   data: string;
   /** rótulo do dia ("14/03") */
   dataLabel: string;
-  /** índice do dia (0-based) em que a luta cai */
+  /** índice da janela (0-based) em que a luta cai — várias por dia (manhã/tarde) */
   diaIndex: number;
+  /** nº do dia de calendário (1-based) — distinto de diaIndex (janelas) */
+  diaNumero: number;
   /** nome do atleta 1 (ou "A definir" quando o slot ainda não foi resolvido) */
   a1: string;
   a2: string;
@@ -118,8 +120,10 @@ export interface CategoriaCron {
   data: string;
   /** rótulo do dia de início ("14/03") */
   dataLabel: string;
-  /** índice do dia (0-based) em que a categoria começa */
+  /** índice da janela (0-based) em que a categoria começa */
   diaIndex: number;
+  /** nº do dia de calendário (1-based) — distinto de diaIndex (janelas) */
+  diaNumero: number;
   /** nº de lutas (real quando há chave; estimado — atletas−1 — quando não) */
   nLutas: number;
   /** true quando a chave já foi gerada (há lutas de verdade) */
@@ -159,11 +163,13 @@ export interface AreaCron {
   categorias: CategoriaCron[];
 }
 
-/** rótulo da faixa de datas de uma lista de dias */
+/** rótulo da faixa de datas de uma lista de dias (datas distintas: um dia com
+ *  duas janelas não vira "14/03–14/03") */
 function faixaDatasLabel(dias: DiaCron[]): string {
-  if (!dias.length) return "";
-  if (dias.length === 1) return dias[0].dataLabel;
-  return `${dias[0].dataLabel}–${dias[dias.length - 1].dataLabel}`;
+  const datas = [...new Set(dias.map((d) => d.dataLabel))];
+  if (!datas.length) return "";
+  if (datas.length === 1) return datas[0];
+  return `${datas[0]}–${datas[datas.length - 1]}`;
 }
 
 /**
@@ -188,6 +194,14 @@ export async function montarCronogramaDoEvento(
     id: eventoId,
     dataInicio: inicioStr,
   });
+  // nº do dia de calendário (1-based) por data — para os divisores multi-dia,
+  // distinto do diaIndex (que conta janelas; um dia pode ter manhã e tarde)
+  const diaNumeroPorData = new Map(
+    [...new Set(janelas.map((j) => j.data))]
+      .sort((a, b) => a.localeCompare(b))
+      .map((d, i) => [d, i + 1] as const),
+  );
+  const diaNumeroDe = (data: string) => diaNumeroPorData.get(data) ?? 1;
   // dia default para colunas vazias (o header sempre mostra ao menos um dia)
   const diaVazio: DiaCron = {
     data: janelas[0].data,
@@ -375,6 +389,7 @@ export async function montarCronogramaDoEvento(
             data: p.data,
             dataLabel: dataLabel(p.data),
             diaIndex: p.diaIndex,
+            diaNumero: diaNumeroDe(p.data),
             a1,
             a2,
             score1: l.pontos1,
@@ -400,6 +415,7 @@ export async function montarCronogramaDoEvento(
         data: pos.data,
         dataLabel: dataLabel(pos.data),
         diaIndex: pos.diaIndex,
+        diaNumero: diaNumeroDe(pos.data),
         nLutas: m.chaveGerada ? lutasCron.length : Math.max(0, m.nAtletas - 1),
         chaveGerada: m.chaveGerada,
         atletas: m.atletas,

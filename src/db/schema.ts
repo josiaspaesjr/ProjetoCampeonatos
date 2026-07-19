@@ -1,6 +1,7 @@
 import {
   boolean,
   date,
+  index,
   integer,
   jsonb,
   numeric,
@@ -187,11 +188,13 @@ export const eventos = pgTable("eventos", {
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
 });
 
-// dias do evento: cada dia tem uma janela (início/fim em minutos desde a
-// meia-noite). O período disponível = soma das janelas × nº de áreas; o
-// gerador de áreas só estrutura se as lutas couberem, e o cronograma encaixa
-// as lutas dia a dia. Sem linhas → evento de um dia (retrocompat: ver
-// diasDoEventoOuDefault em src/lib/cronograma/dias.ts).
+// dias do evento: cada linha é uma **janela** de horário (início/fim em minutos
+// desde a meia-noite). Um dia de calendário pode ter VÁRIAS janelas (ex.: manhã
+// 09:00–12:00 e tarde 14:00–18:00) — o intervalo entre elas fica livre de lutas.
+// O período disponível = soma das janelas × nº de áreas; o gerador de áreas só
+// estrutura se as lutas couberem, e o cronograma encaixa as lutas janela a
+// janela, rolando ao próximo dia quando esgota. Sem linhas → evento de um dia
+// (retrocompat: ver diasDoEventoOuDefault em src/lib/cronograma/dias.ts).
 export const eventoDias = pgTable(
   "evento_dias",
   {
@@ -205,8 +208,9 @@ export const eventoDias = pgTable(
     fimMinutos: integer("fim_minutos").notNull().default(1080),
     ordem: integer("ordem").notNull().default(0),
   },
-  // um dia do calendário aparece no máximo uma vez por evento
-  (t) => [uniqueIndex("evento_dias_evento_data_idx").on(t.eventoId, t.data)],
+  // NÃO é único: a mesma data pode ter mais de uma janela (manhã/tarde). Índice
+  // só para acelerar a busca das janelas de um evento, na ordem do dia.
+  (t) => [index("evento_dias_evento_data_idx").on(t.eventoId, t.data)],
 );
 
 // colaboradores do evento: co-organizadores convidados por link. O dono do

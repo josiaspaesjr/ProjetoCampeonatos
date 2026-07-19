@@ -356,6 +356,7 @@ export const pt = {
     aDefinir: "A definir",
     operarPlacar: "Operar placar",
     dia: "Dia",
+    aposIntervalo: "Após intervalo",
   },
   bracket: {
     rodadaPre: "",
@@ -520,10 +521,10 @@ export const pt = {
       dataGeracaoNota: "Data prevista para montar as chaves — apenas informativo.",
       detalhesCompeticao: "Detalhes da competição",
       regulamento: "Regulamento",
-      // dias do evento (período com janela de horário por dia)
+      // dias do evento (uma ou mais janelas de horário por dia)
       diasEvento: "Dias do evento",
       diasNota:
-        "Um ou mais dias, cada um com horário de início e fim. As lutas são encaixadas nesse período.",
+        "Uma ou mais janelas por dia — repita a data para separar manhã e tarde. As lutas são encaixadas nas janelas; o intervalo entre elas fica livre.",
       diaData: "Data",
       horaInicio: "Início",
       horaFim: "Fim",
@@ -952,7 +953,7 @@ export const pt = {
       // configuração dos dias na própria tela de áreas
       diasEvento: "Dias do evento",
       diasNota:
-        "As lutas são distribuídas dentro do horário de cada dia. Ajuste os dias e horários antes de estruturar.",
+        "As lutas são distribuídas dentro das janelas de cada dia. Repita a data para ter manhã e tarde — o intervalo entre elas fica sem lutas. Ajuste antes de estruturar.",
       salvarDias: "Salvar dias",
       // aviso quando as lutas estimadas não cabem no período
       naoCabePre: "As lutas estimadas (~",
@@ -973,6 +974,8 @@ export const pt = {
       diasObrigatorio: "Informe ao menos um dia com horário para o evento.",
       diaJanelaInvalida:
         "Cada dia precisa de início e fim válidos, com o fim depois do início.",
+      diaJanelaSobreposta:
+        "As janelas do mesmo dia não podem se sobrepor — deixe um intervalo entre elas.",
       selecaoVazia:
         "Seleção não gera nenhuma categoria — marque ao menos uma classe, um sexo e uma faixa.",
       categoriaComInscritos:

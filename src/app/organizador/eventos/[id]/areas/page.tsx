@@ -33,7 +33,7 @@ export default async function PaginaAreas({
     db.query.areas.findMany({ where: eq(areas.eventoId, id) }),
     db.query.eventoDias.findMany({
       where: eq(eventoDias.eventoId, id),
-      orderBy: asc(eventoDias.data),
+      orderBy: [asc(eventoDias.data), asc(eventoDias.inicioMinutos)],
     }),
   ]);
 

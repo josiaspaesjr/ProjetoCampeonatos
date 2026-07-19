@@ -6,9 +6,11 @@ import { hhmmParaMinutos } from "@/lib/cronograma/dias";
 /**
  * Leitura/validação/persistência dos dias do evento a partir do formulário.
  *
- * Os dias vêm como arrays paralelos no FormData (`diaData[]`, `diaInicio[]`,
- * `diaFim[]`) — o mesmo padrão dos pacotes de preço dos lotes. Compartilhado
- * entre o cadastro/edição do evento e a tela de Áreas, para a regra ser única.
+ * Cada linha é uma **janela** de horário (`diaData[]`, `diaInicio[]`,
+ * `diaFim[]`, arrays paralelos no FormData — o mesmo padrão dos pacotes de
+ * preço dos lotes). Um dia de calendário pode ter mais de uma janela (manhã e
+ * tarde), e o intervalo entre elas fica livre de lutas. Compartilhado entre o
+ * cadastro/edição do evento e a tela de Áreas, para a regra ser única.
  */
 
 export interface DiaForm {
@@ -18,7 +20,10 @@ export interface DiaForm {
   fimMinutos: number;
 }
 
-/** lê as linhas de dias do FormData, ordenadas por data e sem duplicatas */
+/**
+ * Lê as janelas de dias do FormData, ordenadas por (data, início). Mantém
+ * várias janelas no mesmo dia (manhã/tarde) — não deduplica por data.
+ */
 export function lerDiasDoForm(formData: FormData): DiaForm[] {
   const datas = formData.getAll("diaData").map(String);
   const inicios = formData.getAll("diaInicio").map(String);
@@ -35,20 +40,32 @@ export function lerDiasDoForm(formData: FormData): DiaForm[] {
     });
   }
 
-  // um dia do calendário aparece uma vez (casa com o uniqueIndex do banco)
-  const vistos = new Set<string>();
-  return dias
-    .sort((a, b) => a.data.localeCompare(b.data))
-    .filter((d) => (vistos.has(d.data) ? false : (vistos.add(d.data), true)));
+  // ordena por data e, no mesmo dia, por horário de início (manhã antes da
+  // tarde) — é a ordem em que o cronograma encaixa as lutas.
+  return dias.sort(
+    (a, b) => a.data.localeCompare(b.data) || a.inicioMinutos - b.inicioMinutos,
+  );
 }
 
 /** valida os dias; devolve a chave de erro i18n (admin.erros) ou null se ok */
 export function validarDias(
   dias: DiaForm[],
-): "diasObrigatorio" | "diaJanelaInvalida" | null {
+): "diasObrigatorio" | "diaJanelaInvalida" | "diaJanelaSobreposta" | null {
   if (!dias.length) return "diasObrigatorio";
   for (const d of dias) {
     if (!d.data || d.fimMinutos <= d.inicioMinutos) return "diaJanelaInvalida";
+  }
+  // janelas do mesmo dia não podem se sobrepor (nem tocar): o fim de uma tem
+  // de ser <= o início da seguinte. `dias` já vem ordenado por (data, início).
+  const ordenados = [...dias].sort(
+    (a, b) => a.data.localeCompare(b.data) || a.inicioMinutos - b.inicioMinutos,
+  );
+  for (let i = 1; i < ordenados.length; i++) {
+    const prev = ordenados[i - 1];
+    const cur = ordenados[i];
+    if (cur.data === prev.data && cur.inicioMinutos < prev.fimMinutos) {
+      return "diaJanelaSobreposta";
+    }
   }
   return null;
 }

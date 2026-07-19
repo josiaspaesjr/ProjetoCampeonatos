@@ -134,6 +134,13 @@
       "when": 1784411863248,
       "tag": "0018_jittery_jean_grey",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1784466470192,
+      "tag": "0019_polite_master_chief",
+      "breakpoints": true
     }
   ]
 }

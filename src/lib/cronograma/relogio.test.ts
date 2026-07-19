@@ -54,4 +54,33 @@ describe("localizarNoEixo", () => {
       segundos: 50000,
     });
   });
+
+  // um mesmo dia com duas janelas (manhã 09–12 e tarde 14–18): a data sozinha
+  // não basta para achar a janela certa — é o que garante o reajuste ao vivo.
+  describe("duas janelas no mesmo dia (manhã/tarde)", () => {
+    const manhaTarde = [
+      dia("2026-10-24", 9 * 3600, 12 * 3600), // 09:00–12:00
+      dia("2026-10-24", 14 * 3600, 18 * 3600), // 14:00–18:00
+    ];
+
+    it("agora na manhã: janela 0, offset real", () => {
+      expect(
+        localizarNoEixo(manhaTarde, { data: "2026-10-24", segundos: 10 * 3600 }),
+      ).toEqual({ diaIndex: 0, segundos: 10 * 3600 });
+    });
+
+    it("agora no intervalo: retoma no início da tarde (não no passado)", () => {
+      // 13:00 cai no intervalo → ancora em 14:00 da janela da tarde
+      expect(
+        localizarNoEixo(manhaTarde, { data: "2026-10-24", segundos: 13 * 3600 }),
+      ).toEqual({ diaIndex: 1, segundos: 14 * 3600 });
+    });
+
+    it("agora na tarde: janela 1, offset real (não volta p/ 14:00)", () => {
+      // 15:00 → janela 1 preservando o offset (bug antigo: findIndex pegava a 0)
+      expect(
+        localizarNoEixo(manhaTarde, { data: "2026-10-24", segundos: 15 * 3600 }),
+      ).toEqual({ diaIndex: 1, segundos: 15 * 3600 });
+    });
+  });
 });

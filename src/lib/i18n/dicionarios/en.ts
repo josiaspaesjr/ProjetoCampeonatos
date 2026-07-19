@@ -355,6 +355,7 @@ export const en: Dicionario = {
     aDefinir: "TBD",
     operarPlacar: "Operate scoreboard",
     dia: "Day",
+    aposIntervalo: "After break",
   },
   bracket: {
     rodadaPre: "Round ",
@@ -517,10 +518,10 @@ export const en: Dicionario = {
       dataGeracaoNota: "Planned date to build the brackets — informational only.",
       detalhesCompeticao: "Competition details",
       regulamento: "Rules",
-      // event days (period with a time window per day)
+      // event days (one or more time windows per day)
       diasEvento: "Event days",
       diasNota:
-        "One or more days, each with a start and end time. Matches are packed into that window.",
+        "One or more windows per day — repeat the date to split morning and afternoon. Matches are packed into the windows; the break between them stays free.",
       diaData: "Date",
       horaInicio: "Start",
       horaFim: "End",
@@ -944,7 +945,7 @@ export const en: Dicionario = {
       // day configuration on the areas screen itself
       diasEvento: "Event days",
       diasNota:
-        "Matches are spread within each day's window. Adjust the days and times before structuring.",
+        "Matches are spread within each day's windows. Repeat the date for morning and afternoon — the break between them stays match-free. Adjust before structuring.",
       salvarDias: "Save days",
       // warning when the estimated matches don't fit the period
       naoCabePre: "The estimated matches (~",
@@ -965,6 +966,8 @@ export const en: Dicionario = {
       diasObrigatorio: "Add at least one day with a time window for the event.",
       diaJanelaInvalida:
         "Each day needs a valid start and end, with the end after the start.",
+      diaJanelaSobreposta:
+        "Windows on the same day can't overlap — leave a break between them.",
       selecaoVazia:
         "The selection generates no divisions — pick at least one class, one sex and one belt.",
       categoriaComInscritos:
