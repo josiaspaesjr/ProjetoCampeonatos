@@ -1,30 +1,15 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, chaves, inscricoes } from "@/db/schema";
-import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { BotaoAcao } from "@/components/ui/botao-acao";
 import { getUsuarioAtual } from "@/lib/auth";
 import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
-import { formatoAutomatico } from "@/lib/bracket";
 import { ordenarCategoriasExibicao } from "@/lib/categorias/distribuicao-areas";
-import { SeletorFormato } from "@/components/chaves/seletor-formato";
 import { GerarLoteDialog } from "@/components/chaves/gerar-lote-dialog";
-import {
-  gerarChave,
-  gerarChaveAuto,
-  gerarChavesEmLote,
-  publicarChaves,
-} from "../../actions";
-
-const VARIANTE_CHAVE: Record<string, BadgeProps["variant"]> = {
-  rascunho: "warning",
-  publicada: "default",
-  em_andamento: "outline",
-  concluida: "success",
-};
+import { gerarChavesEmLote, publicarChaves } from "../../actions";
+import { PainelChaves, type LinhaChave } from "./painel-chaves";
 
 export default async function PaginaChaves({
   params,
@@ -60,14 +45,44 @@ export default async function PaginaChaves({
   const chavePorCategoria = new Map(todasChaves.map((c) => [c.categoriaId, c]));
 
   const contagem = new Map<string, number>();
+  // atletas confirmados por categoria — alimentam a busca por nome de atleta
+  const atletasPorCategoria = new Map<string, string[]>();
   for (const i of confirmadas) {
     contagem.set(i.categoriaId, (contagem.get(i.categoriaId) ?? 0) + 1);
+    const arr = atletasPorCategoria.get(i.categoriaId) ?? [];
+    if (i.nomeAtleta) arr.push(i.nomeAtleta);
+    if (i.academiaNome) arr.push(i.academiaNome);
+    atletasPorCategoria.set(i.categoriaId, arr);
   }
 
   // ordem canônica de exibição (classe → sexo F→M → faixa → peso)
   const comInscritos = ordenarCategoriasExibicao(
     cats.filter((c) => (contagem.get(c.id) ?? 0) > 0),
   );
+
+  // linhas serializadas para o painel client (filtros + busca instantâneos)
+  const linhas: LinhaChave[] = comInscritos.map((c) => {
+    const chave = chavePorCategoria.get(c.id) ?? null;
+    const qtd = contagem.get(c.id) ?? 0;
+    return {
+      id: c.id,
+      nome: c.nome,
+      classeIdade: c.classeIdade,
+      faixa: c.faixa,
+      sexo: c.sexo,
+      qtd,
+      statusKey: chave ? chave.status : "sem_chave",
+      chave: chave
+        ? {
+            id: chave.id,
+            status: chave.status,
+            formato: chave.formato,
+            medalhasEntregues: !!chave.medalhasEntreguesEm,
+          }
+        : null,
+      busca: [c.nome, ...(atletasPorCategoria.get(c.id) ?? [])].join(" "),
+    };
+  });
   const rascunhos = todasChaves.filter((c) => c.status === "rascunho").length;
   // 1 atleta já é elegível (vira campeão por W.O.)
   const pendentes = comInscritos.filter(
@@ -105,82 +120,7 @@ export default async function PaginaChaves({
         </div>
       </div>
 
-      <ul className="mt-6 divide-y divide-border rounded-xl border bg-card">
-        {comInscritos.map((c) => {
-          const chave = chavePorCategoria.get(c.id);
-          const qtd = contagem.get(c.id) ?? 0;
-          const rotulo = chave ? (ch.status[chave.status] ?? chave.status) : ch.semChave;
-          const variante: BadgeProps["variant"] = chave
-            ? (VARIANTE_CHAVE[chave.status] ?? "secondary")
-            : "secondary";
-
-          return (
-            <li
-              key={c.id}
-              className="flex flex-col gap-2.5 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
-            >
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">{c.nome}</p>
-                <p className="text-xs text-muted-foreground">
-                  {qtd} {qtd === 1 ? ch.confirmadoSing : ch.confirmadoPlur}
-                  {chave
-                    ? ` · ${ch.formatos[chave.formato]?.nome ?? chave.formato}`
-                    : qtd === 1
-                      ? ` · ${ch.campeaoWo}`
-                      : ` · ${ch.formatoSugerido} ${ch.formatos[formatoAutomatico(qtd)].nome}`}
-                </p>
-              </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-3 max-sm:w-full">
-                <Badge variant={variante}>{rotulo}</Badge>
-                {chave?.status === "concluida" && (
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      chave.medalhasEntreguesEm
-                        ? "bg-success/15 text-success"
-                        : "bg-warning/15 text-warning-foreground"
-                    }`}
-                  >
-                    🏅{" "}
-                    {chave.medalhasEntreguesEm
-                      ? ch.medalhasEntregues
-                      : ch.medalhasPendentes}
-                  </span>
-                )}
-                {qtd >= 2 &&
-                  (!chave ||
-                    chave.status === "rascunho" ||
-                    chave.status === "publicada") && (
-                    <SeletorFormato
-                      acao={gerarChave.bind(null, evento.id, c.id)}
-                      qtd={qtd}
-                      regenerar={!!chave}
-                      publicada={chave?.status === "publicada"}
-                      formatoAtual={chave?.formato ?? null}
-                    />
-                  )}
-                {qtd === 1 && !chave && (
-                  <form action={gerarChaveAuto.bind(null, evento.id, c.id)}>
-                    <BotaoAcao>{ch.gerarChave}</BotaoAcao>
-                  </form>
-                )}
-                {chave && (
-                  <Link
-                    href={`/organizador/eventos/${evento.id}/chaves/${chave.id}`}
-                    className="text-xs font-medium underline"
-                  >
-                    {ch.abrir}
-                  </Link>
-                )}
-              </div>
-            </li>
-          );
-        })}
-        {comInscritos.length === 0 && (
-          <li className="px-5 py-10 text-center text-sm text-muted-foreground">
-            {ch.nenhumaCategoriaConfirmada}
-          </li>
-        )}
-      </ul>
+      <PainelChaves eventoId={evento.id} linhas={linhas} />
     </div>
   );
 }

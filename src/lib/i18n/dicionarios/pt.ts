@@ -900,6 +900,12 @@ export const pt = {
         "Nenhuma categoria com inscrições confirmadas ainda.",
       chaveRascunhoAviso:
         "Chave em rascunho — publique na lista de chaves para liberar o lançamento de resultados.",
+      filtrarTodas: "Todas",
+      filtroClasse: "Todas as classes",
+      filtroFaixa: "Todas as faixas",
+      filtroSexo: "Ambos os sexos",
+      buscarPlaceholder: "Buscar categoria ou atleta…",
+      nenhumaNoFiltro: "Nenhuma categoria encontrada.",
     },
     checkin: {
       intro:

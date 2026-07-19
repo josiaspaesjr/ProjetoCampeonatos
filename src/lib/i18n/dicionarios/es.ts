@@ -894,6 +894,12 @@ export const es: Dicionario = {
         "Aún no hay categorías con inscripciones confirmadas.",
       chaveRascunhoAviso:
         "Llave en borrador — publícala en la lista de llaves para habilitar el registro de resultados.",
+      filtrarTodas: "Todas",
+      filtroClasse: "Todas las clases",
+      filtroFaixa: "Todas las cintas",
+      filtroSexo: "Ambos sexos",
+      buscarPlaceholder: "Buscar categoría o atleta…",
+      nenhumaNoFiltro: "No se encontraron categorías.",
     },
     checkin: {
       intro:

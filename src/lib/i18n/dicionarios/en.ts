@@ -893,6 +893,12 @@ export const en: Dicionario = {
         "No division with confirmed registrations yet.",
       chaveRascunhoAviso:
         "Bracket in draft — publish it on the brackets list to enable entering results.",
+      filtrarTodas: "All",
+      filtroClasse: "All age groups",
+      filtroFaixa: "All belts",
+      filtroSexo: "Both sexes",
+      buscarPlaceholder: "Search division or athlete…",
+      nenhumaNoFiltro: "No divisions found.",
     },
     checkin: {
       intro:
