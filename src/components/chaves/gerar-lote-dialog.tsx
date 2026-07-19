@@ -58,8 +58,8 @@ export function GerarLoteDialog({
   );
 
   const opcoes: { id: Formato3 }[] = [
-    { id: "round_robin" },
     { id: "eliminacao_simples" },
+    { id: "round_robin" },
   ];
 
   return (
