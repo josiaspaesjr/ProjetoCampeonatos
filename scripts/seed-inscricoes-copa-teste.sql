@@ -1,5 +1,5 @@
 -- ===========================================================================
--- LeagueMat · Seed de 500 inscrições no evento "copa-teste" (PRODUÇÃO)
+-- BJJCAMP · Seed de 500 inscrições no evento "copa-teste" (PRODUÇÃO)
 -- ---------------------------------------------------------------------------
 -- Cria APENAS atletas (usuarios) + inscrições (inscricoes). Nada de chaves,
 -- áreas, pagamentos, cronograma etc.
@@ -9,13 +9,17 @@
 --     sendo 5 atletas de UMA MESMA academia e 15 de academias variadas.
 --   • 480 inscrições espalhadas (round-robin) por TODAS as demais categorias
 --     abertas do evento, com academias variadas.
+--   • Pagamento: metade CONFIRMADA (paga) e metade PENDENTE (inscrito, não pago),
+--     alternando dentro de cada categoria → 250 confirmadas / 250 pendentes, com
+--     mistura realista em toda categoria. Para gerar todas pagas, veja o CASE no
+--     INSERT do passo 1.
 --
 -- Pré-requisitos no banco: o evento "copa-teste" já existe e sua GRADE DE
 -- CATEGORIAS já foi gerada (inclusive a Adulto/Masculino/Branca/Pena 70kg).
 -- O catálogo de academias já está populado.
 --
 -- Idempotência: os atletas usam e-mails com sufixo fixo
---   atleta.<n>.copateste@seed.leaguemat.test
+--   atleta.<n>.copateste@seed.bjjcamp.test
 -- Rodar duas vezes falha no índice único de e-mail. Para desfazer, use o
 -- bloco "LIMPEZA" no fim do arquivo.
 -- ===========================================================================
@@ -145,7 +149,7 @@ plan AS MATERIALIZED (
     (CASE WHEN x.sexo = 'masculino' THEN nm.m[(x.seq % 20) + 1] ELSE nm.f[(x.seq % 20) + 1] END)
       || ' ' || nm.s[((x.seq / 20) % 20) + 1]
       || ' ' || nm.s[((x.seq / 3 + 7) % 20) + 1] AS nome,
-    'atleta.' || x.seq || '.copateste@seed.leaguemat.test' AS email
+    'atleta.' || x.seq || '.copateste@seed.bjjcamp.test' AS email
   FROM (SELECT * FROM partA UNION ALL SELECT * FROM partB) x
   CROSS JOIN nm
 ),
@@ -159,7 +163,13 @@ new_users AS (
 -- cria as inscrições (snapshot igual ao fluxo de inscrição manual do app)
 INSERT INTO inscricoes
   (usuario_id, evento_id, categoria_id, status, nome_atleta, faixa, data_nascimento, academia_id, academia_nome)
-SELECT u.id, p.evento_id, p.categoria_id, 'confirmada', p.nome, p.faixa,
+SELECT u.id, p.evento_id, p.categoria_id,
+       -- metade paga (confirmada), metade aguardando (pendente_pagamento), alternando
+       -- dentro de cada categoria → exatamente 250 / 250 (500 linhas, paridade do rank).
+       -- Para gerar TODAS pagas, troque este CASE por 'confirmada'.
+       (CASE WHEN row_number() OVER (ORDER BY p.categoria_id, p.seq) % 2 = 0
+             THEN 'pendente_pagamento' ELSE 'confirmada' END)::inscricao_status,
+       p.nome, p.faixa,
        make_date(p.ano_nasc, 1, 1), p.academia_id, p.academia_nome
 FROM plan p
 JOIN new_users u ON u.email = p.email;
@@ -172,7 +182,15 @@ COMMIT;
 SELECT
   (SELECT count(*) FROM inscricoes i
      JOIN usuarios u ON u.id = i.usuario_id
-     WHERE u.email LIKE 'atleta.%.copateste@seed.leaguemat.test')                       AS inscricoes_criadas,
+     WHERE u.email LIKE 'atleta.%.copateste@seed.bjjcamp.test')                       AS inscricoes_criadas,
+  (SELECT count(*) FROM inscricoes i
+     JOIN usuarios u ON u.id = i.usuario_id
+     WHERE u.email LIKE 'atleta.%.copateste@seed.bjjcamp.test'
+       AND i.status = 'confirmada')                                                   AS pagas_confirmadas,
+  (SELECT count(*) FROM inscricoes i
+     JOIN usuarios u ON u.id = i.usuario_id
+     WHERE u.email LIKE 'atleta.%.copateste@seed.bjjcamp.test'
+       AND i.status = 'pendente_pagamento')                                          AS pendentes_pagamento,
   (SELECT count(*) FROM inscricoes i
      JOIN categorias c ON c.id = i.categoria_id
      JOIN eventos e ON e.id = i.evento_id
@@ -181,10 +199,10 @@ SELECT
        AND (c.limite_peso_kg = 70 OR c.nome ILIKE '%Pena%'))                          AS na_categoria_alvo,
   (SELECT count(DISTINCT i.categoria_id) FROM inscricoes i
      JOIN usuarios u ON u.id = i.usuario_id
-     WHERE u.email LIKE 'atleta.%.copateste@seed.leaguemat.test')                       AS categorias_distintas,
+     WHERE u.email LIKE 'atleta.%.copateste@seed.bjjcamp.test')                       AS categorias_distintas,
   (SELECT count(DISTINCT i.academia_id) FROM inscricoes i
      JOIN usuarios u ON u.id = i.usuario_id
-     WHERE u.email LIKE 'atleta.%.copateste@seed.leaguemat.test')                       AS academias_distintas;
+     WHERE u.email LIKE 'atleta.%.copateste@seed.bjjcamp.test')                       AS academias_distintas;
 
 -- Detalhe das academias na categoria alvo (deve mostrar 1 academia com 5 inscritos):
 -- SELECT i.academia_nome, count(*) AS inscritos
@@ -201,6 +219,6 @@ SELECT
 -- ===========================================================================
 -- BEGIN;
 --   DELETE FROM inscricoes
---     WHERE usuario_id IN (SELECT id FROM usuarios WHERE email LIKE 'atleta.%.copateste@seed.leaguemat.test');
---   DELETE FROM usuarios WHERE email LIKE 'atleta.%.copateste@seed.leaguemat.test';
+--     WHERE usuario_id IN (SELECT id FROM usuarios WHERE email LIKE 'atleta.%.copateste@seed.bjjcamp.test');
+--   DELETE FROM usuarios WHERE email LIKE 'atleta.%.copateste@seed.bjjcamp.test';
 -- COMMIT;
