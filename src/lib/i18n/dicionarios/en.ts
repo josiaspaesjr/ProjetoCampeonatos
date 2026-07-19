@@ -527,6 +527,10 @@ export const en: Dicionario = {
       horaFim: "End",
       adicionarDia: "+ Add day",
       removerDia: "Remove",
+      adicionarTurno: "+ Session (same day)",
+      removerTurno: "Remove session",
+      turno: "Session",
+      intervaloLivre: "Free break",
     },
     moedas: {
       brl: "BRL — Real (Pix)",

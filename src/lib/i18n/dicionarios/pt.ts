@@ -530,6 +530,10 @@ export const pt = {
       horaFim: "Fim",
       adicionarDia: "+ Adicionar dia",
       removerDia: "Remover",
+      adicionarTurno: "+ Turno (mesmo dia)",
+      removerTurno: "Remover turno",
+      turno: "Turno",
+      intervaloLivre: "Intervalo livre",
     },
     moedas: {
       brl: "BRL — Real (Pix)",
