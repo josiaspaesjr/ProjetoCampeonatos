@@ -38,6 +38,9 @@ export const AbrirLutaCtx = createContext<(sel: LutaSelecionada) => void>(
   () => {},
 );
 
+/** evento com mais de um dia → mostra a data em cada luta (evita prop drilling) */
+const MultiDiaCtx = createContext<boolean>(false);
+
 /** container das áreas — lado a lado (colunas) ou empilhadas */
 export function ProgramacaoAreas({
   cronograma,
@@ -57,30 +60,40 @@ export function ProgramacaoAreas({
 }) {
   const colunas = layout === "colunas";
   const grade = layout === "grade";
+  // evento multi-dia: alguma categoria/luta cai em data distinta → mostra o dia
+  const datas = new Set<string>();
+  for (const a of cronograma)
+    for (const c of a.categorias) {
+      datas.add(c.data);
+      for (const l of c.lutas) datas.add(l.data);
+    }
+  const multiDia = datas.size > 1;
   return (
-    <div
-      className={cn(
-        colunas && "flex gap-4 overflow-x-auto pb-2",
-        colunas && full && "min-h-0 flex-1",
-        layout === "empilhado" && "flex flex-col gap-4",
-        grade &&
-          cn(
-            "grid grid-cols-1 items-start gap-4 sm:grid-cols-2",
-            cronograma.length > 2 ? "lg:grid-cols-3" : "lg:grid-cols-2",
-          ),
-      )}
-    >
-      {cronograma.map((area) => (
-        <CardArea
-          key={area.id}
-          area={area}
-          layout={layout}
-          base={base}
-          slugPublico={slugPublico}
-          full={full}
-        />
-      ))}
-    </div>
+    <MultiDiaCtx.Provider value={multiDia}>
+      <div
+        className={cn(
+          colunas && "flex gap-4 overflow-x-auto pb-2",
+          colunas && full && "min-h-0 flex-1",
+          layout === "empilhado" && "flex flex-col gap-4",
+          grade &&
+            cn(
+              "grid grid-cols-1 items-start gap-4 sm:grid-cols-2",
+              cronograma.length > 2 ? "lg:grid-cols-3" : "lg:grid-cols-2",
+            ),
+        )}
+      >
+        {cronograma.map((area) => (
+          <CardArea
+            key={area.id}
+            area={area}
+            layout={layout}
+            base={base}
+            slugPublico={slugPublico}
+            full={full}
+          />
+        ))}
+      </div>
+    </MultiDiaCtx.Provider>
   );
 }
 
@@ -302,6 +315,7 @@ function LinhaLuta({
   catSubtitulo: string;
 }) {
   const abrir = useContext(AbrirLutaCtx);
+  const multiDia = useContext(MultiDiaCtx);
   return (
     <li className="border-b border-white/6 last:border-b-0">
       <button
@@ -309,7 +323,12 @@ function LinhaLuta({
         onClick={() => abrir({ luta, catTitulo, catSubtitulo })}
         className="flex w-full items-stretch gap-2.5 px-4 py-2 text-left transition-colors hover:bg-white/[0.04] focus-visible:bg-white/[0.04] focus-visible:outline-none"
       >
-        <div className="w-11 shrink-0 pt-0.5">
+        <div className="w-12 shrink-0 pt-0.5">
+          {multiDia && (
+            <div className="tnum mb-0.5 font-cond text-[10px] uppercase leading-none tracking-[0.04em] text-brand-soft">
+              {luta.dataLabel}
+            </div>
+          )}
           <div className="disp tnum text-[15px] leading-none">{luta.hora}</div>
           <div className="mt-1 font-cond text-[10px] uppercase tracking-[0.06em] text-muted-3">
             {luta.label}
