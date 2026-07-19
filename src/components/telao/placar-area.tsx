@@ -1,18 +1,15 @@
-import { corDaFaixa } from "@/lib/categorias/faixa-cores";
-import {
-  duracaoDaCategoria,
-  tempoDeLutaSegundos,
-  type FilaDaArea,
-} from "@/lib/cronograma/fila";
-import { hora, rotuloCat, forca } from "@/lib/cronograma/telao-format";
+import { tempoDeLutaSegundos, type FilaDaArea } from "@/lib/cronograma/fila";
+import { hora, rotuloCat } from "@/lib/cronograma/telao-format";
 import { getDicionario } from "@/lib/i18n/server";
 import { cn } from "@/lib/utils";
 import { CronometroTelao } from "./cronometro-telao";
 
 /**
  * Placar de exibição de UMA área, em tela cheia (read-only, para projetar no
- * monitor ao lado do tatame). Espelha a luta corrente com placar grande e
- * cronômetro ao vivo; a atualização vem do `<AutoRefresh>` montado pela página.
+ * monitor ao lado do tatame). É o ESPELHO ampliado do placar que o organizador
+ * opera no tablet: mesma luta corrente, mesmas cores (azul × vermelho), mesmo
+ * layout — só que gigante e sem os botões. A atualização vem do `<AutoRefresh>`
+ * montado pela página; o cronômetro "anda" localmente via `CronometroTelao`.
  */
 export async function PlacarArea({
   evento,
@@ -23,125 +20,79 @@ export async function PlacarArea({
 }) {
   const t = (await getDicionario()).telaoArea;
 
-  // luta corrente: 1ª pronta com algum ponto/vantagem, senão a 1ª pronta
-  const emAndamento =
-    fila.fila.find(
-      (i) =>
-        i.pronta &&
-        (i.luta.pontos1 > 0 ||
-          i.luta.pontos2 > 0 ||
-          i.luta.vantagens1 > 0 ||
-          i.luta.vantagens2 > 0),
-    ) ?? fila.fila.find((i) => i.pronta);
+  // MESMA regra do tablet (placar/page.tsx): a luta corrente é a 1ª da fila
+  // pronta (dois atletas definidos). Assim telão e tablet nunca divergem.
+  const emAndamento = fila.fila.find((i) => i.pronta);
 
-  const proximas = fila.fila.filter((i) => i !== emAndamento).slice(0, 6);
+  const proximas = fila.fila.filter((i) => i !== emAndamento).slice(0, 5);
   const nome = (id: string | null) =>
     id ? (fila.atletas[id]?.nome ?? "?") : t.aguardando;
   const academia = (id: string | null) =>
     (id && fila.atletas[id]?.academia) || "";
 
-  const terminaEm =
-    fila.fila.length > 0
-      ? hora(
-          new Date(
-            fila.fila.at(-1)!.horaEstimada.getTime() +
-              duracaoDaCategoria(fila.fila.at(-1)!.categoria) * 1000,
-          ),
-        )
-      : null;
-
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* CABEÇALHO */}
-      <header className="flex items-end justify-between gap-4 border-b border-white/8 px-8 py-5 md:px-12">
+    <div className="flex min-h-screen flex-col gap-3 p-3 md:gap-5 md:p-6">
+      {/* BARRA SUPERIOR — categoria + cronômetro (estilo do tablet) */}
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 rounded-2xl bg-zinc-900 px-6 py-4 text-white md:px-8 md:py-6">
         <div className="min-w-0">
-          <div className="truncate font-cond text-sm font-semibold uppercase tracking-[0.14em] text-brand md:text-base">
-            {evento.nome}
+          <div className="truncate font-cond text-xs font-semibold uppercase tracking-[0.16em] text-brand md:text-sm">
+            {evento.nome} · {fila.area.nome}
           </div>
-          <h1 className="disp truncate text-[40px] leading-none md:text-[64px]">
-            {fila.area.nome}
-          </h1>
+          <p className="truncate font-cond text-xl font-bold uppercase leading-tight md:text-3xl">
+            {emAndamento
+              ? `${t.noTatame} · ${rotuloCat(emAndamento.categoria.nome)}`
+              : fila.fila.length === 0
+                ? t.areaConcluida
+                : t.aguardandoLuta}
+          </p>
         </div>
-        {fila.fila.length > 0 && (
-          <div className="shrink-0 text-right font-cond text-sm uppercase tracking-[0.05em] text-muted-2 md:text-base">
-            <span className="tnum">{fila.fila.length}</span>{" "}
-            {fila.fila.length === 1 ? t.luta : t.lutas}
-            {terminaEm && (
-              <div className="text-muted-3">
-                {t.termina} ~<span className="tnum">{terminaEm}</span>
-              </div>
-            )}
-          </div>
+        {emAndamento && (
+          <CronometroTelao
+            restanteSeg={emAndamento.luta.cronometroRestanteSeg}
+            rodando={emAndamento.luta.cronometroRodando}
+            atualizadoEmMs={
+              emAndamento.luta.cronometroAtualizadoEm?.getTime() ?? null
+            }
+            duracaoBaseSeg={tempoDeLutaSegundos(emAndamento.categoria.faixa)}
+            className="text-[clamp(56px,11vw,132px)] leading-none"
+          />
         )}
-      </header>
+      </div>
 
-      {/* NO TATAME */}
+      {/* PLACAR — dois lados azul × vermelho (mesmo do tablet, ampliado) */}
       {emAndamento ? (
-        <section className="flex flex-1 flex-col justify-center px-6 py-6 md:px-12">
-          {/* categoria + cronômetro */}
-          <div className="mb-5 flex flex-wrap items-center justify-center gap-x-8 gap-y-3">
-            <div className="flex items-center gap-3">
-              <span
-                className="h-5 w-5 shrink-0 -skew-x-9 border border-white/25"
-                style={{ background: corDaFaixa(emAndamento.categoria.faixa) }}
-              />
-              <span className="font-cond text-lg font-bold uppercase tracking-[0.05em] text-brand-soft md:text-2xl">
-                {t.noTatame} · {rotuloCat(emAndamento.categoria.nome)}
-              </span>
-            </div>
-            <CronometroTelao
-              restanteSeg={emAndamento.luta.cronometroRestanteSeg}
-              rodando={emAndamento.luta.cronometroRodando}
-              atualizadoEmMs={
-                emAndamento.luta.cronometroAtualizadoEm?.getTime() ?? null
-              }
-              duracaoBaseSeg={tempoDeLutaSegundos(emAndamento.categoria.faixa)}
-              className="text-[clamp(48px,9vw,120px)] leading-none"
-            />
-          </div>
-
-          {/* dois lados */}
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-            <LadoTatame
-              nome={nome(emAndamento.luta.atleta1InscricaoId)}
-              academia={academia(emAndamento.luta.atleta1InscricaoId)}
-              pontos={emAndamento.luta.pontos1}
-              vantagens={emAndamento.luta.vantagens1}
-              punicoes={emAndamento.luta.punicoes1}
-              cor="#3E7BD6"
-              lider={
-                forca(emAndamento.luta.pontos1, emAndamento.luta.vantagens1) >
-                forca(emAndamento.luta.pontos2, emAndamento.luta.vantagens2)
-              }
-              t={t}
-            />
-            <LadoTatame
-              nome={nome(emAndamento.luta.atleta2InscricaoId)}
-              academia={academia(emAndamento.luta.atleta2InscricaoId)}
-              pontos={emAndamento.luta.pontos2}
-              vantagens={emAndamento.luta.vantagens2}
-              punicoes={emAndamento.luta.punicoes2}
-              cor="#EE2E24"
-              lider={
-                forca(emAndamento.luta.pontos2, emAndamento.luta.vantagens2) >
-                forca(emAndamento.luta.pontos1, emAndamento.luta.vantagens1)
-              }
-              t={t}
-            />
-          </div>
-        </section>
+        <div className="flex flex-1 flex-col gap-3 md:flex-row md:gap-5">
+          <LadoTatame
+            nome={nome(emAndamento.luta.atleta1InscricaoId)}
+            academia={academia(emAndamento.luta.atleta1InscricaoId)}
+            pontos={emAndamento.luta.pontos1}
+            vantagens={emAndamento.luta.vantagens1}
+            punicoes={emAndamento.luta.punicoes1}
+            cor="bg-blue-700"
+            t={t}
+          />
+          <LadoTatame
+            nome={nome(emAndamento.luta.atleta2InscricaoId)}
+            academia={academia(emAndamento.luta.atleta2InscricaoId)}
+            pontos={emAndamento.luta.pontos2}
+            vantagens={emAndamento.luta.vantagens2}
+            punicoes={emAndamento.luta.punicoes2}
+            cor="bg-red-700"
+            t={t}
+          />
+        </div>
       ) : (
-        <section className="flex flex-1 items-center justify-center px-8 text-center">
-          <p className="disp text-[clamp(32px,5vw,64px)] text-white/30">
+        <div className="flex flex-1 items-center justify-center rounded-2xl bg-surface">
+          <p className="disp text-[clamp(32px,5vw,64px)] text-white/25">
             {fila.fila.length === 0 ? t.areaConcluida : t.aguardandoLuta}
           </p>
-        </section>
+        </div>
       )}
 
       {/* PRÓXIMAS */}
       {proximas.length > 0 && (
-        <footer className="border-t border-white/8 px-6 py-4 md:px-12">
-          <div className="mb-2 font-cond text-sm font-semibold uppercase tracking-[0.08em] text-muted-3">
+        <div className="rounded-2xl bg-zinc-900 px-6 py-4 text-white md:px-8 md:py-5">
+          <div className="mb-2 font-cond text-xs font-semibold uppercase tracking-[0.12em] text-white/45 md:text-sm">
             {t.proximas}
           </div>
           <ul className="flex flex-col gap-1.5">
@@ -152,11 +103,11 @@ export async function PlacarArea({
                     {hora(i.horaEstimada)}
                   </span>
                 </span>
-                <span className="truncate font-cond text-lg uppercase tracking-[0.01em] text-muted-2 md:text-xl">
+                <span className="truncate font-cond text-lg uppercase tracking-[0.01em] text-white/70 md:text-xl">
                   {i.pronta ? (
                     <>
                       {nome(i.luta.atleta1InscricaoId)}
-                      <span className="mx-2 text-muted-3">×</span>
+                      <span className="mx-2 text-white/35">×</span>
                       {nome(i.luta.atleta2InscricaoId)}
                     </>
                   ) : (
@@ -166,12 +117,13 @@ export async function PlacarArea({
               </li>
             ))}
           </ul>
-        </footer>
+        </div>
       )}
     </div>
   );
 }
 
+/** Um lado do placar — caixa colorida cheia (azul ou vermelha), como no tablet. */
 function LadoTatame({
   nome,
   academia,
@@ -179,7 +131,6 @@ function LadoTatame({
   vantagens,
   punicoes,
   cor,
-  lider,
   t,
 }: {
   nome: string;
@@ -188,44 +139,34 @@ function LadoTatame({
   vantagens: number;
   punicoes: number;
   cor: string;
-  lider: boolean;
   t: { vnt: string; pun: string };
 }) {
   return (
     <div
       className={cn(
-        "relative overflow-hidden border bg-surface px-6 py-5 md:px-8",
-        lider ? "border-white/25" : "border-white/10",
+        "flex flex-1 flex-col justify-center rounded-2xl p-6 text-white md:p-10",
+        cor,
       )}
     >
-      <span
-        className="absolute inset-y-0 left-0 w-[6px]"
-        style={{ background: cor }}
-      />
-      <div className="flex items-center justify-between gap-4">
-        <div className="min-w-0">
-          <div className="truncate font-cond text-2xl font-semibold uppercase leading-tight md:text-4xl">
-            {nome}
-          </div>
-          {academia && (
-            <div className="truncate font-cond text-sm uppercase tracking-[0.04em] text-muted-3 md:text-base">
-              {academia}
-            </div>
-          )}
-          <div className="mt-2 flex gap-4 font-cond text-sm uppercase tracking-[0.04em] text-muted-2 md:text-base">
-            <span>
-              {t.vnt} <span className="tnum font-bold text-foreground">{vantagens}</span>
-            </span>
-            <span>
-              {t.pun} <span className="tnum font-bold text-foreground">{punicoes}</span>
-            </span>
-          </div>
+      <div className="truncate font-cond text-3xl font-bold uppercase leading-tight md:text-5xl lg:text-6xl">
+        {nome}
+      </div>
+      {academia && (
+        <div className="truncate font-cond text-lg uppercase tracking-[0.03em] text-white/60 md:text-2xl">
+          {academia}
         </div>
-        <div
-          className="disp tnum shrink-0 text-[clamp(72px,14vw,200px)] leading-none"
-          style={{ color: lider ? "#EE2E24" : undefined }}
-        >
+      )}
+      <div className="mt-4 flex items-end justify-between gap-6">
+        <span className="disp tnum leading-[0.78] text-[clamp(96px,19vw,300px)]">
           {pontos}
+        </span>
+        <div className="mb-2 shrink-0 space-y-1 text-right font-cond text-lg uppercase tracking-[0.04em] text-white/80 md:text-2xl">
+          <div>
+            {t.vnt} <span className="tnum font-bold text-white">{vantagens}</span>
+          </div>
+          <div>
+            {t.pun} <span className="tnum font-bold text-white">{punicoes}</span>
+          </div>
         </div>
       </div>
     </div>
