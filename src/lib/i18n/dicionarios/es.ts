@@ -910,7 +910,10 @@ export const es: Dicionario = {
       zerar: "Reiniciar",
       encerrarLuta: "Finalizar combate",
       confirmarResultado: "Confirmar resultado",
+      vencedor: "Ganador",
+      metodo: "Método",
       confirmar: "Confirmar",
+      confirmando: "Finalizando…",
       voltar: "volver",
     },
     areas: {

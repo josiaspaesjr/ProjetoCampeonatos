@@ -916,7 +916,10 @@ export const pt = {
       zerar: "Zerar",
       encerrarLuta: "Encerrar luta",
       confirmarResultado: "Confirmar resultado",
+      vencedor: "Vencedor",
+      metodo: "Método",
       confirmar: "Confirmar",
+      confirmando: "Encerrando…",
       voltar: "voltar",
     },
     areas: {

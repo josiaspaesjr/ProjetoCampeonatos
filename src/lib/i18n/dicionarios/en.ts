@@ -908,7 +908,10 @@ export const en: Dicionario = {
       zerar: "Reset",
       encerrarLuta: "End fight",
       confirmarResultado: "Confirm result",
+      vencedor: "Winner",
+      metodo: "Method",
       confirmar: "Confirm",
+      confirmando: "Ending…",
       voltar: "back",
     },
     areas: {

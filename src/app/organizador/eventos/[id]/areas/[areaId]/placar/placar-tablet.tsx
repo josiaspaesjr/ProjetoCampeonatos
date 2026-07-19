@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import type { MetodoVitoria } from "@/lib/bracket";
+import { Spinner } from "@/components/ui/botao-acao";
 import { useDic } from "@/lib/i18n/client";
+import { cn } from "@/lib/utils";
 import {
   encerrarLutaDoPlacar,
   salvarCronometro,
@@ -35,6 +38,15 @@ interface Lado {
 }
 
 const zerado: Lado = { pontos: 0, vantagens: 0, punicoes: 0 };
+
+const METODOS: MetodoVitoria[] = [
+  "pontos",
+  "vantagens",
+  "finalizacao",
+  "decisao",
+  "wo",
+  "dq",
+];
 
 function fmt(seg: number) {
   const m = Math.floor(Math.abs(seg) / 60);
@@ -74,6 +86,7 @@ export function PlacarTablet({
   const [metodo, setMetodo] = useState<MetodoVitoria>("pontos");
   const [vencedorId, setVencedorId] = useState<string>("");
   const [, startTransition] = useTransition();
+  const [confirmando, iniciarConfirmacao] = useTransition();
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -106,6 +119,21 @@ export function PlacarTablet({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [placar]);
+
+  // trava scroll do body + Esc fecha o modal (mas nunca durante o envio)
+  useEffect(() => {
+    if (!encerrando) return;
+    const overflowAnterior = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !confirmando) setEncerrando(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = overflowAnterior;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [encerrando, confirmando]);
 
   // atualização funcional: cliques em sequência rápida nunca perdem pontos
   const ajustar = (lado: 1 | 2, campo: keyof Lado, delta: number) => {
@@ -166,17 +194,19 @@ export function PlacarTablet({
     setEncerrando(true);
   };
 
-  const confirmar = async () => {
+  const confirmar = () => {
     if (!vencedorId) return;
-    await encerrarLutaDoPlacar(eventoId, chaveId, lutaId, vencedorId, metodo, {
-      pontos1: lado1.pontos,
-      vantagens1: lado1.vantagens,
-      punicoes1: lado1.punicoes,
-      pontos2: lado2.pontos,
-      vantagens2: lado2.vantagens,
-      punicoes2: lado2.punicoes,
+    iniciarConfirmacao(async () => {
+      await encerrarLutaDoPlacar(eventoId, chaveId, lutaId, vencedorId, metodo, {
+        pontos1: lado1.pontos,
+        vantagens1: lado1.vantagens,
+        punicoes1: lado1.punicoes,
+        pontos2: lado2.pontos,
+        vantagens2: lado2.vantagens,
+        punicoes2: lado2.punicoes,
+      });
+      router.refresh();
     });
-    router.refresh();
   };
 
   const Coluna = ({
@@ -260,52 +290,222 @@ export function PlacarTablet({
       </div>
 
       {encerrando && (
-        <div className="mt-4 rounded-2xl border border-zinc-200 bg-white p-6">
-          <p className="font-bold">{t.confirmarResultado}</p>
-          <div className="mt-3 flex flex-wrap items-center gap-6 text-sm">
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="vencedor"
-                checked={vencedorId === atleta1.id}
-                onChange={() => setVencedorId(atleta1.id)}
-              />
-              {atleta1.nome}
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="vencedor"
-                checked={vencedorId === atleta2.id}
-                onChange={() => setVencedorId(atleta2.id)}
-              />
-              {atleta2.nome}
-            </label>
-            <select
-              value={metodo}
-              onChange={(e) => setMetodo(e.target.value as MetodoVitoria)}
-              className="rounded-lg border border-zinc-300 px-3 py-2"
-            >
-              <option value="pontos">{met.pontos}</option>
-              <option value="vantagens">{met.vantagens}</option>
-              <option value="finalizacao">{met.finalizacao}</option>
-              <option value="decisao">{met.decisao}</option>
-              <option value="wo">{met.wo}</option>
-              <option value="dq">{met.dq}</option>
-            </select>
+        <ModalEncerrar
+          categoriaNome={categoriaNome}
+          atleta1={atleta1}
+          atleta2={atleta2}
+          lado1={lado1}
+          lado2={lado2}
+          vencedorId={vencedorId}
+          setVencedorId={setVencedorId}
+          metodo={metodo}
+          setMetodo={setMetodo}
+          confirmando={confirmando}
+          onConfirmar={confirmar}
+          onFechar={() => !confirmando && setEncerrando(false)}
+          t={t}
+          met={met}
+        />
+      )}
+    </div>
+  );
+}
+
+/* Modal de encerramento — mesma linguagem do placar (escuro, cantos
+   arredondados, lados azul × vermelho). Escolha do vencedor em cartões grandes
+   e tocáveis + método em pílulas; confirma numa transition com spinner. */
+function ModalEncerrar({
+  categoriaNome,
+  atleta1,
+  atleta2,
+  lado1,
+  lado2,
+  vencedorId,
+  setVencedorId,
+  metodo,
+  setMetodo,
+  confirmando,
+  onConfirmar,
+  onFechar,
+  t,
+  met,
+}: {
+  categoriaNome: string;
+  atleta1: Props["atleta1"];
+  atleta2: Props["atleta1"];
+  lado1: Lado;
+  lado2: Lado;
+  vencedorId: string;
+  setVencedorId: (id: string) => void;
+  metodo: MetodoVitoria;
+  setMetodo: (m: MetodoVitoria) => void;
+  confirmando: boolean;
+  onConfirmar: () => void;
+  onFechar: () => void;
+  t: ReturnType<typeof useDic>["admin"]["placarTablet"];
+  met: ReturnType<typeof useDic>["bracket"]["metodos"];
+}) {
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[220] flex items-center justify-center bg-black/70 p-4 animate-[fade-in_0.18s_ease]"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onFechar();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        className="max-h-[92vh] w-[min(760px,96vw)] overflow-y-auto rounded-3xl bg-zinc-900 text-white shadow-2xl ring-1 ring-white/10 animate-[pop-in_0.18s_cubic-bezier(0.16,1,0.3,1)]"
+      >
+        <div className="p-6 sm:p-8">
+          {/* cabeçalho */}
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h2 className="text-2xl font-bold sm:text-3xl">
+                {t.encerrarLuta}
+              </h2>
+              <p className="mt-1 truncate text-sm text-zinc-400">
+                {categoriaNome}
+              </p>
+            </div>
             <button
-              onClick={confirmar}
-              disabled={!vencedorId}
-              className="rounded-lg bg-emerald-600 px-5 py-2 font-medium text-white hover:bg-emerald-500 disabled:bg-zinc-300"
+              type="button"
+              onClick={onFechar}
+              disabled={confirmando}
+              aria-label={t.voltar}
+              className="-mr-1 -mt-1 shrink-0 rounded-lg p-2 text-zinc-400 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-40"
             >
-              {t.confirmar}
+              <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="currentColor" strokeWidth="2.4">
+                <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />
+              </svg>
             </button>
-            <button onClick={() => setEncerrando(false)} className="text-zinc-500 hover:underline">
+          </div>
+
+          {/* vencedor */}
+          <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+            {t.vencedor}
+          </p>
+          <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <CartaoVencedor
+              atleta={atleta1}
+              dados={lado1}
+              cor="bg-blue-700"
+              selecionado={vencedorId === atleta1.id}
+              onClick={() => setVencedorId(atleta1.id)}
+              t={t}
+            />
+            <CartaoVencedor
+              atleta={atleta2}
+              dados={lado2}
+              cor="bg-red-700"
+              selecionado={vencedorId === atleta2.id}
+              onClick={() => setVencedorId(atleta2.id)}
+              t={t}
+            />
+          </div>
+
+          {/* método */}
+          <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-zinc-400">
+            {t.metodo}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {METODOS.map((m) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMetodo(m)}
+                aria-pressed={metodo === m}
+                className={cn(
+                  "rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors",
+                  metodo === m
+                    ? "bg-white text-zinc-900"
+                    : "bg-white/10 text-zinc-200 hover:bg-white/20",
+                )}
+              >
+                {met[m]}
+              </button>
+            ))}
+          </div>
+
+          {/* ações */}
+          <div className="mt-8 flex gap-3">
+            <button
+              type="button"
+              onClick={onFechar}
+              disabled={confirmando}
+              className="flex-1 rounded-xl bg-white/10 py-3.5 text-sm font-semibold uppercase tracking-wide text-zinc-200 transition-colors hover:bg-white/20 disabled:opacity-40"
+            >
               {t.voltar}
+            </button>
+            <button
+              type="button"
+              onClick={onConfirmar}
+              disabled={!vencedorId || confirmando}
+              aria-busy={confirmando}
+              className="inline-flex flex-[2] items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3.5 text-base font-bold text-white transition-colors hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-zinc-500"
+            >
+              {confirmando && <Spinner className="h-4 w-4" />}
+              {confirmando ? t.confirmando : t.confirmarResultado}
             </button>
           </div>
         </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+/* Cartão de escolha do vencedor — reflete a cor do lado (azul/vermelho) e o
+   placar atual; dimmed quando não é o escolhido, com selo de check quando é. */
+function CartaoVencedor({
+  atleta,
+  dados,
+  cor,
+  selecionado,
+  onClick,
+  t,
+}: {
+  atleta: Props["atleta1"];
+  dados: Lado;
+  cor: string;
+  selecionado: boolean;
+  onClick: () => void;
+  t: ReturnType<typeof useDic>["admin"]["placarTablet"];
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selecionado}
+      className={cn(
+        "relative flex flex-col rounded-2xl p-5 text-left text-white transition-all",
+        cor,
+        selecionado
+          ? "opacity-100 ring-4 ring-white ring-offset-2 ring-offset-zinc-900"
+          : "opacity-45 hover:opacity-75",
       )}
-    </div>
+    >
+      {selecionado && (
+        <span className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-zinc-900">
+          <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth="3">
+            <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </span>
+      )}
+      <span className="truncate pr-9 text-xl font-bold sm:text-2xl">
+        {atleta.nome}
+      </span>
+      {atleta.academia && (
+        <span className="truncate text-sm opacity-70">{atleta.academia}</span>
+      )}
+      <div className="mt-3 flex items-end gap-3">
+        <span className="text-5xl font-black leading-none tabular-nums">
+          {dados.pontos}
+        </span>
+        <span className="mb-1 text-xs uppercase tracking-wide opacity-80">
+          {t.vantagensLabel} {dados.vantagens} · {t.punicoesLabel} {dados.punicoes}
+        </span>
+      </div>
+    </button>
   );
 }
