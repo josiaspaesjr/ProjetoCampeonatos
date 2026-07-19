@@ -699,6 +699,36 @@ export async function lancarResultado(
   revalidatePath(`/organizador/eventos/${eventoId}/chaves/${chaveId}`);
 }
 
+/**
+ * Registra na chave se as medalhas do pódio já foram entregues (cerimônia).
+ * `entregues` grava/limpa o carimbo de data. Só faz sentido em chave concluída
+ * (com pódio) — silenciosamente ignora as demais.
+ */
+export async function marcarMedalhasEntregues(
+  eventoId: string,
+  chaveId: string,
+  entregues: boolean,
+) {
+  const { db, usuario } = await eventoDoOrganizador(eventoId);
+  const chave = await db.query.chaves.findFirst({ where: eq(chaves.id, chaveId) });
+  if (!chave || chave.status !== "concluida") return;
+
+  await db
+    .update(chaves)
+    .set({ medalhasEntreguesEm: entregues ? new Date() : null })
+    .where(eq(chaves.id, chaveId));
+
+  await db.insert(auditoria).values({
+    usuarioId: usuario.id,
+    entidade: "chave",
+    entidadeId: chaveId,
+    acao: entregues ? "medalhas_entregues" : "medalhas_desfeitas",
+  });
+
+  revalidatePath(`/organizador/eventos/${eventoId}/chaves`);
+  revalidatePath(`/organizador/eventos/${eventoId}/chaves/${chaveId}`);
+}
+
 /** Salva as notas dos jurados de uma apresentação (votação por jurados). */
 export async function salvarNotas(
   eventoId: string,

@@ -816,6 +816,11 @@ export const es: Dicionario = {
       insuficiente: "insuficiente para generar la llave",
       formatoSugerido: "formato sugerido:",
       campeaoWo: "campeón por W.O. (1 atleta)",
+      // entrega de medallas (llave concluida / ceremonia)
+      medalhasMarcar: "Marcar medallas entregadas",
+      medalhasEntregues: "Medallas entregadas",
+      medalhasPendentes: "Medallas pendientes",
+      medalhasDesfazer: "Deshacer",
       formatos: {
         eliminacao_simples: {
           nome: "Eliminación simple",

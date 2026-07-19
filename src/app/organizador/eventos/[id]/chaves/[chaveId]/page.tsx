@@ -9,7 +9,21 @@ import { getDicionario } from "@/lib/i18n/server";
 import { calcularPodioDaChave } from "@/lib/chaves/persistencia";
 import { BracketView, type AtletaInfo } from "@/components/bracket-view";
 import { Podio } from "@/components/podio";
-import { lancarResultado, salvarNotas } from "../../../actions";
+import { BotaoAcao } from "@/components/ui/botao-acao";
+import {
+  lancarResultado,
+  marcarMedalhasEntregues,
+  salvarNotas,
+} from "../../../actions";
+
+/** "DD/MM/AAAA HH:MM" no fuso do Brasil (datas do app são pt-BR) */
+function dataHoraBR(d: Date): string {
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: "America/Sao_Paulo",
+  }).format(d);
+}
 
 export default async function PaginaChave({
   params,
@@ -76,6 +90,38 @@ export default async function PaginaChave({
             atletas={atletas}
             labels={{ podio: dic.chavesTab.podio, campeao: dic.chavesTab.campeao }}
           />
+
+          {/* cerimônia: registrar entrega das medalhas */}
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            {chave.medalhasEntreguesEm ? (
+              <>
+                <span className="inline-flex items-center gap-2 rounded-md bg-success/15 px-3 py-1.5 text-sm font-medium text-success">
+                  🏅 {dic.admin.chaves.medalhasEntregues} ·{" "}
+                  {dataHoraBR(chave.medalhasEntreguesEm)}
+                </span>
+                <form
+                  action={marcarMedalhasEntregues.bind(null, id, chave.id, false)}
+                >
+                  <BotaoAcao variant="ghost" size="sm">
+                    {dic.admin.chaves.medalhasDesfazer}
+                  </BotaoAcao>
+                </form>
+              </>
+            ) : (
+              <>
+                <span className="text-sm text-muted-foreground">
+                  {dic.admin.chaves.medalhasPendentes}
+                </span>
+                <form
+                  action={marcarMedalhasEntregues.bind(null, id, chave.id, true)}
+                >
+                  <BotaoAcao variant="outline" size="sm">
+                    🏅 {dic.admin.chaves.medalhasMarcar}
+                  </BotaoAcao>
+                </form>
+              </>
+            )}
+          </div>
         </div>
       )}
 

@@ -822,6 +822,11 @@ export const pt = {
       insuficiente: "insuficiente para gerar chave",
       formatoSugerido: "formato sugerido:",
       campeaoWo: "campeão por W.O. (1 atleta)",
+      // entrega das medalhas (chave concluída / cerimônia)
+      medalhasMarcar: "Marcar medalhas entregues",
+      medalhasEntregues: "Medalhas entregues",
+      medalhasPendentes: "Medalhas pendentes",
+      medalhasDesfazer: "Desfazer",
       formatos: {
         eliminacao_simples: {
           nome: "Eliminação simples",

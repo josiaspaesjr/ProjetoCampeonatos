@@ -1,0 +1,1 @@
+ALTER TABLE "chaves" ADD COLUMN "medalhas_entregues_em" timestamp with time zone;

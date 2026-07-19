@@ -815,6 +815,11 @@ export const en: Dicionario = {
       insuficiente: "not enough to generate a bracket",
       formatoSugerido: "suggested format:",
       campeaoWo: "champion by W.O. (1 athlete)",
+      // medal handout (finished bracket / ceremony)
+      medalhasMarcar: "Mark medals handed out",
+      medalhasEntregues: "Medals handed out",
+      medalhasPendentes: "Medals pending",
+      medalhasDesfazer: "Undo",
       formatos: {
         eliminacao_simples: {
           nome: "Single elimination",

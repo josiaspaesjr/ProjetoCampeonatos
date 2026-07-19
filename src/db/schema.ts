@@ -409,6 +409,9 @@ export const chaves = pgTable("chaves", {
   seedSorteio: text("seed_sorteio").notNull(),
   geradaEm: timestamp("gerada_em", { withTimezone: true }).notNull().defaultNow(),
   publicadaEm: timestamp("publicada_em", { withTimezone: true }),
+  // cerimônia: quando as medalhas do pódio foram entregues (nulo = pendente).
+  // Só faz sentido em chave concluída (com pódio). Ver marcarMedalhasEntregues.
+  medalhasEntreguesEm: timestamp("medalhas_entregues_em", { withTimezone: true }),
 });
 
 export const lutas = pgTable("lutas", {

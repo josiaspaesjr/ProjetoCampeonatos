@@ -128,6 +128,20 @@ export default async function PaginaChaves({
               </div>
               <div className="flex shrink-0 flex-wrap items-center gap-3 max-sm:w-full">
                 <Badge variant={variante}>{rotulo}</Badge>
+                {chave?.status === "concluida" && (
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      chave.medalhasEntreguesEm
+                        ? "bg-success/15 text-success"
+                        : "bg-warning/15 text-warning-foreground"
+                    }`}
+                  >
+                    🏅{" "}
+                    {chave.medalhasEntreguesEm
+                      ? ch.medalhasEntregues
+                      : ch.medalhasPendentes}
+                  </span>
+                )}
                 {qtd >= 2 &&
                   (!chave ||
                     chave.status === "rascunho" ||
