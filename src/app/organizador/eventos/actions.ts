@@ -533,13 +533,21 @@ export async function gerarChave(
 
 /**
  * Gera em lote as chaves de todas as categorias com 2+ confirmados que ainda
- * não têm chave. Formato automático por tamanho: até 3 atletas → round robin
- * (todos contra todos), 4+ → eliminação simples. Rascunhos existentes são
+ * não têm chave. Formato automático por tamanho (2 atletas → luta única, 4+ →
+ * eliminação simples); as divisões com **exatamente 3 atletas** seguem a
+ * escolha do organizador (`tresAtletas` no form): "todos contra todos"
+ * (round robin, padrão) ou eliminação simples. Rascunhos existentes são
  * preservados — regenere individualmente se quiser trocar o sorteio.
  */
-export async function gerarChavesEmLote(eventoId: string) {
+export async function gerarChavesEmLote(eventoId: string, formData?: FormData) {
   const { db, usuario } = await eventoDoOrganizador(eventoId);
   const dic = await getDicionario();
+
+  // formato das divisões de exatamente 3 atletas (padrão: todos contra todos)
+  const formato3: FormatoSelecionavel =
+    formData?.get("tresAtletas") === "eliminacao_simples"
+      ? "eliminacao_simples"
+      : "round_robin";
 
   const [cats, confirmadas] = await Promise.all([
     db.query.categorias.findMany({ where: eq(categorias.eventoId, eventoId) }),
@@ -579,7 +587,10 @@ export async function gerarChavesEmLote(eventoId: string) {
   const falhas: string[] = [];
   for (const cat of pendentes) {
     try {
-      const chave = await gerarChaveParaCategoria(db, cat.id, "auto");
+      // divisões de 3 atletas seguem a escolha; as demais, automático
+      const formato: FormatoSelecionavel =
+        (contagem.get(cat.id) ?? 0) === 3 ? formato3 : "auto";
+      const chave = await gerarChaveParaCategoria(db, cat.id, formato);
       await db.insert(auditoria).values({
         usuarioId: usuario.id,
         entidade: "chave",

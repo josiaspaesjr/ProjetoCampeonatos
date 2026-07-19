@@ -10,6 +10,7 @@ import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import { formatoAutomatico } from "@/lib/bracket";
 import { SeletorFormato } from "@/components/chaves/seletor-formato";
+import { GerarLoteDialog } from "@/components/chaves/gerar-lote-dialog";
 import { gerarChave, gerarChavesEmLote, publicarChaves } from "../../actions";
 
 const VARIANTE_CHAVE: Record<string, BadgeProps["variant"]> = {
@@ -59,9 +60,12 @@ export default async function PaginaChaves({
 
   const comInscritos = cats.filter((c) => (contagem.get(c.id) ?? 0) > 0);
   const rascunhos = todasChaves.filter((c) => c.status === "rascunho").length;
-  const semChave = comInscritos.filter(
+  const pendentes = comInscritos.filter(
     (c) => (contagem.get(c.id) ?? 0) >= 2 && !chavePorCategoria.has(c.id),
-  ).length;
+  );
+  const semChave = pendentes.length;
+  // divisões do lote com exatamente 3 atletas (a escolha do formato só afeta essas)
+  const tres3 = pendentes.filter((c) => (contagem.get(c.id) ?? 0) === 3).length;
 
   return (
     <div>
@@ -74,12 +78,11 @@ export default async function PaginaChaves({
         <p className="max-w-[560px] text-sm text-muted-foreground">{ch.intro}</p>
         <div className="flex items-center gap-3">
           {semChave > 0 && (
-            <form action={gerarChavesEmLote.bind(null, evento.id)}>
-              <BotaoAcao>
-                {ch.gerar} {semChave}{" "}
-                {semChave === 1 ? ch.chaveSing : ch.chavePlur} {ch.emLote}
-              </BotaoAcao>
-            </form>
+            <GerarLoteDialog
+              acao={gerarChavesEmLote.bind(null, evento.id)}
+              total={semChave}
+              tres={tres3}
+            />
           )}
           {rascunhos > 0 && (
             <form action={publicarChaves.bind(null, evento.id)}>

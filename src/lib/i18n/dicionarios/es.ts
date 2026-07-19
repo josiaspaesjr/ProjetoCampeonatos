@@ -800,6 +800,16 @@ export const es: Dicionario = {
       chaveSing: "llave",
       chavePlur: "llaves",
       emLote: "en lote",
+      // diálogo de generación en lote (formato de las divisiones de 3 atletas)
+      loteTitulo: "Generar llaves en lote",
+      lotePergunta: "Divisiones con 3 atletas",
+      loteDivisaoSing: "división",
+      loteDivisaoPlur: "divisiones",
+      loteComTres: "en este lote — elige cómo armarlas",
+      loteSemTres:
+        "Ninguna división de 3 atletas en este lote — la elección vale para las próximas.",
+      loteNota:
+        "Las divisiones con 2 atletas se vuelven lucha única; con 4 o más, eliminación simple.",
       publicar: "Publicar",
       confirmadoSing: "confirmado",
       confirmadoPlur: "confirmados",

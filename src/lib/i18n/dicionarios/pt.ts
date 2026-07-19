@@ -806,6 +806,16 @@ export const pt = {
       chaveSing: "chave",
       chavePlur: "chaves",
       emLote: "em lote",
+      // diálogo de geração em lote (formato das divisões de 3 atletas)
+      loteTitulo: "Gerar chaves em lote",
+      lotePergunta: "Divisões com 3 atletas",
+      loteDivisaoSing: "divisão",
+      loteDivisaoPlur: "divisões",
+      loteComTres: "neste lote — escolha como montá-las",
+      loteSemTres:
+        "Nenhuma divisão de 3 atletas neste lote — a escolha vale para as próximas.",
+      loteNota:
+        "Divisões com 2 atletas viram luta única; com 4 ou mais, eliminação simples.",
       publicar: "Publicar",
       confirmadoSing: "confirmado",
       confirmadoPlur: "confirmados",
