@@ -686,6 +686,14 @@ export const es: Dicionario = {
       manualDesc:
         "Para un atleta que pagó por fuera (efectivo, exención) — entra directo como confirmada y queda registrada en la auditoría.",
       inscreverManualmente: "Inscribir manualmente",
+      adicionar: "Añadir",
+      buscarPlaceholder: "Buscar por nombre, academia o categoría…",
+      filtroTodas: "Todas",
+      filtroConfirmadas: "Confirmadas",
+      filtroPendentes: "Pendientes",
+      filtroInativas: "Inactivas",
+      nenhumResultado: "No se encontraron inscritos.",
+      erroManual: "No se pudo inscribir. Revisa los datos e inténtalo de nuevo.",
     },
     categorias: {
       gradeGerada: "Grilla generada",

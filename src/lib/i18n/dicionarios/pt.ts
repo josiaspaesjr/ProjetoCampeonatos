@@ -692,6 +692,14 @@ export const pt = {
       manualDesc:
         "Para atleta que pagou por fora (dinheiro, isenção) — entra direto como confirmada e fica registrada na auditoria.",
       inscreverManualmente: "Inscrever manualmente",
+      adicionar: "Adicionar",
+      buscarPlaceholder: "Buscar por nome, academia ou categoria…",
+      filtroTodas: "Todas",
+      filtroConfirmadas: "Confirmadas",
+      filtroPendentes: "Pendentes",
+      filtroInativas: "Inativas",
+      nenhumResultado: "Nenhum inscrito encontrado.",
+      erroManual: "Não foi possível inscrever. Confira os dados e tente de novo.",
     },
     categorias: {
       gradeGerada: "Grade gerada",

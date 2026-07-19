@@ -685,6 +685,14 @@ export const en: Dicionario = {
       manualDesc:
         "For an athlete who paid another way (cash, waiver) — enters directly as confirmed and is logged in the audit trail.",
       inscreverManualmente: "Register manually",
+      adicionar: "Add",
+      buscarPlaceholder: "Search by name, academy or division…",
+      filtroTodas: "All",
+      filtroConfirmadas: "Confirmed",
+      filtroPendentes: "Pending",
+      filtroInativas: "Inactive",
+      nenhumResultado: "No registrations found.",
+      erroManual: "Could not register. Check the details and try again.",
     },
     categorias: {
       gradeGerada: "Generated grid",

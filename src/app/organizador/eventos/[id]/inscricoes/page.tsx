@@ -2,31 +2,18 @@ import { notFound } from "next/navigation";
 import { asc, desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, inscricoes, usuarios } from "@/db/schema";
-import { Badge, type BadgeProps } from "@/components/ui/badge";
-import { AcaoTexto, BotaoAcao } from "@/components/ui/botao-acao";
-import { SeletorAcademia } from "@/components/inscricao/seletor-academia";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { BotaoAcao } from "@/components/ui/botao-acao";
 import { NativeSelect } from "@/components/ui/native-select";
 import { getUsuarioAtual } from "@/lib/auth";
 import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
-import { FAIXAS } from "@/lib/categorias/cbjj";
 import { formatarCep, formatarCpf } from "@/lib/cpf";
+import { fundirCategorias } from "./actions";
 import {
-  cancelarInscricao,
-  fundirCategorias,
-  inscricaoManual,
-  moverInscricao,
-  reembolsarInscricao,
-} from "./actions";
-
-const VARIANTE_STATUS: Record<string, BadgeProps["variant"]> = {
-  pendente_pagamento: "warning",
-  confirmada: "success",
-  cancelada: "secondary",
-  reembolsada: "secondary",
-};
+  PainelInscricoes,
+  type CategoriaAberta,
+  type LinhaInscricao,
+} from "./painel-inscricoes";
 
 export default async function PaginaInscricoes({
   params,
@@ -85,6 +72,42 @@ export default async function PaginaInscricoes({
     : [];
   const perfilPorUsuario = new Map(dadosUsuarios.map((u) => [u.id, u]));
 
+  // linhas serializadas para o painel client (filtro + busca instantâneos)
+  const linhas: LinhaInscricao[] = lista.map((i) => {
+    const u = perfilPorUsuario.get(i.usuarioId);
+    const endereco = u
+      ? [
+          [u.enderecoLogradouro, u.enderecoNumero].filter(Boolean).join(", "),
+          u.enderecoComplemento,
+          u.enderecoBairro,
+          [u.enderecoCidade, u.enderecoUf].filter(Boolean).join("/"),
+          u.enderecoCep ? `CEP ${formatarCep(u.enderecoCep)}` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ")
+      : "";
+    const cpfTxt = u && u.cpf ? `${dic.inscricao.cpf} ${formatarCpf(u.cpf)}` : "";
+    const docLinha = [cpfTxt, endereco].filter(Boolean).join(" · ");
+    const categoriaNome = nomeCategoria.get(i.categoriaId) ?? "";
+    return {
+      id: i.id,
+      nome: i.nomeAtleta,
+      status: i.status,
+      categoriaId: i.categoriaId,
+      categoriaNome,
+      faixa: i.faixa,
+      academiaNome: i.academiaNome,
+      docLinha,
+      busca: [i.nomeAtleta, i.academiaNome, categoriaNome, i.faixa, docLinha]
+        .filter(Boolean)
+        .join(" "),
+    };
+  });
+  const abertasDTO: CategoriaAberta[] = abertas.map((c) => ({
+    id: c.id,
+    nome: c.nome,
+  }));
+
   const ativasPorCategoria = new Map<string, number>();
   for (const i of lista) {
     if (i.status === "confirmada" || i.status === "pendente_pagamento") {
@@ -101,7 +124,7 @@ export default async function PaginaInscricoes({
   );
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       <p className="font-cond text-[15px] uppercase tracking-[0.05em] text-muted-2">
         <span className="text-foreground">{nAtivas}</span>{" "}
         {nAtivas === 1 ? t.inscricaoSing : t.inscricaoPlur}
@@ -163,168 +186,7 @@ export default async function PaginaInscricoes({
         </section>
       )}
 
-      <section>
-        <ul className="divide-y divide-border rounded-xl border bg-card">
-          {lista.map((i) => {
-            const rotulo = dic.admin.statusInscricao[i.status] ?? i.status;
-            const variante = VARIANTE_STATUS[i.status] ?? ("outline" as const);
-            const ativa = i.status === "confirmada" || i.status === "pendente_pagamento";
-            const u = perfilPorUsuario.get(i.usuarioId);
-            const endereco = u
-              ? [
-                  [u.enderecoLogradouro, u.enderecoNumero].filter(Boolean).join(", "),
-                  u.enderecoComplemento,
-                  u.enderecoBairro,
-                  [u.enderecoCidade, u.enderecoUf].filter(Boolean).join("/"),
-                  u.enderecoCep ? `CEP ${formatarCep(u.enderecoCep)}` : null,
-                ]
-                  .filter(Boolean)
-                  .join(" · ")
-              : "";
-            const cpfTxt =
-              u && u.cpf ? `${dic.inscricao.cpf} ${formatarCpf(u.cpf)}` : "";
-            const docLinha = [cpfTxt, endereco].filter(Boolean).join(" · ");
-            return (
-              <li
-                key={i.id}
-                className="flex flex-col gap-2.5 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
-              >
-                <div className="flex min-w-0 items-center gap-2.5">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
-                      {i.nomeAtleta}
-                      <span className="ml-2 font-normal capitalize text-muted-foreground">
-                        {dic.evento.faixaNomes[
-                          i.faixa as keyof typeof dic.evento.faixaNomes
-                        ] ?? i.faixa}
-                        {i.academiaNome ? ` · ${i.academiaNome}` : ""}
-                      </span>
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {nomeCategoria.get(i.categoriaId)}
-                    </p>
-                    {docLinha && (
-                      <p className="mt-0.5 text-xs text-muted-foreground/70">
-                        {docLinha}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 max-sm:w-full">
-                  <Badge variant={variante}>{rotulo}</Badge>
-
-                  {ativa && (
-                    <form
-                      action={moverInscricao.bind(null, id, i.id)}
-                      className="flex items-center gap-1 max-sm:flex-1"
-                    >
-                      <NativeSelect
-                        name="categoriaId"
-                        required
-                        defaultValue=""
-                        className="h-8 w-full text-xs sm:w-44"
-                      >
-                        <option value="" disabled>
-                          {t.moverPara}
-                        </option>
-                        {abertas
-                          .filter((c) => c.id !== i.categoriaId)
-                          .map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.nome}
-                            </option>
-                          ))}
-                      </NativeSelect>
-                      <BotaoAcao variant="outline" size="sm">
-                        OK
-                      </BotaoAcao>
-                    </form>
-                  )}
-
-                  {i.status === "pendente_pagamento" && (
-                    <form action={cancelarInscricao.bind(null, id, i.id)}>
-                      <AcaoTexto className="text-xs text-destructive hover:underline">
-                        {t.cancelarAcao}
-                      </AcaoTexto>
-                    </form>
-                  )}
-                  {i.status === "confirmada" && (
-                    <form action={reembolsarInscricao.bind(null, id, i.id)}>
-                      <AcaoTexto className="text-xs text-destructive hover:underline">
-                        {t.reembolsar}
-                      </AcaoTexto>
-                    </form>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-          {lista.length === 0 && (
-            <li className="px-5 py-8 text-center text-sm text-muted-foreground">
-              {t.nenhumaAinda}
-            </li>
-          )}
-        </ul>
-      </section>
-
-      <section className="max-w-2xl">
-        <h2 className="text-lg font-bold">{t.inscricaoManual}</h2>
-        <p className="mt-1 text-xs text-muted-foreground">{t.manualDesc}</p>
-        <Card className="mt-4">
-          <CardContent className="p-5">
-            <form action={inscricaoManual.bind(null, id)} className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Input
-                  name="nome"
-                  required
-                  placeholder={dic.inscricao.nomeCompleto}
-                />
-                <Input
-                  name="email"
-                  type="email"
-                  required
-                  placeholder={dic.inscricao.email}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                <Input name="dataNascimento" type="date" required />
-                <NativeSelect name="sexo" required defaultValue="">
-                  <option value="" disabled>
-                    {dic.inscricao.sexo}
-                  </option>
-                  <option value="masculino">{dic.inscricao.masculino}</option>
-                  <option value="feminino">{dic.inscricao.feminino}</option>
-                </NativeSelect>
-                <NativeSelect name="faixa" required defaultValue="">
-                  <option value="" disabled>
-                    {dic.inscricao.faixa}
-                  </option>
-                  {FAIXAS.map((f) => (
-                    <option key={f} value={f}>
-                      {dic.evento.faixaNomes[
-                        f as keyof typeof dic.evento.faixaNomes
-                      ] ?? f}
-                    </option>
-                  ))}
-                </NativeSelect>
-                <SeletorAcademia name="academiaId" />
-              </div>
-              <NativeSelect name="categoriaId" required defaultValue="">
-                <option value="" disabled>
-                  {dic.inscricao.categoria}
-                </option>
-                {abertas.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
-                  </option>
-                ))}
-              </NativeSelect>
-              <BotaoAcao>{t.inscreverManualmente}</BotaoAcao>
-            </form>
-          </CardContent>
-        </Card>
-      </section>
+      <PainelInscricoes eventoId={id} linhas={linhas} abertas={abertasDTO} />
     </div>
   );
 }
