@@ -11,7 +11,12 @@ import { getDicionario } from "@/lib/i18n/server";
 import { formatoAutomatico } from "@/lib/bracket";
 import { SeletorFormato } from "@/components/chaves/seletor-formato";
 import { GerarLoteDialog } from "@/components/chaves/gerar-lote-dialog";
-import { gerarChave, gerarChavesEmLote, publicarChaves } from "../../actions";
+import {
+  gerarChave,
+  gerarChaveAuto,
+  gerarChavesEmLote,
+  publicarChaves,
+} from "../../actions";
 
 const VARIANTE_CHAVE: Record<string, BadgeProps["variant"]> = {
   rascunho: "warning",
@@ -60,8 +65,9 @@ export default async function PaginaChaves({
 
   const comInscritos = cats.filter((c) => (contagem.get(c.id) ?? 0) > 0);
   const rascunhos = todasChaves.filter((c) => c.status === "rascunho").length;
+  // 1 atleta já é elegível (vira campeão por W.O.)
   const pendentes = comInscritos.filter(
-    (c) => (contagem.get(c.id) ?? 0) >= 2 && !chavePorCategoria.has(c.id),
+    (c) => (contagem.get(c.id) ?? 0) >= 1 && !chavePorCategoria.has(c.id),
   );
   const semChave = pendentes.length;
   // divisões do lote com exatamente 3 atletas (a escolha do formato só afeta essas)
@@ -113,11 +119,11 @@ export default async function PaginaChaves({
                 <p className="truncate text-sm font-medium">{c.nome}</p>
                 <p className="text-xs text-muted-foreground">
                   {qtd} {qtd === 1 ? ch.confirmadoSing : ch.confirmadoPlur}
-                  {qtd === 1 && ` — ${ch.insuficiente}`}
                   {chave
                     ? ` · ${ch.formatos[chave.formato]?.nome ?? chave.formato}`
-                    : qtd >= 2 &&
-                      ` · ${ch.formatoSugerido} ${ch.formatos[formatoAutomatico(qtd)].nome}`}
+                    : qtd === 1
+                      ? ` · ${ch.campeaoWo}`
+                      : ` · ${ch.formatoSugerido} ${ch.formatos[formatoAutomatico(qtd)].nome}`}
                 </p>
               </div>
               <div className="flex shrink-0 flex-wrap items-center gap-3 max-sm:w-full">
@@ -134,6 +140,11 @@ export default async function PaginaChaves({
                       formatoAtual={chave?.formato ?? null}
                     />
                   )}
+                {qtd === 1 && !chave && (
+                  <form action={gerarChaveAuto.bind(null, evento.id, c.id)}>
+                    <BotaoAcao>{ch.gerarChave}</BotaoAcao>
+                  </form>
+                )}
                 {chave && (
                   <Link
                     href={`/organizador/eventos/${evento.id}/chaves/${chave.id}`}

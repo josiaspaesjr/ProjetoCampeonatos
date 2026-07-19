@@ -6,6 +6,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import type { Db } from "@/db";
 import * as schema from "@/db/schema";
 import {
+  calcularPodioDaChave,
   gerarChaveParaCategoria,
   registrarResultadoNoBanco,
 } from "./persistencia";
@@ -124,11 +125,25 @@ describe("gerarChaveParaCategoria — só entra quem pagou (confirmada)", () => 
     expect(participantes.size).toBe(confirmadas.length);
   });
 
-  it("menos de 2 pagos (1 pago + 3 pendentes): não gera chave", async () => {
-    const { categoriaId } = await criarCategoriaCom(1, 3);
-    await expect(gerarChaveParaCategoria(db, categoriaId)).rejects.toThrow(
-      /chave_min_inscricoes/,
-    );
+  it("1 pago (+ pendentes): gera campeão por W.O. — chave concluída sem oponente", async () => {
+    const { categoriaId, confirmadas, pendentes } = await criarCategoriaCom(1, 3);
+    const chave = await gerarChaveParaCategoria(db, categoriaId);
+    expect(chave.status).toBe("concluida");
+
+    const linhas = await db.query.lutas.findMany({
+      where: eq(schema.lutas.chaveId, chave.id),
+    });
+    expect(linhas).toHaveLength(1);
+    expect(linhas[0].atleta1InscricaoId).toBe(confirmadas[0]);
+    expect(linhas[0].atleta2InscricaoId).toBeNull();
+    expect(linhas[0].vencedorInscricaoId).toBe(confirmadas[0]);
+    // nenhum pendente entra
+    const participantes = await participantesDaChave(chave.id);
+    for (const id of pendentes) expect(participantes.has(id)).toBe(false);
+    // pódio: o solo é o campeão
+    const podio = calcularPodioDaChave(chave, linhas);
+    expect(podio.primeiro).toBe(confirmadas[0]);
+    expect(podio.segundo).toBeNull();
   });
 
   it("ninguém pagou (0 pago + 2 pendentes): não gera chave", async () => {
@@ -219,5 +234,36 @@ describe("gerarChaveParaCategoria — regeneração", () => {
     await expect(gerarChaveParaCategoria(db, categoriaId)).rejects.toThrow(
       /chave_em_andamento/,
     );
+  });
+
+  it("campeão solo (concluída, sem luta real): regenera quando um 2º atleta confirma", async () => {
+    const { categoriaId, confirmadas } = await criarCategoriaCom(1, 0);
+    const solo = await gerarChaveParaCategoria(db, categoriaId);
+    expect(solo.status).toBe("concluida");
+
+    // um 2º atleta confirma na mesma categoria
+    const [u] = await db
+      .insert(schema.usuarios)
+      .values({ nome: "segundo", email: `seg-${categoriaId}@t.dev` })
+      .returning();
+    const [insc2] = await db
+      .insert(schema.inscricoes)
+      .values({
+        usuarioId: u.id,
+        eventoId,
+        categoriaId,
+        status: "confirmada",
+        nomeAtleta: "segundo",
+        faixa: "preta",
+        dataNascimento: "1996-01-01",
+      })
+      .returning();
+
+    // apesar de "concluída", regenera (não havia luta real) → chave de 2 atletas
+    const regen = await gerarChaveParaCategoria(db, categoriaId);
+    expect(regen.id).not.toBe(solo.id);
+    const participantes = await participantesDaChave(regen.id);
+    expect(participantes.has(confirmadas[0])).toBe(true);
+    expect(participantes.has(insc2.id)).toBe(true);
   });
 });

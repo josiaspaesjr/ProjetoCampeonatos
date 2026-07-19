@@ -815,6 +815,7 @@ export const es: Dicionario = {
       confirmadoPlur: "confirmados",
       insuficiente: "insuficiente para generar la llave",
       formatoSugerido: "formato sugerido:",
+      campeaoWo: "campeón por W.O. (1 atleta)",
       formatos: {
         eliminacao_simples: {
           nome: "Eliminación simple",

@@ -814,6 +814,7 @@ export const en: Dicionario = {
       confirmadoPlur: "confirmed",
       insuficiente: "not enough to generate a bracket",
       formatoSugerido: "suggested format:",
+      campeaoWo: "champion by W.O. (1 athlete)",
       formatos: {
         eliminacao_simples: {
           nome: "Single elimination",

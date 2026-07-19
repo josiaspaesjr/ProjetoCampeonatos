@@ -532,6 +532,15 @@ export async function gerarChave(
 }
 
 /**
+ * Gera a chave pelo formato automático (assinatura amigável a `<form>`). Usado
+ * pelo botão das divisões de 1 atleta — que viram campeão por W.O. em
+ * `gerarChaveParaCategoria`; para 2+ o SeletorFormato é quem chama `gerarChave`.
+ */
+export async function gerarChaveAuto(eventoId: string, categoriaId: string) {
+  await gerarChave(eventoId, categoriaId, "auto");
+}
+
+/**
  * Gera em lote as chaves de todas as categorias com 2+ confirmados que ainda
  * não têm chave. Formato automático por tamanho (2 atletas → luta única, 4+ →
  * eliminação simples); as divisões com **exatamente 3 atletas** seguem a
@@ -573,8 +582,9 @@ export async function gerarChavesEmLote(eventoId: string, formData?: FormData) {
       : [],
   );
 
+  // inclui divisões de 1 atleta (viram campeão por W.O. em gerarChaveParaCategoria)
   const pendentes = cats.filter(
-    (c) => (contagem.get(c.id) ?? 0) >= 2 && !existentes.has(c.id),
+    (c) => (contagem.get(c.id) ?? 0) >= 1 && !existentes.has(c.id),
   );
   if (!pendentes.length) {
     redirect(

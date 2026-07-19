@@ -69,7 +69,7 @@ export async function gerarChaveParaCategoria(
   });
   // mensagens de erro usam códigos neutros de idioma — a UI traduz via
   // dic.admin.erros.chave[código] (ver src/app/organizador/eventos/actions.ts)
-  if (confirmadas.length < 2) {
+  if (confirmadas.length < 1) {
     throw new Error("chave_min_inscricoes");
   }
 
@@ -77,7 +77,9 @@ export async function gerarChaveParaCategoria(
   // seja, enquanto nenhuma luta tiver resultado lançado. O status já é o proxy
   // fiel disso: só vira em_andamento/concluida ao registrar um resultado real
   // (byes da geração não mexem no status). Uma chave publicada sem resultados
-  // pode ser regenerada e permanece publicada.
+  // pode ser regenerada e permanece publicada. Exceção: o **campeão solo** nasce
+  // "concluída" por walkover (1 luta sem oponente); como não houve luta real, ele
+  // pode ser regenerado — ex.: quando um 2º atleta confirma depois.
   const existente = await db.query.chaves.findFirst({
     where: eq(chaves.categoriaId, categoriaId),
   });
@@ -85,7 +87,12 @@ export async function gerarChaveParaCategoria(
   let publicadaEm: Date | null = null;
   if (existente) {
     if (existente.status === "em_andamento" || existente.status === "concluida") {
-      throw new Error("chave_em_andamento");
+      const linhasExist = await db.query.lutas.findMany({
+        where: eq(lutas.chaveId, existente.id),
+      });
+      const campeaoSolo =
+        linhasExist.length === 1 && linhasExist[0].atleta2InscricaoId === null;
+      if (!campeaoSolo) throw new Error("chave_em_andamento");
     }
     if (existente.status === "publicada") {
       statusInicial = "publicada";
@@ -95,10 +102,41 @@ export async function gerarChaveParaCategoria(
     await db.delete(chaves).where(eq(chaves.id, existente.id));
   }
 
+  const seed = crypto.randomUUID();
+
+  // 1 atleta: campeão por W.O. Uma chave já **concluída** com uma única luta sem
+  // oponente (bye); o pódio calcula primeiro = vencedor (ver calcularPodio) e a
+  // UI mostra o campeão. Sem passar pelo motor (que exige ≥ 2).
+  if (confirmadas.length === 1) {
+    const solo = confirmadas[0];
+    const [chave] = await db
+      .insert(chaves)
+      .values({
+        categoriaId,
+        formato: "eliminacao_simples",
+        seedSorteio: seed,
+        config: null,
+        status: "concluida",
+        publicadaEm: publicadaEm ?? new Date(),
+      })
+      .returning();
+    await db.insert(lutas).values({
+      id: crypto.randomUUID(),
+      chaveId: chave.id,
+      rodada: 1,
+      posicao: 0,
+      atleta1InscricaoId: solo.id,
+      atleta2InscricaoId: null,
+      vencedorInscricaoId: solo.id,
+      metodo: "wo",
+      encerradaEm: new Date(),
+    });
+    return chave;
+  }
+
   const formatoFinal: FormatoChaveId =
     formato === "auto" ? formatoAutomatico(confirmadas.length) : formato;
 
-  const seed = crypto.randomUUID();
   const participantes = confirmadas.map((i) => ({
     id: i.id,
     nome: i.nomeAtleta,

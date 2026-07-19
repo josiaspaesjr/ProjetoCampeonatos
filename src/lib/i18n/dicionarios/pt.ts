@@ -821,6 +821,7 @@ export const pt = {
       confirmadoPlur: "confirmados",
       insuficiente: "insuficiente para gerar chave",
       formatoSugerido: "formato sugerido:",
+      campeaoWo: "campeão por W.O. (1 atleta)",
       formatos: {
         eliminacao_simples: {
           nome: "Eliminação simples",
