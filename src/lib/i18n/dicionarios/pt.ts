@@ -959,6 +959,26 @@ export const pt = {
       diasNota:
         "As lutas são distribuídas dentro das janelas de cada dia. Repita a data para ter manhã e tarde — o intervalo entre elas fica sem lutas. Ajuste antes de estruturar.",
       salvarDias: "Salvar dias",
+      // modo de estruturação: automático × por dia (manual)
+      modoLabel: "Modo",
+      modoAutomatico: "Automático",
+      modoPorDia: "Por dia",
+      porDiaTitulo: "Categorias por dia",
+      porDiaTexto:
+        "Escolha, por dia, as classes, sexos e faixas que acontecem nele. Cada categoria entra no primeiro dia cujo filtro a inclui; as demais ficam sem dia.",
+      porDiaSemDia: "sem dia",
+      porDiaTodasAtribuidas: "Todas as categorias têm dia",
+      estruturarPorDia: "Estruturar por dia",
+      porDiaSemFiltro:
+        "Marque ao menos uma classe, um sexo e uma faixa em pelo menos um dia.",
+      // impressão da programação por dia
+      imprimirPrograma: "Imprimir programação",
+      programaTitulo: "Programação",
+      colHora: "Horário",
+      colArea: "Área",
+      colCategoria: "Categoria",
+      colLutas: "Lutas",
+      geradoEm: "Gerado em",
       // aviso quando as lutas estimadas não cabem no período
       naoCabePre: "As lutas estimadas (~",
       naoCabeMeio: " no tatame mais cheio) não cabem no período disponível (~",

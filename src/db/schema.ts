@@ -310,6 +310,10 @@ export const categorias = pgTable("categorias", {
   // dia do evento: categorias correm em sequência dentro de uma área
   areaId: uuid("area_id"),
   ordemNaArea: integer("ordem_na_area"),
+  // dia fixado manualmente ("YYYY-MM-DD") no modo "Por dia" — a categoria só
+  // começa a partir da 1ª janela desse dia. Nulo = modo automático (o encaixe
+  // decide o dia). Ver src/lib/cronograma e a action estruturarPorDia.
+  dataFixada: date("data_fixada"),
 });
 
 export const inscricoes = pgTable(

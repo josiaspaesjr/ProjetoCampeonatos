@@ -59,11 +59,17 @@ function maxAncora(a: Ancora | null, b: Ancora | null): Ancora | null {
  * ancorado) em vez de `janelas[0].inicioSegundos` — é o que permite reancorar as
  * lutas pendentes no progresso real (ver `encaixarComProgresso`). Sem o 3º
  * argumento, o comportamento é idêntico ao anterior.
+ *
+ * Com `pisos[i]` (modo "Por dia"), a luta `i` nunca começa antes daquele ponto:
+ * o cursor **salta para a frente** até o piso quando ainda não o alcançou (nunca
+ * para trás). É como uma categoria fixada num dia começa na 1ª janela desse dia
+ * mesmo que a janela anterior tenha sobrado tempo. Sem `pisos`, idêntico.
  */
 export function encaixarItens(
   janelas: JanelaDia[],
   duracoes: number[],
   inicioAncora?: Ancora,
+  pisos?: (Ancora | null)[],
 ): ItemEncaixado[] {
   const resultado: ItemEncaixado[] = [];
   if (!janelas.length) {
@@ -93,7 +99,15 @@ export function encaixarItens(
     }
   }
 
-  for (const dur of duracoes) {
+  for (let i = 0; i < duracoes.length; i++) {
+    const dur = duracoes[i];
+    // piso do dia fixado: salta o cursor para a frente até a janela do dia (só
+    // se ainda não o alcançou — nunca volta no tempo)
+    const piso = pisos?.[i];
+    if (piso && escalar({ diaIndex, segundos: cursor }) < escalar(piso)) {
+      diaIndex = Math.min(Math.max(piso.diaIndex, 0), janelas.length - 1);
+      cursor = Math.max(piso.segundos, janelas[diaIndex].inicioSegundos);
+    }
     // rola para o próximo dia enquanto a luta não couber no resto do atual
     while (
       diaIndex < janelas.length - 1 &&
@@ -122,6 +136,8 @@ export interface ItemProgresso {
   duracao: number;
   /** término real no eixo do motor quando a luta já encerrou; senão null */
   fimReal: Ancora | null;
+  /** piso do dia fixado (modo "Por dia"): a luta pendente não começa antes daqui */
+  pisoDia?: Ancora | null;
 }
 
 /** slot resultante do encaixe com progresso */
@@ -166,11 +182,14 @@ export function encaixarComProgresso(
     : undefined;
 
   // empacota SÓ as pendentes (subsequência, ordem preservada) a partir do piso
+  // global (progresso real); o pisoDia por-luta salta cada categoria fixada para
+  // o seu dia.
   const pendentes = itens.filter((it) => it.fimReal === null);
   const encaixePend = encaixarItens(
     janelas,
     pendentes.map((p) => p.duracao),
     piso,
+    pendentes.map((p) => p.pisoDia ?? null),
   );
 
   // costura de volta na ordem original das lutas

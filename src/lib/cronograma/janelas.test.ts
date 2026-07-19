@@ -72,6 +72,31 @@ describe("encaixarItens", () => {
     expect(r[0]).toMatchObject({ diaIndex: 1, inicioSegundos: 0 });
   });
 
+  it("piso do dia fixado: salta para o dia mesmo com a janela anterior sobrando", () => {
+    // 2 dias de 1h; 2 lutas de 15min. A 2ª é fixada no dia 1 → salta para lá,
+    // mesmo cabendo no resto do dia 0 (modo "Por dia").
+    const r = encaixarItens(
+      [dia("d1", 0, 3600), dia("d2", 0, 3600)],
+      [900, 900],
+      undefined,
+      [null, { diaIndex: 1, segundos: 0 }],
+    );
+    expect(r.map((i) => [i.diaIndex, i.inicioSegundos])).toEqual([
+      [0, 0], // dia 0
+      [1, 0], // fixada no dia 1 → NÃO fica em [0, 900]
+    ]);
+  });
+
+  it("piso nunca volta no tempo: cursor já adiante ignora o piso", () => {
+    const r = encaixarItens(
+      [dia("d1", 0, 3600)],
+      [900, 900],
+      undefined,
+      [null, { diaIndex: 0, segundos: 0 }],
+    );
+    expect(r[1]).toMatchObject({ diaIndex: 0, inicioSegundos: 900 });
+  });
+
   it("pula o intervalo entre duas janelas do mesmo dia (manhã/tarde)", () => {
     // manhã 09:00–12:00 e tarde 14:00–18:00, mesma data. Lutas de 1h: 3 cabem
     // na manhã; a 4ª rola para a tarde (14:00), nunca para o intervalo (12–14).
@@ -89,10 +114,11 @@ describe("encaixarItens", () => {
 });
 
 describe("encaixarComProgresso", () => {
-  const prog = (duracao: number, fimReal: Ancora | null = null): ItemProgresso => ({
-    duracao,
-    fimReal,
-  });
+  const prog = (
+    duracao: number,
+    fimReal: Ancora | null = null,
+    pisoDia: Ancora | null = null,
+  ): ItemProgresso => ({ duracao, fimReal, pisoDia });
 
   it("luta encerrada cedo adianta as pendentes seguintes", () => {
     // 3 lutas de 1800s; a 1ª terminou às 600s → as seguintes partem de 600
@@ -163,6 +189,22 @@ describe("encaixarComProgresso", () => {
       [0, 10 * 3600 + 1800], // encerrada 10:30 (real)
       [0, 10 * 3600 + 1800], // pendente reancora 10:30 → termina 11:30 (cabe na manhã)
       [1, 14 * 3600], // não cabe até 12:00 → tarde às 14:00 (pula o intervalo)
+    ]);
+  });
+
+  it("pisoDia: pendentes fixadas no dia 2 saltam, sem nada encerrado", () => {
+    // dia0 e dia1 de 1h; 3 lutas de 15min. L0 livre (dia 0); L1 e L2 fixadas no
+    // dia 1 → saltam para lá, mesmo sobrando tempo no dia 0.
+    const d1: Ancora = { diaIndex: 1, segundos: 0 };
+    const r = encaixarComProgresso(
+      [dia("d1", 0, 3600), dia("d2", 0, 3600)],
+      [prog(900), prog(900, null, d1), prog(900, null, d1)],
+      null,
+    );
+    expect(r.map((s) => [s.diaIndex, s.inicioSegundos])).toEqual([
+      [0, 0], // L0 no dia 0
+      [1, 0], // L1 salta para o dia 1
+      [1, 900], // L2 logo após, no dia 1
     ]);
   });
 

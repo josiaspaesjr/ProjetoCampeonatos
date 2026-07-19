@@ -953,6 +953,26 @@ export const es: Dicionario = {
       diasNota:
         "Las luchas se distribuyen dentro de las franjas de cada día. Repite la fecha para tener mañana y tarde — el intervalo entre ellas queda sin luchas. Ajusta antes de estructurar.",
       salvarDias: "Guardar días",
+      // modo de estructuración: automático × por día (manual)
+      modoLabel: "Modo",
+      modoAutomatico: "Automático",
+      modoPorDia: "Por día",
+      porDiaTitulo: "Categorías por día",
+      porDiaTexto:
+        "Elige, por día, las clases, sexos y cinturones que ocurren en él. Cada categoría va al primer día cuyo filtro la incluye; las demás quedan sin día.",
+      porDiaSemDia: "sin día",
+      porDiaTodasAtribuidas: "Todas las categorías tienen día",
+      estruturarPorDia: "Estructurar por día",
+      porDiaSemFiltro:
+        "Marca al menos una clase, un sexo y un cinturón en al menos un día.",
+      // impresión de la programación por día
+      imprimirPrograma: "Imprimir programación",
+      programaTitulo: "Programación",
+      colHora: "Horario",
+      colArea: "Área",
+      colCategoria: "Categoría",
+      colLutas: "Luchas",
+      geradoEm: "Generado el",
       // aviso cuando las luchas estimadas no caben en el período
       naoCabePre: "Las luchas estimadas (~",
       naoCabeMeio: " en el área más cargada) no caben en el período disponible (~",

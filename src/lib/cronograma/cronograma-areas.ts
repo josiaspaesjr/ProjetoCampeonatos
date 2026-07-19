@@ -5,7 +5,7 @@ import { chaveDoGrupo, nomeDaClasse } from "@/lib/categorias/distribuicao-areas"
 import { idsDeBye } from "@/lib/chaves/byes";
 import { duracaoDaCategoria } from "./fila";
 import { diasDoEventoOuDefault } from "./dias";
-import { encaixarComProgresso, type ItemProgresso } from "./janelas";
+import { encaixarComProgresso, type Ancora, type ItemProgresso } from "./janelas";
 import { localizarNoEixo, paredeSegundos } from "./relogio";
 
 /**
@@ -202,6 +202,15 @@ export async function montarCronogramaDoEvento(
       .map((d, i) => [d, i + 1] as const),
   );
   const diaNumeroDe = (data: string) => diaNumeroPorData.get(data) ?? 1;
+  // piso do dia fixado (modo "Por dia"): data → 1ª janela desse dia no eixo.
+  // Uma categoria com `dataFixada` só começa a partir daqui (ver janelas.ts).
+  const pisoPorData = new Map<string, Ancora>();
+  janelas.forEach((j, i) => {
+    if (!pisoPorData.has(j.data))
+      pisoPorData.set(j.data, { diaIndex: i, segundos: j.inicioSegundos });
+  });
+  const pisoDaCategoria = (dataFixada: string | null): Ancora | null =>
+    dataFixada ? (pisoPorData.get(dataFixada.slice(0, 10)) ?? null) : null;
   // dia default para colunas vazias (o header sempre mostra ao menos um dia)
   const diaVazio: DiaCron = {
     data: janelas[0].data,
@@ -309,17 +318,18 @@ export async function montarCronogramaDoEvento(
     // momento em que a área ficou livre (ou "agora"), somando a estimativa.
     const itens: ItemProgresso[] = [];
     for (const m of metaCats) {
+      const pisoDia = pisoDaCategoria(m.c.dataFixada);
       if (m.chaveGerada) {
         for (const l of m.visiveis) {
           const fimReal = l.encerradaEm
             ? localizarNoEixo(janelas, paredeSegundos(l.encerradaEm))
             : null;
-          itens.push({ duracao: m.dur, fimReal });
+          itens.push({ duracao: m.dur, fimReal, pisoDia });
         }
       } else {
         // sem chave: unidades estimadas, sempre pendentes
         for (let k = 0; k < m.nUnidades; k++) {
-          itens.push({ duracao: m.dur, fimReal: null });
+          itens.push({ duracao: m.dur, fimReal: null, pisoDia });
         }
       }
     }

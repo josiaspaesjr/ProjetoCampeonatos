@@ -22,6 +22,13 @@ import {
   CamposDiasEvento,
   type DiaEvento,
 } from "@/components/organizador/campos-dias-evento";
+import {
+  PainelPorDia,
+  type CategoriaFiltro,
+  type DiaDistinto,
+  type DimensoesGrade,
+} from "@/components/organizador/painel-por-dia";
+import { BotaoImprimirPrograma } from "@/components/organizador/botao-imprimir-programa";
 import { useDic } from "@/lib/i18n/client";
 
 const AREAS_MIN = 1;
@@ -39,10 +46,16 @@ export function EstruturadorAreas({
   numAreasInicial,
   base,
   slugPublico,
+  eventoNome,
   cronograma,
   dias,
+  diasDistintos,
+  dimensoes,
+  categoriasFiltro,
+  modoInicial,
   erro,
   estruturar,
+  estruturarPorDia,
   salvarDias,
 }: {
   categorias: CategoriaView[];
@@ -51,18 +64,30 @@ export function EstruturadorAreas({
   base: string;
   /** slug público do evento — habilita "Abrir placar (tela cheia)" por área */
   slugPublico?: string;
+  /** nome do evento (título da programação imprimível) */
+  eventoNome: string;
   /** cronograma real por área (persistido) — vazio quando não estruturado */
   cronograma: AreaCron[];
   /** dias do evento (data + início/fim), para configurar aqui também */
   dias: DiaEvento[];
+  /** dias distintos do evento (para o modo "Por dia") */
+  diasDistintos: DiaDistinto[];
+  /** dimensões presentes na grade (classes/sexos/faixas) para os filtros por dia */
+  dimensoes: DimensoesGrade;
+  /** categorias enxutas (para casar os filtros no cliente) */
+  categoriasFiltro: CategoriaFiltro[];
+  /** modo em que a estrutura atual foi montada */
+  modoInicial: "auto" | "porDia";
   /** aviso vindo do servidor (ex.: as lutas não cabem no período) */
   erro?: string;
   estruturar: (formData: FormData) => void | Promise<void>;
+  estruturarPorDia: (formData: FormData) => void | Promise<void>;
   salvarDias: (formData: FormData) => void | Promise<void>;
 }) {
   const [areasN, setAreasN] = useState(
     numAreasInicial ? String(numAreasInicial) : "",
   );
+  const [modo, setModo] = useState<"auto" | "porDia">(modoInicial);
   const [areasFull, setAreasFull] = useState(false);
   const [lutaSel, setLutaSel] = useState<LutaSelecionada | null>(null);
 
@@ -152,7 +177,37 @@ export function EstruturadorAreas({
         </form>
       </div>
 
-      {/* CARD DE CONTROLE */}
+      {/* SELETOR DE MODO: automático × por dia */}
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="font-cond text-[13px] font-semibold uppercase tracking-[0.1em] text-muted-3">
+          {ta.modoLabel}
+        </span>
+        <div className="flex">
+          {(
+            [
+              ["auto", ta.modoAutomatico],
+              ["porDia", ta.modoPorDia],
+            ] as ["auto" | "porDia", string][]
+          ).map(([val, rotulo]) => (
+            <button
+              key={val}
+              type="button"
+              onClick={() => setModo(val)}
+              className={cn(
+                "-skew-x-9 border px-4 py-2 font-cond text-[14px] font-semibold uppercase tracking-[0.04em] transition-colors",
+                modo === val
+                  ? "border-brand bg-brand text-white"
+                  : "border-white/16 text-muted-2 hover:border-white/30",
+              )}
+            >
+              <span className="inline-block skew-x-9">{rotulo}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* CARD DE CONTROLE (modo automático) */}
+      {modo === "auto" && (
       <div className="relative border border-white/10 bg-surface">
         <span className="absolute inset-y-0 left-0 w-[3px] bg-brand" />
         <div className="grid items-center gap-x-8 gap-y-6 px-6 py-[26px] lg:grid-cols-[auto_1fr_auto]">
@@ -205,6 +260,19 @@ export function EstruturadorAreas({
           {ta.ajudaOrdena}
         </p>
       </div>
+      )}
+
+      {/* PAINEL POR DIA (modo manual) */}
+      {modo === "porDia" && (
+        <PainelPorDia
+          dias={diasDistintos}
+          dimensoes={dimensoes}
+          categorias={categoriasFiltro}
+          areasN={areasN}
+          setAreasN={setAreasN}
+          estruturar={estruturarPorDia}
+        />
+      )}
 
       {/* LEGENDA DO FUNIL */}
       <div className="border border-white/10 bg-surface p-[22px]">
@@ -270,7 +338,8 @@ export function EstruturadorAreas({
           </div>
 
           {/* BARRA DE AÇÃO */}
-          <div className="flex justify-end">
+          <div className="flex flex-wrap justify-end gap-2">
+            <BotaoImprimirPrograma cronograma={cronograma} eventoNome={eventoNome} />
             <button
               type="button"
               onClick={() => setAreasFull(true)}

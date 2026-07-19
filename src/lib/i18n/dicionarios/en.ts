@@ -951,6 +951,26 @@ export const en: Dicionario = {
       diasNota:
         "Matches are spread within each day's windows. Repeat the date for morning and afternoon — the break between them stays match-free. Adjust before structuring.",
       salvarDias: "Save days",
+      // structuring mode: automatic × by day (manual)
+      modoLabel: "Mode",
+      modoAutomatico: "Automatic",
+      modoPorDia: "By day",
+      porDiaTitulo: "Categories by day",
+      porDiaTexto:
+        "Pick, per day, the classes, sexes and belts that run on it. Each category goes to the first day whose filter includes it; the rest stay without a day.",
+      porDiaSemDia: "without a day",
+      porDiaTodasAtribuidas: "Every category has a day",
+      estruturarPorDia: "Structure by day",
+      porDiaSemFiltro:
+        "Select at least one class, one sex and one belt on at least one day.",
+      // printable schedule by day
+      imprimirPrograma: "Print schedule",
+      programaTitulo: "Schedule",
+      colHora: "Time",
+      colArea: "Mat",
+      colCategoria: "Category",
+      colLutas: "Matches",
+      geradoEm: "Generated on",
       // warning when the estimated matches don't fit the period
       naoCabePre: "The estimated matches (~",
       naoCabeMeio: " on the busiest mat) don't fit the available period (~",
