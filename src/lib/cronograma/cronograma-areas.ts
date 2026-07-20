@@ -3,7 +3,7 @@ import type { Db } from "@/db";
 import { areas, categorias, chaves, inscricoes, lutas } from "@/db/schema";
 import { chaveDoGrupo, nomeDaClasse } from "@/lib/categorias/distribuicao-areas";
 import { idsDeBye } from "@/lib/chaves/byes";
-import { duracaoDaCategoria } from "./fila";
+import { duracaoDaCategoria, TRANSICAO_SEGUNDOS } from "./fila";
 import { diasDoEventoOuDefault } from "./dias";
 import { encaixarComProgresso, type Ancora, type ItemProgresso } from "./janelas";
 import { localizarNoEixo, paredeSegundos } from "./relogio";
@@ -344,7 +344,13 @@ export async function montarCronogramaDoEvento(
       }
     }
     const agoraPonto = localizarNoEixo(janelas, paredeSegundos(agora));
-    const encaixe = encaixarComProgresso(janelas, itens, agoraPonto);
+    // a próxima luta começa TRANSICAO_SEGUNDOS após o término real da última
+    const encaixe = encaixarComProgresso(
+      janelas,
+      itens,
+      agoraPonto,
+      TRANSICAO_SEGUNDOS,
+    );
 
     // intervalo real usado por dia (para o header multi-dia)
     const porDia = new Map<number, { data: string; ini: number; fim: number }>();

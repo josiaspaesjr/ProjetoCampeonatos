@@ -155,11 +155,18 @@ export interface SlotProgresso extends ItemEncaixado {
  * Assim, uma luta que termina antes do estimado adianta as seguintes. Sem
  * nenhuma luta encerrada, `piso` é indefinido e o resultado degrada
  * **exatamente** para `encaixarItens` (sem regressão em evento que não começou).
+ *
+ * `folgaAposRealSeg` é o tempo de organização somado ao término da ÚLTIMA luta
+ * encerrada antes de posicionar a 1ª pendente (a próxima luta começa esse tanto
+ * depois de a anterior acabar). As pendentes seguintes já carregam esse
+ * intervalo na própria duração estimada, então só a fronteira real→pendente
+ * precisa somá-lo aqui.
  */
 export function encaixarComProgresso(
   janelas: JanelaDia[],
   itens: ItemProgresso[],
   agora: Ancora | null,
+  folgaAposRealSeg = 0,
 ): SlotProgresso[] {
   if (!janelas.length) {
     return itens.map(() => ({
@@ -176,9 +183,15 @@ export function encaixarComProgresso(
   for (const it of itens) {
     if (it.fimReal) libre = maxAncora(libre, it.fimReal);
   }
+  // a área só fica livre `folga` s após o término real (organização da próxima
+  // luta); encaixarItens rola o dia se isso passar do fim da janela
+  const libreLivre: Ancora | null =
+    libre && folgaAposRealSeg > 0
+      ? { diaIndex: libre.diaIndex, segundos: libre.segundos + folgaAposRealSeg }
+      : libre;
   // piso das pendentes; sem nada encerrado, fica indefinido → encaixe estático
-  const piso: Ancora | undefined = libre
-    ? (maxAncora(libre, agora) ?? undefined)
+  const piso: Ancora | undefined = libreLivre
+    ? (maxAncora(libreLivre, agora) ?? undefined)
     : undefined;
 
   // empacota SÓ as pendentes (subsequência, ordem preservada) a partir do piso

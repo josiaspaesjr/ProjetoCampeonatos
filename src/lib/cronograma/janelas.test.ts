@@ -135,6 +135,23 @@ describe("encaixarComProgresso", () => {
     ]);
   });
 
+  it("folga após a última real: a próxima luta começa após o intervalo de organização", () => {
+    // 1ª luta terminou às 600s; folga de 120s de organização → a próxima começa
+    // às 720 (não 600). A 2ª pendente já carrega o intervalo na própria duração.
+    const janelas = [dia("d1", 0, 36000)];
+    const r = encaixarComProgresso(
+      janelas,
+      [prog(1800, { diaIndex: 0, segundos: 600 }), prog(1800), prog(1800)],
+      { diaIndex: 0, segundos: 600 },
+      120,
+    );
+    expect(r.map((s) => [s.inicioSegundos, s.real])).toEqual([
+      [600, true], // encerrada: término real
+      [720, false], // pendente: 600 + 120 de organização
+      [2520, false], // 720 + 1800
+    ]);
+  });
+
   it("sem nada encerrado degrada exatamente para encaixarItens", () => {
     const janelas = [dia("d1", 0, 36000), dia("d2", 0, 36000)];
     const duracoes = [1800, 1800, 1800];

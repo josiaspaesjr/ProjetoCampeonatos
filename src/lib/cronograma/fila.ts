@@ -13,7 +13,12 @@ import { diasDoEventoOuDefault, type JanelaDia } from "./dias";
  * (ou agora, se a área já está atrasada).
  */
 
-const TRANSICAO_SEGUNDOS = 60;
+/**
+ * Tempo de "organização" entre lutas (segundos): somado ao tempo regulamentar
+ * para estimar quando a próxima luta começa — chamada dos atletas, ajuste do
+ * placar etc. É o intervalo que separa o fim de uma luta do início da seguinte.
+ */
+export const TRANSICAO_SEGUNDOS = 120;
 
 /** tempo regulamentar CBJJ por faixa (kids: aproximação por faixa), em segundos */
 export function duracaoLutaSegundos(faixa: string | null): number {
