@@ -7,14 +7,14 @@ import { IconeFormato } from "@/components/chaves/formato-icone";
 import { useDic } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 
-type Formato3 = "round_robin" | "eliminacao_simples";
+type Formato3 = "tres_repescagem" | "eliminacao_simples";
 
 /**
  * Botão "Gerar N chaves em lote" + modal que pergunta como montar as divisões
- * de **3 atletas**: todos contra todos (round robin, padrão) ou eliminação
- * simples. As de 2 atletas viram luta única e as de 4+ eliminação simples — a
- * escolha só muda o caso de 3. Submete o formato escolhido (`tresAtletas`) para
- * a server action `gerarChavesEmLote`.
+ * de **3 atletas**: 3 atletas com repescagem (padrão) ou eliminação simples. As
+ * de 2 atletas viram luta única e as de 4+ eliminação simples — a escolha só
+ * muda o caso de 3. Submete o formato escolhido (`tresAtletas`) para a server
+ * action `gerarChavesEmLote`.
  */
 export function GerarLoteDialog({
   acao,
@@ -31,7 +31,7 @@ export function GerarLoteDialog({
   const c = useDic().admin.comum;
 
   const [aberto, setAberto] = useState(false);
-  const [formato3, setFormato3] = useState<Formato3>("round_robin");
+  const [formato3, setFormato3] = useState<Formato3>("tres_repescagem");
   const gatilhoRef = useRef<HTMLButtonElement>(null);
   const tituloId = useId();
 
@@ -59,7 +59,7 @@ export function GerarLoteDialog({
 
   const opcoes: { id: Formato3 }[] = [
     { id: "eliminacao_simples" },
-    { id: "round_robin" },
+    { id: "tres_repescagem" },
   ];
 
   return (

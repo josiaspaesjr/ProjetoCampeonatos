@@ -6,6 +6,7 @@ import {
   FORMATOS,
   formatoAutomatico,
   formatoDisponivel,
+  formatoMeta,
   type FormatoChaveId,
   type FormatoMeta,
   type FormatoSelecionavel,
@@ -44,8 +45,11 @@ export function SeletorFormato({
   const s = ch.seletor;
 
   const [aberto, setAberto] = useState(false);
-  const [selecionado, setSelecionado] = useState<FormatoSelecionavel>(
-    formatoAtual ?? "auto",
+  // Pré-seleciona o formato atual, mas cai em "Automático" se ele tiver saído
+  // de cena (ex.: virou "em breve") — assim um card desabilitado nunca começa
+  // selecionado nem escapa pela regeneração.
+  const [selecionado, setSelecionado] = useState<FormatoSelecionavel>(() =>
+    formatoAtual && formatoMeta(formatoAtual).implementado ? formatoAtual : "auto",
   );
   const [numJurados, setNumJurados] = useState(3);
   const [enviando, iniciar] = useTransition();

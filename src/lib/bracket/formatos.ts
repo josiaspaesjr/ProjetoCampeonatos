@@ -38,7 +38,9 @@ export interface FormatoMeta {
 export const FORMATOS: readonly FormatoMeta[] = [
   { id: "eliminacao_simples", implementado: true, minAtletas: 2 },
   { id: "eliminacao_dupla", implementado: true, minAtletas: 3 },
-  { id: "round_robin", implementado: true, minAtletas: 2 },
+  // "Em breve": motor existe mas o comportamento ainda não está redondo.
+  // Enquanto isso, o "Automático" cobre divisões de 3 com tres_repescagem.
+  { id: "round_robin", implementado: false, minAtletas: 2 },
   { id: "tres_repescagem", implementado: true, minAtletas: 3, maxAtletas: 3 },
   { id: "multistage", implementado: true, minAtletas: 6 },
   { id: "votacao_jurados", implementado: true, minAtletas: 2 },
@@ -63,14 +65,18 @@ export function formatoDisponivel(meta: FormatoMeta, qtdAtletas: number): boolea
 }
 
 /**
- * Regra automática de formato por tamanho da divisão (padrão CBJJ):
- * até 3 atletas → todos contra todos; 4+ → eliminação simples.
+ * Regra automática de formato por tamanho da divisão:
+ * exatamente 3 atletas → 3 atletas com repescagem (cada um luta ao menos duas
+ * vezes); 2 ou 4+ → eliminação simples.
+ *
+ * Enquanto "todos contra todos" (round_robin) está em breve, ele fica fora do
+ * automático — tres_repescagem substitui o padrão CBJJ para divisões de 3.
  *
  * Função pura (sem banco), reaproveitada pelo seletor para mostrar o que o
  * "Automático" escolheria e pela persistência ao resolver formato "auto".
  */
 export function formatoAutomatico(
   qtdInscritos: number,
-): "round_robin" | "eliminacao_simples" {
-  return qtdInscritos <= 3 ? "round_robin" : "eliminacao_simples";
+): "tres_repescagem" | "eliminacao_simples" {
+  return qtdInscritos === 3 ? "tres_repescagem" : "eliminacao_simples";
 }
