@@ -56,8 +56,8 @@ function fmt(seg: number) {
 
 type DicPlacar = ReturnType<typeof useDic>["admin"]["placarTablet"];
 
-/** Contador em destaque (vantagem/punição): rótulo pequeno + número grande. */
-function ContadorPlacar({
+/** Contador (advantage/penalty): rótulo pequeno em cima, número grande cinza. */
+function Contador({
   rotulo,
   valor,
   grande,
@@ -67,24 +67,19 @@ function ContadorPlacar({
   grande: boolean;
 }) {
   return (
-    <div
-      className={cn(
-        "flex min-w-[3.75rem] flex-col items-center rounded-lg bg-black/20",
-        grande ? "px-4 py-2" : "px-3 py-1.5",
-      )}
-    >
+    <div className="flex flex-col items-center">
       <span
         className={cn(
-          "font-cond font-semibold uppercase tracking-[0.08em] text-white/60",
-          grande ? "text-xs" : "text-[10px]",
+          "font-cond font-semibold uppercase tracking-[0.1em] text-white/55",
+          grande ? "text-base" : "text-xs",
         )}
       >
         {rotulo}
       </span>
       <span
         className={cn(
-          "font-black tabular-nums leading-none",
-          grande ? "text-4xl sm:text-5xl" : "text-3xl",
+          "font-black tabular-nums leading-none text-white",
+          grande ? "text-7xl sm:text-8xl" : "text-5xl sm:text-6xl",
         )}
       >
         {valor}
@@ -93,7 +88,7 @@ function ContadorPlacar({
   );
 }
 
-/** Botão da grade de scoring — verde para somar, vermelho para corrigir. */
+/** Botão da grade de scoring — verde soma, vermelho corrige. */
 function BotaoGrade({
   texto,
   somar,
@@ -110,11 +105,11 @@ function BotaoGrade({
       type="button"
       onClick={onClick}
       className={cn(
-        "rounded-lg font-bold tabular-nums transition-colors",
+        "rounded-md font-semibold tabular-nums transition-colors",
         somar
-          ? "bg-white/10 text-green-300 hover:bg-green-500/30"
-          : "bg-white/5 text-red-300 hover:bg-red-500/30",
-        grande ? "py-4 text-2xl sm:text-3xl" : "py-3 text-lg",
+          ? "bg-white/[0.04] text-green-400/75 hover:bg-green-500/20 hover:text-green-300"
+          : "bg-white/[0.02] text-red-400/70 hover:bg-red-500/20 hover:text-red-300",
+        grande ? "py-2.5 text-lg sm:text-xl" : "py-2 text-sm sm:text-base",
       )}
     >
       {texto}
@@ -122,12 +117,26 @@ function BotaoGrade({
   );
 }
 
+/** Botão pequeno de ajuste do cronômetro (±1s / ±30s). */
+function BotaoTempo({ texto, onClick }: { texto: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="rounded-lg bg-white/10 px-3 py-2 font-cond text-sm font-semibold tabular-nums text-white/80 transition-colors hover:bg-white/20"
+    >
+      {texto}
+    </button>
+  );
+}
+
 /**
- * Um lado do placar (um atleta): nome + academia, pontos com os contadores de
- * vantagem/punição em destaque, e a grade de scoring `+ / −` (verde soma,
- * vermelho corrige). Em tela cheia (`grande`) tudo escala e preenche a metade.
+ * Uma LINHA do placar (um atleta), no layout do placar profissional: grade de
+ * scoring `+ / −` à esquerda (fundo escuro), contadores de vantagem/punição no
+ * meio e o placar de pontos num bloco de cor sólida (azul/vermelho) à direita.
+ * Em tela cheia (`grande`) a linha estica para preencher metade da altura.
  */
-function LadoPlacar({
+function LinhaAtleta({
   atleta,
   dados,
   cor,
@@ -151,41 +160,10 @@ function LadoPlacar({
     { rotulo: t.punicaoLetra, campo: "punicoes", valor: 1 },
   ];
   return (
-    <div
-      className={cn(
-        "flex flex-1 flex-col rounded-2xl text-white",
-        cor,
-        grande ? "min-h-0 justify-between p-6 sm:p-8" : "p-5",
-      )}
-    >
-      <div className="min-w-0">
-        <p className={cn("truncate font-bold leading-tight", grande ? "text-3xl sm:text-4xl" : "text-2xl")}>
-          {atleta.nome}
-        </p>
-        {atleta.academia && (
-          <p className={cn("truncate opacity-70", grande ? "text-base" : "text-sm")}>
-            {atleta.academia}
-          </p>
-        )}
-      </div>
-
-      <div className={cn("flex items-center justify-between gap-3", !grande && "mt-3")}>
-        <span
-          className={cn(
-            "font-black tabular-nums leading-none",
-            grande ? "text-7xl sm:text-8xl" : "text-6xl sm:text-7xl",
-          )}
-        >
-          {dados.pontos}
-        </span>
-        <div className="flex gap-2">
-          <ContadorPlacar rotulo={t.vantagensLabel} valor={dados.vantagens} grande={grande} />
-          <ContadorPlacar rotulo={t.punicoesLabel} valor={dados.punicoes} grande={grande} />
-        </div>
-      </div>
-
-      <div className={cn("rounded-xl bg-black/25 p-2", !grande && "mt-3")}>
-        <div className="grid grid-cols-5 gap-1.5">
+    <div className={cn("flex items-stretch gap-2 sm:gap-3", grande && "min-h-0 flex-1")}>
+      {/* grade de scoring (esquerda, fundo escuro) */}
+      <div className="flex flex-1 flex-col justify-center rounded-xl bg-zinc-900 p-2 sm:p-3">
+        <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
           {cols.map((c) => (
             <BotaoGrade
               key={"+" + c.rotulo}
@@ -205,6 +183,50 @@ function LadoPlacar({
             />
           ))}
         </div>
+      </div>
+
+      {/* contadores de vantagem/punição (fundo escuro) */}
+      <div className="flex items-center gap-6 rounded-xl bg-zinc-900 px-5 sm:gap-8 sm:px-8">
+        <Contador rotulo={t.vantagensLabel} valor={dados.vantagens} grande={grande} />
+        <Contador rotulo={t.punicoesLabel} valor={dados.punicoes} grande={grande} />
+      </div>
+
+      {/* nome + academia + placar num bloco de cor sólida (direita) */}
+      <div
+        className={cn(
+          "flex flex-col items-center justify-center gap-1 overflow-hidden rounded-xl px-4 text-white",
+          cor,
+          grande ? "w-64 sm:w-80" : "w-48 sm:w-60",
+        )}
+      >
+        <div className="w-full text-center">
+          <p
+            className={cn(
+              "truncate font-bold uppercase leading-tight",
+              grande ? "text-2xl sm:text-3xl" : "text-lg sm:text-xl",
+            )}
+          >
+            {atleta.nome}
+          </p>
+          {atleta.academia && (
+            <p
+              className={cn(
+                "truncate font-cond uppercase tracking-[0.04em] opacity-70",
+                grande ? "text-sm sm:text-base" : "text-xs",
+              )}
+            >
+              {atleta.academia}
+            </p>
+          )}
+        </div>
+        <span
+          className={cn(
+            "font-black tabular-nums leading-none",
+            grande ? "text-8xl sm:text-9xl" : "text-7xl sm:text-8xl",
+          )}
+        >
+          {dados.pontos}
+        </span>
       </div>
     </div>
   );
@@ -345,6 +367,13 @@ export function PlacarTablet({
     persistirRelogio(duracaoSegundos, false);
   };
 
+  // ajuste manual do cronômetro (±1s / ±30s); persiste a nova âncora p/ o telão
+  const ajustarRelogio = (delta: number) => {
+    const novo = Math.max(0, restante + delta);
+    setRestante(novo);
+    persistirRelogio(novo, rodando);
+  };
+
   const abrirEncerramento = () => {
     setRodando(false);
     persistirRelogio(restante, false);
@@ -375,10 +404,10 @@ export function PlacarTablet({
     });
   };
 
-  // os dois cartões (cor fixa por atleta); o SWITCH SIDES só inverte a ordem.
+  // as duas linhas (cor fixa por atleta); o TROCAR LADOS só inverte a ordem.
   // Keys estáveis (a1/a2) preservam o estado ao reordenar.
-  const cartoes = [
-    <LadoPlacar
+  const linhas = [
+    <LinhaAtleta
       key="a1"
       atleta={atleta1}
       dados={lado1}
@@ -387,7 +416,7 @@ export function PlacarTablet({
       t={t}
       onAjustar={(campo, delta) => ajustar(1, campo, delta)}
     />,
-    <LadoPlacar
+    <LinhaAtleta
       key="a2"
       atleta={atleta2}
       dados={lado2}
@@ -400,46 +429,65 @@ export function PlacarTablet({
 
   return (
     <div className={cn(cheia && "flex min-h-0 flex-1 flex-col")}>
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-2xl bg-zinc-900 px-4 py-4 text-white sm:px-6">
-        <p className="w-full truncate text-sm text-zinc-300 sm:w-auto">{categoriaNome}</p>
-        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-          <span className={`font-cond text-3xl font-bold tabular-nums sm:text-4xl ${restante < 0 ? "text-red-400" : ""}`}>
+      <p className="truncate font-cond text-sm uppercase tracking-[0.06em] text-zinc-400">
+        {categoriaNome}
+      </p>
+
+      <div className={cn("mt-2 flex flex-col gap-2 sm:gap-3", cheia && "min-h-0 flex-1")}>
+        {trocado ? [linhas[1], linhas[0]] : linhas}
+      </div>
+
+      {/* barra inferior: trocar lados · cronômetro (play + ajustes) · encerrar */}
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-zinc-900 px-4 py-3 text-white sm:mt-3">
+        <button
+          onClick={() => setTrocado((v) => !v)}
+          className="rounded-lg bg-white/10 px-4 py-2 font-cond text-sm font-semibold uppercase tracking-[0.04em] text-white/80 transition-colors hover:bg-white/20"
+        >
+          {t.trocarLados}
+        </button>
+
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex flex-col gap-1">
+            <BotaoTempo texto="+30" onClick={() => ajustarRelogio(30)} />
+            <BotaoTempo texto="−30" onClick={() => ajustarRelogio(-30)} />
+          </div>
+          <div className="flex flex-col gap-1">
+            <BotaoTempo texto="+1" onClick={() => ajustarRelogio(1)} />
+            <BotaoTempo texto="−1" onClick={() => ajustarRelogio(-1)} />
+          </div>
+          <span
+            className={cn(
+              "font-cond font-bold tabular-nums leading-none tracking-tight",
+              restante < 0 && "text-red-400",
+              cheia ? "text-8xl" : "text-6xl sm:text-7xl",
+            )}
+          >
             {fmt(restante)}
           </span>
           <button
             onClick={alternarRelogio}
-            className="rounded-lg bg-white/20 px-4 py-2 text-sm font-medium hover:bg-white/30"
+            aria-label={rodando ? t.pausar : t.iniciar}
+            className={cn(
+              "flex shrink-0 items-center justify-center rounded-xl bg-white/20 transition-colors hover:bg-white/30",
+              cheia ? "h-16 w-16 text-2xl" : "h-14 w-14 text-xl",
+            )}
           >
-            {rodando ? t.pausar : t.iniciar}
+            {rodando ? "❚❚" : "▶"}
           </button>
           <button
             onClick={zerarRelogio}
-            className="rounded-lg bg-white/10 px-3 py-2 text-sm hover:bg-white/20"
+            className="self-stretch rounded-lg bg-white/5 px-3 font-cond text-xs uppercase tracking-[0.04em] text-white/50 transition-colors hover:bg-white/15"
           >
             {t.zerar}
           </button>
-          <button
-            onClick={() => setTrocado((v) => !v)}
-            className="rounded-lg bg-white/10 px-3 py-2 text-sm hover:bg-white/20"
-          >
-            {t.trocarLados}
-          </button>
         </div>
+
         <button
           onClick={abrirEncerramento}
-          className="rounded-lg bg-emerald-600 px-5 py-2 font-medium hover:bg-emerald-500"
+          className="rounded-lg bg-emerald-600 px-5 py-2 font-medium transition-colors hover:bg-emerald-500"
         >
           {t.encerrarLuta}
         </button>
-      </div>
-
-      <div
-        className={cn(
-          "mt-4 flex gap-4",
-          cheia ? "min-h-0 flex-1 flex-col" : "flex-col sm:flex-row",
-        )}
-      >
-        {trocado ? [cartoes[1], cartoes[0]] : cartoes}
       </div>
 
       {encerrando && (
