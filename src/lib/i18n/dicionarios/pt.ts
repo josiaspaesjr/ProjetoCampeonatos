@@ -943,9 +943,9 @@ export const pt = {
     placarTablet: {
       vantagensLabel: "Vantagens",
       punicoesLabel: "Punições",
-      menos1Ponto: "−1 ponto",
-      maisVantagem: "+Vantagem",
-      maisPunicao: "+Punição",
+      trocarLados: "Trocar lados",
+      vantagemLetra: "V",
+      punicaoLetra: "P",
       pausar: "Pausar",
       iniciar: "Iniciar",
       zerar: "Zerar",

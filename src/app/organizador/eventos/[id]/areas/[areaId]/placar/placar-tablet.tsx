@@ -54,6 +54,162 @@ function fmt(seg: number) {
   return `${seg < 0 ? "-" : ""}${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
+type DicPlacar = ReturnType<typeof useDic>["admin"]["placarTablet"];
+
+/** Contador em destaque (vantagem/punição): rótulo pequeno + número grande. */
+function ContadorPlacar({
+  rotulo,
+  valor,
+  grande,
+}: {
+  rotulo: string;
+  valor: number;
+  grande: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex min-w-[3.75rem] flex-col items-center rounded-lg bg-black/20",
+        grande ? "px-4 py-2" : "px-3 py-1.5",
+      )}
+    >
+      <span
+        className={cn(
+          "font-cond font-semibold uppercase tracking-[0.08em] text-white/60",
+          grande ? "text-xs" : "text-[10px]",
+        )}
+      >
+        {rotulo}
+      </span>
+      <span
+        className={cn(
+          "font-black tabular-nums leading-none",
+          grande ? "text-4xl sm:text-5xl" : "text-3xl",
+        )}
+      >
+        {valor}
+      </span>
+    </div>
+  );
+}
+
+/** Botão da grade de scoring — verde para somar, vermelho para corrigir. */
+function BotaoGrade({
+  texto,
+  somar,
+  onClick,
+  grande,
+}: {
+  texto: string;
+  somar: boolean;
+  onClick: () => void;
+  grande: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-lg font-bold tabular-nums transition-colors",
+        somar
+          ? "bg-white/10 text-green-300 hover:bg-green-500/30"
+          : "bg-white/5 text-red-300 hover:bg-red-500/30",
+        grande ? "py-4 text-2xl sm:text-3xl" : "py-3 text-lg",
+      )}
+    >
+      {texto}
+    </button>
+  );
+}
+
+/**
+ * Um lado do placar (um atleta): nome + academia, pontos com os contadores de
+ * vantagem/punição em destaque, e a grade de scoring `+ / −` (verde soma,
+ * vermelho corrige). Em tela cheia (`grande`) tudo escala e preenche a metade.
+ */
+function LadoPlacar({
+  atleta,
+  dados,
+  cor,
+  grande,
+  t,
+  onAjustar,
+}: {
+  atleta: { nome: string; academia: string | null };
+  dados: Lado;
+  cor: string;
+  grande: boolean;
+  t: DicPlacar;
+  onAjustar: (campo: keyof Lado, delta: number) => void;
+}) {
+  // colunas da grade: pontos 2/3/4, vantagem (V/A) e punição (P)
+  const cols: { rotulo: string; campo: keyof Lado; valor: number }[] = [
+    { rotulo: "2", campo: "pontos", valor: 2 },
+    { rotulo: "3", campo: "pontos", valor: 3 },
+    { rotulo: "4", campo: "pontos", valor: 4 },
+    { rotulo: t.vantagemLetra, campo: "vantagens", valor: 1 },
+    { rotulo: t.punicaoLetra, campo: "punicoes", valor: 1 },
+  ];
+  return (
+    <div
+      className={cn(
+        "flex flex-1 flex-col rounded-2xl text-white",
+        cor,
+        grande ? "min-h-0 justify-between p-6 sm:p-8" : "p-5",
+      )}
+    >
+      <div className="min-w-0">
+        <p className={cn("truncate font-bold leading-tight", grande ? "text-3xl sm:text-4xl" : "text-2xl")}>
+          {atleta.nome}
+        </p>
+        {atleta.academia && (
+          <p className={cn("truncate opacity-70", grande ? "text-base" : "text-sm")}>
+            {atleta.academia}
+          </p>
+        )}
+      </div>
+
+      <div className={cn("flex items-center justify-between gap-3", !grande && "mt-3")}>
+        <span
+          className={cn(
+            "font-black tabular-nums leading-none",
+            grande ? "text-7xl sm:text-8xl" : "text-6xl sm:text-7xl",
+          )}
+        >
+          {dados.pontos}
+        </span>
+        <div className="flex gap-2">
+          <ContadorPlacar rotulo={t.vantagensLabel} valor={dados.vantagens} grande={grande} />
+          <ContadorPlacar rotulo={t.punicoesLabel} valor={dados.punicoes} grande={grande} />
+        </div>
+      </div>
+
+      <div className={cn("rounded-xl bg-black/25 p-2", !grande && "mt-3")}>
+        <div className="grid grid-cols-5 gap-1.5">
+          {cols.map((c) => (
+            <BotaoGrade
+              key={"+" + c.rotulo}
+              texto={"+" + c.rotulo}
+              somar
+              onClick={() => onAjustar(c.campo, c.valor)}
+              grande={grande}
+            />
+          ))}
+          {cols.map((c) => (
+            <BotaoGrade
+              key={"-" + c.rotulo}
+              texto={"−" + c.rotulo}
+              somar={false}
+              onClick={() => onAjustar(c.campo, -c.valor)}
+              grande={grande}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PlacarTablet({
   eventoId,
   chaveId,
@@ -89,6 +245,8 @@ export function PlacarTablet({
   const [confirmando, iniciarConfirmacao] = useTransition();
   // em tela cheia o placar reorganiza os lados em cima/embaixo preenchendo a tela
   const [cheia, setCheia] = useState(false);
+  // troca visual dos lados (azul ↔ vermelho na tela), sem mexer nos dados
+  const [trocado, setTrocado] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -217,88 +375,34 @@ export function PlacarTablet({
     });
   };
 
-  const Coluna = ({
-    lado,
-    atleta,
-    dados,
-    cor,
-  }: {
-    lado: 1 | 2;
-    atleta: Props["atleta1"];
-    dados: Lado;
-    cor: string;
-  }) => (
-    <div
-      className={cn(
-        "flex-1 rounded-2xl text-white",
-        cor,
-        cheia ? "flex min-h-0 flex-col justify-between p-8" : "p-6",
-      )}
-    >
-      <div>
-        <p className={cn("truncate font-bold", cheia ? "text-3xl sm:text-4xl" : "text-2xl")}>
-          {atleta.nome}
-        </p>
-        <p className={cn("truncate opacity-70", cheia ? "text-base" : "text-sm")}>
-          {atleta.academia ?? ""}
-        </p>
-      </div>
-
-      <div className={cn("flex items-end gap-6", !cheia && "mt-4")}>
-        <span
-          className={cn(
-            "font-black tabular-nums leading-none",
-            cheia ? "text-7xl sm:text-8xl" : "text-6xl sm:text-8xl",
-          )}
-        >
-          {dados.pontos}
-        </span>
-        <div className={cn("space-y-1", cheia ? "text-lg sm:text-xl" : "mb-2 text-sm")}>
-          <p>{t.vantagensLabel}: <span className="font-bold">{dados.vantagens}</span></p>
-          <p>{t.punicoesLabel}: <span className="font-bold">{dados.punicoes}</span></p>
-        </div>
-      </div>
-
-      <div className={cn("grid grid-cols-3 gap-2", cheia ? "" : "mt-4")}>
-        {[2, 3, 4].map((n) => (
-          <button
-            key={n}
-            onClick={() => ajustar(lado, "pontos", n)}
-            className={cn(
-              "rounded-xl bg-white/20 font-bold hover:bg-white/30",
-              cheia ? "py-6 text-2xl sm:text-3xl" : "py-4 text-xl",
-            )}
-          >
-            +{n}
-          </button>
-        ))}
-        <button
-          onClick={() => ajustar(lado, "pontos", -1)}
-          className={cn("rounded-xl bg-white/10 hover:bg-white/20", cheia ? "py-4 text-base" : "py-2 text-sm")}
-        >
-          {t.menos1Ponto}
-        </button>
-        <button
-          onClick={() => ajustar(lado, "vantagens", 1)}
-          className={cn("rounded-xl bg-white/10 hover:bg-white/20", cheia ? "py-4 text-base" : "py-2 text-sm")}
-        >
-          {t.maisVantagem}
-        </button>
-        <button
-          onClick={() => ajustar(lado, "punicoes", 1)}
-          className={cn("rounded-xl bg-white/10 hover:bg-white/20", cheia ? "py-4 text-base" : "py-2 text-sm")}
-        >
-          {t.maisPunicao}
-        </button>
-      </div>
-    </div>
-  );
+  // os dois cartões (cor fixa por atleta); o SWITCH SIDES só inverte a ordem.
+  // Keys estáveis (a1/a2) preservam o estado ao reordenar.
+  const cartoes = [
+    <LadoPlacar
+      key="a1"
+      atleta={atleta1}
+      dados={lado1}
+      cor="bg-blue-700"
+      grande={cheia}
+      t={t}
+      onAjustar={(campo, delta) => ajustar(1, campo, delta)}
+    />,
+    <LadoPlacar
+      key="a2"
+      atleta={atleta2}
+      dados={lado2}
+      cor="bg-red-700"
+      grande={cheia}
+      t={t}
+      onAjustar={(campo, delta) => ajustar(2, campo, delta)}
+    />,
+  ];
 
   return (
     <div className={cn(cheia && "flex min-h-0 flex-1 flex-col")}>
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-2xl bg-zinc-900 px-4 py-4 text-white sm:px-6">
         <p className="w-full truncate text-sm text-zinc-300 sm:w-auto">{categoriaNome}</p>
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-4">
           <span className={`font-cond text-3xl font-bold tabular-nums sm:text-4xl ${restante < 0 ? "text-red-400" : ""}`}>
             {fmt(restante)}
           </span>
@@ -313,6 +417,12 @@ export function PlacarTablet({
             className="rounded-lg bg-white/10 px-3 py-2 text-sm hover:bg-white/20"
           >
             {t.zerar}
+          </button>
+          <button
+            onClick={() => setTrocado((v) => !v)}
+            className="rounded-lg bg-white/10 px-3 py-2 text-sm hover:bg-white/20"
+          >
+            {t.trocarLados}
           </button>
         </div>
         <button
@@ -329,8 +439,7 @@ export function PlacarTablet({
           cheia ? "min-h-0 flex-1 flex-col" : "flex-col sm:flex-row",
         )}
       >
-        <Coluna lado={1} atleta={atleta1} dados={lado1} cor="bg-blue-700" />
-        <Coluna lado={2} atleta={atleta2} dados={lado2} cor="bg-red-700" />
+        {trocado ? [cartoes[1], cartoes[0]] : cartoes}
       </div>
 
       {encerrando && (

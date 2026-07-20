@@ -935,9 +935,9 @@ export const en: Dicionario = {
     placarTablet: {
       vantagensLabel: "Advantages",
       punicoesLabel: "Penalties",
-      menos1Ponto: "−1 point",
-      maisVantagem: "+Advantage",
-      maisPunicao: "+Penalty",
+      trocarLados: "Switch sides",
+      vantagemLetra: "A",
+      punicaoLetra: "P",
       pausar: "Pause",
       iniciar: "Start",
       zerar: "Reset",
