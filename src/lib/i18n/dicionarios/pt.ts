@@ -16,17 +16,12 @@ export const pt = {
   telaoArea: {
     telaCheia: "Tela cheia",
     sairTelaCheia: "Sair da tela cheia",
-    abrirPlacar: "Abrir placar (tela cheia)",
     noTatame: "No tatame",
     proximas: "Próximas",
     aguardando: "aguardando",
-    aguardandoLuta: "Aguardando a próxima luta",
-    areaConcluida: "Área concluída ✓",
     termina: "termina",
     luta: "luta",
     lutas: "lutas",
-    vnt: "VNT",
-    pun: "PUN",
     semLutas: "Sem lutas pendentes",
     semCronograma:
       "O cronograma aparece aqui quando o organizador distribuir as chaves pelas áreas.",

@@ -254,8 +254,7 @@ export function PlacarTablet({
   const lado2 = placar.l2;
   // ao recarregar o tablet, o relógio retoma no último valor salvo, porém
   // PAUSADO — o organizador aperta iniciar quando quiser (não mostra tempo
-  // defasado nem depende de Date.now no render). O telão é quem espelha o tempo
-  // rodando com precisão (CronometroTelao).
+  // defasado nem depende de Date.now no render).
   const [restante, setRestante] = useState(
     cronometroInicial?.restanteSeg ?? duracaoSegundos,
   );

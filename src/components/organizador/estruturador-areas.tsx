@@ -45,7 +45,6 @@ export function EstruturadorAreas({
   categorias,
   numAreasInicial,
   base,
-  slugPublico,
   eventoNome,
   cronograma,
   dias,
@@ -62,8 +61,6 @@ export function EstruturadorAreas({
   numAreasInicial: number | null;
   /** caminho base do evento, ex.: `/organizador/eventos/:id` */
   base: string;
-  /** slug público do evento — habilita "Abrir placar (tela cheia)" por área */
-  slugPublico?: string;
   /** nome do evento (título da programação imprimível) */
   eventoNome: string;
   /** cronograma real por área (persistido) — vazio quando não estruturado */
@@ -354,7 +351,6 @@ export function EstruturadorAreas({
             cronograma={cronograma}
             layout="colunas"
             base={base}
-            slugPublico={slugPublico}
             full={false}
           />
         </>
@@ -390,7 +386,6 @@ export function EstruturadorAreas({
             cronograma={cronograma}
             layout="colunas"
             base={base}
-            slugPublico={slugPublico}
             full
           />
         </div>

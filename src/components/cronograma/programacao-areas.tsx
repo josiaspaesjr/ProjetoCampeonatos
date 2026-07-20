@@ -46,15 +46,12 @@ export function ProgramacaoAreas({
   cronograma,
   layout,
   base,
-  slugPublico,
   full = false,
 }: {
   cronograma: AreaCron[];
   layout: LayoutAreas;
   /** caminho base do evento (organizador) — mostra o rodapé "Operar placar" */
   base?: string;
-  /** slug do evento — habilita o link "Abrir placar (tela cheia)" no rodapé */
-  slugPublico?: string;
   /** tela cheia do organizador (só afeta o layout de colunas) */
   full?: boolean;
 }) {
@@ -90,7 +87,6 @@ export function ProgramacaoAreas({
             area={area}
             layout={layout}
             base={base}
-            slugPublico={slugPublico}
             full={full}
           />
         ))}
@@ -104,19 +100,15 @@ function CardArea({
   area,
   layout,
   base,
-  slugPublico,
   full,
 }: {
   area: AreaCron;
   layout: LayoutAreas;
   base?: string;
-  slugPublico?: string;
   full: boolean;
 }) {
   const colunas = layout === "colunas";
-  const dic = useDic();
-  const dp = dic.placar;
-  const dt = dic.telaoArea;
+  const dp = useDic().placar;
   return (
     <div
       className={cn(
@@ -190,18 +182,9 @@ function CardArea({
         )}
       </div>
 
-      {/* RODAPÉ (organizador: abrir placar em tela cheia + operar placar) */}
+      {/* RODAPÉ (organizador: operar placar) */}
       {base && (
         <div className="flex shrink-0 items-center justify-end gap-4 border-t border-white/10 px-4 py-2.5">
-          {slugPublico && (
-            <Link
-              href={`/evento/${slugPublico}/telao/${area.id}`}
-              target="_blank"
-              className="font-cond text-[12px] font-semibold uppercase tracking-[0.05em] text-muted-3 transition-colors hover:text-brand-soft"
-            >
-              {dt.abrirPlacar} ↗
-            </Link>
-          )}
           <Link
             href={`${base}/areas/${area.id}/placar`}
             className="font-cond text-[12px] font-semibold uppercase tracking-[0.05em] text-muted-3 transition-colors hover:text-brand-soft"

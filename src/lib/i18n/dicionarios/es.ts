@@ -17,17 +17,12 @@ export const es: Dicionario = {
   telaoArea: {
     telaCheia: "Pantalla completa",
     sairTelaCheia: "Salir de pantalla completa",
-    abrirPlacar: "Abrir marcador (pantalla completa)",
     noTatame: "En el tatami",
     proximas: "Próximas",
     aguardando: "esperando",
-    aguardandoLuta: "Esperando la próxima lucha",
-    areaConcluida: "Área finalizada ✓",
     termina: "termina",
     luta: "lucha",
     lutas: "luchas",
-    vnt: "VNT",
-    pun: "PUN",
     semLutas: "Sin luchas pendientes",
     semCronograma:
       "El cronograma aparece aquí cuando el organizador distribuya las llaves por las áreas.",

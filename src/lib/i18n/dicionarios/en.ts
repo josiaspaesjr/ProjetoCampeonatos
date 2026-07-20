@@ -17,17 +17,12 @@ export const en: Dicionario = {
   telaoArea: {
     telaCheia: "Fullscreen",
     sairTelaCheia: "Exit fullscreen",
-    abrirPlacar: "Open scoreboard (fullscreen)",
     noTatame: "On the mat",
     proximas: "Up next",
     aguardando: "waiting",
-    aguardandoLuta: "Waiting for the next match",
-    areaConcluida: "Area finished ✓",
     termina: "ends",
     luta: "match",
     lutas: "matches",
-    vnt: "ADV",
-    pun: "PEN",
     semLutas: "No matches pending",
     semCronograma:
       "The schedule appears here once the organizer assigns the brackets to the areas.",

@@ -1,4 +1,4 @@
-/** Formatação compartilhada entre o telão geral e o placar ao vivo por área. */
+/** Formatação compartilhada do telão. */
 
 /** "09:12" a partir de um Date (horário do runtime) */
 export const hora = (d: Date) =>
@@ -9,11 +9,3 @@ export const rotuloCat = (nome: string) => nome.split(" / ").slice(-2).join(" ")
 
 /** força do placar: pontos dominam, vantagem desempata (líder do tatame) */
 export const forca = (p: number, v: number) => p * 1000 + v;
-
-/** "05:00" / "-00:12" a partir de segundos (aceita negativo = overtime) */
-export function fmtRelogio(seg: number): string {
-  const s = Math.trunc(seg);
-  const m = Math.floor(Math.abs(s) / 60);
-  const r = Math.abs(s) % 60;
-  return `${s < 0 ? "-" : ""}${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
-}
