@@ -541,22 +541,15 @@ export async function gerarChaveAuto(eventoId: string, categoriaId: string) {
 }
 
 /**
- * Gera em lote as chaves de todas as categorias com 2+ confirmados que ainda
- * não têm chave. Formato automático por tamanho (2 atletas → luta única, 4+ →
- * eliminação simples); as divisões com **exatamente 3 atletas** seguem a
- * escolha do organizador (`tresAtletas` no form): "3 atletas com repescagem"
- * (padrão) ou eliminação simples. Rascunhos existentes são
- * preservados — regenere individualmente se quiser trocar o sorteio.
+ * Gera em lote as chaves de todas as categorias com 1+ confirmado que ainda
+ * não têm chave, todas em eliminação simples (formato "auto"): 1 atleta vira
+ * campeão por W.O., 2 viram luta única, 3+ eliminação simples. Rascunhos
+ * existentes são preservados — regenere individualmente se quiser trocar o
+ * sorteio ou escolher outro formato.
  */
-export async function gerarChavesEmLote(eventoId: string, formData?: FormData) {
+export async function gerarChavesEmLote(eventoId: string) {
   const { db, usuario } = await eventoDoOrganizador(eventoId);
   const dic = await getDicionario();
-
-  // formato das divisões de exatamente 3 atletas (padrão: 3 atletas com repescagem)
-  const formato3: FormatoSelecionavel =
-    formData?.get("tresAtletas") === "eliminacao_simples"
-      ? "eliminacao_simples"
-      : "tres_repescagem";
 
   const [cats, confirmadas] = await Promise.all([
     db.query.categorias.findMany({ where: eq(categorias.eventoId, eventoId) }),
@@ -597,10 +590,8 @@ export async function gerarChavesEmLote(eventoId: string, formData?: FormData) {
   const falhas: string[] = [];
   for (const cat of pendentes) {
     try {
-      // divisões de 3 atletas seguem a escolha; as demais, automático
-      const formato: FormatoSelecionavel =
-        (contagem.get(cat.id) ?? 0) === 3 ? formato3 : "auto";
-      const chave = await gerarChaveParaCategoria(db, cat.id, formato);
+      // todas em eliminação simples (auto resolve por tamanho)
+      const chave = await gerarChaveParaCategoria(db, cat.id, "auto");
       await db.insert(auditoria).values({
         usuarioId: usuario.id,
         entidade: "chave",

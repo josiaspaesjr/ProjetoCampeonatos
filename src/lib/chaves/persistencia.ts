@@ -135,7 +135,7 @@ export async function gerarChaveParaCategoria(
   }
 
   const formatoFinal: FormatoChaveId =
-    formato === "auto" ? formatoAutomatico(confirmadas.length) : formato;
+    formato === "auto" ? formatoAutomatico() : formato;
 
   const participantes = confirmadas.map((i) => ({
     id: i.id,

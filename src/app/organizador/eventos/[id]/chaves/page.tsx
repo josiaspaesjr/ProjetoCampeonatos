@@ -2,12 +2,11 @@ import { notFound } from "next/navigation";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, chaves, inscricoes } from "@/db/schema";
-import { BotaoAcao } from "@/components/ui/botao-acao";
+import { BotaoAcao, BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { getUsuarioAtual } from "@/lib/auth";
 import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import { ordenarCategoriasExibicao } from "@/lib/categorias/distribuicao-areas";
-import { GerarLoteDialog } from "@/components/chaves/gerar-lote-dialog";
 import { gerarChavesEmLote, publicarChaves } from "../../actions";
 import { PainelChaves, type LinhaChave } from "./painel-chaves";
 
@@ -89,8 +88,6 @@ export default async function PaginaChaves({
     (c) => (contagem.get(c.id) ?? 0) >= 1 && !chavePorCategoria.has(c.id),
   );
   const semChave = pendentes.length;
-  // divisões do lote com exatamente 3 atletas (a escolha do formato só afeta essas)
-  const tres3 = pendentes.filter((c) => (contagem.get(c.id) ?? 0) === 3).length;
 
   return (
     <div>
@@ -103,11 +100,12 @@ export default async function PaginaChaves({
         <p className="max-w-[560px] text-sm text-muted-foreground">{ch.intro}</p>
         <div className="flex items-center gap-3">
           {semChave > 0 && (
-            <GerarLoteDialog
-              acao={gerarChavesEmLote.bind(null, evento.id)}
-              total={semChave}
-              tres={tres3}
-            />
+            <form action={gerarChavesEmLote.bind(null, evento.id)}>
+              <BotaoAcaoBruto className="inline-flex h-9 items-center justify-center border border-white/16 bg-brand px-4 font-cond text-sm font-semibold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">
+                {ch.gerar} {semChave} {semChave === 1 ? ch.chaveSing : ch.chavePlur}{" "}
+                {ch.emLote}
+              </BotaoAcaoBruto>
+            </form>
           )}
           {rascunhos > 0 && (
             <form action={publicarChaves.bind(null, evento.id)}>

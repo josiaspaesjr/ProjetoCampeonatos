@@ -93,7 +93,7 @@ export function SeletorFormato({
     });
   }
 
-  const fmtAuto = formatoAutomatico(qtd);
+  const fmtAuto = formatoAutomatico();
 
   /** motivo pelo qual um card fica bloqueado, ou null se disponível */
   function motivoBloqueio(meta: FormatoMeta): string | null {

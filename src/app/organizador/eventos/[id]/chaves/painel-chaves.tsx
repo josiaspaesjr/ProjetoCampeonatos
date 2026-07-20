@@ -230,7 +230,7 @@ export function PainelChaves({
                     ? ` · ${ch.formatos[l.chave.formato]?.nome ?? l.chave.formato}`
                     : l.qtd === 1
                       ? ` · ${ch.campeaoWo}`
-                      : ` · ${ch.formatoSugerido} ${ch.formatos[formatoAutomatico(l.qtd)].nome}`}
+                      : ` · ${ch.formatoSugerido} ${ch.formatos[formatoAutomatico()].nome}`}
                 </p>
               </div>
               <div className="flex shrink-0 flex-wrap items-center gap-3 max-sm:w-full">
