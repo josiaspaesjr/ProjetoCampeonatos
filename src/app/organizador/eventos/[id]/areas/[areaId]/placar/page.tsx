@@ -8,6 +8,7 @@ import { getUsuarioAtual } from "@/lib/auth";
 import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import { montarFilaDaArea, tempoDeLutaSegundos } from "@/lib/cronograma/fila";
+import { BotaoTelaCheia } from "@/components/telao/botao-tela-cheia";
 import { PlacarTablet } from "./placar-tablet";
 
 export default async function PaginaPlacar({
@@ -53,16 +54,19 @@ export default async function PaginaPlacar({
   const a2 = proxima.luta.atleta2InscricaoId!;
 
   return (
-    <div>
-      <div className="mb-4 flex items-center justify-between">
+    <div id="placar-operador">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <Link href={`/organizador/eventos/${id}/areas`} className="text-sm text-muted-foreground hover:underline">
           ← {dic.admin.nav.areas}
         </Link>
-        <p className="text-sm font-medium text-muted-foreground">
-          {fila.area.nome} · {fila.fila.length}{" "}
-          {fila.fila.length === 1 ? dic.lutasTab.luta : dic.lutasTab.lutas}{" "}
-          {p.naFila}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm font-medium text-muted-foreground">
+            {fila.area.nome} · {fila.fila.length}{" "}
+            {fila.fila.length === 1 ? dic.lutasTab.luta : dic.lutasTab.lutas}{" "}
+            {p.naFila}
+          </p>
+          <BotaoTelaCheia alvoId="placar-operador" variante="inline" />
+        </div>
       </div>
 
       <PlacarTablet

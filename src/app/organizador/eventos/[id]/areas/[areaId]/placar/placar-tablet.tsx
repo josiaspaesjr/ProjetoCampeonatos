@@ -451,7 +451,9 @@ function ModalEncerrar({
         </div>
       </div>
     </div>,
-    document.body,
+    // em tela cheia, só a subárvore do elemento fullscreen renderiza — portal p/
+    // ele (senão o modal de encerramento sumiria por trás do placar cheio)
+    document.fullscreenElement ?? document.body,
   );
 }
 
