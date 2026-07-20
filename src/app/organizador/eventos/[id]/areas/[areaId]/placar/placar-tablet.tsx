@@ -94,21 +94,31 @@ function BotaoGrade({
   somar,
   onClick,
   grande,
+  desabilitado,
 }: {
   texto: string;
   somar: boolean;
   onClick: () => void;
   grande: boolean;
+  desabilitado: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
+      disabled={desabilitado}
       className={cn(
         "rounded-md font-semibold tabular-nums transition-colors",
-        somar
-          ? "bg-white/[0.04] text-green-400/75 hover:bg-green-500/20 hover:text-green-300"
-          : "bg-white/[0.02] text-red-400/70 hover:bg-red-500/20 hover:text-red-300",
+        desabilitado
+          ? cn(
+              "cursor-not-allowed opacity-30",
+              somar
+                ? "bg-white/[0.04] text-green-400/75"
+                : "bg-white/[0.02] text-red-400/70",
+            )
+          : somar
+            ? "bg-white/[0.04] text-green-400/75 hover:bg-green-500/20 hover:text-green-300"
+            : "bg-white/[0.02] text-red-400/70 hover:bg-red-500/20 hover:text-red-300",
         grande ? "py-2.5 text-lg sm:text-xl" : "py-2 text-sm sm:text-base",
       )}
     >
@@ -141,6 +151,7 @@ function LinhaAtleta({
   dados,
   cor,
   grande,
+  bloqueado,
   t,
   onAjustar,
 }: {
@@ -148,6 +159,8 @@ function LinhaAtleta({
   dados: Lado;
   cor: string;
   grande: boolean;
+  /** true = grade travada (cronômetro ainda não foi iniciado nenhuma vez) */
+  bloqueado: boolean;
   t: DicPlacar;
   onAjustar: (campo: keyof Lado, delta: number) => void;
 }) {
@@ -171,6 +184,7 @@ function LinhaAtleta({
               somar
               onClick={() => onAjustar(c.campo, c.valor)}
               grande={grande}
+              desabilitado={bloqueado}
             />
           ))}
           {cols.map((c) => (
@@ -180,6 +194,7 @@ function LinhaAtleta({
               somar={false}
               onClick={() => onAjustar(c.campo, -c.valor)}
               grande={grande}
+              desabilitado={bloqueado}
             />
           ))}
         </div>
@@ -259,6 +274,27 @@ export function PlacarTablet({
     cronometroInicial?.restanteSeg ?? duracaoSegundos,
   );
   const [rodando, setRodando] = useState(false);
+  // "marcar pontos" só libera depois de o cronômetro ser iniciado ao menos uma
+  // vez (evita pontuar antes de a luta começar). Ao recarregar no meio da luta,
+  // infere que já começou — relógio já correu (rodando ou tempo < duração) ou já
+  // há placar parcial. Uma vez liberado continua liberado (pausar/zerar não
+  // retrancam): a trava vale só até o primeiro "iniciar".
+  const [jaIniciou, setJaIniciou] = useState(() => {
+    const relogioJaCorreu =
+      (cronometroInicial?.rodando ?? false) ||
+      (cronometroInicial?.restanteSeg != null &&
+        cronometroInicial.restanteSeg < duracaoSegundos);
+    const temParcial =
+      !!placarInicial &&
+      placarInicial.l1.pontos +
+        placarInicial.l1.vantagens +
+        placarInicial.l1.punicoes +
+        placarInicial.l2.pontos +
+        placarInicial.l2.vantagens +
+        placarInicial.l2.punicoes >
+        0;
+    return relogioJaCorreu || temParcial;
+  });
   const [encerrando, setEncerrando] = useState(false);
   const [metodo, setMetodo] = useState<MetodoVitoria>("pontos");
   const [vencedorId, setVencedorId] = useState<string>("");
@@ -324,6 +360,7 @@ export function PlacarTablet({
 
   // atualização funcional: cliques em sequência rápida nunca perdem pontos
   const ajustar = (lado: 1 | 2, campo: keyof Lado, delta: number) => {
+    if (!jaIniciou) return; // trava até o cronômetro iniciar pela 1ª vez
     setPlacar((prev) => {
       const chave = lado === 1 ? "l1" : "l2";
       const atual = prev[chave];
@@ -357,6 +394,7 @@ export function PlacarTablet({
   const alternarRelogio = () => {
     const novo = !rodando;
     setRodando(novo);
+    if (novo) setJaIniciou(true); // primeiro "iniciar" libera a marcação
     persistirRelogio(restante, novo);
   };
 
@@ -412,6 +450,7 @@ export function PlacarTablet({
       dados={lado1}
       cor="bg-blue-700"
       grande={cheia}
+      bloqueado={!jaIniciou}
       t={t}
       onAjustar={(campo, delta) => ajustar(1, campo, delta)}
     />,
@@ -421,6 +460,7 @@ export function PlacarTablet({
       dados={lado2}
       cor="bg-red-700"
       grande={cheia}
+      bloqueado={!jaIniciou}
       t={t}
       onAjustar={(campo, delta) => ajustar(2, campo, delta)}
     />,
@@ -431,6 +471,12 @@ export function PlacarTablet({
       <p className="truncate font-cond text-sm uppercase tracking-[0.06em] text-zinc-400">
         {categoriaNome}
       </p>
+      {!jaIniciou && (
+        <p className="mt-1 flex items-center gap-1.5 font-cond text-xs font-semibold uppercase tracking-[0.04em] text-amber-400/90">
+          <span aria-hidden>▶</span>
+          {t.iniciarParaMarcar}
+        </p>
+      )}
 
       <div className={cn("mt-2 flex flex-col gap-2 sm:gap-3", cheia && "min-h-0 flex-1")}>
         {trocado ? [linhas[1], linhas[0]] : linhas}
@@ -469,6 +515,7 @@ export function PlacarTablet({
             className={cn(
               "flex shrink-0 items-center justify-center rounded-xl bg-white/20 transition-colors hover:bg-white/30",
               cheia ? "h-16 w-16 text-2xl" : "h-14 w-14 text-xl",
+              !jaIniciou && "ring-2 ring-amber-400/80",
             )}
           >
             {rodando ? "❚❚" : "▶"}

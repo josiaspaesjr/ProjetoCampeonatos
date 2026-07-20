@@ -943,6 +943,7 @@ export const en: Dicionario = {
       confirmar: "Confirm",
       confirmando: "Ending…",
       voltar: "back",
+      iniciarParaMarcar: "Start the clock to score points",
     },
     areas: {
       nenhumaCategoria: "No divisions loaded",

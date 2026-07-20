@@ -951,6 +951,7 @@ export const pt = {
       confirmar: "Confirmar",
       confirmando: "Encerrando…",
       voltar: "voltar",
+      iniciarParaMarcar: "Inicie o cronômetro para marcar pontos",
     },
     areas: {
       nenhumaCategoria: "Nenhuma categoria carregada",

@@ -945,6 +945,7 @@ export const es: Dicionario = {
       confirmar: "Confirmar",
       confirmando: "Finalizando…",
       voltar: "volver",
+      iniciarParaMarcar: "Inicia el cronómetro para marcar puntos",
     },
     areas: {
       nenhumaCategoria: "Ninguna categoría cargada",
