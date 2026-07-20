@@ -54,39 +54,6 @@ function fmt(seg: number) {
   return `${seg < 0 ? "-" : ""}${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-/**
- * Chip de estatística do placar (vantagem/punição) com cor própria por tipo:
- * vantagem em amarelo, punição em vermelho — sobre um fundo escuro que garante
- * o contraste tanto no card azul quanto no vermelho (vermelho sobre vermelho
- * seria ilegível). Os pontos ficam em verde, direto no card (helper à parte).
- */
-function ChipPlacar({
-  rotulo,
-  valor,
-  tom,
-  grande,
-}: {
-  rotulo: string;
-  valor: number;
-  tom: "vantagem" | "punicao";
-  grande?: boolean;
-}) {
-  return (
-    <div
-      className={cn(
-        "flex items-center gap-2 rounded-lg bg-black/30 font-cond font-bold uppercase tabular-nums leading-none",
-        tom === "vantagem" ? "text-yellow-300" : "text-red-400",
-        grande ? "px-3.5 py-2.5 text-2xl sm:text-3xl" : "px-2.5 py-1.5 text-lg",
-      )}
-    >
-      <span className={cn("tracking-[0.06em] opacity-90", grande ? "text-sm" : "text-[11px]")}>
-        {rotulo}
-      </span>
-      <span className="ml-auto">{valor}</span>
-    </div>
-  );
-}
-
 export function PlacarTablet({
   eventoId,
   chaveId,
@@ -277,18 +244,18 @@ export function PlacarTablet({
         </p>
       </div>
 
-      <div className={cn("flex items-end gap-5", !cheia && "mt-4")}>
+      <div className={cn("flex items-end gap-6", !cheia && "mt-4")}>
         <span
           className={cn(
-            "font-black tabular-nums leading-none text-green-400",
+            "font-black tabular-nums leading-none",
             cheia ? "text-7xl sm:text-8xl" : "text-6xl sm:text-8xl",
           )}
         >
           {dados.pontos}
         </span>
-        <div className={cn("flex flex-col gap-2", cheia ? "mb-1" : "mb-1.5")}>
-          <ChipPlacar rotulo={t.vantagensLabel} valor={dados.vantagens} tom="vantagem" grande={cheia} />
-          <ChipPlacar rotulo={t.punicoesLabel} valor={dados.punicoes} tom="punicao" grande={cheia} />
+        <div className={cn("space-y-1", cheia ? "text-lg sm:text-xl" : "mb-2 text-sm")}>
+          <p>{t.vantagensLabel}: <span className="font-bold">{dados.vantagens}</span></p>
+          <p>{t.punicoesLabel}: <span className="font-bold">{dados.punicoes}</span></p>
         </div>
       </div>
 
