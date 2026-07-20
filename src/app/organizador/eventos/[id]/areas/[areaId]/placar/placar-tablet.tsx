@@ -87,7 +87,15 @@ export function PlacarTablet({
   const [vencedorId, setVencedorId] = useState<string>("");
   const [, startTransition] = useTransition();
   const [confirmando, iniciarConfirmacao] = useTransition();
+  // em tela cheia o placar reorganiza os lados em cima/embaixo preenchendo a tela
+  const [cheia, setCheia] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const h = () => setCheia(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", h);
+    return () => document.removeEventListener("fullscreenchange", h);
+  }, []);
 
   useEffect(() => {
     if (rodando) {
@@ -220,35 +228,66 @@ export function PlacarTablet({
     dados: Lado;
     cor: string;
   }) => (
-    <div className={`flex-1 rounded-2xl p-6 text-white ${cor}`}>
-      <p className="truncate text-2xl font-bold">{atleta.nome}</p>
-      <p className="truncate text-sm opacity-70">{atleta.academia ?? ""}</p>
+    <div
+      className={cn(
+        "flex-1 rounded-2xl text-white",
+        cor,
+        cheia ? "flex min-h-0 flex-col justify-between p-8" : "p-6",
+      )}
+    >
+      <div>
+        <p className={cn("truncate font-bold", cheia ? "text-3xl sm:text-4xl" : "text-2xl")}>
+          {atleta.nome}
+        </p>
+        <p className={cn("truncate opacity-70", cheia ? "text-base" : "text-sm")}>
+          {atleta.academia ?? ""}
+        </p>
+      </div>
 
-      <div className="mt-4 flex items-end gap-6">
-        <span className="text-6xl font-black tabular-nums sm:text-8xl">{dados.pontos}</span>
-        <div className="mb-2 space-y-1 text-sm">
+      <div className={cn("flex items-end gap-6", !cheia && "mt-4")}>
+        <span
+          className={cn(
+            "font-black tabular-nums leading-none",
+            cheia ? "text-7xl sm:text-8xl" : "text-6xl sm:text-8xl",
+          )}
+        >
+          {dados.pontos}
+        </span>
+        <div className={cn("space-y-1", cheia ? "text-lg sm:text-xl" : "mb-2 text-sm")}>
           <p>{t.vantagensLabel}: <span className="font-bold">{dados.vantagens}</span></p>
           <p>{t.punicoesLabel}: <span className="font-bold">{dados.punicoes}</span></p>
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-3 gap-2">
+      <div className={cn("grid grid-cols-3 gap-2", cheia ? "" : "mt-4")}>
         {[2, 3, 4].map((n) => (
           <button
             key={n}
             onClick={() => ajustar(lado, "pontos", n)}
-            className="rounded-xl bg-white/20 py-4 text-xl font-bold hover:bg-white/30"
+            className={cn(
+              "rounded-xl bg-white/20 font-bold hover:bg-white/30",
+              cheia ? "py-6 text-2xl sm:text-3xl" : "py-4 text-xl",
+            )}
           >
             +{n}
           </button>
         ))}
-        <button onClick={() => ajustar(lado, "pontos", -1)} className="rounded-xl bg-white/10 py-2 text-sm hover:bg-white/20">
+        <button
+          onClick={() => ajustar(lado, "pontos", -1)}
+          className={cn("rounded-xl bg-white/10 hover:bg-white/20", cheia ? "py-4 text-base" : "py-2 text-sm")}
+        >
           {t.menos1Ponto}
         </button>
-        <button onClick={() => ajustar(lado, "vantagens", 1)} className="rounded-xl bg-white/10 py-2 text-sm hover:bg-white/20">
+        <button
+          onClick={() => ajustar(lado, "vantagens", 1)}
+          className={cn("rounded-xl bg-white/10 hover:bg-white/20", cheia ? "py-4 text-base" : "py-2 text-sm")}
+        >
           {t.maisVantagem}
         </button>
-        <button onClick={() => ajustar(lado, "punicoes", 1)} className="rounded-xl bg-white/10 py-2 text-sm hover:bg-white/20">
+        <button
+          onClick={() => ajustar(lado, "punicoes", 1)}
+          className={cn("rounded-xl bg-white/10 hover:bg-white/20", cheia ? "py-4 text-base" : "py-2 text-sm")}
+        >
           {t.maisPunicao}
         </button>
       </div>
@@ -256,7 +295,7 @@ export function PlacarTablet({
   );
 
   return (
-    <div>
+    <div className={cn(cheia && "flex min-h-0 flex-1 flex-col")}>
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 rounded-2xl bg-zinc-900 px-4 py-4 text-white sm:px-6">
         <p className="w-full truncate text-sm text-zinc-300 sm:w-auto">{categoriaNome}</p>
         <div className="flex items-center gap-3 sm:gap-4">
@@ -284,7 +323,12 @@ export function PlacarTablet({
         </button>
       </div>
 
-      <div className="mt-4 flex flex-col gap-4 sm:flex-row">
+      <div
+        className={cn(
+          "mt-4 flex gap-4",
+          cheia ? "min-h-0 flex-1 flex-col" : "flex-col sm:flex-row",
+        )}
+      >
         <Coluna lado={1} atleta={atleta1} dados={lado1} cor="bg-blue-700" />
         <Coluna lado={2} atleta={atleta2} dados={lado2} cor="bg-red-700" />
       </div>

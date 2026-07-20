@@ -257,9 +257,12 @@
 }
 
 /* Placar do operador em tela cheia: no fullscreen o console some, então o
-   próprio elemento precisa do fundo, do respiro e do scroll (telas baixas). */
+   próprio elemento precisa do fundo, do respiro e do scroll (telas baixas).
+   Vira coluna flex para o placar preencher a altura (lados em cima/embaixo). */
 #placar-operador:fullscreen {
   background: var(--color-background);
   overflow-y: auto;
   padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
 }
