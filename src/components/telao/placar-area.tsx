@@ -123,6 +123,32 @@ export async function PlacarArea({
   );
 }
 
+/**
+ * Chip de vantagem/punição do telão, com cor por tipo (amarelo/vermelho) sobre
+ * fundo escuro — mesmo esquema do placar do operador, legível nos dois lados.
+ */
+function ChipTelao({
+  rotulo,
+  valor,
+  tom,
+}: {
+  rotulo: string;
+  valor: number;
+  tom: "vantagem" | "punicao";
+}) {
+  return (
+    <div
+      className={cn(
+        "flex items-center justify-end gap-3 rounded-xl bg-black/30 px-4 py-2 font-cond font-bold uppercase tabular-nums leading-none",
+        tom === "vantagem" ? "text-yellow-300" : "text-red-400",
+      )}
+    >
+      <span className="text-base tracking-[0.06em] opacity-90 md:text-2xl">{rotulo}</span>
+      <span className="text-2xl md:text-4xl">{valor}</span>
+    </div>
+  );
+}
+
 /** Um lado do placar — caixa colorida cheia (azul ou vermelha), como no tablet. */
 function LadoTatame({
   nome,
@@ -159,16 +185,12 @@ function LadoTatame({
         </div>
       )}
       <div className="mt-4 flex items-end justify-between gap-6">
-        <span className="disp tnum leading-[0.78] text-[clamp(64px,min(18vw,30vh),280px)]">
+        <span className="disp tnum leading-[0.78] text-green-400 text-[clamp(64px,min(18vw,30vh),280px)]">
           {pontos}
         </span>
-        <div className="mb-2 shrink-0 space-y-1 text-right font-cond text-lg uppercase tracking-[0.04em] text-white/80 md:text-2xl">
-          <div>
-            {t.vnt} <span className="tnum font-bold text-white">{vantagens}</span>
-          </div>
-          <div>
-            {t.pun} <span className="tnum font-bold text-white">{punicoes}</span>
-          </div>
+        <div className="mb-2 flex shrink-0 flex-col gap-2 text-right">
+          <ChipTelao rotulo={t.vnt} valor={vantagens} tom="vantagem" />
+          <ChipTelao rotulo={t.pun} valor={punicoes} tom="punicao" />
         </div>
       </div>
     </div>
