@@ -55,7 +55,12 @@ function rankPeso(c: { tipo: string; limitePesoKg: number | null }): number {
   return c.limitePesoKg;
 }
 
-const sexoRank = (sexo: string) => (sexo === "masculino" ? 0 : 1);
+/**
+ * Desempate de sexo na ordem do dia: **feminino antes de masculino** — a mesma
+ * direção de `sexoExibicaoRank`, para o cronograma/área correr na ordem canônica
+ * usada no resto do sistema (listas, chaves, páginas públicas).
+ */
+const sexoRank = (sexo: string) => (sexo === "feminino" ? 0 : 1);
 
 /** categoria mínima para ordenar na ordem do dia */
 export interface CategoriaOrdenavel {
@@ -77,7 +82,7 @@ export interface CategoriaComCarga {
 
 /**
  * Ordena as categorias na ordem do dia: onda asc (extremos primeiro) → faixa
- * (branca→preta) → classe → sexo (masculino antes) → peso (leve→pesado).
+ * (branca→preta) → classe → sexo (feminino antes) → peso (leve→pesado).
  */
 export function ordenarCategorias<T extends CategoriaOrdenavel>(cats: T[]): T[] {
   return [...cats].sort(

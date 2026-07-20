@@ -125,6 +125,14 @@ describe("ordenarCategorias", () => {
     expect(cats.map((c) => c.faixa)).toEqual(["branca", "azul", "preta"]);
   });
 
+  it("mesma onda·faixa·classe: feminino antes de masculino (ordem canônica)", () => {
+    const cats = ordenarCategorias([
+      cat("m", "adulto", "azul", "masculino"),
+      cat("f", "adulto", "azul", "feminino"),
+    ]);
+    expect(cats.map((c) => c.sexo)).toEqual(["feminino", "masculino"]);
+  });
+
   it("dentro do grupo, ordena leve→pesado→pesadíssimo→absoluto", () => {
     const cats = ordenarCategorias([
       cat("abs", "adulto", "preta", "masculino", { tipo: "absoluto", limitePesoKg: null }),

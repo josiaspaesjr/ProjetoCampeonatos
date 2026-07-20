@@ -161,6 +161,12 @@ export interface AreaCron {
   totalCats: number;
   totalGrupos: number;
   categorias: CategoriaCron[];
+  /**
+   * O evento tem mais de um dia de calendário configurado. Sinaliza à
+   * programação que mostre a data em cada luta mesmo quando, no modo "Por dia",
+   * todas as lutas acabam caindo num único dia (senão a data sumiria).
+   */
+  eventoMultiDia?: boolean;
 }
 
 /** rótulo da faixa de datas de uma lista de dias (datas distintas: um dia com
@@ -202,6 +208,9 @@ export async function montarCronogramaDoEvento(
       .map((d, i) => [d, i + 1] as const),
   );
   const diaNumeroDe = (data: string) => diaNumeroPorData.get(data) ?? 1;
+  // evento com mais de um dia de calendário configurado: a programação mostra a
+  // data em cada luta mesmo se, no modo "Por dia", tudo cair num só dia
+  const eventoMultiDia = diaNumeroPorData.size > 1;
   // piso do dia fixado (modo "Por dia"): data → 1ª janela desse dia no eixo.
   // Uma categoria com `dataFixada` só começa a partir daqui (ver janelas.ts).
   const pisoPorData = new Map<string, Ancora>();
@@ -237,6 +246,7 @@ export async function montarCronogramaDoEvento(
       totalCats: 0,
       totalGrupos: 0,
       categorias: [],
+      eventoMultiDia,
     }));
   }
 
@@ -443,6 +453,7 @@ export async function montarCronogramaDoEvento(
       totalCats: catsDaArea.length,
       totalGrupos: gruposVistos.size,
       categorias: categoriasCron,
+      eventoMultiDia,
     };
   });
 }

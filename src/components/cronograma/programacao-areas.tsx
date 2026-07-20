@@ -60,14 +60,16 @@ export function ProgramacaoAreas({
 }) {
   const colunas = layout === "colunas";
   const grade = layout === "grade";
-  // evento multi-dia: alguma categoria/luta cai em data distinta → mostra o dia
+  // evento multi-dia: mostra a data em cada luta quando o evento tem mais de um
+  // dia configurado (mesmo que, no modo "Por dia", tudo caia num só dia) ou
+  // quando as lutas de fato caem em datas distintas
   const datas = new Set<string>();
   for (const a of cronograma)
     for (const c of a.categorias) {
       datas.add(c.data);
       for (const l of c.lutas) datas.add(l.data);
     }
-  const multiDia = datas.size > 1;
+  const multiDia = cronograma.some((a) => a.eventoMultiDia) || datas.size > 1;
   return (
     <MultiDiaCtx.Provider value={multiDia}>
       <div
