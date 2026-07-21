@@ -17,6 +17,7 @@ import {
   ProgramacaoAreas,
   type LutaSelecionada,
 } from "@/components/cronograma/programacao-areas";
+import { EditorOrdemAreas } from "@/components/cronograma/editor-ordem-areas";
 import type { AreaCron } from "@/lib/cronograma/cronograma-areas";
 import {
   CamposDiasEvento,
@@ -56,6 +57,7 @@ export function EstruturadorAreas({
   estruturar,
   estruturarPorDia,
   salvarDias,
+  reordenar,
 }: {
   categorias: CategoriaView[];
   numAreasInicial: number | null;
@@ -80,12 +82,15 @@ export function EstruturadorAreas({
   estruturar: (formData: FormData) => void | Promise<void>;
   estruturarPorDia: (formData: FormData) => void | Promise<void>;
   salvarDias: (formData: FormData) => void | Promise<void>;
+  /** persiste a ordem manual das lutas de uma área (drag-and-drop) */
+  reordenar: (areaId: string, lutaIds: string[]) => void | Promise<void>;
 }) {
   const [areasN, setAreasN] = useState(
     numAreasInicial ? String(numAreasInicial) : "",
   );
   const [modo, setModo] = useState<"auto" | "porDia">(modoInicial);
   const [areasFull, setAreasFull] = useState(false);
+  const [reordenando, setReordenando] = useState(false);
   const [lutaSel, setLutaSel] = useState<LutaSelecionada | null>(null);
 
   const nInt = Math.floor(Number(areasN));
@@ -148,8 +153,9 @@ export function EstruturadorAreas({
   return (
     <AbrirLutaCtx.Provider value={setLutaSel}>
       {/* reajuste ao vivo: com cronograma na tela, re-busca o servidor (soft,
-          preserva o estado do cliente) para os horários acompanharem as lutas */}
-      {estruturado && <AutoRefresh segundos={30} />}
+          preserva o estado do cliente) para os horários acompanharem as lutas.
+          Pausado ao reordenar para o re-fetch não atropelar o arraste. */}
+      {estruturado && !reordenando && <AutoRefresh segundos={30} />}
 
       {/* AVISO (ex.: as lutas não cabem no período) */}
       {erro && (
@@ -335,24 +341,52 @@ export function EstruturadorAreas({
           </div>
 
           {/* BARRA DE AÇÃO */}
-          <div className="flex flex-wrap justify-end gap-2">
-            <BotaoImprimirPrograma cronograma={cronograma} eventoNome={eventoNome} />
-            <button
-              type="button"
-              onClick={() => setAreasFull(true)}
-              className="inline-flex -skew-x-9 items-center border border-white/14 px-4 py-2 font-cond text-[13px] font-semibold uppercase tracking-[0.04em] text-muted-2 transition-colors hover:border-brand/50 hover:text-brand-soft"
-            >
-              <span className="inline-block skew-x-9">⤢ {ta.expandirTelaCheia}</span>
-            </button>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {reordenando ? (
+              <>
+                <p className="mr-auto max-w-xl font-cond text-[12px] uppercase leading-snug tracking-[0.03em] text-muted-3">
+                  {ta.reordenarDica}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setReordenando(false)}
+                  className="inline-flex -skew-x-9 items-center bg-brand px-4 py-2 font-cond text-[13px] font-semibold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]"
+                >
+                  <span className="inline-block skew-x-9">✓ {ta.reordenarConcluir}</span>
+                </button>
+              </>
+            ) : (
+              <>
+                <BotaoImprimirPrograma cronograma={cronograma} eventoNome={eventoNome} />
+                <button
+                  type="button"
+                  onClick={() => setReordenando(true)}
+                  className="inline-flex -skew-x-9 items-center border border-white/14 px-4 py-2 font-cond text-[13px] font-semibold uppercase tracking-[0.04em] text-muted-2 transition-colors hover:border-brand/50 hover:text-brand-soft"
+                >
+                  <span className="inline-block skew-x-9">⇅ {ta.reordenarLutas}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAreasFull(true)}
+                  className="inline-flex -skew-x-9 items-center border border-white/14 px-4 py-2 font-cond text-[13px] font-semibold uppercase tracking-[0.04em] text-muted-2 transition-colors hover:border-brand/50 hover:text-brand-soft"
+                >
+                  <span className="inline-block skew-x-9">⤢ {ta.expandirTelaCheia}</span>
+                </button>
+              </>
+            )}
           </div>
 
           {/* COLUNAS DE ÁREA (lado a lado, scroll lateral) */}
-          <ProgramacaoAreas
-            cronograma={cronograma}
-            layout="colunas"
-            base={base}
-            full={false}
-          />
+          {reordenando ? (
+            <EditorOrdemAreas cronograma={cronograma} onReordenar={reordenar} />
+          ) : (
+            <ProgramacaoAreas
+              cronograma={cronograma}
+              layout="colunas"
+              base={base}
+              full={false}
+            />
+          )}
         </>
       ) : (
         // AINDA NÃO ESTRUTURADO

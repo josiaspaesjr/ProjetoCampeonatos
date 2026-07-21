@@ -968,6 +968,14 @@ export const es: Dicionario = {
       informeMontar: "y armar el cronograma.",
       cronogramaPorArea: "Cronograma por área",
       fecharTelaCheia: "Cerrar pantalla completa",
+      // reordenación manual de las luchas (drag-and-drop)
+      reordenarLutas: "Reordenar luchas",
+      reordenarConcluir: "Listo",
+      reordenarDica:
+        "Arrastra por el asa para reordenar las luchas de cada tatami — puedes intercalar divisiones. El orden vale solo para el cronograma y la pantalla; la llave no cambia.",
+      reordenarAlca: "Arrastrar para reordenar",
+      reordenarAviso: "Depende de una lucha posterior",
+      reordenarVazio: "Genera las llaves para reordenar las luchas.",
       // configuración de los días en la propia pantalla de áreas
       diasEvento: "Días del evento",
       diasNota:

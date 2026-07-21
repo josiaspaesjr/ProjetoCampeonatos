@@ -1,0 +1,1 @@
+ALTER TABLE "lutas" ADD COLUMN "ordem_cronograma" integer;

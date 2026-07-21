@@ -155,6 +155,13 @@
       "when": 1784487858524,
       "tag": "0021_pale_mojo",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1784639865040,
+      "tag": "0022_handy_valeria_richards",
+      "breakpoints": true
     }
   ]
 }

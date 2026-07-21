@@ -966,6 +966,14 @@ export const en: Dicionario = {
       informeMontar: "and build the schedule.",
       cronogramaPorArea: "Schedule by mat",
       fecharTelaCheia: "Close full screen",
+      // manual match reordering (drag-and-drop)
+      reordenarLutas: "Reorder matches",
+      reordenarConcluir: "Done",
+      reordenarDica:
+        "Drag by the handle to reorder each mat's matches — you can interleave divisions. The order only affects the schedule and the display; the bracket doesn't change.",
+      reordenarAlca: "Drag to reorder",
+      reordenarAviso: "Depends on a match that comes later",
+      reordenarVazio: "Generate the brackets to reorder matches.",
       // day configuration on the areas screen itself
       diasEvento: "Event days",
       diasNota:

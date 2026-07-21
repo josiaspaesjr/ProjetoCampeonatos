@@ -4,7 +4,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb, type Db } from "@/db";
-import { areas, auditoria, categorias, eventos, lutas } from "@/db/schema";
+import { areas, auditoria, categorias, chaves, eventos, lutas } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
 import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
@@ -114,6 +114,37 @@ async function conciliarAreas(
   return alvoIds;
 }
 
+/**
+ * Zera a ordem manual das lutas (drag-and-drop) do evento inteiro. Chamado ao
+ * reestruturar as áreas: a re-distribuição de categorias re-organiza os tatames
+ * do zero, então a ordem manual anterior deixa de fazer sentido. Sem chaves
+ * geradas ainda, é no-op.
+ */
+async function zerarOrdemManual(db: Db, eventoId: string) {
+  const cats = await db.query.categorias.findMany({
+    where: eq(categorias.eventoId, eventoId),
+    columns: { id: true },
+  });
+  if (!cats.length) return;
+  const chavesRows = await db.query.chaves.findMany({
+    where: inArray(
+      chaves.categoriaId,
+      cats.map((c) => c.id),
+    ),
+    columns: { id: true },
+  });
+  if (!chavesRows.length) return;
+  await db
+    .update(lutas)
+    .set({ ordemCronograma: null })
+    .where(
+      inArray(
+        lutas.chaveId,
+        chavesRows.map((c) => c.id),
+      ),
+    );
+}
+
 /** filtro de um dia no modo "Por dia": classe·sexo·faixa (+ absoluto) → dia */
 interface FiltroDia {
   /** "YYYY-MM-DD" */
@@ -211,6 +242,9 @@ export async function estruturarAreas(eventoId: string, formData: FormData) {
         .where(and(eq(categorias.id, a.id), eq(categorias.eventoId, eventoId))),
     ),
   );
+
+  // re-layout dos tatames descarta a ordem manual de lutas anterior
+  await zerarOrdemManual(db, eventoId);
 
   await db.insert(auditoria).values({
     usuarioId: usuario.id,
@@ -327,6 +361,9 @@ export async function estruturarPorDia(eventoId: string, formData: FormData) {
       ),
   ]);
 
+  // re-layout dos tatames descarta a ordem manual de lutas anterior
+  await zerarOrdemManual(db, eventoId);
+
   await db.update(eventos).set({ numAreas: nAreas }).where(eq(eventos.id, eventoId));
 
   await db.insert(auditoria).values({
@@ -418,5 +455,55 @@ export async function encerrarLutaDoPlacar(
 ) {
   const { db } = await contexto(eventoId);
   await registrarResultadoNoBanco(db, chaveId, lutaId, vencedorId, metodo, placar);
+  revalidatePath(`/organizador/eventos/${eventoId}/areas`);
+}
+
+/**
+ * Reordena as lutas de uma área conforme o drag-and-drop do cronograma. Grava
+ * `ordemCronograma` = posição na lista (0..N) de cada luta; afeta só a exibição
+ * e a fila do telão/placar — a topologia da chave (rodada/posição/proximaLuta)
+ * fica intacta. Ids que não pertencem à área são ignorados (guarda contra
+ * estado velho). Chamada direta pelo editor (não é form action).
+ */
+export async function reordenarLutasDaArea(
+  eventoId: string,
+  areaId: string,
+  lutaIdsEmOrdem: string[],
+) {
+  const { db } = await contexto(eventoId);
+
+  // ids válidos = lutas cujas categorias estão nesta área do evento
+  const cats = await db.query.categorias.findMany({
+    where: and(eq(categorias.eventoId, eventoId), eq(categorias.areaId, areaId)),
+    columns: { id: true },
+  });
+  if (!cats.length) return;
+  const chavesRows = await db.query.chaves.findMany({
+    where: inArray(
+      chaves.categoriaId,
+      cats.map((c) => c.id),
+    ),
+    columns: { id: true },
+  });
+  if (!chavesRows.length) return;
+  const lutasDaArea = await db.query.lutas.findMany({
+    where: inArray(
+      lutas.chaveId,
+      chavesRows.map((c) => c.id),
+    ),
+    columns: { id: true },
+  });
+  const validos = new Set(lutasDaArea.map((l) => l.id));
+
+  const ordenados = lutaIdsEmOrdem.filter((id) => validos.has(id));
+  if (!ordenados.length) return;
+
+  await Promise.all(
+    ordenados.map((id, i) =>
+      db.update(lutas).set({ ordemCronograma: i }).where(eq(lutas.id, id)),
+    ),
+  );
+
+  revalidatePath(`/organizador/eventos/${eventoId}`);
   revalidatePath(`/organizador/eventos/${eventoId}/areas`);
 }

@@ -76,8 +76,15 @@ function rotuloPeso(nome: string, tipo: string): string {
 
 /** uma luta na coluna da área */
 export interface LutaCron {
-  /** rótulo sequencial na categoria: "L1", "L2"… */
+  /** id da luta (o editor de ordem usa para persistir a sequência arrastada) */
+  id: string;
+  /** rótulo sequencial na categoria: "L1", "L2"… (índice dentro da própria
+   *  categoria — estável mesmo quando a ordem manual intercala divisões) */
   label: string;
+  /** ids das lutas (da mesma chave) que alimentam esta — vencedor/perdedor caem
+   *  aqui. O editor sinaliza quando a ordem manual põe esta luta antes de uma
+   *  dependência (rodada 2 antes da rodada 1). Vazio quando não depende de nada. */
+  dependeDe: string[];
   /** horário previsto de início ("09:12") */
   hora: string;
   /** dia da luta ("YYYY-MM-DD") — evento multi-dia */
@@ -349,26 +356,71 @@ export async function montarCronogramaDoEvento(
       return { c, dur, atletas, nAtletas, grupoChave, chaveGerada, visiveis, nUnidades };
     });
 
-    // encaixa todas as unidades da área nas janelas, reancorando no tempo real:
-    // lutas encerradas usam o término real (encerradaEm); as pendentes partem do
-    // momento em que a área ficou livre (ou "agora"), somando a estimativa.
-    const itens: ItemProgresso[] = [];
-    for (const m of metaCats) {
-      const pisoDia = pisoDaCategoria(m.c.dataFixada);
+    // "unidades" da área na ORDEM em que correm: cada luta real e cada luta
+    // estimada (categoria sem chave) vira uma unidade, guardando de qual
+    // categoria (catIdx) veio, o override manual (ordemCronograma) e a posição
+    // de baseline (a ordem calculada de sempre: ordemNaArea + rodada/posição).
+    type Unidade = {
+      catIdx: number;
+      luta: (typeof lutasRows)[number] | null;
+      override: number | null;
+      baseline: number;
+    };
+    const unidades: Unidade[] = [];
+    metaCats.forEach((m, catIdx) => {
       if (m.chaveGerada) {
-        for (const l of m.visiveis) {
-          const fimReal = l.encerradaEm
-            ? localizarNoEixo(janelas, paredeSegundos(l.encerradaEm))
-            : null;
-          itens.push({ duracao: m.dur, fimReal, pisoDia });
-        }
+        for (const l of m.visiveis)
+          unidades.push({
+            catIdx,
+            luta: l,
+            override: l.ordemCronograma ?? null,
+            baseline: unidades.length,
+          });
       } else {
-        // sem chave: unidades estimadas, sempre pendentes
-        for (let k = 0; k < m.nUnidades; k++) {
-          itens.push({ duracao: m.dur, fimReal: null, pisoDia });
-        }
+        // sem chave: unidades estimadas, sempre pendentes e sem override
+        for (let k = 0; k < m.nUnidades; k++)
+          unidades.push({ catIdx, luta: null, override: null, baseline: unidades.length });
       }
+    });
+    // ordem manual (drag-and-drop): se alguma luta da área tem override, as
+    // lutas correm por ordemCronograma (nulls por último → categorias novas /
+    // sem chave caem no fim, na ordem de baseline). Sem override: baseline puro
+    // (idêntico ao comportamento anterior).
+    const temManual = unidades.some((u) => u.override != null);
+    if (temManual)
+      unidades.sort(
+        (a, b) =>
+          (a.override ?? Infinity) - (b.override ?? Infinity) ||
+          a.baseline - b.baseline,
+      );
+
+    // índice de cada luta DENTRO da própria categoria (rótulo "L{n}" estável) e
+    // dependências topológicas (quem alimenta quem, p/ o aviso do editor)
+    const indiceNaCat = new Map<string, number>();
+    const dependeDePorLuta = new Map<string, string[]>();
+    for (const m of metaCats) {
+      if (!m.chaveGerada) continue;
+      const visIds = new Set(m.visiveis.map((l) => l.id));
+      m.visiveis.forEach((l, k) => indiceNaCat.set(l.id, k));
+      for (const f of m.visiveis)
+        for (const alvo of [f.proximaLutaId, f.proximaLutaPerdedorId]) {
+          if (!alvo || !visIds.has(alvo)) continue;
+          const arr = dependeDePorLuta.get(alvo);
+          if (arr) arr.push(f.id);
+          else dependeDePorLuta.set(alvo, [f.id]);
+        }
     }
+
+    // encaixa todas as unidades da área nas janelas NA ORDEM acima, reancorando
+    // no tempo real: lutas encerradas usam o término real (encerradaEm); as
+    // pendentes partem do momento em que a área ficou livre (ou "agora").
+    const itens: ItemProgresso[] = unidades.map((u) => ({
+      duracao: metaCats[u.catIdx].dur,
+      fimReal: u.luta?.encerradaEm
+        ? localizarNoEixo(janelas, paredeSegundos(u.luta.encerradaEm))
+        : null,
+      pisoDia: pisoDaCategoria(metaCats[u.catIdx].c.dataFixada),
+    }));
     const agoraPonto = localizarNoEixo(janelas, paredeSegundos(agora));
     // a próxima luta começa TRANSICAO_SEGUNDOS após o término real da última
     const encaixe = encaixarComProgresso(
@@ -403,77 +455,122 @@ export async function montarCronogramaDoEvento(
             }))
         : [diaVazio];
 
-    // refatia o encaixe por categoria (na ordem)
-    let ptr = 0;
-    const categoriasCron: CategoriaCron[] = metaCats.map((m) => {
-      const slotsCat = encaixe.slice(ptr, ptr + m.nUnidades);
-      ptr += m.nUnidades;
-      // início do bloco: 1ª unidade da categoria; se vazia, a posição seguinte
-      const pos =
-        slotsCat[0] ??
-        encaixe[ptr] ??
-        encaixe[encaixe.length - 1] ?? {
-          diaIndex: 0,
-          data: janelas[0].data,
-          inicioSegundos: janelas[0].inicioSegundos,
-        };
+    // posição de fallback (categoria/bloco sem slot próprio)
+    type Slot = { diaIndex: number; data: string; inicioSegundos: number };
+    const posFallback: Slot = {
+      diaIndex: 0,
+      data: janelas[0].data,
+      inicioSegundos: janelas[0].inicioSegundos,
+    };
 
-      let lutasCron: LutaCron[] = [];
-      if (m.chaveGerada) {
-        lutasCron = m.visiveis.map((l, k) => {
-          const p = slotsCat[k] ?? pos;
-          const a1 = l.atleta1InscricaoId
-            ? (nomePorInscricao.get(l.atleta1InscricaoId) ?? "—")
-            : "A definir";
-          const a2 = l.atleta2InscricaoId
-            ? (nomePorInscricao.get(l.atleta2InscricaoId) ?? "—")
-            : "A definir";
-          const vencedor: 0 | 1 | 2 = !l.vencedorInscricaoId
-            ? 0
-            : l.vencedorInscricaoId === l.atleta1InscricaoId
-              ? 1
-              : l.vencedorInscricaoId === l.atleta2InscricaoId
-                ? 2
-                : 0;
-          return {
-            label: `L${k + 1}`,
-            hora: horaLabel(p.inicioSegundos),
-            data: p.data,
-            dataLabel: dataLabel(p.data),
-            diaIndex: p.diaIndex,
-            diaNumero: diaNumeroDe(p.data),
-            a1,
-            a2,
-            score1: l.pontos1,
-            score2: l.pontos2,
-            vantagens1: l.vantagens1,
-            vantagens2: l.vantagens2,
-            punicoes1: l.punicoes1,
-            punicoes2: l.punicoes2,
-            vencedor,
-            decidida: Boolean(l.vencedorInscricaoId),
-            metodo: l.metodo ? (ROTULO_METODO[l.metodo] ?? l.metodo) : null,
-            finalizacao: l.nomeFinalizacao,
-          };
-        });
-      }
-
+    // uma luta → DTO da coluna (rótulo = índice na própria categoria)
+    const lutaParaCron = (
+      l: (typeof lutasRows)[number],
+      p: Slot,
+      labelIdx: number,
+    ): LutaCron => {
+      const a1 = l.atleta1InscricaoId
+        ? (nomePorInscricao.get(l.atleta1InscricaoId) ?? "—")
+        : "A definir";
+      const a2 = l.atleta2InscricaoId
+        ? (nomePorInscricao.get(l.atleta2InscricaoId) ?? "—")
+        : "A definir";
+      const vencedor: 0 | 1 | 2 = !l.vencedorInscricaoId
+        ? 0
+        : l.vencedorInscricaoId === l.atleta1InscricaoId
+          ? 1
+          : l.vencedorInscricaoId === l.atleta2InscricaoId
+            ? 2
+            : 0;
       return {
-        grupoChave: m.grupoChave,
-        faixa: m.c.faixa,
-        titulo: `${m.c.faixa ? cap(m.c.faixa) : "—"} · ${rotuloPeso(m.c.nome, m.c.tipo)}`,
-        subtitulo: `${nomeDaClasse(m.c.classeIdade)} · ${ROTULO_SEXO[m.c.sexo] ?? cap(m.c.sexo)} · ${m.nAtletas} atleta${m.nAtletas === 1 ? "" : "s"}`,
-        hora: horaLabel(pos.inicioSegundos),
-        data: pos.data,
-        dataLabel: dataLabel(pos.data),
-        diaIndex: pos.diaIndex,
-        diaNumero: diaNumeroDe(pos.data),
-        nLutas: m.chaveGerada ? lutasCron.length : Math.max(0, m.nAtletas - 1),
-        chaveGerada: m.chaveGerada,
-        atletas: m.atletas,
-        lutas: lutasCron,
+        id: l.id,
+        label: `L${labelIdx + 1}`,
+        dependeDe: dependeDePorLuta.get(l.id) ?? [],
+        hora: horaLabel(p.inicioSegundos),
+        data: p.data,
+        dataLabel: dataLabel(p.data),
+        diaIndex: p.diaIndex,
+        diaNumero: diaNumeroDe(p.data),
+        a1,
+        a2,
+        score1: l.pontos1,
+        score2: l.pontos2,
+        vantagens1: l.vantagens1,
+        vantagens2: l.vantagens2,
+        punicoes1: l.punicoes1,
+        punicoes2: l.punicoes2,
+        vencedor,
+        decidida: Boolean(l.vencedorInscricaoId),
+        metodo: l.metodo ? (ROTULO_METODO[l.metodo] ?? l.metodo) : null,
+        finalizacao: l.nomeFinalizacao,
       };
+    };
+
+    // um bloco (corrida contígua de uma categoria) → DTO
+    const montarBloco = (
+      m: (typeof metaCats)[number],
+      pos: Slot,
+      lutasCron: LutaCron[],
+    ): CategoriaCron => ({
+      grupoChave: m.grupoChave,
+      faixa: m.c.faixa,
+      titulo: `${m.c.faixa ? cap(m.c.faixa) : "—"} · ${rotuloPeso(m.c.nome, m.c.tipo)}`,
+      subtitulo: `${nomeDaClasse(m.c.classeIdade)} · ${ROTULO_SEXO[m.c.sexo] ?? cap(m.c.sexo)} · ${m.nAtletas} atleta${m.nAtletas === 1 ? "" : "s"}`,
+      hora: horaLabel(pos.inicioSegundos),
+      data: pos.data,
+      dataLabel: dataLabel(pos.data),
+      diaIndex: pos.diaIndex,
+      diaNumero: diaNumeroDe(pos.data),
+      nLutas: m.chaveGerada ? lutasCron.length : Math.max(0, m.nAtletas - 1),
+      chaveGerada: m.chaveGerada,
+      atletas: m.atletas,
+      lutas: lutasCron,
     });
+
+    let categoriasCron: CategoriaCron[];
+    if (!temManual) {
+      // SEM ordem manual: um bloco por categoria, na ordem de baseline (as
+      // unidades estão em ordem de baseline → o corte por categoria bate).
+      let ptr = 0;
+      categoriasCron = metaCats.map((m) => {
+        const slotsCat = encaixe.slice(ptr, ptr + m.nUnidades);
+        ptr += m.nUnidades;
+        const pos =
+          slotsCat[0] ?? encaixe[ptr] ?? encaixe[encaixe.length - 1] ?? posFallback;
+        const lutasCron = m.chaveGerada
+          ? m.visiveis.map((l, k) => lutaParaCron(l, slotsCat[k] ?? pos, k))
+          : [];
+        return montarBloco(m, pos, lutasCron);
+      });
+    } else {
+      // COM ordem manual: agrupa corridas contíguas de mesma categoria (uma
+      // categoria intercalada aparece em mais de um bloco — o header repete).
+      categoriasCron = [];
+      let i = 0;
+      while (i < unidades.length) {
+        const catIdx = unidades[i].catIdx;
+        let j = i;
+        while (j < unidades.length && unidades[j].catIdx === catIdx) j++;
+        const m = metaCats[catIdx];
+        const slots = encaixe.slice(i, j);
+        const pos = slots[0] ?? posFallback;
+        const lutasCron = m.chaveGerada
+          ? unidades
+              .slice(i, j)
+              .map((u, k) =>
+                lutaParaCron(u.luta!, slots[k] ?? pos, indiceNaCat.get(u.luta!.id) ?? k),
+              )
+          : [];
+        categoriasCron.push(montarBloco(m, pos, lutasCron));
+        i = j;
+      }
+      // categorias sem unidade (0 lutas/atletas) não entram no laço → anexa ao
+      // fim para não sumirem da coluna (mostram "sem atletas")
+      const comBloco = new Set(unidades.map((u) => u.catIdx));
+      metaCats.forEach((m, catIdx) => {
+        if (!comBloco.has(catIdx)) categoriasCron.push(montarBloco(m, posFallback, []));
+      });
+    }
 
     return {
       id: area.id,

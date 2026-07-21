@@ -974,6 +974,14 @@ export const pt = {
       informeMontar: "e montar o cronograma.",
       cronogramaPorArea: "Cronograma por área",
       fecharTelaCheia: "Fechar tela cheia",
+      // reordenação manual das lutas (drag-and-drop)
+      reordenarLutas: "Reordenar lutas",
+      reordenarConcluir: "Concluir",
+      reordenarDica:
+        "Arraste pela alça para reordenar as lutas de cada tatame — dá para intercalar divisões. A ordem vale só para o cronograma e o telão; a chave não muda.",
+      reordenarAlca: "Arrastar para reordenar",
+      reordenarAviso: "Depende de uma luta que vem depois",
+      reordenarVazio: "Gere as chaves para reordenar as lutas.",
       // configuração dos dias na própria tela de áreas
       diasEvento: "Dias do evento",
       diasNota:

@@ -214,9 +214,19 @@ export async function montarFilaDaArea(
     }
   }
 
-  const ordenadas = area.intercalarRodadas
+  let ordenadas = area.intercalarRodadas
     ? intercalarPorRodada(gruposPorCategoria)
     : gruposPorCategoria.flat(2);
+
+  // ordem manual (drag-and-drop do cronograma): se alguma luta da área tem
+  // `ordemCronograma`, a fila segue essa ordem — vence tanto o flatten por
+  // categoria quanto `intercalarRodadas`. As pendentes sem override (nulls)
+  // ficam no fim, preservando a ordem calculada (sort estável).
+  if (ordenadas.some((o) => o.luta.ordemCronograma != null))
+    ordenadas = [...ordenadas].sort(
+      (a, b) =>
+        (a.luta.ordemCronograma ?? Infinity) - (b.luta.ordemCronograma ?? Infinity),
+    );
 
   // janelas dos dias do evento (carrega se não vierem injetadas)
   const janelas =

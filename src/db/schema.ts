@@ -451,6 +451,12 @@ export const lutas = pgTable("lutas", {
   cronometroAtualizadoEm: timestamp("cronometro_atualizado_em", {
     withTimezone: true,
   }),
+  // ordem manual da luta na fila da ÁREA (drag-and-drop do cronograma). Nulo =
+  // sem override → usa a ordem calculada (ordemNaArea + rodada/posicao). NÃO
+  // altera a topologia da chave (rodada/posicao/proximaLutaId ficam intactos):
+  // só reordena a exibição e a fila do telão/placar. Zerada ao reestruturar as
+  // áreas. Ver montarCronogramaDoEvento e montarFilaDaArea.
+  ordemCronograma: integer("ordem_cronograma"),
 });
 
 // toda mutação sensível (troca de categoria, correção de resultado,

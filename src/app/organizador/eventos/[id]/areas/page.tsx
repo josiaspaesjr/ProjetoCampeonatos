@@ -15,7 +15,12 @@ import {
   EstruturadorAreas,
   type CategoriaView,
 } from "@/components/organizador/estruturador-areas";
-import { estruturarAreas, estruturarPorDia, salvarDiasEvento } from "./actions";
+import {
+  estruturarAreas,
+  estruturarPorDia,
+  reordenarLutasDaArea,
+  salvarDiasEvento,
+} from "./actions";
 
 /** "YYYY-MM-DD" → "dd/mm" */
 function dataLabel(data: string): string {
@@ -116,6 +121,7 @@ export default async function PaginaAreas({
       estruturar={estruturarAreas.bind(null, id)}
       estruturarPorDia={estruturarPorDia.bind(null, id)}
       salvarDias={salvarDiasEvento.bind(null, id)}
+      reordenar={reordenarLutasDaArea.bind(null, id)}
     />
   );
 }
