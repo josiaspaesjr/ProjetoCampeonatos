@@ -12,9 +12,8 @@ import { montarFilaDaArea } from "./fila";
 /**
  * Ordem manual das lutas (drag-and-drop). `ordemCronograma` reordena a exibição
  * e a fila SEM tocar na topologia da chave. Cobre: baseline (sem override =
- * intercalação por descanso entre categorias), intercalação livre entre divisões
- * (corridas contíguas + rótulo "L{n}" estável) e a fila do telão seguindo o
- * override.
+ * agrupado por categoria), intercalação livre entre divisões (corridas
+ * contíguas + rótulo "L{n}" estável) e a fila do telão seguindo o override.
  */
 
 let db: Db;
@@ -126,7 +125,7 @@ beforeAll(async () => {
 });
 
 describe("montarCronogramaDoEvento — ordem manual", () => {
-  it("sem override: intercala as categorias para dar descanso", async () => {
+  it("sem override: agrupa por categoria na ordem de ordemNaArea", async () => {
     await definirOrdem([
       [A.lutas[0].id, null],
       [A.lutas[1].id, null],
@@ -135,18 +134,15 @@ describe("montarCronogramaDoEvento — ordem manual", () => {
     ]);
     const area = await areaDoEvento();
 
-    // A tem 2 camadas (1ª rodada: a0, a1 · final: a2), B tem 1 (b0). Intercalando
-    // por camada, b0 entra ANTES da final de A → o vencedor de a1 descansa em vez
-    // de emendar a final. A quebra em 2 corridas (r1 e final), B no meio.
+    expect(area.categorias).toHaveLength(2);
+    expect(area.categorias[0].faixa).toBe("preta");
+    expect(area.categorias[1].faixa).toBe("azul");
     expect(idsNaColuna(area)).toEqual([
       A.lutas[0].id,
       A.lutas[1].id,
-      B.lutas[0].id,
       A.lutas[2].id,
+      B.lutas[0].id,
     ]);
-    expect(area.categorias.map((c) => c.faixa)).toEqual(["preta", "azul", "preta"]);
-    // rótulo = índice na PRÓPRIA categoria: a final de A continua "L3"
-    expect(area.categorias[2].lutas.map((l) => l.label)).toEqual(["L3"]);
   });
 
   it("intercala divisões: corridas contíguas + rótulo L{n} estável", async () => {
