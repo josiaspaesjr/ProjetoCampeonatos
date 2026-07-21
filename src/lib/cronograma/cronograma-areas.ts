@@ -2,12 +2,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import type { Db } from "@/db";
 import { areas, categorias, chaves, inscricoes, lutas } from "@/db/schema";
 import { chaveDoGrupo, nomeDaClasse } from "@/lib/categorias/distribuicao-areas";
-import { idsDeBye } from "@/lib/chaves/byes";
-import {
-  classificarEliminacaoDupla,
-  nivelDisputaEliminacaoDupla,
-  prioridadeFaseDupla,
-} from "@/lib/chaves/eliminacao-dupla";
+import { agruparEmCamadas, intercalarCategorias } from "./intercalar";
 import { duracaoDaCategoria, TRANSICAO_SEGUNDOS } from "./fila";
 import { diasDoEventoOuDefault } from "./dias";
 import { encaixarComProgresso, type Ancora, type ItemProgresso } from "./janelas";
@@ -323,69 +318,65 @@ export async function montarCronogramaDoEvento(
 
       const chave = chavePorCat.get(c.id);
       const lutasDaChave = chave ? (lutasPorChave.get(chave.id) ?? []) : [];
-      // "unidades de luta" que consomem tempo: exclui byes. A eliminação dupla
-      // precisa do classificador (byes/walkover/mortas em cascata não são lutas
-      // reais, e idsDeBye não cobre esse formato); os demais usam a geometria.
-      let visiveis: typeof lutasDaChave;
-      if (chave?.formato === "eliminacao_dupla") {
-        // só as lutas reais entram no cronograma, na ordem de disputa (nível
-        // topológico): a ordem crua (rodada, posição) põe a grande final — guardada
-        // como "rodada 1" — antes de tudo e mistura WB/LB/repescagem.
-        const { reais } = classificarEliminacaoDupla(lutasDaChave);
-        const nivel = nivelDisputaEliminacaoDupla(lutasDaChave);
-        visiveis = lutasDaChave
-          .filter((l) => reais.has(l.id))
-          .sort(
-            (a, b) =>
-              (nivel.get(a.id) ?? 0) - (nivel.get(b.id) ?? 0) ||
-              prioridadeFaseDupla(a.fase) - prioridadeFaseDupla(b.fase) ||
-              a.rodada - b.rodada ||
-              a.posicao - b.posicao,
-          );
-      } else {
-        const byes = chave
-          ? idsDeBye(lutasDaChave, chave.formato)
-          : new Set<string>();
-        visiveis = lutasDaChave.filter((l) => !byes.has(l.id));
-      }
+      // lutas de fato, fatiadas nas suas camadas topológicas (rodada na simples,
+      // nível de disputa na dupla) na ordem em que correm — byes/walkover/mortas
+      // ficam de fora (ver agruparEmCamadas). O cronograma mostra também as já
+      // encerradas (com placar), então inclui as decididas.
+      const camadas = chave
+        ? agruparEmCamadas(lutasDaChave, chave.formato, { incluirDecididas: true })
+        : [];
+      const visiveis = camadas.flat();
       const chaveGerada = visiveis.length > 0;
       // sem chave: estima atletas−1 lutas só para o horário ficar realista
-      const nUnidades = chaveGerada
-        ? visiveis.length
-        : Math.max(0, nAtletas - 1);
-      return { c, dur, atletas, nAtletas, grupoChave, chaveGerada, visiveis, nUnidades };
+      const nUnidades = chaveGerada ? visiveis.length : Math.max(0, nAtletas - 1);
+      return { c, dur, atletas, nAtletas, grupoChave, chaveGerada, camadas, visiveis, nUnidades };
     });
 
-    // "unidades" da área na ORDEM em que correm: cada luta real e cada luta
-    // estimada (categoria sem chave) vira uma unidade, guardando de qual
-    // categoria (catIdx) veio, o override manual (ordemCronograma) e a posição
-    // de baseline (a ordem calculada de sempre: ordemNaArea + rodada/posição).
+    // "unidades" da área: cada luta real e cada luta estimada (categoria sem
+    // chave) vira uma unidade, guardando de qual categoria (catIdx) veio, o
+    // override manual (ordemCronograma) e a posição de baseline. O baseline é a
+    // ordem INTERCALADA (descanso: ninguém luta 2x seguidas) — a MESMA da fila.
     type Unidade = {
       catIdx: number;
       luta: (typeof lutasRows)[number] | null;
       override: number | null;
       baseline: number;
     };
-    const unidades: Unidade[] = [];
+    // por categoria, as unidades fatiadas em camadas p/ a intercalação; categoria
+    // sem chave entra como uma única camada de unidades estimadas.
+    const unidadesPorCategoria: {
+      dataFixada: string | null;
+      camadas: Unidade[][];
+    }[] = [];
     metaCats.forEach((m, catIdx) => {
       if (m.chaveGerada) {
-        for (const l of m.visiveis)
-          unidades.push({
+        const camadas = m.camadas.map((camada) =>
+          camada.map((l) => ({
             catIdx,
             luta: l,
             override: l.ordemCronograma ?? null,
-            baseline: unidades.length,
-          });
-      } else {
-        // sem chave: unidades estimadas, sempre pendentes e sem override
-        for (let k = 0; k < m.nUnidades; k++)
-          unidades.push({ catIdx, luta: null, override: null, baseline: unidades.length });
+            baseline: 0,
+          })),
+        );
+        unidadesPorCategoria.push({ dataFixada: m.c.dataFixada, camadas });
+      } else if (m.nUnidades > 0) {
+        const camada = Array.from({ length: m.nUnidades }, () => ({
+          catIdx,
+          luta: null,
+          override: null,
+          baseline: 0,
+        }));
+        unidadesPorCategoria.push({ dataFixada: m.c.dataFixada, camadas: [camada] });
       }
     });
-    // ordem manual (drag-and-drop): se alguma luta da área tem override, as
-    // lutas correm por ordemCronograma (nulls por último → categorias novas /
-    // sem chave caem no fim, na ordem de baseline). Sem override: baseline puro
-    // (idêntico ao comportamento anterior).
+    // baseline = ordem intercalada; cada unidade recebe sua posição nela
+    const unidades = intercalarCategorias(unidadesPorCategoria);
+    unidades.forEach((u, i) => {
+      u.baseline = i;
+    });
+    // ordem manual (drag-and-drop) vence quando existe: as lutas correm por
+    // ordemCronograma (nulls por último → categorias novas/sem chave caem no fim,
+    // na ordem de baseline intercalada). Sem override: baseline intercalado.
     const temManual = unidades.some((u) => u.override != null);
     if (temManual)
       unidades.sort(
@@ -527,50 +518,35 @@ export async function montarCronogramaDoEvento(
       lutas: lutasCron,
     });
 
-    let categoriasCron: CategoriaCron[];
-    if (!temManual) {
-      // SEM ordem manual: um bloco por categoria, na ordem de baseline (as
-      // unidades estão em ordem de baseline → o corte por categoria bate).
-      let ptr = 0;
-      categoriasCron = metaCats.map((m) => {
-        const slotsCat = encaixe.slice(ptr, ptr + m.nUnidades);
-        ptr += m.nUnidades;
-        const pos =
-          slotsCat[0] ?? encaixe[ptr] ?? encaixe[encaixe.length - 1] ?? posFallback;
-        const lutasCron = m.chaveGerada
-          ? m.visiveis.map((l, k) => lutaParaCron(l, slotsCat[k] ?? pos, k))
-          : [];
-        return montarBloco(m, pos, lutasCron);
-      });
-    } else {
-      // COM ordem manual: agrupa corridas contíguas de mesma categoria (uma
-      // categoria intercalada aparece em mais de um bloco — o header repete).
-      categoriasCron = [];
-      let i = 0;
-      while (i < unidades.length) {
-        const catIdx = unidades[i].catIdx;
-        let j = i;
-        while (j < unidades.length && unidades[j].catIdx === catIdx) j++;
-        const m = metaCats[catIdx];
-        const slots = encaixe.slice(i, j);
-        const pos = slots[0] ?? posFallback;
-        const lutasCron = m.chaveGerada
-          ? unidades
-              .slice(i, j)
-              .map((u, k) =>
-                lutaParaCron(u.luta!, slots[k] ?? pos, indiceNaCat.get(u.luta!.id) ?? k),
-              )
-          : [];
-        categoriasCron.push(montarBloco(m, pos, lutasCron));
-        i = j;
-      }
-      // categorias sem unidade (0 lutas/atletas) não entram no laço → anexa ao
-      // fim para não sumirem da coluna (mostram "sem atletas")
-      const comBloco = new Set(unidades.map((u) => u.catIdx));
-      metaCats.forEach((m, catIdx) => {
-        if (!comBloco.has(catIdx)) categoriasCron.push(montarBloco(m, posFallback, []));
-      });
+    // Corridas contíguas de mesma categoria viram um bloco. Como o baseline
+    // agora intercala as categorias (descanso), uma categoria costuma aparecer
+    // em mais de um bloco — o header repete a cada corrida (igual ao editor de
+    // ordem manual). A ordem manual (quando existe) segue o mesmo caminho.
+    const categoriasCron: CategoriaCron[] = [];
+    let i = 0;
+    while (i < unidades.length) {
+      const catIdx = unidades[i].catIdx;
+      let j = i;
+      while (j < unidades.length && unidades[j].catIdx === catIdx) j++;
+      const m = metaCats[catIdx];
+      const slots = encaixe.slice(i, j);
+      const pos = slots[0] ?? posFallback;
+      const lutasCron = m.chaveGerada
+        ? unidades
+            .slice(i, j)
+            .map((u, k) =>
+              lutaParaCron(u.luta!, slots[k] ?? pos, indiceNaCat.get(u.luta!.id) ?? k),
+            )
+        : [];
+      categoriasCron.push(montarBloco(m, pos, lutasCron));
+      i = j;
     }
+    // categorias sem unidade (0 lutas/atletas) não entram no laço → anexa ao
+    // fim para não sumirem da coluna (mostram "sem atletas")
+    const comBloco = new Set(unidades.map((u) => u.catIdx));
+    metaCats.forEach((m, catIdx) => {
+      if (!comBloco.has(catIdx)) categoriasCron.push(montarBloco(m, posFallback, []));
+    });
 
     return {
       id: area.id,

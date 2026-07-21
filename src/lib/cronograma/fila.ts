@@ -1,12 +1,7 @@
 import { asc, eq, inArray } from "drizzle-orm";
 import type { Db } from "@/db";
 import { areas, categorias, chaves, eventos, inscricoes, lutas } from "@/db/schema";
-import { idsDeBye } from "@/lib/chaves/byes";
-import {
-  classificarEliminacaoDupla,
-  nivelDisputaEliminacaoDupla,
-  prioridadeFaseDupla,
-} from "@/lib/chaves/eliminacao-dupla";
+import { agruparEmCamadas, intercalarCategorias } from "./intercalar";
 import { diasDoEventoOuDefault, type JanelaDia } from "./dias";
 
 /**
@@ -61,23 +56,6 @@ export function duracaoDaCategoria(categoria: {
   duracaoLutaSegundos: number | null;
 }): number {
   return categoria.duracaoLutaSegundos ?? duracaoLutaSegundos(categoria.faixa);
-}
-
-/**
- * "Slice": intercala as rodadas das categorias (1ª rodada de todas, depois a
- * 2ª de todas…) em vez de correr cada categoria inteira. Entre duas lutas do
- * mesmo atleta passam a existir as rodadas das outras categorias — é o que
- * garante descanso em divisões pequenas, onde a rodada seguinte vem logo.
- */
-export function intercalarPorRodada<T>(gruposPorCategoria: T[][][]): T[] {
-  const resultado: T[] = [];
-  const maisRodadas = Math.max(0, ...gruposPorCategoria.map((g) => g.length));
-  for (let rodada = 0; rodada < maisRodadas; rodada++) {
-    for (const grupos of gruposPorCategoria) {
-      if (grupos[rodada]) resultado.push(...grupos[rodada]);
-    }
-  }
-  return resultado;
 }
 
 type LutaRow = typeof lutas.$inferSelect;
@@ -160,8 +138,13 @@ export async function montarFilaDaArea(
     orderBy: asc(categorias.ordemNaArea),
   });
 
-  // lutas pendentes de cada categoria, agrupadas por rodada (ordem da chave)
-  const gruposPorCategoria: { luta: LutaRow; categoria: CategoriaRow }[][][] = [];
+  // cada categoria fatiada nas suas camadas topológicas (rodada/nível — ver
+  // agruparEmCamadas); a fila ao vivo só quer as lutas pendentes (as decididas
+  // já saíram do tatame).
+  const porCategoria: {
+    dataFixada: string | null;
+    camadas: { luta: LutaRow; categoria: CategoriaRow }[][];
+  }[] = [];
   for (const categoria of cats) {
     const chave = await db.query.chaves.findFirst({
       where: eq(chaves.categoriaId, categoria.id),
@@ -174,54 +157,21 @@ export async function montarFilaDaArea(
       where: eq(lutas.chaveId, chave.id),
       orderBy: [asc(lutas.rodada), asc(lutas.posicao)],
     });
-    // eliminação dupla: só as lutas reais entram na fila (byes/walkover/mortas
-    // não são lutas) e a "rodada" para intercalar/ordenar é o nível de disputa
-    // topológico — a rodada crua interleava WB/LB/GF errado (a grande final é
-    // guardada como "rodada 1"). Demais formatos: geometria de byes + rodada.
-    const dupla = chave.formato === "eliminacao_dupla";
-    const reais = dupla ? classificarEliminacaoDupla(linhas).reais : null;
-    const byes = dupla ? new Set<string>() : idsDeBye(linhas, chave.formato);
-    const nivel = dupla ? nivelDisputaEliminacaoDupla(linhas) : null;
-
-    const rodadas = new Map<number, { luta: LutaRow; categoria: CategoriaRow }[]>();
-    for (const luta of linhas) {
-      if (luta.vencedorInscricaoId || byes.has(luta.id)) continue;
-      if (reais && !reais.has(luta.id)) continue; // pula bye/walkover/morta da dupla
-      const r = nivel ? (nivel.get(luta.id) ?? 0) : luta.rodada;
-      const grupo = rodadas.get(r) ?? [];
-      grupo.push({ luta, categoria });
-      rodadas.set(r, grupo);
-    }
-    if (rodadas.size) {
-      // dentro de um nível, ordena por (fase, rodada, posição) p/ bater com o cronograma
-      const chaveOrdem = (x: { luta: LutaRow }) =>
-        dupla
-          ? [prioridadeFaseDupla(x.luta.fase), x.luta.rodada, x.luta.posicao]
-          : [x.luta.rodada, x.luta.posicao];
-      gruposPorCategoria.push(
-        [...rodadas.entries()]
-          .sort((a, b) => a[0] - b[0])
-          .map(([, g]) =>
-            g.sort((p, q) => {
-              const kp = chaveOrdem(p);
-              const kq = chaveOrdem(q);
-              for (let i = 0; i < kp.length; i++)
-                if (kp[i] !== kq[i]) return kp[i] - kq[i];
-              return 0;
-            }),
-          ),
-      );
-    }
+    const camadas = agruparEmCamadas(linhas, chave.formato, {
+      incluirDecididas: false,
+    }).map((c) => c.map((luta) => ({ luta, categoria })));
+    if (camadas.length)
+      porCategoria.push({ dataFixada: categoria.dataFixada, camadas });
   }
 
-  let ordenadas = area.intercalarRodadas
-    ? intercalarPorRodada(gruposPorCategoria)
-    : gruposPorCategoria.flat(2);
+  // intercala as categorias por camada p/ dar descanso (ninguém luta 2x
+  // seguidas), respeitando os dias — a MESMA ordem base do cronograma.
+  let ordenadas = intercalarCategorias(porCategoria);
 
   // ordem manual (drag-and-drop do cronograma): se alguma luta da área tem
-  // `ordemCronograma`, a fila segue essa ordem — vence tanto o flatten por
-  // categoria quanto `intercalarRodadas`. As pendentes sem override (nulls)
-  // ficam no fim, preservando a ordem calculada (sort estável).
+  // `ordemCronograma`, a fila segue essa ordem — vence a intercalação. As
+  // pendentes sem override (nulls) ficam no fim, preservando a ordem calculada
+  // (sort estável).
   if (ordenadas.some((o) => o.luta.ordemCronograma != null))
     ordenadas = [...ordenadas].sort(
       (a, b) =>
