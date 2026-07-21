@@ -3,6 +3,26 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
+ * Move `id` para o índice de inserção `alvo` (0..n), medido ANTES de remover o
+ * item da lista. Retorna a MESMA referência quando nada muda (soltar no lugar).
+ */
+export function moverParaAlvo(
+  ordem: string[],
+  id: string,
+  alvo: number,
+): string[] {
+  const de = ordem.indexOf(id);
+  if (de === -1) return ordem;
+  // remover o item desloca em -1 tudo o que vem depois dele
+  const para = de < alvo ? alvo - 1 : alvo;
+  if (para === de) return ordem;
+  const nova = [...ordem];
+  nova.splice(de, 1);
+  nova.splice(para, 0, id);
+  return nova;
+}
+
+/**
  * Lista vertical reordenável por arraste, com **Pointer Events** (mouse e toque
  * de forma uniforme — sem dependência externa nem HTML5 drag, que não pega em
  * toque). Mantém a ordem otimista localmente e chama `aoSoltar(novaOrdem)`
@@ -33,17 +53,20 @@ export function useReordenavel<E extends HTMLElement = HTMLElement>(
     ordemRef.current = ordem;
   }, [ordem]);
 
-  // re-sincroniza com o servidor quando a ordem persistida muda (após salvar +
-  // revalidar), mas nunca no meio de um arraste
-  const assinatura = idsIniciais.join(",");
-  const assinaturaRef = useRef(assinatura);
+  // re-sincroniza com o servidor só quando o CONJUNTO de lutas muda (lutas
+  // criadas/removidas, troca de área…) — NUNCA por causa da reordenação em si.
+  // Enquanto edita, a ordem local é a fonte da verdade: sincronizar pela ordem
+  // faria a luta "voltar" ao soltar, porque os props revalidados chegam depois
+  // do update otimista (assinatura por ordem ficaria momentaneamente diferente).
+  const conjunto = [...idsIniciais].sort().join(",");
+  const conjuntoRef = useRef(conjunto);
   useEffect(() => {
     if (arrastandoId) return;
-    if (assinaturaRef.current !== assinatura) {
-      assinaturaRef.current = assinatura;
+    if (conjuntoRef.current !== conjunto) {
+      conjuntoRef.current = conjunto;
       setOrdem(idsIniciais);
     }
-  }, [assinatura, idsIniciais, arrastandoId]);
+  }, [conjunto, idsIniciais, arrastandoId]);
 
   // remove listeners pendentes ao desmontar
   useEffect(
@@ -102,18 +125,9 @@ export function useReordenavel<E extends HTMLElement = HTMLElement>(
       setAlvo(null);
       if (!arrastadoId || alvo == null) return;
 
-      const atual = ordemRef.current;
-      const de = atual.indexOf(arrastadoId);
-      if (de === -1) return;
-      // `alvo` é a posição de inserção ANTES de remover o item; ajusta
-      let para = alvo;
-      if (de < para) para -= 1;
-      if (para === de) return;
-      const nova = [...atual];
-      nova.splice(de, 1);
-      nova.splice(para, 0, arrastadoId);
+      const nova = moverParaAlvo(ordemRef.current, arrastadoId, alvo);
+      if (nova === ordemRef.current) return; // soltou no mesmo lugar
       ordemRef.current = nova;
-      assinaturaRef.current = nova.join(",");
       setOrdem(nova);
       aoSoltar(nova);
     };

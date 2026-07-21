@@ -28,7 +28,11 @@ let B: { chaveId: string; lutas: (typeof schema.lutas.$inferSelect)[] };
 
 const AGORA = new Date("2026-05-10T09:00:00.000Z");
 
-async function criarCategoria(nAtletas: number, faixa: string, ordemNaArea: number) {
+async function criarCategoria(
+  nAtletas: number,
+  faixa: "preta" | "azul",
+  ordemNaArea: number,
+) {
   const [cat] = await db
     .insert(schema.categorias)
     .values({
