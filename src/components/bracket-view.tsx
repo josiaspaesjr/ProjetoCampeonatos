@@ -98,6 +98,10 @@ const rotuloRodada = (
   return generico;
 };
 
+/** dois primeiros nomes do atleta — mantém a caixa da chave compacta. */
+const doisPrimeirosNomes = (nome: string): string =>
+  nome.trim().split(/\s+/).slice(0, 2).join(" ");
+
 function LinhaAtleta({
   inscricaoId,
   atletas,
@@ -115,7 +119,7 @@ function LinhaAtleta({
   if (!inscricaoId) {
     return (
       <p
-        className={`truncate text-xs italic text-muted-foreground ${dir ? "text-right" : ""}`}
+        className={`truncate text-xs italic leading-tight text-muted-foreground ${dir ? "text-right" : ""}`}
       >
         {slotLivre}
       </p>
@@ -125,16 +129,18 @@ function LinhaAtleta({
   const ganhou = vencedor === inscricaoId;
   const perdeu = vencedor !== null && !ganhou;
   return (
-    <p
-      className={`truncate text-sm ${dir ? "text-right" : ""} ${ganhou ? "font-bold text-success" : ""} ${perdeu ? "text-muted-foreground line-through" : ""}`}
-    >
-      {info?.nome ?? "?"}
+    <div className={dir ? "text-right" : ""}>
+      <p
+        className={`truncate text-xs leading-tight ${ganhou ? "font-bold text-success" : ""} ${perdeu ? "text-muted-foreground line-through" : ""}`}
+      >
+        {info ? doisPrimeirosNomes(info.nome) : "?"}
+      </p>
       {info?.academia && (
-        <span className="ml-1 text-xs font-normal text-muted-foreground">
-          · {info.academia}
-        </span>
+        <p className="truncate text-[10px] leading-tight text-muted-foreground">
+          {info.academia}
+        </p>
       )}
-    </p>
+    </div>
   );
 }
 
@@ -161,7 +167,7 @@ function CartaoLuta({
     !luta.vencedorInscricaoId;
 
   return (
-    <div className="rounded-lg border bg-card p-3 shadow-sm transition-colors">
+    <div className="rounded-lg border bg-card px-2 py-1.5 shadow-sm transition-colors">
       {/* num bye, o slot vazio (qualquer um dos dois) mostra "bye" */}
       <LinhaAtleta
         inscricaoId={luta.atleta1InscricaoId}
@@ -229,8 +235,8 @@ function CartaoLuta({
 }
 
 /** largura de cada coluna de rodada (px) e altura mínima por luta da 1ª rodada */
-const COL = 240;
-const SLOT = 104;
+const COL = 190;
+const SLOT = 84;
 
 interface ColunaDados {
   rodada: number;
@@ -489,7 +495,7 @@ function RoundRobinView({
     <div className="overflow-x-auto pb-4">
       <div className="flex gap-6">
         {rodadas.map((lutasDaRodada, i) => (
-          <div key={i} className="w-64 shrink-0">
+          <div key={i} className="w-52 shrink-0">
             <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {rotuloRodada(i + 1, totalRodadas, "round_robin", L)}
             </p>
@@ -614,7 +620,7 @@ function ColunaLutas({
   acaoResultado?: (formData: FormData) => Promise<void>;
 }) {
   return (
-    <div className="w-60 shrink-0">
+    <div className="w-48 shrink-0">
       <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
         {titulo}
       </p>
@@ -852,7 +858,7 @@ function ColocacaoView({
         <div className="overflow-x-auto pb-2">
           <div className="flex gap-6">
             {cols.map((c) => (
-              <div key={c.rodada} className="w-60 shrink-0">
+              <div key={c.rodada} className="w-48 shrink-0">
                 <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   {rotuloRodada(c.rodada, cols.length, "round_robin", L)}
                 </p>
