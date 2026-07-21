@@ -803,6 +803,8 @@ export const es: Dicionario = {
       chaveSing: "llave",
       chavePlur: "llaves",
       emLote: "en lote",
+      imprimirChaves: "Imprimir llaves",
+      chavesTitulo: "Llaves",
       // diálogo de generación en lote (formato aplicado a todas las llaves)
       loteTitulo: "Generar llaves en lote",
       lotePergunta: "Formato de todas las llaves",

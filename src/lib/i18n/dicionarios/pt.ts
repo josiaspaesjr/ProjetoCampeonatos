@@ -809,6 +809,8 @@ export const pt = {
       chaveSing: "chave",
       chavePlur: "chaves",
       emLote: "em lote",
+      imprimirChaves: "Imprimir chaves",
+      chavesTitulo: "Chaves",
       // diálogo de geração em lote (formato aplicado a todas as chaves)
       loteTitulo: "Gerar chaves em lote",
       lotePergunta: "Formato de todas as chaves",

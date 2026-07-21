@@ -802,6 +802,8 @@ export const en: Dicionario = {
       chaveSing: "bracket",
       chavePlur: "brackets",
       emLote: "in bulk",
+      imprimirChaves: "Print brackets",
+      chavesTitulo: "Brackets",
       // bulk generation dialog (format applied to all brackets)
       loteTitulo: "Generate brackets in bulk",
       lotePergunta: "Format for all brackets",
