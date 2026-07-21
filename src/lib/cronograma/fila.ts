@@ -9,6 +9,8 @@ import {
 } from "@/lib/chaves/eliminacao-dupla";
 import { intercalarComDescanso, type UnidadeIntercalavel } from "./intercalar";
 import { diasDoEventoOuDefault, type JanelaDia } from "./dias";
+import { encaixarComProgresso, type Ancora, type ItemProgresso } from "./janelas";
+import { localizarNoEixo, paredeSegundos } from "./relogio";
 
 /**
  * Fila de lutas e cronograma estimado por área.
@@ -81,52 +83,19 @@ export interface FilaDaArea {
   atletas: Record<string, { nome: string; academia: string | null }>;
 }
 
-/** janela de um dia como intervalo absoluto (horário local do ginásio) */
-function janelaEmDatas(j: JanelaDia): { inicio: number; fim: number } {
-  const base = new Date(`${j.data}T00:00:00`).getTime();
-  return {
-    inicio: base + j.inicioSegundos * 1000,
-    fim: base + j.fimSegundos * 1000,
-  };
-}
-
 /**
- * Empacota durações (segundos) nas janelas dos dias, em Date absolutas,
- * começando em "agora" (fila ao vivo do telão). Pula os dias já encerrados;
- * dentro do dia corrente ancora no maior entre o início do dia e agora; uma luta
- * que não cabe no resto do dia rola inteira para o próximo. Sem janelas, empacota
- * a partir de agora em sequência (retrocompat).
+ * Slot do encaixe (dia "YYYY-MM-DD" + segundos desde a meia-noite) → Date
+ * absoluto. Constrói no mesmo eixo local em que o telão FORMATA a hora
+ * (`toLocaleTimeString` sem fuso), então o número exibido é o horário de parede
+ * configurado, qualquer que seja o fuso do servidor. Sem data (janelas vazias),
+ * cai no próprio "agora".
  */
-function empacotarEmDatas(
-  janelas: JanelaDia[],
-  duracoesSeg: number[],
+function slotParaData(
+  s: { data: string; inicioSegundos: number },
   agora: Date,
-): Date[] {
-  const agoraMs = agora.getTime();
-  if (!janelas.length) {
-    let c = agoraMs;
-    return duracoesSeg.map((dur) => {
-      const at = new Date(c);
-      c += dur * 1000;
-      return at;
-    });
-  }
-  const dts = janelas.map(janelaEmDatas);
-  let diaIdx = 0;
-  // pula dias cujo horário de término já passou
-  while (diaIdx < dts.length - 1 && agoraMs >= dts[diaIdx].fim) diaIdx++;
-  let cursor = Math.max(agoraMs, dts[diaIdx].inicio);
-  const horas: Date[] = [];
-  for (const dur of duracoesSeg) {
-    const durMs = dur * 1000;
-    while (diaIdx < dts.length - 1 && cursor + durMs > dts[diaIdx].fim) {
-      diaIdx++;
-      cursor = Math.max(agoraMs, dts[diaIdx].inicio);
-    }
-    horas.push(new Date(cursor));
-    cursor += durMs;
-  }
-  return horas;
+): Date {
+  const base = s.data ? new Date(`${s.data}T00:00:00`).getTime() : agora.getTime();
+  return new Date(base + s.inicioSegundos * 1000);
 }
 
 export async function montarFilaDaArea(
@@ -144,14 +113,34 @@ export async function montarFilaDaArea(
     orderBy: asc(categorias.ordemNaArea),
   });
 
+  // janelas dos dias do evento (injetadas por montarFilasDoEvento p/ evitar N+1)
+  const janelas =
+    dias ??
+    (await (async (): Promise<JanelaDia[]> => {
+      const evento = await db.query.eventos.findFirst({
+        where: eq(eventos.id, area.eventoId),
+      });
+      return evento ? diasDoEventoOuDefault(db, evento) : [];
+    })());
+  // piso do dia fixado (modo "Por dia"): data → 1ª janela desse dia (ver janelas.ts)
+  const pisoPorData = new Map<string, Ancora>();
+  janelas.forEach((j, i) => {
+    if (!pisoPorData.has(j.data))
+      pisoPorData.set(j.data, { diaIndex: i, segundos: j.inicioSegundos });
+  });
+  const pisoDaCategoria = (dataFixada: string | null): Ancora | null =>
+    dataFixada ? (pisoPorData.get(dataFixada.slice(0, 10)) ?? null) : null;
+
   // unidades pendentes de cada categoria, na ordem da chave (rodada/nível +
   // fase/posição), já com as tags que a intercalação usa (ver intercalar.ts). A
-  // fila ao vivo só quer as pendentes (as decididas já saíram do tatame).
+  // fila ao vivo só mostra as pendentes; as decididas reais entram apenas como
+  // ÂNCORA de progresso real (reancoram as pendentes pelo tempo já corrido).
   type UnidadeFila = UnidadeIntercalavel & {
     luta: LutaRow;
     categoria: CategoriaRow;
   };
   const unidades: UnidadeFila[] = [];
+  const decididas: ItemProgresso[] = [];
   for (const categoria of cats) {
     const chave = await db.query.chaves.findFirst({
       where: eq(chaves.categoriaId, categoria.id),
@@ -173,11 +162,23 @@ export async function montarFilaDaArea(
     const byes = dupla ? new Set<string>() : idsDeBye(linhas, chave.formato);
     const nivel = dupla ? nivelDisputaEliminacaoDupla(linhas) : null;
 
-    const pendentes = linhas.filter((luta) => {
-      if (luta.vencedorInscricaoId || byes.has(luta.id)) return false;
-      if (reais && !reais.has(luta.id)) return false; // pula bye/walkover/morta
-      return true;
-    });
+    // luta "de fato" (exclui bye/walkover/morta). Decididas viram âncora de
+    // progresso; as ainda em aberto entram na fila.
+    const ehReal = (luta: LutaRow) =>
+      !byes.has(luta.id) && (!reais || reais.has(luta.id));
+    for (const luta of linhas) {
+      if (!ehReal(luta) || !luta.vencedorInscricaoId) continue;
+      decididas.push({
+        duracao: 0,
+        fimReal: luta.encerradaEm
+          ? localizarNoEixo(janelas, paredeSegundos(luta.encerradaEm))
+          : null,
+        pisoDia: null,
+      });
+    }
+    const pendentes = linhas.filter(
+      (luta) => ehReal(luta) && !luta.vencedorInscricaoId,
+    );
     // ordem topológica: (nível/rodada, fase, rodada, posição) — bate com a coluna
     // do organizador para os dois motores intercalarem igual.
     const camadaDe = (l: LutaRow) => (nivel ? (nivel.get(l.id) ?? 0) : l.rodada);
@@ -215,22 +216,30 @@ export async function montarFilaDaArea(
         (a.luta.ordemCronograma ?? Infinity) - (b.luta.ordemCronograma ?? Infinity),
     );
 
-  // janelas dos dias do evento (carrega se não vierem injetadas)
-  const janelas =
-    dias ??
-    (await (async (): Promise<JanelaDia[]> => {
-      const evento = await db.query.eventos.findFirst({
-        where: eq(eventos.id, area.eventoId),
-      });
-      return evento ? diasDoEventoOuDefault(db, evento) : [];
-    })());
-
-  // horários estimados encaixados nas janelas dos dias, a partir de "agora"
-  const horas = empacotarEmDatas(
+  // horários estimados: MESMO motor do cronograma do organizador
+  // (encaixarComProgresso) — encaixa nas janelas dos dias reancorando pelo
+  // progresso real (uma luta encerrada empurra as pendentes). Sem nada encerrado,
+  // parte do início do 1º dia (NÃO do relógio), então a estimativa não pula pro
+  // horário atual quando o telão é aberto fora do período do evento.
+  const agoraPonto = localizarNoEixo(janelas, paredeSegundos(agora));
+  const itens: ItemProgresso[] = [
+    ...decididas,
+    ...ordenadas.map((o) => ({
+      duracao: duracaoDaCategoria(o.categoria),
+      fimReal: null,
+      pisoDia: pisoDaCategoria(o.categoria.dataFixada),
+    })),
+  ];
+  const encaixe = encaixarComProgresso(
     janelas,
-    ordenadas.map((o) => duracaoDaCategoria(o.categoria)),
-    agora,
+    itens,
+    agoraPonto,
+    TRANSICAO_SEGUNDOS,
   );
+  // as pendentes são a subsequência após as decididas (que só ancoram)
+  const horas = encaixe
+    .slice(decididas.length)
+    .map((s) => slotParaData(s, agora));
 
   const fila: LutaNaFila[] = ordenadas.map(({ luta, categoria }, i) => ({
     luta,

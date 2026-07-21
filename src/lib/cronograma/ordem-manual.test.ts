@@ -203,3 +203,28 @@ describe("montarFilaDaArea — ordem manual", () => {
     ]);
   });
 });
+
+describe("montarFilaDaArea — horários (telão)", () => {
+  it("ancora na janela do dia, não no relógio (telão aberto fora do evento)", async () => {
+    // zera os overrides das lutas anteriores → ordem-base intercalada
+    await definirOrdem([
+      [A.lutas[0].id, null],
+      [A.lutas[1].id, null],
+      [A.lutas[2].id, null],
+      [B.lutas[0].id, null],
+    ]);
+    // "agora" bem depois da janela do evento (2026-05-10 09:00–23:59): antes o
+    // telão empacotava a partir do relógio (00:xx do dia seguinte); agora usa o
+    // mesmo motor do cronograma e parte do início do dia.
+    const agoraTarde = new Date("2026-05-13T21:00:00.000Z");
+    const fila = await montarFilaDaArea(db, areaId, agoraTarde);
+    const primeira = fila!.fila[0];
+    // horário puxado do início da janela (05-10), não do "agora" (05-13)
+    expect(primeira.horaEstimada.getTime()).toBeLessThan(agoraTarde.getTime());
+    // e a fila concorda com o cronograma do organizador na 1ª luta (mesmo motor)
+    const cron = await montarCronogramaDoEvento(db, eventoId, "2026-05-10", agoraTarde);
+    const area = cron.find((a) => a.id === areaId)!;
+    const primeiraCron = area.categorias.flatMap((c) => c.lutas)[0];
+    expect(primeira.luta.id).toBe(primeiraCron.id);
+  });
+});
