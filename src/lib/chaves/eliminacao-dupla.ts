@@ -105,3 +105,59 @@ export function classificarEliminacaoDupla(
   }
   return { mortas, reais };
 }
+
+/**
+ * Ordem de disputa (nível topológico) de cada luta — o mapa id → nível.
+ *
+ * A ordem crua do banco `(rodada, posicao)` NÃO serve para a eliminação dupla:
+ * as fases WB/LB/GF têm rodadas próprias e a grande final é guardada como
+ * "rodada 1", então uma luta ainda indefinida (dependente de resultados) acaba
+ * listada antes de lutas já prontas. O nível topológico corrige isso:
+ *
+ *   • nível 0 — não depende de ninguém (1ª rodada da chave de vencedores);
+ *   • nível N — 1 + o maior nível entre as lutas que a alimentam (o vencedor
+ *     via `proximaLutaId` e o perdedor via `proximaLutaPerdedorId`).
+ *
+ * Assim nenhuma luta aparece antes das que a alimentam, e a grande final, que
+ * depende de tudo, fica sempre por último. Ordenar por (nível, fase, rodada,
+ * posição) dá a sequência real de disputa.
+ */
+export function nivelDisputaEliminacaoDupla(
+  linhas: LinhaLutaDupla[],
+): Map<string, number> {
+  const alimentadores = new Map<string, string[]>();
+  const ligar = (alvo: string | null, fonte: string) => {
+    if (!alvo) return;
+    const arr = alimentadores.get(alvo);
+    if (arr) arr.push(fonte);
+    else alimentadores.set(alvo, [fonte]);
+  };
+  for (const l of linhas) {
+    ligar(l.proximaLutaId, l.id);
+    ligar(l.proximaLutaPerdedorId, l.id);
+  }
+
+  const memo = new Map<string, number>();
+  const nivel = (id: string, visitando: Set<string>): number => {
+    const m = memo.get(id);
+    if (m !== undefined) return m;
+    if (visitando.has(id)) return 0; // salvaguarda contra ciclo (não deve ocorrer)
+    visitando.add(id);
+    const fontes = alimentadores.get(id) ?? [];
+    const n = fontes.length
+      ? 1 + Math.max(...fontes.map((f) => nivel(f, visitando)))
+      : 0;
+    visitando.delete(id);
+    memo.set(id, n);
+    return n;
+  };
+
+  const ordem = new Map<string, number>();
+  for (const l of linhas) ordem.set(l.id, nivel(l.id, new Set()));
+  return ordem;
+}
+
+/** prioridade de fase para desempate na ordem de disputa: WB → LB → GF */
+export function prioridadeFaseDupla(fase: string | null | undefined): number {
+  return fase === "wb" ? 0 : fase === "lb" ? 1 : fase === "gf" ? 2 : 3;
+}

@@ -2,6 +2,11 @@ import { asc, eq, inArray } from "drizzle-orm";
 import type { Db } from "@/db";
 import { areas, categorias, chaves, eventos, inscricoes, lutas } from "@/db/schema";
 import { idsDeBye } from "@/lib/chaves/byes";
+import {
+  classificarEliminacaoDupla,
+  nivelDisputaEliminacaoDupla,
+  prioridadeFaseDupla,
+} from "@/lib/chaves/eliminacao-dupla";
 import { diasDoEventoOuDefault, type JanelaDia } from "./dias";
 
 /**
@@ -169,18 +174,42 @@ export async function montarFilaDaArea(
       where: eq(lutas.chaveId, chave.id),
       orderBy: [asc(lutas.rodada), asc(lutas.posicao)],
     });
-    const byes = idsDeBye(linhas, chave.formato);
+    // eliminação dupla: só as lutas reais entram na fila (byes/walkover/mortas
+    // não são lutas) e a "rodada" para intercalar/ordenar é o nível de disputa
+    // topológico — a rodada crua interleava WB/LB/GF errado (a grande final é
+    // guardada como "rodada 1"). Demais formatos: geometria de byes + rodada.
+    const dupla = chave.formato === "eliminacao_dupla";
+    const reais = dupla ? classificarEliminacaoDupla(linhas).reais : null;
+    const byes = dupla ? new Set<string>() : idsDeBye(linhas, chave.formato);
+    const nivel = dupla ? nivelDisputaEliminacaoDupla(linhas) : null;
 
     const rodadas = new Map<number, { luta: LutaRow; categoria: CategoriaRow }[]>();
     for (const luta of linhas) {
       if (luta.vencedorInscricaoId || byes.has(luta.id)) continue;
-      const grupo = rodadas.get(luta.rodada) ?? [];
+      if (reais && !reais.has(luta.id)) continue; // pula bye/walkover/morta da dupla
+      const r = nivel ? (nivel.get(luta.id) ?? 0) : luta.rodada;
+      const grupo = rodadas.get(r) ?? [];
       grupo.push({ luta, categoria });
-      rodadas.set(luta.rodada, grupo);
+      rodadas.set(r, grupo);
     }
     if (rodadas.size) {
+      // dentro de um nível, ordena por (fase, rodada, posição) p/ bater com o cronograma
+      const chaveOrdem = (x: { luta: LutaRow }) =>
+        dupla
+          ? [prioridadeFaseDupla(x.luta.fase), x.luta.rodada, x.luta.posicao]
+          : [x.luta.rodada, x.luta.posicao];
       gruposPorCategoria.push(
-        [...rodadas.entries()].sort((a, b) => a[0] - b[0]).map(([, g]) => g),
+        [...rodadas.entries()]
+          .sort((a, b) => a[0] - b[0])
+          .map(([, g]) =>
+            g.sort((p, q) => {
+              const kp = chaveOrdem(p);
+              const kq = chaveOrdem(q);
+              for (let i = 0; i < kp.length; i++)
+                if (kp[i] !== kq[i]) return kp[i] - kq[i];
+              return 0;
+            }),
+          ),
       );
     }
   }

@@ -3,7 +3,11 @@ import type { Db } from "@/db";
 import { areas, categorias, chaves, inscricoes, lutas } from "@/db/schema";
 import { chaveDoGrupo, nomeDaClasse } from "@/lib/categorias/distribuicao-areas";
 import { idsDeBye } from "@/lib/chaves/byes";
-import { classificarEliminacaoDupla } from "@/lib/chaves/eliminacao-dupla";
+import {
+  classificarEliminacaoDupla,
+  nivelDisputaEliminacaoDupla,
+  prioridadeFaseDupla,
+} from "@/lib/chaves/eliminacao-dupla";
 import { duracaoDaCategoria, TRANSICAO_SEGUNDOS } from "./fila";
 import { diasDoEventoOuDefault } from "./dias";
 import { encaixarComProgresso, type Ancora, type ItemProgresso } from "./janelas";
@@ -317,8 +321,20 @@ export async function montarCronogramaDoEvento(
       // reais, e idsDeBye não cobre esse formato); os demais usam a geometria.
       let visiveis: typeof lutasDaChave;
       if (chave?.formato === "eliminacao_dupla") {
+        // só as lutas reais entram no cronograma, na ordem de disputa (nível
+        // topológico): a ordem crua (rodada, posição) põe a grande final — guardada
+        // como "rodada 1" — antes de tudo e mistura WB/LB/repescagem.
         const { reais } = classificarEliminacaoDupla(lutasDaChave);
-        visiveis = lutasDaChave.filter((l) => reais.has(l.id));
+        const nivel = nivelDisputaEliminacaoDupla(lutasDaChave);
+        visiveis = lutasDaChave
+          .filter((l) => reais.has(l.id))
+          .sort(
+            (a, b) =>
+              (nivel.get(a.id) ?? 0) - (nivel.get(b.id) ?? 0) ||
+              prioridadeFaseDupla(a.fase) - prioridadeFaseDupla(b.fase) ||
+              a.rodada - b.rodada ||
+              a.posicao - b.posicao,
+          );
       } else {
         const byes = chave
           ? idsDeBye(lutasDaChave, chave.formato)
