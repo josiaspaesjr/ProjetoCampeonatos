@@ -25,6 +25,7 @@ import {
   registrarResultadoNoBanco,
   salvarNotasVotacao,
 } from "@/lib/chaves/persistencia";
+import { formatoDisponivel, formatoMeta } from "@/lib/bracket";
 import type { FormatoSelecionavel, MetodoVitoria } from "@/lib/bracket";
 import {
   gerarGrade,
@@ -542,14 +543,21 @@ export async function gerarChaveAuto(eventoId: string, categoriaId: string) {
 
 /**
  * Gera em lote as chaves de todas as categorias com 1+ confirmado que ainda
- * não têm chave, todas em eliminação simples (formato "auto"): 1 atleta vira
- * campeão por W.O., 2 viram luta única, 3+ eliminação simples. Rascunhos
- * existentes são preservados — regenere individualmente se quiser trocar o
- * sorteio ou escolher outro formato.
+ * não têm chave, no formato escolhido no diálogo (`formatoLote`): eliminação
+ * simples (padrão) ou eliminação dupla. Divisões pequenas demais para o formato
+ * (dupla exige 3+; 1 atleta vira campeão por W.O.) caem em "auto" = eliminação
+ * simples. Rascunhos existentes são preservados — regenere individualmente para
+ * trocar o sorteio ou o formato.
  */
-export async function gerarChavesEmLote(eventoId: string) {
+export async function gerarChavesEmLote(eventoId: string, formData?: FormData) {
   const { db, usuario } = await eventoDoOrganizador(eventoId);
   const dic = await getDicionario();
+
+  // formato aplicado a todas as chaves do lote (padrão: eliminação simples)
+  const escolha: Extract<FormatoSelecionavel, "eliminacao_simples" | "eliminacao_dupla"> =
+    formData?.get("formatoLote") === "eliminacao_dupla"
+      ? "eliminacao_dupla"
+      : "eliminacao_simples";
 
   const [cats, confirmadas] = await Promise.all([
     db.query.categorias.findMany({ where: eq(categorias.eventoId, eventoId) }),
@@ -588,10 +596,17 @@ export async function gerarChavesEmLote(eventoId: string) {
   }
 
   const falhas: string[] = [];
+  const metaEscolha = formatoMeta(escolha);
   for (const cat of pendentes) {
     try {
-      // todas em eliminação simples (auto resolve por tamanho)
-      const chave = await gerarChaveParaCategoria(db, cat.id, "auto");
+      // usa o formato escolhido quando a divisão comporta; senão, auto (simples)
+      const formato: FormatoSelecionavel = formatoDisponivel(
+        metaEscolha,
+        contagem.get(cat.id) ?? 0,
+      )
+        ? escolha
+        : "auto";
+      const chave = await gerarChaveParaCategoria(db, cat.id, formato);
       await db.insert(auditoria).values({
         usuarioId: usuario.id,
         entidade: "chave",

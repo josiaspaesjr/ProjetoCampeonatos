@@ -802,16 +802,10 @@ export const en: Dicionario = {
       chaveSing: "bracket",
       chavePlur: "brackets",
       emLote: "in bulk",
-      // bulk generation dialog (format for 3-athlete divisions)
+      // bulk generation dialog (format applied to all brackets)
       loteTitulo: "Generate brackets in bulk",
-      lotePergunta: "Divisions with 3 athletes",
-      loteDivisaoSing: "division",
-      loteDivisaoPlur: "divisions",
-      loteComTres: "in this batch — choose how to build them",
-      loteSemTres:
-        "No 3-athlete divisions in this batch — the choice applies to future ones.",
-      loteNota:
-        "Divisions with 2 athletes become a single match; with 4 or more, single elimination.",
+      lotePergunta: "Format for all brackets",
+      loteNota: "Divisions with fewer than 3 athletes use single elimination.",
       publicar: "Publish",
       confirmadoSing: "confirmed",
       confirmadoPlur: "confirmed",

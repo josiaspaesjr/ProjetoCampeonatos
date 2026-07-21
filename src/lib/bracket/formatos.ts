@@ -36,16 +36,19 @@ export interface FormatoMeta {
  * Ao concluir cada fase, vire `implementado: true` no formato correspondente.
  */
 export const FORMATOS: readonly FormatoMeta[] = [
+  // Só eliminação simples e dupla estão liberadas. Os outros motores existem e
+  // NÃO devem ser apagados — ficam "em breve" (implementado:false) até estarem
+  // redondos: somem do seletor, mas continuam renderizando/avançando chaves já
+  // criadas (e o multistage segue usando round_robin por dentro). Para religar
+  // qualquer um, basta voltar implementado:true.
   { id: "eliminacao_simples", implementado: true, minAtletas: 2 },
   { id: "eliminacao_dupla", implementado: true, minAtletas: 3 },
-  // "Em breve": motor existe mas o comportamento ainda não está redondo.
-  // Enquanto isso, as divisões pequenas caem no "Automático" (eliminação simples).
   { id: "round_robin", implementado: false, minAtletas: 2 },
-  { id: "tres_repescagem", implementado: true, minAtletas: 3, maxAtletas: 3 },
-  { id: "multistage", implementado: true, minAtletas: 6 },
-  { id: "votacao_jurados", implementado: true, minAtletas: 2 },
-  { id: "colocacao", implementado: true, minAtletas: 2 },
-  { id: "melhor_de_tres", implementado: true, minAtletas: 2, maxAtletas: 2 },
+  { id: "tres_repescagem", implementado: false, minAtletas: 3, maxAtletas: 3 },
+  { id: "multistage", implementado: false, minAtletas: 6 },
+  { id: "votacao_jurados", implementado: false, minAtletas: 2 },
+  { id: "colocacao", implementado: false, minAtletas: 2 },
+  { id: "melhor_de_tres", implementado: false, minAtletas: 2, maxAtletas: 2 },
 ] as const;
 
 const POR_ID = new Map(FORMATOS.map((f) => [f.id, f]));
