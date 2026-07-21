@@ -3,6 +3,7 @@ import type { Db } from "@/db";
 import { areas, categorias, chaves, inscricoes, lutas } from "@/db/schema";
 import { chaveDoGrupo, nomeDaClasse } from "@/lib/categorias/distribuicao-areas";
 import { idsDeBye } from "@/lib/chaves/byes";
+import { classificarEliminacaoDupla } from "@/lib/chaves/eliminacao-dupla";
 import { duracaoDaCategoria, TRANSICAO_SEGUNDOS } from "./fila";
 import { diasDoEventoOuDefault } from "./dias";
 import { encaixarComProgresso, type Ancora, type ItemProgresso } from "./janelas";
@@ -311,10 +312,19 @@ export async function montarCronogramaDoEvento(
 
       const chave = chavePorCat.get(c.id);
       const lutasDaChave = chave ? (lutasPorChave.get(chave.id) ?? []) : [];
-      const byes = chave
-        ? idsDeBye(lutasDaChave, chave.formato)
-        : new Set<string>();
-      const visiveis = lutasDaChave.filter((l) => !byes.has(l.id));
+      // "unidades de luta" que consomem tempo: exclui byes. A eliminação dupla
+      // precisa do classificador (byes/walkover/mortas em cascata não são lutas
+      // reais, e idsDeBye não cobre esse formato); os demais usam a geometria.
+      let visiveis: typeof lutasDaChave;
+      if (chave?.formato === "eliminacao_dupla") {
+        const { reais } = classificarEliminacaoDupla(lutasDaChave);
+        visiveis = lutasDaChave.filter((l) => reais.has(l.id));
+      } else {
+        const byes = chave
+          ? idsDeBye(lutasDaChave, chave.formato)
+          : new Set<string>();
+        visiveis = lutasDaChave.filter((l) => !byes.has(l.id));
+      }
       const chaveGerada = visiveis.length > 0;
       // sem chave: estima atletas−1 lutas só para o horário ficar realista
       const nUnidades = chaveGerada

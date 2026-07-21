@@ -5,6 +5,7 @@ import type { lutas } from "@/db/schema";
 import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { NativeSelect } from "@/components/ui/native-select";
 import { idsDeBye } from "@/lib/chaves/byes";
+import { classificarEliminacaoDupla } from "@/lib/chaves/eliminacao-dupla";
 
 type LutaRow = typeof lutas.$inferSelect;
 
@@ -655,10 +656,11 @@ function DuplaEliminacaoView({
       )
       .map((l) => l.id),
   );
-  const vazia = (l: LutaRow) =>
-    l.atleta1InscricaoId == null &&
-    l.atleta2InscricaoId == null &&
-    l.vencedorInscricaoId == null;
+  // Oculta só as lutas MORTAS (que nunca terão atletas — byes em cascata). As
+  // demais lutas vazias são futuras (reais ou walkover) e precisam aparecer para
+  // a chave mostrar as possibilidades de luta; senão o bracket some quase todo
+  // antes dos resultados (só a 1ª rodada da WB teria atletas).
+  const { mortas } = classificarEliminacaoDupla(linhas);
 
   const colunas = (fase: string) => {
     const ls = linhas.filter((l) => l.fase === fase);
@@ -668,7 +670,7 @@ function DuplaEliminacaoView({
         rodada: r,
         total: rodadas.length,
         lutas: ls
-          .filter((l) => l.rodada === r && !vazia(l))
+          .filter((l) => l.rodada === r && !mortas.has(l.id))
           .sort((a, b) => a.posicao - b.posicao),
       }))
       .filter((c) => c.lutas.length > 0);
