@@ -308,6 +308,11 @@ export function PlacarTablet({
 
   useEffect(() => {
     const h = () => setCheia(Boolean(document.fullscreenElement));
+    // sincroniza no montar: ao encerrar a luta, o router.refresh troca a `key`
+    // (id da luta) e re-monta este componente AINDA em tela cheia — sem isto,
+    // `cheia` voltaria a false (nenhum fullscreenchange dispara) e a próxima
+    // luta renderizaria no layout compacto em vez de preencher a tela.
+    h();
     document.addEventListener("fullscreenchange", h);
     return () => document.removeEventListener("fullscreenchange", h);
   }, []);
