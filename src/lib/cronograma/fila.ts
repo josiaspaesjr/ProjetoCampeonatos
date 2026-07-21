@@ -7,6 +7,7 @@ import {
   nivelDisputaEliminacaoDupla,
   prioridadeFaseDupla,
 } from "@/lib/chaves/eliminacao-dupla";
+import { intercalarComDescanso, type UnidadeIntercalavel } from "./intercalar";
 import { diasDoEventoOuDefault, type JanelaDia } from "./dias";
 
 /**
@@ -61,23 +62,6 @@ export function duracaoDaCategoria(categoria: {
   duracaoLutaSegundos: number | null;
 }): number {
   return categoria.duracaoLutaSegundos ?? duracaoLutaSegundos(categoria.faixa);
-}
-
-/**
- * "Slice": intercala as rodadas das categorias (1ª rodada de todas, depois a
- * 2ª de todas…) em vez de correr cada categoria inteira. Entre duas lutas do
- * mesmo atleta passam a existir as rodadas das outras categorias — é o que
- * garante descanso em divisões pequenas, onde a rodada seguinte vem logo.
- */
-export function intercalarPorRodada<T>(gruposPorCategoria: T[][][]): T[] {
-  const resultado: T[] = [];
-  const maisRodadas = Math.max(0, ...gruposPorCategoria.map((g) => g.length));
-  for (let rodada = 0; rodada < maisRodadas; rodada++) {
-    for (const grupos of gruposPorCategoria) {
-      if (grupos[rodada]) resultado.push(...grupos[rodada]);
-    }
-  }
-  return resultado;
 }
 
 type LutaRow = typeof lutas.$inferSelect;
@@ -160,8 +144,14 @@ export async function montarFilaDaArea(
     orderBy: asc(categorias.ordemNaArea),
   });
 
-  // lutas pendentes de cada categoria, agrupadas por rodada (ordem da chave)
-  const gruposPorCategoria: { luta: LutaRow; categoria: CategoriaRow }[][][] = [];
+  // unidades pendentes de cada categoria, na ordem da chave (rodada/nível +
+  // fase/posição), já com as tags que a intercalação usa (ver intercalar.ts). A
+  // fila ao vivo só quer as pendentes (as decididas já saíram do tatame).
+  type UnidadeFila = UnidadeIntercalavel & {
+    luta: LutaRow;
+    categoria: CategoriaRow;
+  };
+  const unidades: UnidadeFila[] = [];
   for (const categoria of cats) {
     const chave = await db.query.chaves.findFirst({
       where: eq(chaves.categoriaId, categoria.id),
@@ -175,53 +165,50 @@ export async function montarFilaDaArea(
       orderBy: [asc(lutas.rodada), asc(lutas.posicao)],
     });
     // eliminação dupla: só as lutas reais entram na fila (byes/walkover/mortas
-    // não são lutas) e a "rodada" para intercalar/ordenar é o nível de disputa
-    // topológico — a rodada crua interleava WB/LB/GF errado (a grande final é
-    // guardada como "rodada 1"). Demais formatos: geometria de byes + rodada.
+    // não são lutas) e a ordem topológica é o nível de disputa — a rodada crua
+    // interleava WB/LB/GF errado (a grande final é guardada como "rodada 1").
+    // Demais formatos: geometria de byes + rodada.
     const dupla = chave.formato === "eliminacao_dupla";
     const reais = dupla ? classificarEliminacaoDupla(linhas).reais : null;
     const byes = dupla ? new Set<string>() : idsDeBye(linhas, chave.formato);
     const nivel = dupla ? nivelDisputaEliminacaoDupla(linhas) : null;
 
-    const rodadas = new Map<number, { luta: LutaRow; categoria: CategoriaRow }[]>();
-    for (const luta of linhas) {
-      if (luta.vencedorInscricaoId || byes.has(luta.id)) continue;
-      if (reais && !reais.has(luta.id)) continue; // pula bye/walkover/morta da dupla
-      const r = nivel ? (nivel.get(luta.id) ?? 0) : luta.rodada;
-      const grupo = rodadas.get(r) ?? [];
-      grupo.push({ luta, categoria });
-      rodadas.set(r, grupo);
-    }
-    if (rodadas.size) {
-      // dentro de um nível, ordena por (fase, rodada, posição) p/ bater com o cronograma
-      const chaveOrdem = (x: { luta: LutaRow }) =>
-        dupla
-          ? [prioridadeFaseDupla(x.luta.fase), x.luta.rodada, x.luta.posicao]
-          : [x.luta.rodada, x.luta.posicao];
-      gruposPorCategoria.push(
-        [...rodadas.entries()]
-          .sort((a, b) => a[0] - b[0])
-          .map(([, g]) =>
-            g.sort((p, q) => {
-              const kp = chaveOrdem(p);
-              const kq = chaveOrdem(q);
-              for (let i = 0; i < kp.length; i++)
-                if (kp[i] !== kq[i]) return kp[i] - kq[i];
-              return 0;
-            }),
-          ),
-      );
+    const pendentes = linhas.filter((luta) => {
+      if (luta.vencedorInscricaoId || byes.has(luta.id)) return false;
+      if (reais && !reais.has(luta.id)) return false; // pula bye/walkover/morta
+      return true;
+    });
+    // ordem topológica: (nível/rodada, fase, rodada, posição) — bate com a coluna
+    // do organizador para os dois motores intercalarem igual.
+    const camadaDe = (l: LutaRow) => (nivel ? (nivel.get(l.id) ?? 0) : l.rodada);
+    pendentes.sort(
+      (p, q) =>
+        camadaDe(p) - camadaDe(q) ||
+        (dupla ? prioridadeFaseDupla(p.fase) - prioridadeFaseDupla(q.fase) : 0) ||
+        p.rodada - q.rodada ||
+        p.posicao - q.posicao,
+    );
+    for (const luta of pendentes) {
+      const definida = Boolean(luta.atleta1InscricaoId && luta.atleta2InscricaoId);
+      unidades.push({
+        luta,
+        categoria,
+        catId: categoria.id,
+        dataFixada: categoria.dataFixada,
+        indefinida: !definida,
+        separadora: definida,
+      });
     }
   }
 
-  let ordenadas = area.intercalarRodadas
-    ? intercalarPorRodada(gruposPorCategoria)
-    : gruposPorCategoria.flat(2);
+  // intercala as categorias p/ dar descanso (ninguém luta 2x seguidas quando dá),
+  // respeitando os dias — a MESMA ordem-base do cronograma do organizador.
+  let ordenadas: UnidadeFila[] = intercalarComDescanso(unidades);
 
   // ordem manual (drag-and-drop do cronograma): se alguma luta da área tem
-  // `ordemCronograma`, a fila segue essa ordem — vence tanto o flatten por
-  // categoria quanto `intercalarRodadas`. As pendentes sem override (nulls)
-  // ficam no fim, preservando a ordem calculada (sort estável).
+  // `ordemCronograma`, a fila segue essa ordem — vence a intercalação. As
+  // pendentes sem override (nulls) ficam no fim, preservando a ordem calculada
+  // (sort estável).
   if (ordenadas.some((o) => o.luta.ordemCronograma != null))
     ordenadas = [...ordenadas].sort(
       (a, b) =>

@@ -278,8 +278,9 @@ export const areas = pgTable("areas", {
   ordem: integer("ordem").notNull().default(0),
   // âncora do cronograma estimado da área
   horaInicio: timestamp("hora_inicio", { withTimezone: true }),
-  // "slice": alterna as rodadas das categorias em vez de correr cada uma
-  // inteira — reduz a espera dos atletas entre as próprias lutas
+  // OBSOLETO: a intercalação p/ descanso hoje é sempre ligada no motor
+  // (src/lib/cronograma/intercalar.ts), não depende mais desta flag. Coluna
+  // mantida por retrocompat (dropar exigiria migração); nenhum código a lê.
   intercalarRodadas: boolean("intercalar_rodadas").notNull().default(false),
 });
 
