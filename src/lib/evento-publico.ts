@@ -59,7 +59,7 @@ export function statusDoEvento(
   return { chave: "encerradas", vivo: false };
 }
 
-/** Contadores exibidos nas abas (Atletas = confirmados, Chaves = publicadas). */
+/** Contadores exibidos nas abas (Checagem = confirmados, Chaves = publicadas). */
 export const getContadoresEvento = cache(async (eventoId: string) => {
   const db = await getDb();
 
@@ -68,7 +68,7 @@ export const getContadoresEvento = cache(async (eventoId: string) => {
     columns: { id: true },
   });
 
-  const atletas = await db.$count(
+  const confirmados = await db.$count(
     inscricoes,
     and(
       eq(inscricoes.eventoId, eventoId),
@@ -89,5 +89,5 @@ export const getContadoresEvento = cache(async (eventoId: string) => {
       )
     : 0;
 
-  return { atletas, chaves: chavesPublicadas, categorias: cats.length };
+  return { checagem: confirmados, chaves: chavesPublicadas };
 });

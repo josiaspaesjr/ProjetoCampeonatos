@@ -252,12 +252,14 @@ function imprimirHtml(html: string) {
 }
 
 /**
- * Aba **Atletas** pública: todos os inscritos, agrupados por **divisão**
+ * Aba **Checagem** pública: todos os inscritos, agrupados por **divisão**
  * (categoria) ou por **academia** — alternável pelo usuário. Card por atleta
  * com selo **Confirmado** (confirmada) / **Pendente** (pendente_pagamento) — o
  * atleta se inscreve e paga depois; só os confirmados entram nas áreas e
- * chaves. Tem busca (atleta/academia), filtro por país e atalho para a chave
- * de cada categoria quando ela já está publicada.
+ * chaves. Categoria já chaveada não recebe mais pendentes: a página filtra
+ * esses inscritos antes de montar as divisões. Tem busca (atleta/academia),
+ * filtro por país e atalho para a chave de cada categoria quando ela já está
+ * publicada.
  */
 export function AtletasLista({
   divisoes,

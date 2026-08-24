@@ -40,8 +40,7 @@ export const es: Dicionario = {
     },
     abas: {
       informacoes: "Información",
-      categorias: "Categorías",
-      atletas: "Atletas",
+      checagem: "Chequeo",
       chaves: "Llaves",
       lutas: "Combates",
       cronograma: "Cronograma",
@@ -230,23 +229,8 @@ export const es: Dicionario = {
     copiarCodigo: "Copiar código",
     copiado: "Copiado ✓",
   },
-  categorias: {
-    titulo: "Categorías",
-    disponivel: "disponible",
-    disponiveis: "disponibles",
-    vazio: "Las categorías aparecen aquí cuando el organizador arma la grilla.",
-    todas: "Todas",
-    feminino: "Femenino",
-    inscrito: "inscrito",
-    inscritos: "inscritos",
-    chave: "Llave",
-    nenhumaNoFiltro: "Ninguna categoría en este filtro.",
-    mostrando: "Mostrando",
-    notaCompat:
-      "las categorías compatibles con tu perfil aparecen en la pantalla de inscripción",
-  },
   atletas: {
-    titulo: "Atletas",
+    titulo: "Chequeo",
     subtitulo: "Inscritos por división · busca por atleta o academia",
     ninguemInscrito:
       "Nadie inscrito aún — los atletas aparecen aquí cuando empiecen las inscripciones.",

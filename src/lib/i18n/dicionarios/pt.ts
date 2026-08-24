@@ -39,8 +39,7 @@ export const pt = {
     },
     abas: {
       informacoes: "Informações",
-      categorias: "Categorias",
-      atletas: "Atletas",
+      checagem: "Checagem",
       chaves: "Chaves",
       lutas: "Lutas",
       cronograma: "Cronograma",
@@ -229,23 +228,8 @@ export const pt = {
     copiarCodigo: "Copiar código",
     copiado: "Copiado ✓",
   },
-  categorias: {
-    titulo: "Categorias",
-    disponivel: "disponível",
-    disponiveis: "disponíveis",
-    vazio: "As categorias aparecem aqui assim que o organizador montar a grade.",
-    todas: "Todas",
-    feminino: "Feminino",
-    inscrito: "inscrito",
-    inscritos: "inscritos",
-    chave: "Chave",
-    nenhumaNoFiltro: "Nenhuma categoria neste filtro.",
-    mostrando: "Mostrando",
-    notaCompat:
-      "as categorias compatíveis com seu perfil aparecem na tela de inscrição",
-  },
   atletas: {
-    titulo: "Atletas",
+    titulo: "Checagem",
     subtitulo: "Inscritos por divisão · busque por atleta ou academia",
     ninguemInscrito:
       "Ninguém inscrito ainda — os atletas aparecem aqui assim que as inscrições começarem.",

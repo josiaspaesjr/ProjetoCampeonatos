@@ -12,7 +12,7 @@ import {
   type DivisaoAtletas,
 } from "@/components/evento/atletas-lista";
 
-export default async function AbaAtletas({
+export default async function AbaChecagem({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -45,14 +45,20 @@ export default async function AbaAtletas({
       : Promise.resolve([]),
   ]);
 
+  // chave já gerada (mesmo em rascunho) → a categoria está fechada: só quem
+  // estava confirmado entrou no sorteio, então os pendentes somem da checagem
+  const catComChaveGerada = new Set(chavesRows.map((c) => c.categoriaId));
   // categorias com chave publicada → ganham o atalho "Ver chave"
   const catComChave = new Set(
     chavesRows.filter((c) => c.status !== "rascunho").map((c) => c.categoriaId),
   );
 
-  // agrupa os inscritos por categoria (divisão)
+  // agrupa os inscritos por categoria (divisão), escondendo os pendentes das
+  // categorias que já foram chaveadas
   const porCat = new Map<string, typeof inscs>();
   for (const i of inscs) {
+    if (i.status !== "confirmada" && catComChaveGerada.has(i.categoriaId))
+      continue;
     const arr = porCat.get(i.categoriaId);
     if (arr) arr.push(i);
     else porCat.set(i.categoriaId, [i]);
@@ -86,8 +92,14 @@ export default async function AbaAtletas({
       };
     });
 
-  const totalConfirmados = inscs.filter((i) => i.status === "confirmada").length;
-  const totalPendentes = inscs.length - totalConfirmados;
+  // totais do topo refletem o que está visível (pendentes de categoria chaveada
+  // já foram descartados acima)
+  let totalConfirmados = 0;
+  let totalPendentes = 0;
+  for (const d of divisoes) {
+    totalConfirmados += d.confirmados;
+    totalPendentes += d.pendentes;
+  }
 
   return (
     <div className="px-6 pb-20 pt-10 md:px-12">

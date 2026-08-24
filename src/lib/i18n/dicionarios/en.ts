@@ -40,8 +40,7 @@ export const en: Dicionario = {
     },
     abas: {
       informacoes: "Info",
-      categorias: "Divisions",
-      atletas: "Athletes",
+      checagem: "Check-in",
       chaves: "Brackets",
       lutas: "Matches",
       cronograma: "Schedule",
@@ -230,23 +229,8 @@ export const en: Dicionario = {
     copiarCodigo: "Copy code",
     copiado: "Copied ✓",
   },
-  categorias: {
-    titulo: "Divisions",
-    disponivel: "available",
-    disponiveis: "available",
-    vazio: "Divisions show up here once the organizer builds the bracket grid.",
-    todas: "All",
-    feminino: "Female",
-    inscrito: "registered",
-    inscritos: "registered",
-    chave: "Bracket",
-    nenhumaNoFiltro: "No divisions in this filter.",
-    mostrando: "Showing",
-    notaCompat:
-      "divisions matching your profile appear on the registration screen",
-  },
   atletas: {
-    titulo: "Athletes",
+    titulo: "Check-in",
     subtitulo: "Registered by division · search by athlete or academy",
     ninguemInscrito:
       "No one registered yet — athletes appear here once registration starts.",

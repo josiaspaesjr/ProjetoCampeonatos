@@ -17,8 +17,7 @@ interface Aba {
 
 const ABAS: Aba[] = [
   { seg: null, chave: "informacoes", href: "" },
-  { seg: "categorias", chave: "categorias", href: "/categorias" },
-  { seg: "atletas", chave: "atletas", href: "/atletas" },
+  { seg: "checagem", chave: "checagem", href: "/checagem" },
   { seg: "chaves", chave: "chaves", href: "/chaves" },
   { seg: "lutas", chave: "lutas", href: "/lutas" },
   { seg: "cronograma", chave: "cronograma", href: "/cronograma" },
