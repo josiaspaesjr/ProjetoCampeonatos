@@ -41,7 +41,6 @@ export const pt = {
       informacoes: "Informações",
       checagem: "Checagem",
       chaves: "Chaves",
-      lutas: "Lutas",
       cronograma: "Cronograma",
       resultados: "Resultados",
     },
@@ -295,8 +294,6 @@ export const pt = {
     campeao: "Campeão",
   },
   lutasTab: {
-    titulo: "Lutas",
-    subtitulo: "Busque por atleta ou academia · atualiza sozinho",
     vazio: "As lutas aparecem aqui quando o organizador gerar as chaves e distribuir as áreas.",
     buscar: "Buscar atleta ou academia…",
     todas: "Todas",
@@ -306,9 +303,8 @@ export const pt = {
   },
   cronogramaTab: {
     titulo: "Cronograma",
-    subtitulo: "Horários estimados · atualiza sozinho",
+    subtitulo: "Horários estimados · busque por atleta ou academia · atualiza sozinho",
     modoTelao: "Modo telão",
-    vazio: "O cronograma aparece aqui quando o organizador distribuir as chaves pelas áreas.",
   },
   resultadosTab: {
     emBreve: "Em breve",

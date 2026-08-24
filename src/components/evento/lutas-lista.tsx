@@ -33,10 +33,11 @@ const norm = (s: string) =>
     .toLowerCase();
 
 /**
- * Aba **Lutas** pública: todas as lutas do evento numa lista com busca (por
- * atleta ou academia) e filtro por tatame. Cada linha mostra horário, área,
- * categoria, os dois atletas e o resultado (W/L). Clicar abre o placar. O
- * `AutoRefresh` mantém a lista viva.
+ * Conteúdo da aba **Cronograma** pública: todas as lutas do evento numa lista
+ * com busca (por atleta ou academia) e filtro por tatame. Cada linha mostra
+ * horário, área, categoria, os dois atletas e o resultado (W/L). Clicar abre o
+ * placar. O `AutoRefresh` mantém a lista viva. O botão "Modo telão" fica no
+ * cabeçalho da página, fora deste componente.
  */
 export function LutasLista({
   itens,

@@ -42,7 +42,6 @@ export const es: Dicionario = {
       informacoes: "Información",
       checagem: "Chequeo",
       chaves: "Llaves",
-      lutas: "Combates",
       cronograma: "Cronograma",
       resultados: "Resultados",
     },
@@ -294,8 +293,6 @@ export const es: Dicionario = {
     campeao: "Campeón",
   },
   lutasTab: {
-    titulo: "Combates",
-    subtitulo: "Busca por atleta o academia · se actualiza solo",
     vazio: "Los combates aparecen aquí cuando el organizador crea las llaves y distribuye las áreas.",
     buscar: "Buscar atleta o academia…",
     todas: "Todas",
@@ -305,9 +302,8 @@ export const es: Dicionario = {
   },
   cronogramaTab: {
     titulo: "Cronograma",
-    subtitulo: "Horarios estimados · se actualiza solo",
+    subtitulo: "Horarios estimados · busca por atleta o academia · se actualiza solo",
     modoTelao: "Modo pantalla",
-    vazio: "El cronograma aparece aquí cuando el organizador distribuye las llaves por las áreas.",
   },
   resultadosTab: {
     emBreve: "Próximamente",

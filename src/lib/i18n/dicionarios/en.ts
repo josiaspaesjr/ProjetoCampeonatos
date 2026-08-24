@@ -42,7 +42,6 @@ export const en: Dicionario = {
       informacoes: "Info",
       checagem: "Check-in",
       chaves: "Brackets",
-      lutas: "Matches",
       cronograma: "Schedule",
       resultados: "Results",
     },
@@ -294,8 +293,6 @@ export const en: Dicionario = {
     campeao: "Champion",
   },
   lutasTab: {
-    titulo: "Matches",
-    subtitulo: "Search by athlete or academy · auto-updates",
     vazio: "Matches show up here once the organizer creates brackets and assigns mats.",
     buscar: "Search athlete or academy…",
     todas: "All",
@@ -305,9 +302,8 @@ export const en: Dicionario = {
   },
   cronogramaTab: {
     titulo: "Schedule",
-    subtitulo: "Estimated times · auto-updates",
+    subtitulo: "Estimated times · search by athlete or academy · auto-updates",
     modoTelao: "Big-screen mode",
-    vazio: "The schedule shows up here once the organizer distributes brackets across mats.",
   },
   resultadosTab: {
     emBreve: "Coming soon",

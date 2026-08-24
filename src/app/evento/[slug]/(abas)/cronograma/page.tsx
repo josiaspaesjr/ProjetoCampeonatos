@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
+import { inscricoes } from "@/db/schema";
 import { getEventoPublico } from "@/lib/evento-publico";
 import { getDicionario } from "@/lib/i18n/server";
 import { montarCronogramaDoEvento } from "@/lib/cronograma/cronograma-areas";
-import { CronogramaAreasPublico } from "@/components/evento/cronograma-areas-publico";
+import { LutasLista, type LutaItem } from "@/components/evento/lutas-lista";
 
 export default async function AbaCronograma({
   params,
@@ -18,7 +20,39 @@ export default async function AbaCronograma({
   const dcr = (await getDicionario()).cronogramaTab;
 
   const db = await getDb();
-  const cronograma = await montarCronogramaDoEvento(db, evento.id, evento.dataInicio);
+  const [cronograma, confirmadas] = await Promise.all([
+    montarCronogramaDoEvento(db, evento.id, evento.dataInicio),
+    db.query.inscricoes.findMany({
+      where: and(
+        eq(inscricoes.eventoId, evento.id),
+        eq(inscricoes.status, "confirmada"),
+      ),
+      columns: { nomeAtleta: true, academiaNome: true },
+    }),
+  ]);
+
+  // academia por nome (para permitir busca por academia sem inflar o cronograma)
+  const academiaPorNome = new Map<string, string>();
+  for (const i of confirmadas) {
+    if (i.academiaNome) academiaPorNome.set(i.nomeAtleta, i.academiaNome);
+  }
+
+  // achata o cronograma em uma lista única de lutas (com contexto de área)
+  const itens: LutaItem[] = cronograma.flatMap((area) =>
+    area.categorias.flatMap((cat) =>
+      cat.lutas.map((luta) => ({
+        area: area.nome,
+        luta,
+        catTitulo: cat.titulo,
+        catSubtitulo: cat.subtitulo,
+        academia1: academiaPorNome.get(luta.a1) ?? null,
+        academia2: academiaPorNome.get(luta.a2) ?? null,
+      })),
+    ),
+  );
+  const areasNomes = cronograma.map((a) => a.nome);
+  // evento com mais de um dia distinto → mostra a data em cada luta
+  const multiDia = new Set(itens.map((i) => i.luta.data)).size > 1;
 
   return (
     <div className="px-6 pb-20 pt-10 md:px-12">
@@ -36,7 +70,7 @@ export default async function AbaCronograma({
           {dcr.modoTelao}
         </Link>
       </div>
-      <CronogramaAreasPublico cronograma={cronograma} />
+      <LutasLista itens={itens} areas={areasNomes} multiDia={multiDia} />
     </div>
   );
 }

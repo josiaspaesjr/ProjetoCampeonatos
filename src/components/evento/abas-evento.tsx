@@ -19,7 +19,6 @@ const ABAS: Aba[] = [
   { seg: null, chave: "informacoes", href: "" },
   { seg: "checagem", chave: "checagem", href: "/checagem" },
   { seg: "chaves", chave: "chaves", href: "/chaves" },
-  { seg: "lutas", chave: "lutas", href: "/lutas" },
   { seg: "cronograma", chave: "cronograma", href: "/cronograma" },
   { seg: "resultados", chave: "resultados", href: "/resultados" },
 ];
