@@ -979,6 +979,11 @@ export const es: Dicionario = {
       moverSoltarAqui: "Suelta aquí para traer el combate",
       moverCategoriaTitulo: "Llevar división a otra área",
       moverCategoriaBotao: "Mover",
+      moverCategoriaAbrir: "Mover división",
+      moverCategoriaEscolha: "¿Qué división cambia de área?",
+      moverCategoriaPara: "¿A qué área llevar?",
+      moverCategoriaVoltar: "volver",
+      moverCategoriaVazio: "Ninguna división en esta área.",
       // configuración de los días en la propia pantalla de áreas
       diasEvento: "Días del evento",
       diasNota:

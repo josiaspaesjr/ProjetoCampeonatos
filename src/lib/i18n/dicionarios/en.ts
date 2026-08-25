@@ -978,6 +978,11 @@ export const en: Dicionario = {
       moverSoltarAqui: "Drop here to bring the match",
       moverCategoriaTitulo: "Move division to another mat",
       moverCategoriaBotao: "Move",
+      moverCategoriaAbrir: "Move division",
+      moverCategoriaEscolha: "Which division changes mat?",
+      moverCategoriaPara: "Move to which mat?",
+      moverCategoriaVoltar: "back",
+      moverCategoriaVazio: "No divisions on this mat.",
       diasEvento: "Event days",
       diasNota:
         "Matches are spread within each day's windows. Repeat the date for morning and afternoon — the break between them stays match-free. Adjust before structuring.",

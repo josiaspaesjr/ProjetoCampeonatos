@@ -34,7 +34,7 @@ interface CategoriaDaColuna {
  * Editor de ordem das lutas por área (drag-and-drop). Cada tatame vira uma
  * lista plana arrastável das suas lutas reais — dá para intercalar divisões,
  * **arrastar uma luta para outro tatame** e levar uma **categoria inteira**
- * para outra área pelo menu do rodapé. Nada disso mexe na chave (rodada,
+ * para outra área pelo menu do cabeçalho. Nada disso mexe na chave (rodada,
  * posição e próxima luta ficam intactas): muda só onde e quando a luta corre.
  */
 export function EditorOrdemAreas({
@@ -176,6 +176,7 @@ function ColunaEditavel({
   }, [ordem]);
 
   const outrasAreas = areas.filter((a) => a.id !== area.id);
+  const semChave = categorias.filter((c) => !c.chaveGerada);
 
   return (
     <div
@@ -187,7 +188,7 @@ function ColunaEditavel({
     >
       <span className="absolute inset-x-0 top-0 z-10 h-[3px] bg-brand" />
 
-      {/* HEADER */}
+      {/* HEADER — nome do tatame, nº de lutas e o menu de mover divisões */}
       <div className="shrink-0 border-b border-white/10 px-4 pb-3 pt-4">
         <div className="flex items-baseline justify-between gap-2">
           <span className="disp tnum text-[24px] leading-none">{area.nome}</span>
@@ -200,6 +201,13 @@ function ColunaEditavel({
             </span>
           </div>
         </div>
+        {outrasAreas.length > 0 && (
+          <MenuMoverDivisao
+            categorias={categorias}
+            areas={outrasAreas}
+            onMover={onMoverCategoria}
+          />
+        )}
       </div>
 
       {/* LISTA ARRASTÁVEL */}
@@ -287,93 +295,154 @@ function ColunaEditavel({
         </ul>
       )}
 
-      {/* CATEGORIAS DA COLUNA: levar a divisão inteira para outro tatame */}
-      {categorias.length > 0 && outrasAreas.length > 0 && (
+      {/* CATEGORIAS SEM CHAVE (informativo) */}
+      {semChave.length > 0 && (
         <div className="border-t border-white/10 px-4 py-2.5">
           <div className="mb-1.5 font-cond text-[10px] uppercase tracking-[0.08em] text-muted-3">
-            {ta.moverCategoriaTitulo}
+            {dp.chaveNaoGerada}
           </div>
           <ul className="flex flex-col gap-1">
-            {categorias.map((c, i) => (
-              <li key={c.id ?? i} className="flex items-center gap-1.5">
+            {semChave.map((c, i) => (
+              <li
+                key={c.id ?? i}
+                className="flex items-center gap-1.5 font-cond text-[11px] uppercase tracking-[0.02em] text-muted-2"
+              >
                 <span
                   className="h-2 w-2 shrink-0 -skew-x-9 border border-white/25"
                   style={{ background: corDaFaixa(c.faixa) }}
                 />
-                <span className="min-w-0 flex-1 truncate font-cond text-[11px] uppercase tracking-[0.02em] text-muted-2">
-                  {c.titulo}
-                  {!c.chaveGerada && (
-                    <span className="ml-1 text-muted-3">
-                      · {dp.chaveNaoGerada}
-                    </span>
-                  )}
-                </span>
-                {c.id && (
-                  <MenuMoverCategoria
-                    categoriaId={c.id}
-                    areas={outrasAreas}
-                    rotulo={ta.moverCategoriaBotao}
-                    onMover={onMoverCategoria}
-                  />
-                )}
+                <span className="truncate">{c.titulo}</span>
               </li>
             ))}
           </ul>
         </div>
       )}
+
     </div>
   );
 }
 
-/** menu enxuto: escolhe o tatame de destino da categoria */
-function MenuMoverCategoria({
-  categoriaId,
+/**
+ * Menu do cabeçalho da coluna: escolhe a **divisão** e depois o **tatame** para
+ * onde ela vai. Fica no topo porque a coluna de lutas é longa — um controle no
+ * rodapé ficaria a centenas de pixels de distância num evento cheio.
+ */
+function MenuMoverDivisao({
+  categorias,
   areas,
-  rotulo,
   onMover,
 }: {
-  categoriaId: string;
+  categorias: CategoriaDaColuna[];
   areas: AreaCron[];
-  rotulo: string;
   onMover: (categoriaId: string, areaDestinoId: string) => void | Promise<void>;
 }) {
+  const ta = useDic().admin.areas;
   const [aberto, setAberto] = useState(false);
+  const [escolhida, setEscolhida] = useState<CategoriaDaColuna | null>(null);
+
+  const fechar = () => {
+    setAberto(false);
+    setEscolhida(null);
+  };
+
+  const moviveis = categorias.filter((c) => c.id);
 
   return (
-    <div className="relative shrink-0">
+    <div className="relative mt-2">
       <button
         type="button"
-        onClick={() => setAberto((v) => !v)}
+        onClick={() => (aberto ? fechar() : setAberto(true))}
         aria-expanded={aberto}
-        className="font-cond text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-3 transition-colors hover:text-brand-soft"
+        className={cn(
+          "inline-flex w-full items-center justify-between gap-2 border px-3 py-1.5 font-cond text-[11px] font-semibold uppercase tracking-[0.06em] transition-colors",
+          aberto
+            ? "border-brand text-brand-soft"
+            : "border-white/14 text-muted-2 hover:border-brand/50 hover:text-brand-soft",
+        )}
       >
-        {rotulo} →
+        <span>⇄ {ta.moverCategoriaAbrir}</span>
+        <span className="text-[10px]">{aberto ? "▲" : "▼"}</span>
       </button>
+
       {aberto && (
         <>
           <button
             type="button"
             aria-hidden
             tabIndex={-1}
-            onClick={() => setAberto(false)}
+            onClick={fechar}
             className="fixed inset-0 z-40 cursor-default"
           />
-          <ul className="absolute right-0 z-50 mt-1 min-w-[132px] border border-white/14 bg-background py-1 shadow-xl">
-            {areas.map((a) => (
-              <li key={a.id}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAberto(false);
-                    onMover(categoriaId, a.id);
-                  }}
-                  className="block w-full px-3 py-1.5 text-left font-cond text-[11px] uppercase tracking-[0.04em] text-text-2 transition-colors hover:bg-white/[0.06] hover:text-brand-soft"
-                >
-                  {a.nome}
-                </button>
-              </li>
-            ))}
-          </ul>
+          <div className="absolute inset-x-0 z-50 mt-1 max-h-[320px] overflow-y-auto border border-white/14 bg-background shadow-xl">
+            <div className="border-b border-white/10 px-3 py-2 font-cond text-[10px] uppercase tracking-[0.06em] text-muted-3">
+              {escolhida ? (
+                <span className="flex items-center justify-between gap-2">
+                  <span className="truncate text-text-2">{escolhida.titulo}</span>
+                  <button
+                    type="button"
+                    onClick={() => setEscolhida(null)}
+                    className="shrink-0 text-muted-3 transition-colors hover:text-brand-soft"
+                  >
+                    ← {ta.moverCategoriaVoltar}
+                  </button>
+                </span>
+              ) : (
+                ta.moverCategoriaEscolha
+              )}
+            </div>
+
+            {escolhida ? (
+              <>
+                <div className="px-3 pt-2 font-cond text-[10px] uppercase tracking-[0.06em] text-muted-3">
+                  {ta.moverCategoriaPara}
+                </div>
+                <ul className="flex flex-col py-1">
+                  {areas.map((a) => (
+                    <li key={a.id}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const id = escolhida.id;
+                          fechar();
+                          if (id) onMover(id, a.id);
+                        }}
+                        className="block w-full px-3 py-2 text-left font-cond text-[12px] uppercase tracking-[0.04em] text-text-2 transition-colors hover:bg-white/[0.06] hover:text-brand-soft"
+                      >
+                        {a.nome} →
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : moviveis.length === 0 ? (
+              <p className="px-3 py-3 font-cond text-[11px] uppercase tracking-[0.04em] text-muted-3">
+                {ta.moverCategoriaVazio}
+              </p>
+            ) : (
+              <ul className="flex flex-col py-1">
+                {moviveis.map((c) => (
+                  <li key={c.id}>
+                    <button
+                      type="button"
+                      onClick={() => setEscolhida(c)}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-white/[0.06]"
+                    >
+                      <span
+                        className="h-2.5 w-2.5 shrink-0 -skew-x-9 border border-white/25"
+                        style={{ background: corDaFaixa(c.faixa) }}
+                      />
+                      <span className="min-w-0 flex-1 truncate font-cond text-[12px] uppercase tracking-[0.02em] text-text-2">
+                        {c.titulo}
+                      </span>
+                      <span className="shrink-0 font-cond text-[10px] uppercase tracking-[0.04em] text-muted-3">
+                        {c.nLutas}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         </>
       )}
     </div>

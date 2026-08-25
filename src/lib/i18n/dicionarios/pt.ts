@@ -985,6 +985,11 @@ export const pt = {
       moverSoltarAqui: "Solte aqui para trazer a luta",
       moverCategoriaTitulo: "Levar divisão para outro tatame",
       moverCategoriaBotao: "Mover",
+      moverCategoriaAbrir: "Mover divisão",
+      moverCategoriaEscolha: "Qual divisão vai mudar de tatame?",
+      moverCategoriaPara: "Levar para qual tatame?",
+      moverCategoriaVoltar: "voltar",
+      moverCategoriaVazio: "Nenhuma divisão neste tatame.",
       // configuração dos dias na própria tela de áreas
       diasEvento: "Dias do evento",
       diasNota:
