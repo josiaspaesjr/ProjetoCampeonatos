@@ -121,21 +121,33 @@ export function EditorOrdemAreas({
           ))}
         </div>
 
-        {/* LOADING DA TROCA DE DIVISÃO (cobre as colunas até o servidor voltar) */}
+        {/* LOADING DA TROCA DE DIVISÃO: escurece as colunas e prende o aviso no
+            TOPO DA TELA — as colunas têm dezenas de lutas, então um aviso
+            centralizado no bloco cairia fora da vista de quem rolou a página */}
         {movendoDivisao && (
-          <div
-            role="status"
-            aria-live="polite"
-            className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-background/80 px-6 text-center backdrop-blur-sm"
-          >
-            <Spinner className="h-7 w-7 border-[3px] text-brand-soft" />
-            <p className="font-cond text-[15px] font-bold uppercase tracking-[0.04em] text-foreground">
-              {ta.moverCategoriaProcessando}
-            </p>
-            <p className="font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
-              {ta.moverCategoriaProcessandoNota}
-            </p>
-          </div>
+          <>
+            <div
+              aria-hidden
+              className="absolute inset-0 z-30 bg-background/70 backdrop-blur-[2px]"
+            />
+            <div
+              role="status"
+              aria-live="polite"
+              className="pointer-events-none fixed inset-x-0 top-20 z-[120] flex justify-center px-4"
+            >
+              <div className="flex items-center gap-3 border border-brand/50 bg-ink/95 px-5 py-3 shadow-2xl">
+                <Spinner className="h-6 w-6 border-[3px] text-brand-soft" />
+                <div>
+                  <p className="font-cond text-[15px] font-bold uppercase tracking-[0.04em] text-foreground">
+                    {ta.moverCategoriaProcessando}
+                  </p>
+                  <p className="font-cond text-[11px] uppercase tracking-[0.04em] text-muted-3">
+                    {ta.moverCategoriaProcessandoNota}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </>
