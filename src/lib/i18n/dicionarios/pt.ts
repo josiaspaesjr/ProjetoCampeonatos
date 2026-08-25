@@ -923,6 +923,8 @@ export const pt = {
       escolherPuxar: "Puxar para agora",
       escolherFechar: "Fechar",
       escolherSalvando: "Ajustando fila…",
+      escolherTrocando: "Trocando a luta do tatame…",
+      escolherTrocandoNota: "Reajustando o cronograma da área e carregando o placar.",
     },
     placarTablet: {
       vantagensLabel: "Vantagens",

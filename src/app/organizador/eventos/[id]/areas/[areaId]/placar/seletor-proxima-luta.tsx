@@ -54,24 +54,34 @@ export function SeletorProximaLuta({
   const [aberto, setAberto] = useState(false);
   const [busca, setBusca] = useState("");
   const [pendente, setPendente] = useState<string | null>(null);
-  const [salvando, iniciarTransicao] = useTransition();
+  const [, iniciarTransicao] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // trocar de luta = server action + refresh do RSC (pode demorar). A troca só
+  // terminou quando o servidor devolve a escolhida como a do tatame — aí o
+  // painel some; até lá fica o loading por cima, sem fechar no meio.
+  const lutaEscolhida = pendente
+    ? opcoes.find((o) => o.lutaId === pendente)
+    : undefined;
+  const trocaConcluida = pendente !== null && Boolean(lutaEscolhida?.atual);
+  const trocando = pendente !== null && !trocaConcluida;
+  const painelAberto = aberto && !trocaConcluida;
 
   // painel aberto: foca a busca, trava o scroll do fundo e fecha com Esc
   useEffect(() => {
-    if (!aberto) return;
+    if (!painelAberto) return;
     inputRef.current?.focus();
     const anterior = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setAberto(false);
+      if (e.key === "Escape" && !trocando) setAberto(false);
     };
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = anterior;
       window.removeEventListener("keydown", onKey);
     };
-  }, [aberto]);
+  }, [painelAberto, trocando]);
 
   const q = norm(busca.trim());
   const visiveis = useMemo(() => {
@@ -84,14 +94,16 @@ export function SeletorProximaLuta({
   }, [opcoes, q]);
 
   function escolher(o: OpcaoLuta) {
-    if (!o.pronta || o.atual || salvando) return;
+    if (!o.pronta || o.atual || trocando) return;
     setPendente(o.lutaId);
     iniciarTransicao(async () => {
-      await definirProximaLuta(eventoId, areaId, o.lutaId);
-      router.refresh();
-      setPendente(null);
-      setAberto(false);
-      setBusca("");
+      try {
+        await definirProximaLuta(eventoId, areaId, o.lutaId);
+        router.refresh();
+      } catch {
+        // falhou: solta o loading para o operador tentar de novo
+        setPendente(null);
+      }
     });
   }
 
@@ -99,22 +111,26 @@ export function SeletorProximaLuta({
     <>
       <button
         type="button"
-        onClick={() => setAberto(true)}
+        onClick={() => {
+          setPendente(null);
+          setBusca("");
+          setAberto(true);
+        }}
         className="rounded-lg bg-white/10 px-3 py-1.5 font-cond text-sm font-semibold uppercase tracking-[0.04em] text-white/80 transition-colors hover:bg-white/20"
       >
         ⌕ {p.escolherLuta}
       </button>
 
-      {aberto && (
+      {painelAberto && (
         <div
           className="fixed inset-0 z-[300] flex items-start justify-center bg-black/70 p-4 pt-[6vh]"
-          onClick={() => setAberto(false)}
+          onClick={() => !trocando && setAberto(false)}
         >
           <div
             role="dialog"
             aria-modal="true"
             onClick={(e) => e.stopPropagation()}
-            className="flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-white/12 bg-zinc-950 text-white shadow-2xl"
+            className="relative flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded-xl border border-white/12 bg-zinc-950 text-white shadow-2xl"
           >
             {/* CABEÇALHO */}
             <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-4">
@@ -129,7 +145,8 @@ export function SeletorProximaLuta({
               <button
                 type="button"
                 onClick={() => setAberto(false)}
-                className="shrink-0 rounded-lg bg-white/10 px-3 py-1.5 font-cond text-sm font-semibold uppercase tracking-[0.04em] text-white/80 transition-colors hover:bg-white/20"
+                disabled={trocando}
+                className="shrink-0 rounded-lg bg-white/10 px-3 py-1.5 font-cond text-sm font-semibold uppercase tracking-[0.04em] text-white/80 transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 ✕ {p.escolherFechar}
               </button>
@@ -164,7 +181,7 @@ export function SeletorProximaLuta({
                       <button
                         type="button"
                         onClick={() => escolher(o)}
-                        disabled={!o.pronta || o.atual || salvando}
+                        disabled={!o.pronta || o.atual || trocando}
                         className={cn(
                           "flex w-full items-center gap-4 px-5 py-3 text-left transition-colors",
                           o.atual
@@ -173,7 +190,7 @@ export function SeletorProximaLuta({
                               ? "hover:bg-white/[0.08]"
                               : "opacity-45",
                           !o.pronta && "cursor-not-allowed",
-                          salvando && "cursor-wait",
+                          trocando && "cursor-wait",
                         )}
                       >
                         <span className="w-14 shrink-0 font-cond text-base font-bold tabular-nums text-white/70">
@@ -218,6 +235,30 @@ export function SeletorProximaLuta({
                 </ul>
               )}
             </div>
+
+            {/* LOADING DA TROCA: cobre o painel até o placar novo renderizar */}
+            {trocando && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-zinc-950/85 px-6 text-center backdrop-blur-sm"
+              >
+                <Spinner className="h-8 w-8 border-[3px] text-white/80" />
+                <p className="font-cond text-lg font-bold uppercase tracking-[0.04em]">
+                  {p.escolherTrocando}
+                </p>
+                {lutaEscolhida && (
+                  <p className="font-cond text-sm uppercase tracking-[0.03em] text-white/70">
+                    {lutaEscolhida.atleta1}
+                    <span className="mx-2 text-white/40">×</span>
+                    {lutaEscolhida.atleta2}
+                  </p>
+                )}
+                <p className="max-w-sm font-cond text-xs uppercase tracking-[0.04em] text-white/45">
+                  {p.escolherTrocandoNota}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}

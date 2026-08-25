@@ -915,6 +915,8 @@ export const en: Dicionario = {
       escolherPuxar: "Run this next",
       escolherFechar: "Close",
       escolherSalvando: "Reordering queue…",
+      escolherTrocando: "Switching the mat's match…",
+      escolherTrocandoNota: "Readjusting the mat schedule and loading the scoreboard.",
     },
     placarTablet: {
       vantagensLabel: "Advantages",

@@ -917,6 +917,8 @@ export const es: Dicionario = {
       escolherPuxar: "Traer ahora",
       escolherFechar: "Cerrar",
       escolherSalvando: "Ajustando la fila…",
+      escolherTrocando: "Cambiando el combate del área…",
+      escolherTrocandoNota: "Reajustando el cronograma del área y cargando el marcador.",
     },
     placarTablet: {
       vantagensLabel: "Ventajas",

@@ -1,6 +1,6 @@
 "use server";
 
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb, type Db } from "@/db";
@@ -517,11 +517,16 @@ export async function definirProximaLuta(
   const insercao = posAtual < destino ? destino - 1 : destino;
   const nova = [...sem.slice(0, insercao), lutaId, ...sem.slice(insercao)];
 
-  await Promise.all(
-    nova.map((id, i) =>
-      db.update(lutas).set({ ordemCronograma: i }).where(eq(lutas.id, id)),
-    ),
+  // uma única ida ao banco (CASE) — a área pode ter dezenas de lutas e o
+  // operador do placar está esperando a troca acontecer
+  const casos = sql.join(
+    nova.map((id, i) => sql`when ${id}::uuid then ${i}::int`),
+    sql` `,
   );
+  await db
+    .update(lutas)
+    .set({ ordemCronograma: sql`case ${lutas.id} ${casos} end` })
+    .where(inArray(lutas.id, nova));
 
   revalidatePath(`/organizador/eventos/${eventoId}/areas`);
   revalidatePath(`/organizador/eventos/${eventoId}/areas/${areaId}/placar`);
