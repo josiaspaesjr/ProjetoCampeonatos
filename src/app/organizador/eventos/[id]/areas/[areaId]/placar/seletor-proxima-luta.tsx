@@ -54,16 +54,19 @@ export function SeletorProximaLuta({
   const [aberto, setAberto] = useState(false);
   const [busca, setBusca] = useState("");
   const [pendente, setPendente] = useState<string | null>(null);
-  const [, iniciarTransicao] = useTransition();
+  const [trocaEmCurso, iniciarTransicao] = useTransition();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // trocar de luta = server action + refresh do RSC (pode demorar). A troca só
-  // terminou quando o servidor devolve a escolhida como a do tatame — aí o
-  // painel some; até lá fica o loading por cima, sem fechar no meio.
+  // trocar de luta = server action + refresh do RSC (pode demorar). Enquanto a
+  // transição está em curso E a escolhida ainda não voltou como a do tatame, o
+  // loading cobre o painel. Terminada a transição a troca é dada por concluída
+  // de qualquer jeito — a luta pode até ter saído da fila depois (encerrada),
+  // e o painel não pode voltar a "carregar" por causa disso.
   const lutaEscolhida = pendente
     ? opcoes.find((o) => o.lutaId === pendente)
     : undefined;
-  const trocaConcluida = pendente !== null && Boolean(lutaEscolhida?.atual);
+  const trocaConcluida =
+    pendente !== null && (!trocaEmCurso || Boolean(lutaEscolhida?.atual));
   const trocando = pendente !== null && !trocaConcluida;
   const painelAberto = aberto && !trocaConcluida;
 
