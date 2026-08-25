@@ -973,6 +973,12 @@ export const es: Dicionario = {
       reordenarAlca: "Arrastrar para reordenar",
       reordenarAviso: "Depende de una lucha posterior",
       reordenarVazio: "Genera las llaves para reordenar las luchas.",
+      // mover combates/categorías entre áreas en el editor de orden
+      moverEntreAreasDica:
+        "Arrastra por el asa para reordenar dentro del área — o suelta el combate en la columna de otra área para llevarlo allí.",
+      moverSoltarAqui: "Suelta aquí para traer el combate",
+      moverCategoriaTitulo: "Llevar división a otra área",
+      moverCategoriaBotao: "Mover",
       // configuración de los días en la propia pantalla de áreas
       diasEvento: "Días del evento",
       diasNota:

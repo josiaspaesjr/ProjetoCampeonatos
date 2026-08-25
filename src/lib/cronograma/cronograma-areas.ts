@@ -120,6 +120,8 @@ export interface LutaCron {
 
 /** uma categoria (bloco) dentro da coluna da área */
 export interface CategoriaCron {
+  /** id da categoria (o editor usa para levar a divisão inteira de tatame) */
+  categoriaId: string;
   /** chave classe·sexo·faixa (para contar grupos distintos na área) */
   grupoChave: string;
   faixa: string | null;
@@ -315,8 +317,37 @@ export async function montarCronogramaDoEvento(
     arr.sort((a, b) => (a.ordemNaArea ?? 0) - (b.ordemNaArea ?? 0));
   }
 
+  // uma luta pode ter sido levada para OUTRO tatame (lutas.areaId): a área
+  // efetiva vence a da categoria. Categorias que perderam lutas continuam na
+  // sua coluna com as que sobraram; a área destino ganha um bloco da categoria
+  // com as lutas recebidas.
+  const catPorChave = new Map(chavesRows.map((ch) => [ch.id, ch.categoriaId]));
+  const catPorId = new Map(cats.map((c) => [c.id, c]));
+  const areaEfetivaDaLuta = (l: (typeof lutasRows)[number]): string | null => {
+    if (l.areaId && areaIds.has(l.areaId)) return l.areaId;
+    const catId = catPorChave.get(l.chaveId);
+    return catId ? (catPorId.get(catId)?.areaId ?? null) : null;
+  };
+  // categorias visitantes por área (têm lutas aqui, mas moram em outro tatame)
+  const visitantesPorArea = new Map<string, Set<string>>();
+  for (const l of lutasRows) {
+    const destino = areaEfetivaDaLuta(l);
+    const catId = catPorChave.get(l.chaveId);
+    if (!destino || !catId) continue;
+    const cat = catPorId.get(catId);
+    if (!cat || cat.areaId === destino) continue;
+    const set = visitantesPorArea.get(destino);
+    if (set) set.add(catId);
+    else visitantesPorArea.set(destino, new Set([catId]));
+  }
+
   return todasAreas.map((area) => {
-    const catsDaArea = catsPorArea.get(area.id) ?? [];
+    const proprias = catsPorArea.get(area.id) ?? [];
+    const visitantes = [...(visitantesPorArea.get(area.id) ?? [])]
+      .map((id) => catPorId.get(id))
+      .filter((c): c is (typeof catsAlocadas)[number] => Boolean(c))
+      .filter((c) => c.areaId !== area.id);
+    const catsDaArea = [...proprias, ...visitantes];
     const gruposVistos = new Set<string>();
 
     // metadados por categoria + nº de "unidades de luta" (reais ou estimadas)
@@ -354,12 +385,26 @@ export async function montarCronogramaDoEvento(
           : new Set<string>();
         visiveis = lutasDaChave.filter((l) => !byes.has(l.id));
       }
-      const chaveGerada = visiveis.length > 0;
+      // ordem completa da categoria: fixa o rótulo "L{n}" mesmo quando parte
+      // das lutas foi levada para outro tatame
+      const todasDaCat = visiveis;
+      const daArea = visiveis.filter((l) => areaEfetivaDaLuta(l) === area.id);
+      const chaveGerada = todasDaCat.length > 0;
       // sem chave: estima atletas−1 lutas só para o horário ficar realista
       const nUnidades = chaveGerada
-        ? visiveis.length
+        ? daArea.length
         : Math.max(0, nAtletas - 1);
-      return { c, dur, atletas, nAtletas, grupoChave, chaveGerada, visiveis, nUnidades };
+      return {
+        c,
+        dur,
+        atletas,
+        nAtletas,
+        grupoChave,
+        chaveGerada,
+        visiveis: daArea,
+        todasDaCat,
+        nUnidades,
+      };
     });
 
     // "unidades" da área: cada luta real e cada luta estimada (categoria sem
@@ -431,7 +476,7 @@ export async function montarCronogramaDoEvento(
     for (const m of metaCats) {
       if (!m.chaveGerada) continue;
       const visIds = new Set(m.visiveis.map((l) => l.id));
-      m.visiveis.forEach((l, k) => indiceNaCat.set(l.id, k));
+      m.todasDaCat.forEach((l, k) => indiceNaCat.set(l.id, k));
       for (const f of m.visiveis)
         for (const alvo of [f.proximaLutaId, f.proximaLutaPerdedorId]) {
           if (!alvo || !visIds.has(alvo)) continue;
@@ -542,6 +587,7 @@ export async function montarCronogramaDoEvento(
       pos: Slot,
       lutasCron: LutaCron[],
     ): CategoriaCron => ({
+      categoriaId: m.c.id,
       grupoChave: m.grupoChave,
       faixa: m.c.faixa,
       titulo: `${m.c.faixa ? cap(m.c.faixa) : "—"} · ${rotuloPeso(m.c.nome, m.c.tipo)}`,

@@ -972,6 +972,12 @@ export const en: Dicionario = {
       reordenarAviso: "Depends on a match that comes later",
       reordenarVazio: "Generate the brackets to reorder matches.",
       // day configuration on the areas screen itself
+      // move matches/categories between mats in the order editor
+      moverEntreAreasDica:
+        "Drag by the handle to reorder within the mat — or drop the match on another mat's column to move it there.",
+      moverSoltarAqui: "Drop here to bring the match",
+      moverCategoriaTitulo: "Move division to another mat",
+      moverCategoriaBotao: "Move",
       diasEvento: "Event days",
       diasNota:
         "Matches are spread within each day's windows. Repeat the date for morning and afternoon — the break between them stays match-free. Adjust before structuring.",

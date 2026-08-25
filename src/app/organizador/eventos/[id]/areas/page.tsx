@@ -19,6 +19,8 @@ import { temposEfetivos } from "@/lib/cronograma/tempos";
 import {
   estruturarAreas,
   estruturarPorDia,
+  moverCategoriaParaArea,
+  moverLutaParaArea,
   reordenarLutasDaArea,
   salvarDiasEvento,
   salvarTemposLuta,
@@ -126,6 +128,8 @@ export default async function PaginaAreas({
       salvarDias={salvarDiasEvento.bind(null, id)}
       salvarTempos={salvarTemposLuta.bind(null, id)}
       reordenar={reordenarLutasDaArea.bind(null, id)}
+      moverLuta={moverLutaParaArea.bind(null, id)}
+      moverCategoria={moverCategoriaParaArea.bind(null, id)}
     />
   );
 }

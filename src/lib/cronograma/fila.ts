@@ -114,10 +114,40 @@ export async function montarFilaDaArea(
   const area = await db.query.areas.findFirst({ where: eq(areas.id, areaId) });
   if (!area) return null;
 
-  const cats = await db.query.categorias.findMany({
+  const proprias = await db.query.categorias.findMany({
     where: eq(categorias.areaId, areaId),
     orderBy: asc(categorias.ordemNaArea),
   });
+
+  // lutas trazidas de outro tatame (lutas.areaId) — a categoria delas mora em
+  // outra área, mas correm aqui: entram na fila desta área
+  const deslocadas = await db.query.lutas.findMany({
+    where: eq(lutas.areaId, areaId),
+    columns: { chaveId: true },
+  });
+  const chavesVisitantes = [...new Set(deslocadas.map((l) => l.chaveId))];
+  const catsVisitantes = chavesVisitantes.length
+    ? await (async () => {
+        const chs = await db.query.chaves.findMany({
+          where: inArray(chaves.id, chavesVisitantes),
+          columns: { categoriaId: true },
+        });
+        const ids = [...new Set(chs.map((c) => c.categoriaId))];
+        const linhas = ids.length
+          ? await db.query.categorias.findMany({
+              where: inArray(categorias.id, ids),
+            })
+          : [];
+        return linhas.filter((c) => c.areaId !== areaId);
+      })()
+    : [];
+  const cats = [...proprias, ...catsVisitantes];
+
+  /** a luta corre nesta área? (override da luta vence a área da categoria) */
+  const corrreNestaArea = (
+    luta: { areaId: string | null },
+    categoria: { areaId: string | null },
+  ) => (luta.areaId ? luta.areaId === areaId : categoria.areaId === areaId);
 
   // dias e tempos do evento: injetados por montarFilasDoEvento (evita N+1) ou
   // lidos aqui numa única passada pelo evento
@@ -157,18 +187,21 @@ export async function montarFilaDaArea(
       continue;
     }
 
-    const linhas = await db.query.lutas.findMany({
+    const todasDaChave = await db.query.lutas.findMany({
       where: eq(lutas.chaveId, chave.id),
       orderBy: [asc(lutas.rodada), asc(lutas.posicao)],
     });
+    // só as que correm NESTA área (as levadas para outro tatame saem daqui);
+    // a classificação de byes/eliminação dupla usa a chave inteira
+    const linhas = todasDaChave.filter((l) => corrreNestaArea(l, categoria));
     // eliminação dupla: só as lutas reais entram na fila (byes/walkover/mortas
     // não são lutas) e a ordem topológica é o nível de disputa — a rodada crua
     // interleava WB/LB/GF errado (a grande final é guardada como "rodada 1").
     // Demais formatos: geometria de byes + rodada.
     const dupla = chave.formato === "eliminacao_dupla";
-    const reais = dupla ? classificarEliminacaoDupla(linhas).reais : null;
-    const byes = dupla ? new Set<string>() : idsDeBye(linhas, chave.formato);
-    const nivel = dupla ? nivelDisputaEliminacaoDupla(linhas) : null;
+    const reais = dupla ? classificarEliminacaoDupla(todasDaChave).reais : null;
+    const byes = dupla ? new Set<string>() : idsDeBye(todasDaChave, chave.formato);
+    const nivel = dupla ? nivelDisputaEliminacaoDupla(todasDaChave) : null;
 
     // luta "de fato" (exclui bye/walkover/morta). Decididas viram âncora de
     // progresso; as ainda em aberto entram na fila.

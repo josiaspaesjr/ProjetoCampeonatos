@@ -484,6 +484,158 @@ export async function encerrarLutaDoPlacar(
 }
 
 /**
+ * Leva UMA luta para outro tatame (ou de volta para o da categoria) e grava a
+ * ordem da área de destino. `lutas.areaId` só diz ONDE a luta corre — a chave
+ * (rodada/posição/próxima luta) fica intacta, e a categoria continua morando na
+ * área dela com as lutas que sobraram.
+ */
+export async function moverLutaParaArea(
+  eventoId: string,
+  lutaId: string,
+  areaDestinoId: string,
+  /** lutas da área de destino na ordem final (já com a movida no lugar) */
+  idsDestinoEmOrdem: string[],
+) {
+  const { db } = await contexto(eventoId);
+
+  const [luta, areaDestino] = await Promise.all([
+    db.query.lutas.findFirst({ where: eq(lutas.id, lutaId) }),
+    db.query.areas.findFirst({ where: eq(areas.id, areaDestinoId) }),
+  ]);
+  if (!luta || !areaDestino || areaDestino.eventoId !== eventoId) return;
+
+  // a luta é mesmo deste evento?
+  const chave = await db.query.chaves.findFirst({
+    where: eq(chaves.id, luta.chaveId),
+  });
+  const categoria = chave
+    ? await db.query.categorias.findFirst({
+        where: eq(categorias.id, chave.categoriaId),
+      })
+    : null;
+  if (!categoria || categoria.eventoId !== eventoId) return;
+
+  // voltou para a área da própria categoria → não precisa de override
+  const override = categoria.areaId === areaDestinoId ? null : areaDestinoId;
+  await db.update(lutas).set({ areaId: override }).where(eq(lutas.id, lutaId));
+
+  const validos = await idsDeLutasDaArea(db, eventoId, areaDestinoId, idsDestinoEmOrdem);
+  if (validos.length) await gravarOrdem(db, validos);
+
+  revalidatePath(`/organizador/eventos/${eventoId}/areas`);
+  revalidatePath(`/organizador/eventos/${eventoId}/areas/${areaDestinoId}/placar`);
+  if (luta.areaId && luta.areaId !== areaDestinoId)
+    revalidatePath(`/organizador/eventos/${eventoId}/areas/${luta.areaId}/placar`);
+  if (categoria.areaId && categoria.areaId !== areaDestinoId)
+    revalidatePath(`/organizador/eventos/${eventoId}/areas/${categoria.areaId}/placar`);
+}
+
+/**
+ * Leva uma CATEGORIA inteira para outro tatame: ela vai para o fim da área de
+ * destino e leva junto todas as suas lutas (limpa overrides de área e de ordem
+ * das lutas, então elas entram na ordem-base intercalada do destino).
+ */
+export async function moverCategoriaParaArea(
+  eventoId: string,
+  categoriaId: string,
+  areaDestinoId: string,
+) {
+  const { db } = await contexto(eventoId);
+
+  const [categoria, areaDestino] = await Promise.all([
+    db.query.categorias.findFirst({ where: eq(categorias.id, categoriaId) }),
+    db.query.areas.findFirst({ where: eq(areas.id, areaDestinoId) }),
+  ]);
+  if (!categoria || categoria.eventoId !== eventoId) return;
+  if (!areaDestino || areaDestino.eventoId !== eventoId) return;
+  if (categoria.areaId === areaDestinoId) return;
+
+  // entra no fim da fila de categorias do destino
+  const noDestino = await db.query.categorias.findMany({
+    where: and(eq(categorias.eventoId, eventoId), eq(categorias.areaId, areaDestinoId)),
+    columns: { ordemNaArea: true },
+  });
+  const proxima = noDestino.reduce((m, c) => Math.max(m, c.ordemNaArea ?? 0), 0) + 1;
+
+  await db
+    .update(categorias)
+    .set({ areaId: areaDestinoId, ordemNaArea: proxima })
+    .where(eq(categorias.id, categoriaId));
+
+  // lutas da categoria voltam a seguir a área dela, no fim da ordem do destino
+  const chave = await db.query.chaves.findFirst({
+    where: eq(chaves.categoriaId, categoriaId),
+  });
+  if (chave) {
+    await db
+      .update(lutas)
+      .set({ areaId: null, ordemCronograma: null })
+      .where(eq(lutas.chaveId, chave.id));
+  }
+
+  revalidatePath(`/organizador/eventos/${eventoId}/areas`);
+  revalidatePath(`/organizador/eventos/${eventoId}/areas/${areaDestinoId}/placar`);
+  if (categoria.areaId)
+    revalidatePath(`/organizador/eventos/${eventoId}/areas/${categoria.areaId}/placar`);
+}
+
+/** ids válidos (lutas que realmente correm na área) preservando a ordem pedida */
+async function idsDeLutasDaArea(
+  db: Db,
+  eventoId: string,
+  areaId: string,
+  idsPedidos: string[],
+): Promise<string[]> {
+  if (!idsPedidos.length) return [];
+  const cats = await db.query.categorias.findMany({
+    where: eq(categorias.eventoId, eventoId),
+    columns: { id: true, areaId: true },
+  });
+  const areaDaCat = new Map(cats.map((c) => [c.id, c.areaId]));
+  const chavesRows = cats.length
+    ? await db.query.chaves.findMany({
+        where: inArray(
+          chaves.categoriaId,
+          cats.map((c) => c.id),
+        ),
+        columns: { id: true, categoriaId: true },
+      })
+    : [];
+  const catDaChave = new Map(chavesRows.map((c) => [c.id, c.categoriaId]));
+  const linhas = chavesRows.length
+    ? await db.query.lutas.findMany({
+        where: inArray(
+          lutas.chaveId,
+          chavesRows.map((c) => c.id),
+        ),
+        columns: { id: true, chaveId: true, areaId: true },
+      })
+    : [];
+  const naArea = new Set(
+    linhas
+      .filter((l) => {
+        if (l.areaId) return l.areaId === areaId;
+        const catId = catDaChave.get(l.chaveId);
+        return catId ? areaDaCat.get(catId) === areaId : false;
+      })
+      .map((l) => l.id),
+  );
+  return idsPedidos.filter((id) => naArea.has(id));
+}
+
+/** grava `ordemCronograma` = posição, numa única ida ao banco */
+async function gravarOrdem(db: Db, idsEmOrdem: string[]) {
+  const casos = sql.join(
+    idsEmOrdem.map((id, i) => sql`when ${id}::uuid then ${i}::int`),
+    sql` `,
+  );
+  await db
+    .update(lutas)
+    .set({ ordemCronograma: sql`case ${lutas.id} ${casos} end` })
+    .where(inArray(lutas.id, idsEmOrdem));
+}
+
+/**
  * Puxa uma luta para ser a PRÓXIMA da área (tela do placar). Reaproveita a
  * ordem manual: grava `ordemCronograma` com a ordem exibida do cronograma, só
  * que com a luta escolhida movida para a primeira posição ainda pendente — as
@@ -519,14 +671,7 @@ export async function definirProximaLuta(
 
   // uma única ida ao banco (CASE) — a área pode ter dezenas de lutas e o
   // operador do placar está esperando a troca acontecer
-  const casos = sql.join(
-    nova.map((id, i) => sql`when ${id}::uuid then ${i}::int`),
-    sql` `,
-  );
-  await db
-    .update(lutas)
-    .set({ ordemCronograma: sql`case ${lutas.id} ${casos} end` })
-    .where(inArray(lutas.id, nova));
+  await gravarOrdem(db, nova);
 
   revalidatePath(`/organizador/eventos/${eventoId}/areas`);
   revalidatePath(`/organizador/eventos/${eventoId}/areas/${areaId}/placar`);
@@ -546,37 +691,12 @@ export async function reordenarLutasDaArea(
 ) {
   const { db } = await contexto(eventoId);
 
-  // ids válidos = lutas cujas categorias estão nesta área do evento
-  const cats = await db.query.categorias.findMany({
-    where: and(eq(categorias.eventoId, eventoId), eq(categorias.areaId, areaId)),
-    columns: { id: true },
-  });
-  if (!cats.length) return;
-  const chavesRows = await db.query.chaves.findMany({
-    where: inArray(
-      chaves.categoriaId,
-      cats.map((c) => c.id),
-    ),
-    columns: { id: true },
-  });
-  if (!chavesRows.length) return;
-  const lutasDaArea = await db.query.lutas.findMany({
-    where: inArray(
-      lutas.chaveId,
-      chavesRows.map((c) => c.id),
-    ),
-    columns: { id: true },
-  });
-  const validos = new Set(lutasDaArea.map((l) => l.id));
-
-  const ordenados = lutaIdsEmOrdem.filter((id) => validos.has(id));
+  // ids válidos = lutas que correm nesta área (inclui as trazidas de outro
+  // tatame e exclui as que saíram dela)
+  const ordenados = await idsDeLutasDaArea(db, eventoId, areaId, lutaIdsEmOrdem);
   if (!ordenados.length) return;
 
-  await Promise.all(
-    ordenados.map((id, i) =>
-      db.update(lutas).set({ ordemCronograma: i }).where(eq(lutas.id, id)),
-    ),
-  );
+  await gravarOrdem(db, ordenados);
 
   revalidatePath(`/organizador/eventos/${eventoId}`);
   revalidatePath(`/organizador/eventos/${eventoId}/areas`);

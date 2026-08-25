@@ -979,6 +979,12 @@ export const pt = {
       reordenarAlca: "Arrastar para reordenar",
       reordenarAviso: "Depende de uma luta que vem depois",
       reordenarVazio: "Gere as chaves para reordenar as lutas.",
+      // mover lutas/categorias entre tatames no editor de ordem
+      moverEntreAreasDica:
+        "Arraste pela alça para reordenar dentro do tatame — ou solte a luta na coluna de outro tatame para levá-la para lá.",
+      moverSoltarAqui: "Solte aqui para trazer a luta",
+      moverCategoriaTitulo: "Levar divisão para outro tatame",
+      moverCategoriaBotao: "Mover",
       // configuração dos dias na própria tela de áreas
       diasEvento: "Dias do evento",
       diasNota:

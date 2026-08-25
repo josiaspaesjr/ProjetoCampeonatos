@@ -64,6 +64,8 @@ export function EstruturadorAreas({
   salvarDias,
   salvarTempos,
   reordenar,
+  moverLuta,
+  moverCategoria,
 }: {
   categorias: CategoriaView[];
   numAreasInicial: number | null;
@@ -94,6 +96,17 @@ export function EstruturadorAreas({
   salvarTempos: (formData: FormData) => void | Promise<void>;
   /** persiste a ordem manual das lutas de uma área (drag-and-drop) */
   reordenar: (areaId: string, lutaIds: string[]) => void | Promise<void>;
+  /** leva uma luta para outro tatame (com a ordem final do destino) */
+  moverLuta: (
+    lutaId: string,
+    areaDestinoId: string,
+    lutaIdsDestino: string[],
+  ) => void | Promise<void>;
+  /** leva uma categoria inteira para outro tatame */
+  moverCategoria: (
+    categoriaId: string,
+    areaDestinoId: string,
+  ) => void | Promise<void>;
 }) {
   // a estrutura vem persistida do servidor: a prévia só muda ao "Estruturar"
   const estruturado = cronograma.length > 0;
@@ -438,7 +451,12 @@ export function EstruturadorAreas({
 
           {/* COLUNAS DE ÁREA (lado a lado, scroll lateral) */}
           {reordenando ? (
-            <EditorOrdemAreas cronograma={cronograma} onReordenar={reordenar} />
+            <EditorOrdemAreas
+              cronograma={cronograma}
+              onReordenar={reordenar}
+              onMoverLuta={moverLuta}
+              onMoverCategoria={moverCategoria}
+            />
           ) : (
             <ProgramacaoAreas
               cronograma={cronograma}
