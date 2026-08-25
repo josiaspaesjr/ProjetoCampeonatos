@@ -17,6 +17,7 @@ import {
   diasDoEventoOuDefault,
   formatarDuracaoSegundos,
 } from "@/lib/cronograma/dias";
+import { montarCronogramaDoEvento } from "@/lib/cronograma/cronograma-areas";
 import { duracaoDaCategoria } from "@/lib/cronograma/fila";
 import { verificarCapacidade, type ResultadoCapacidade } from "@/lib/cronograma/janelas";
 import {
@@ -456,6 +457,50 @@ export async function encerrarLutaDoPlacar(
   const { db } = await contexto(eventoId);
   await registrarResultadoNoBanco(db, chaveId, lutaId, vencedorId, metodo, placar);
   revalidatePath(`/organizador/eventos/${eventoId}/areas`);
+}
+
+/**
+ * Puxa uma luta para ser a PRÓXIMA da área (tela do placar). Reaproveita a
+ * ordem manual: grava `ordemCronograma` com a ordem exibida do cronograma, só
+ * que com a luta escolhida movida para a primeira posição ainda pendente — as
+ * já encerradas ficam onde estão (são âncora de progresso). Como a fila do
+ * placar/telão e as colunas do cronograma leem essa mesma ordem, os horários
+ * estimados se reajustam sozinhos. A topologia da chave não muda.
+ */
+export async function definirProximaLuta(
+  eventoId: string,
+  areaId: string,
+  lutaId: string,
+) {
+  const { db, evento } = await contexto(eventoId);
+
+  const cronograma = await montarCronogramaDoEvento(db, eventoId, evento.dataInicio);
+  const area = cronograma.find((a) => a.id === areaId);
+  if (!area) return;
+
+  // lutas da área na ordem exibida hoje (mesma lista do editor de arrastar)
+  const todas = area.categorias.flatMap((c) => c.lutas);
+  const posAtual = todas.findIndex((l) => l.id === lutaId);
+  if (posAtual < 0) return;
+
+  // destino = primeira posição ainda não encerrada (o "próxima da fila")
+  const primeiroPendente = todas.findIndex((l) => !l.decidida);
+  const destino = primeiroPendente < 0 ? todas.length - 1 : primeiroPendente;
+  if (posAtual === destino) return;
+
+  const ids = todas.map((l) => l.id);
+  const sem = ids.filter((id) => id !== lutaId);
+  const insercao = posAtual < destino ? destino - 1 : destino;
+  const nova = [...sem.slice(0, insercao), lutaId, ...sem.slice(insercao)];
+
+  await Promise.all(
+    nova.map((id, i) =>
+      db.update(lutas).set({ ordemCronograma: i }).where(eq(lutas.id, id)),
+    ),
+  );
+
+  revalidatePath(`/organizador/eventos/${eventoId}/areas`);
+  revalidatePath(`/organizador/eventos/${eventoId}/areas/${areaId}/placar`);
 }
 
 /**

@@ -910,6 +910,19 @@ export const pt = {
         "A fila está vazia ou aguardando vencedores das lutas anteriores.",
       voltarAsAreas: "Voltar às áreas",
       naFila: "na fila",
+      // seletor de próxima luta (puxar uma luta para o tatame)
+      escolherLuta: "Escolher luta",
+      escolherTitulo: "Próxima no tatame",
+      escolherTexto:
+        "Escolha qual luta vai acontecer agora — o cronograma da área se reajusta.",
+      escolherBuscar: "Buscar por atleta, academia ou categoria…",
+      escolherVazio: "Nenhuma luta encontrada",
+      escolherFilaVazia: "Nenhuma luta pendente nesta área.",
+      escolherAtual: "No tatame",
+      escolherAguardando: "Aguardando vencedor",
+      escolherPuxar: "Puxar para agora",
+      escolherFechar: "Fechar",
+      escolherSalvando: "Ajustando fila…",
     },
     placarTablet: {
       vantagensLabel: "Vantagens",

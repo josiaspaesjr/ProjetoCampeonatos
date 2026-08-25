@@ -902,6 +902,19 @@ export const en: Dicionario = {
       filaVazia: "The queue is empty or waiting for winners of previous fights.",
       voltarAsAreas: "Back to mats",
       naFila: "in queue",
+      // next-match picker (pull a match to the mat)
+      escolherLuta: "Pick match",
+      escolherTitulo: "Next on the mat",
+      escolherTexto:
+        "Pick which match runs now — the mat schedule readjusts itself.",
+      escolherBuscar: "Search by athlete, academy or category…",
+      escolherVazio: "No match found",
+      escolherFilaVazia: "No pending matches on this mat.",
+      escolherAtual: "On the mat",
+      escolherAguardando: "Waiting for a winner",
+      escolherPuxar: "Run this next",
+      escolherFechar: "Close",
+      escolherSalvando: "Reordering queue…",
     },
     placarTablet: {
       vantagensLabel: "Advantages",

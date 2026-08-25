@@ -8,8 +8,13 @@ import { getUsuarioAtual } from "@/lib/auth";
 import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import { montarFilaDaArea, tempoDeLutaSegundos } from "@/lib/cronograma/fila";
+import { hora, rotuloCat } from "@/lib/cronograma/telao-format";
 import { BotaoTelaCheia } from "@/components/telao/botao-tela-cheia";
 import { PlacarTablet } from "./placar-tablet";
+import {
+  SeletorProximaLuta,
+  type OpcaoLuta,
+} from "./seletor-proxima-luta";
 
 export default async function PaginaPlacar({
   params,
@@ -30,6 +35,25 @@ export default async function PaginaPlacar({
 
   const proxima = fila.fila.find((f) => f.pronta);
 
+  // fila pendente da área para o seletor "escolher luta" (busca por atleta,
+  // academia ou categoria). `atual` marca a que está no tatame agora.
+  const nomeAtleta = (id: string | null) =>
+    id ? (fila.atletas[id]?.nome ?? "?") : p.escolherAguardando;
+  const academiaAtleta = (id: string | null) =>
+    id ? (fila.atletas[id]?.academia ?? null) : null;
+  const opcoes: OpcaoLuta[] = fila.fila.map((f) => ({
+    lutaId: f.luta.id,
+    categoria: rotuloCat(f.categoria.nome),
+    categoriaCompleta: f.categoria.nome,
+    hora: hora(f.horaEstimada),
+    atleta1: nomeAtleta(f.luta.atleta1InscricaoId),
+    atleta2: nomeAtleta(f.luta.atleta2InscricaoId),
+    academia1: academiaAtleta(f.luta.atleta1InscricaoId),
+    academia2: academiaAtleta(f.luta.atleta2InscricaoId),
+    pronta: f.pronta,
+    atual: f.luta.id === proxima?.luta.id,
+  }));
+
   if (!proxima) {
     return (
       <div className="mx-auto max-w-lg py-20 text-center">
@@ -37,12 +61,17 @@ export default async function PaginaPlacar({
           {p.nenhumLutaProntaEm} {fila.area.nome}
         </p>
         <p className="mt-2 text-muted-foreground">{p.filaVazia}</p>
-        <Link
-          href={`/organizador/eventos/${id}/areas`}
-          className={`mt-6 inline-block ${buttonVariants()}`}
-        >
-          {p.voltarAsAreas}
-        </Link>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href={`/organizador/eventos/${id}/areas`}
+            className={buttonVariants()}
+          >
+            {p.voltarAsAreas}
+          </Link>
+          {opcoes.length > 0 && (
+            <SeletorProximaLuta eventoId={id} areaId={areaId} opcoes={opcoes} />
+          )}
+        </div>
       </div>
     );
   }
@@ -65,6 +94,7 @@ export default async function PaginaPlacar({
             {fila.fila.length === 1 ? dic.lutasTab.luta : dic.lutasTab.lutas}{" "}
             {p.naFila}
           </p>
+          <SeletorProximaLuta eventoId={id} areaId={areaId} opcoes={opcoes} />
           <BotaoTelaCheia alvoId="placar-operador" variante="inline" />
         </div>
       </div>

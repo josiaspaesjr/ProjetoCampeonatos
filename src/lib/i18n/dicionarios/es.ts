@@ -904,6 +904,19 @@ export const es: Dicionario = {
         "La cola está vacía o esperando a los ganadores de los combates anteriores.",
       voltarAsAreas: "Volver a las áreas",
       naFila: "en la cola",
+      // selector de próximo combate (traer un combate al área)
+      escolherLuta: "Elegir combate",
+      escolherTitulo: "Próximo en el área",
+      escolherTexto:
+        "Elige qué combate ocurre ahora — el cronograma del área se reajusta.",
+      escolherBuscar: "Buscar por atleta, academia o categoría…",
+      escolherVazio: "Ningún combate encontrado",
+      escolherFilaVazia: "Ningún combate pendiente en esta área.",
+      escolherAtual: "En el área",
+      escolherAguardando: "Esperando ganador",
+      escolherPuxar: "Traer ahora",
+      escolherFechar: "Cerrar",
+      escolherSalvando: "Ajustando la fila…",
     },
     placarTablet: {
       vantagensLabel: "Ventajas",
