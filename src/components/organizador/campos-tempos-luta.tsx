@@ -2,10 +2,8 @@
 
 import { useState } from "react";
 import { cn } from "@/lib/utils";
-import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 import { useDic } from "@/lib/i18n/client";
-import { BotaoRecolher } from "@/components/organizador/painel-por-dia";
 import {
   CHAVES_TEMPO_FAIXA,
   CHAVES_TEMPO_KIDS,
@@ -23,79 +21,53 @@ import {
  */
 export function CamposTemposLuta({
   valores,
-  salvar,
-  aberto,
-  onAlternar,
 }: {
   /** minutos efetivos por linha (padrão + o que o organizador mudou) */
   valores: Record<ChaveTempo, number>;
-  salvar: (formData: FormData) => void | Promise<void>;
-  aberto: boolean;
-  onAlternar: () => void;
 }) {
   const dic = useDic();
   const ta = dic.admin.areas;
 
   return (
-    <div className="relative flex flex-col gap-4 border border-white/10 bg-surface p-[22px]">
-      <span className="absolute inset-y-0 left-0 w-[3px] bg-brand" />
+    <div className="flex flex-col gap-4">
+      <p className="max-w-2xl font-cond text-[13px] uppercase tracking-[0.02em] text-muted-3">
+        {ta.temposTexto}
+      </p>
 
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0">
-          <div className="disp text-[22px]">{ta.temposTitulo}</div>
-          {aberto && (
-            <p className="mt-1 max-w-2xl font-cond text-[13px] uppercase tracking-[0.02em] text-muted-3">
-              {ta.temposTexto}
-            </p>
-          )}
-        </div>
-        <BotaoRecolher aberto={aberto} onClick={onAlternar} ta={ta} />
-      </div>
+      <Grupo titulo={ta.temposKids}>
+        {CHAVES_TEMPO_KIDS.map((chave) => (
+          <CampoTempo
+            key={chave}
+            chave={chave}
+            rotulo={dic.classesIdade[chave] ?? chave}
+            valor={valores[chave]}
+            min={ta.temposMin}
+            padrao={ta.temposPadrao}
+          />
+        ))}
+      </Grupo>
 
-      {aberto && (
-        <form action={salvar} className="flex flex-col gap-4">
-          <Grupo titulo={ta.temposKids}>
-            {CHAVES_TEMPO_KIDS.map((chave) => (
-              <CampoTempo
-                key={chave}
-                chave={chave}
-                rotulo={dic.classesIdade[chave] ?? chave}
-                valor={valores[chave]}
-                min={ta.temposMin}
-                padrao={ta.temposPadrao}
-              />
-            ))}
-          </Grupo>
+      <Grupo titulo={ta.temposAdulto}>
+        {CHAVES_TEMPO_FAIXA.map((chave) => (
+          <CampoTempo
+            key={chave}
+            chave={chave}
+            rotulo={
+              dic.evento.faixaNomes[
+                chave as keyof typeof dic.evento.faixaNomes
+              ] ?? chave
+            }
+            cor={corDaFaixa(chave)}
+            valor={valores[chave]}
+            min={ta.temposMin}
+            padrao={ta.temposPadrao}
+          />
+        ))}
+      </Grupo>
 
-          <Grupo titulo={ta.temposAdulto}>
-            {CHAVES_TEMPO_FAIXA.map((chave) => (
-              <CampoTempo
-                key={chave}
-                chave={chave}
-                rotulo={
-                  dic.evento.faixaNomes[
-                    chave as keyof typeof dic.evento.faixaNomes
-                  ] ?? chave
-                }
-                cor={corDaFaixa(chave)}
-                valor={valores[chave]}
-                min={ta.temposMin}
-                padrao={ta.temposPadrao}
-              />
-            ))}
-          </Grupo>
-
-          <p className="font-cond text-[12px] uppercase tracking-[0.03em] text-muted-3">
-            {ta.temposNotaJuvenil}
-          </p>
-
-          <div className="flex justify-end">
-            <BotaoAcaoBruto className="inline-flex -skew-x-9 items-center border border-white/16 px-5 py-2.5 font-cond text-[15px] font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-brand/50 hover:text-brand-soft">
-              <span className="inline-block skew-x-9">{ta.temposSalvar}</span>
-            </BotaoAcaoBruto>
-          </div>
-        </form>
-      )}
+      <p className="font-cond text-[12px] uppercase tracking-[0.03em] text-muted-3">
+        {ta.temposNotaJuvenil}
+      </p>
     </div>
   );
 }

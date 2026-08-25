@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 import { useDic } from "@/lib/i18n/client";
 
@@ -31,11 +30,57 @@ export interface DiaDistinto {
   label: string;
 }
 
-interface FiltroState {
+export interface FiltroState {
   classes: Set<string>;
   sexos: Set<string>;
   faixas: Set<string>;
   absoluto: boolean;
+}
+
+/** filtros zerados, um por dia */
+export const filtrosVazios = (nDias: number): FiltroState[] =>
+  Array.from({ length: nDias }, () => ({
+    classes: new Set<string>(),
+    sexos: new Set<string>(),
+    faixas: new Set<string>(),
+    absoluto: false,
+  }));
+
+/**
+ * Contagem ao vivo + payload da action: cada categoria entra no PRIMEIRO dia
+ * cujo filtro a inclui; o resto fica sem dia. Puro de propósito — o assistente
+ * mostra os filtros num passo e o botão de estruturar em outro.
+ */
+export function resumoPorDia(
+  dias: DiaDistinto[],
+  filtros: FiltroState[],
+  categorias: CategoriaFiltro[],
+) {
+  const usados = new Set<string>();
+  const porDia = filtros.map((f) => {
+    let n = 0;
+    for (const c of categorias) {
+      if (usados.has(c.id)) continue;
+      if (casaFiltro(c, f)) {
+        usados.add(c.id);
+        n++;
+      }
+    }
+    return n;
+  });
+  const atribuicoes = dias.map((d, di) => ({
+    data: d.data,
+    classes: [...(filtros[di]?.classes ?? [])],
+    sexos: [...(filtros[di]?.sexos ?? [])],
+    faixas: [...(filtros[di]?.faixas ?? [])],
+    absoluto: filtros[di]?.absoluto ?? false,
+  }));
+  return {
+    porDia,
+    naoAtribuidas: categorias.length - usados.size,
+    atribuidas: usados.size,
+    atribuicoes,
+  };
 }
 
 const chipBase =
@@ -61,40 +106,25 @@ export function PainelPorDia({
   dias,
   dimensoes,
   categorias,
-  areasN,
-  setAreasN,
-  estruturar,
-  aberto = true,
-  onAlternar,
+  filtros,
+  setFiltros,
 }: {
   dias: DiaDistinto[];
   dimensoes: DimensoesGrade;
   categorias: CategoriaFiltro[];
-  /** nº de áreas (string do input, compartilhado com o modo automático) */
-  areasN: string;
-  setAreasN: (v: string) => void;
-  estruturar: (formData: FormData) => void | Promise<void>;
-  /** corpo visível; com `onAlternar`, o cabeçalho ganha Mostrar/Ocultar */
-  aberto?: boolean;
-  onAlternar?: () => void;
+  /** filtros por dia (estado no pai: o assistente separa filtros e ação) */
+  filtros: FiltroState[];
+  setFiltros: React.Dispatch<React.SetStateAction<FiltroState[]>>;
 }) {
   const dic = useDic();
   const ta = dic.admin.areas;
   const ger = dic.admin.gerador;
 
-  const nInt = Math.floor(Number(areasN));
-  const nAreasValido = Number.isFinite(nInt) && nInt >= 1 && nInt <= 40;
-
-  const [filtros, setFiltros] = useState<FiltroState[]>(() =>
-    dias.map(() => ({
-      classes: new Set<string>(),
-      sexos: new Set<string>(),
-      faixas: new Set<string>(),
-      absoluto: false,
-    })),
-  );
-
-  function toggle(di: number, dim: "classes" | "sexos" | "faixas", valor: string) {
+  function toggle(
+    di: number,
+    dim: "classes" | "sexos" | "faixas",
+    valor: string,
+  ) {
     setFiltros((fs) =>
       fs.map((f, k) => {
         if (k !== di) return f;
@@ -112,33 +142,11 @@ export function PainelPorDia({
     );
   }
 
-  // contagem ao vivo: cada categoria vai para o 1º dia cujo filtro a inclui
-  const contagem = useMemo(() => {
-    const usados = new Set<string>();
-    const porDia = filtros.map((f) => {
-      let n = 0;
-      for (const c of categorias) {
-        if (usados.has(c.id)) continue;
-        if (casaFiltro(c, f)) {
-          usados.add(c.id);
-          n++;
-        }
-      }
-      return n;
-    });
-    return { porDia, naoAtribuidas: categorias.length - usados.size };
-  }, [filtros, categorias]);
-
-  const totalAtribuidas = categorias.length - contagem.naoAtribuidas;
-  const podeEstruturar = nAreasValido && totalAtribuidas > 0;
-
-  const atribuicoes = dias.map((d, di) => ({
-    data: d.data,
-    classes: [...filtros[di].classes],
-    sexos: [...filtros[di].sexos],
-    faixas: [...filtros[di].faixas],
-    absoluto: filtros[di].absoluto,
-  }));
+  // contagem ao vivo (mesmo cálculo que a action recebe ao estruturar)
+  const contagem = useMemo(
+    () => resumoPorDia(dias, filtros, categorias),
+    [dias, filtros, categorias],
+  );
 
   const nomeSexo = (s: string) =>
     s === "masculino" ? dic.inscricao.masculino : dic.inscricao.feminino;
@@ -147,52 +155,18 @@ export function PainelPorDia({
     f.charAt(0).toUpperCase() + f.slice(1);
 
   return (
-    <div className="relative flex flex-col gap-4 border border-white/10 bg-surface p-[22px]">
-      <span className="absolute inset-y-0 left-0 w-[3px] bg-brand" />
-
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <div className="disp text-[22px]">{ta.porDiaTitulo}</div>
-          {aberto && (
-            <p className="mt-1 max-w-xl font-cond text-[13px] uppercase tracking-[0.02em] text-muted-3">
-              {ta.porDiaTexto}
-            </p>
-          )}
-        </div>
-        <div className="flex items-end gap-3">
-          {aberto && (
-            <div>
-              <label
-                htmlFor="num-areas-dia"
-                className="mb-1.5 block font-cond text-[12px] font-semibold uppercase tracking-[0.1em] text-muted-3"
-              >
-                {ta.numeroAreas}
-              </label>
-              <input
-                id="num-areas-dia"
-                type="number"
-                min={1}
-                max={40}
-                value={areasN}
-                onChange={(e) => setAreasN(e.target.value)}
-                placeholder="0"
-                className="disp tnum w-[92px] border border-white/14 bg-background px-3 py-1 text-[40px] leading-none text-foreground focus:border-brand focus:outline-none"
-              />
-            </div>
-          )}
-          {onAlternar && (
-            <BotaoRecolher aberto={aberto} onClick={onAlternar} ta={ta} />
-          )}
-        </div>
-      </div>
-
-      {!aberto ? null : (
-        <>
+    <div className="flex flex-col gap-4">
+      <p className="max-w-2xl font-cond text-[13px] uppercase tracking-[0.02em] text-muted-3">
+        {ta.porDiaTexto}
+      </p>
 
       {/* um cartão por dia */}
       <div className="flex flex-col gap-3">
         {dias.map((d, di) => (
-          <div key={d.data} className="border border-white/10 bg-background p-4">
+          <div
+            key={d.data}
+            className="border border-white/10 bg-background p-4"
+          >
             <div className="mb-3 flex items-center justify-between gap-3">
               <div className="flex items-baseline gap-2">
                 <span className="font-cond text-[13px] font-semibold uppercase tracking-[0.1em] text-muted-3">
@@ -201,7 +175,9 @@ export function PainelPorDia({
                 <span className="disp text-[18px]">{d.label}</span>
               </div>
               <span className="font-cond text-[13px] uppercase tracking-[0.04em] text-brand">
-                <span className="disp tnum text-[18px]">{contagem.porDia[di]}</span>{" "}
+                <span className="disp tnum text-[18px]">
+                  {contagem.porDia[di]}
+                </span>{" "}
                 {contagem.porDia[di] === 1
                   ? dic.admin.categorias.categoria
                   : dic.admin.categorias.categorias}
@@ -265,36 +241,19 @@ export function PainelPorDia({
         ))}
       </div>
 
-      {/* rodapé: não atribuídas + estruturar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-4">
-        <span className="font-cond text-[13px] uppercase tracking-[0.04em] text-muted-3">
-          {contagem.naoAtribuidas > 0 ? (
-            <>
-              <span className="disp tnum text-brand">{contagem.naoAtribuidas}</span>{" "}
-              {ta.porDiaSemDia}
-            </>
-          ) : (
-            ta.porDiaTodasAtribuidas
-          )}
-        </span>
-
-        <form action={estruturar}>
-          <input type="hidden" name="numAreas" value={nAreasValido ? nInt : ""} />
-          <input
-            type="hidden"
-            name="atribuicoes"
-            value={JSON.stringify(atribuicoes)}
-          />
-          <BotaoAcaoBruto
-            disabled={!podeEstruturar}
-            className="inline-flex -skew-x-9 items-center bg-brand px-6 py-3.5 font-cond text-[15px] font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d] disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <span className="inline-block skew-x-9">⚙ {ta.estruturarPorDia}</span>
-          </BotaoAcaoBruto>
-        </form>
-      </div>
-        </>
-      )}
+      {/* quantas ficaram sem dia (o botão de estruturar é o passo seguinte) */}
+      <p className="font-cond text-[13px] uppercase tracking-[0.04em] text-muted-3">
+        {contagem.naoAtribuidas > 0 ? (
+          <>
+            <span className="disp tnum text-brand">
+              {contagem.naoAtribuidas}
+            </span>{" "}
+            {ta.porDiaSemDia}
+          </>
+        ) : (
+          ta.porDiaTodasAtribuidas
+        )}
+      </p>
     </div>
   );
 }
@@ -324,7 +283,10 @@ export function BotaoRecolher({
           stroke="currentColor"
           strokeWidth={2.5}
           strokeLinecap="square"
-          className={cn("h-3.5 w-3.5 transition-transform", aberto && "rotate-90")}
+          className={cn(
+            "h-3.5 w-3.5 transition-transform",
+            aberto && "rotate-90",
+          )}
         >
           <path d="M9 6l6 6-6 6" />
         </svg>
@@ -334,7 +296,13 @@ export function BotaoRecolher({
   );
 }
 
-function Linha({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+function Linha({
+  titulo,
+  children,
+}: {
+  titulo: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <span className="w-16 shrink-0 font-cond text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-3">

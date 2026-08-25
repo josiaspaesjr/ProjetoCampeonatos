@@ -24,16 +24,23 @@ import {
   type DiaEvento,
 } from "@/components/organizador/campos-dias-evento";
 import {
-  BotaoRecolher,
+  filtrosVazios,
   PainelPorDia,
+  resumoPorDia,
   type CategoriaFiltro,
   type DiaDistinto,
   type DimensoesGrade,
+  type FiltroState,
 } from "@/components/organizador/painel-por-dia";
+import { AssistentePassos } from "@/components/organizador/assistente-passos";
 import { BuscaCronograma } from "@/components/organizador/busca-cronograma";
 import { BotaoImprimirPrograma } from "@/components/organizador/botao-imprimir-programa";
 import { CamposTemposLuta } from "@/components/organizador/campos-tempos-luta";
-import type { ChaveTempo } from "@/lib/cronograma/tempos";
+import {
+  CHAVES_TEMPO,
+  TEMPOS_PADRAO,
+  type ChaveTempo,
+} from "@/lib/cronograma/tempos";
 import { useDic } from "@/lib/i18n/client";
 
 const AREAS_MIN = 1;
@@ -118,20 +125,48 @@ export function EstruturadorAreas({
   const [areasFull, setAreasFull] = useState(false);
   const [reordenando, setReordenando] = useState(false);
   const [lutaSel, setLutaSel] = useState<LutaSelecionada | null>(null);
-  // com as lutas já distribuídas, a configuração sai da frente (mas volta num clique)
-  const [diasAberto, setDiasAberto] = useState(!estruturado);
-  const [porDiaAberto, setPorDiaAberto] = useState(!estruturado);
-  const [temposAberto, setTemposAberto] = useState(false);
+  // com as lutas já distribuídas o assistente começa recolhido (vira resumo)
+  const [assistenteAberto, setAssistenteAberto] = useState(!estruturado);
   const [buscaAberta, setBuscaAberta] = useState(false);
+  // filtros do modo "Por dia" moram aqui: o assistente mostra os filtros num
+  // passo e o botão de estruturar em outro
+  const [filtros, setFiltros] = useState<FiltroState[]>(() =>
+    filtrosVazios(diasDistintos.length),
+  );
+
+  const dic = useDic();
+  const ta = dic.admin.areas;
 
   const nInt = Math.floor(Number(areasN));
-  const nValido = Number.isFinite(nInt) && nInt >= AREAS_MIN && nInt <= AREAS_MAX;
+  const nValido =
+    Number.isFinite(nInt) && nInt >= AREAS_MIN && nInt <= AREAS_MAX;
   const totalCategorias = categorias.length;
   const temCategorias = totalCategorias > 0;
 
-  const maiorOndaValor = useMemo(() => maiorOndaDeCats(categorias), [categorias]);
+  // resumo de cada passo (aparece na trilha e no modo recolhido)
+  const diasDistintosN = new Set(dias.map((d) => d.data.slice(0, 10))).size;
+  const resumoDias = `${diasDistintosN} ${diasDistintosN === 1 ? ta.assistenteResumoDia : ta.assistenteResumoDias} · ${dias[0]?.inicio ?? ""}–${dias[dias.length - 1]?.fim ?? ""}`;
+  const ajustados = CHAVES_TEMPO.filter(
+    (k) => tempos[k] !== TEMPOS_PADRAO[k],
+  ).length;
+  const resumoTempos = ajustados
+    ? `${ajustados} ${ta.assistenteResumoAjustados}`
+    : ta.assistenteResumoPadrao;
+  const atribuidasPorDia = resumoPorDia(
+    diasDistintos,
+    filtros,
+    categoriasFiltro,
+  ).atribuidas;
+
+  const maiorOndaValor = useMemo(
+    () => maiorOndaDeCats(categorias),
+    [categorias],
+  );
   const gruposTotal = useMemo(() => contarGrupos(categorias), [categorias]);
-  const classesDoFunil = useMemo(() => classesEmOrdem(categorias), [categorias]);
+  const classesDoFunil = useMemo(
+    () => classesEmOrdem(categorias),
+    [categorias],
+  );
 
   // tela cheia e modal de placar: travam o scroll do body e fecham com Esc
   // (Esc fecha primeiro o modal, depois a tela cheia)
@@ -150,9 +185,6 @@ export function EstruturadorAreas({
       window.removeEventListener("keydown", onKey);
     };
   }, [areasFull, lutaSel]);
-
-  const dic = useDic();
-  const ta = dic.admin.areas;
 
   // ---- SEM CATEGORIAS: bloqueia com prompt para a seção Categorias ----
   if (!temCategorias) {
@@ -195,176 +227,240 @@ export function EstruturadorAreas({
         </div>
       )}
 
-      {/* DIAS DO EVENTO (define o período em que as lutas são encaixadas).
-          Já estruturado, começa recolhido — o cronograma é o que interessa. */}
-      <div className="relative border border-white/10 bg-surface p-[22px]">
-        <span className="absolute inset-y-0 left-0 w-[3px] bg-brand" />
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <span className="disp text-[22px]">{ta.diasEvento}</span>
-          <BotaoRecolher
-            aberto={diasAberto}
-            onClick={() => setDiasAberto((v) => !v)}
-            ta={ta}
-          />
-        </div>
-        {diasAberto && (
-          <form action={salvarDias} className="mt-4 flex flex-col gap-4">
-            <CamposDiasEvento
-              labelCls="disp text-[22px]"
-              defaultDias={dias}
-              semTitulo
-            />
-            <div className="flex justify-end">
-              <BotaoAcaoBruto className="inline-flex -skew-x-9 items-center border border-white/16 px-5 py-2.5 font-cond text-[15px] font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-brand/50 hover:text-brand-soft">
+      {/* ASSISTENTE: dias → tempo de luta → categorias por dia → ordem do dia
+          → montagem. Já estruturado, começa recolhido (vira linha de resumo) */}
+      <AssistentePassos
+        titulo={ta.assistenteTitulo}
+        aberto={assistenteAberto}
+        onAlternar={() => setAssistenteAberto((v) => !v)}
+        passos={[
+          {
+            id: "dias",
+            titulo: ta.assistenteDias,
+            resumo: resumoDias,
+            conteudo: (
+              <form
+                id="form-dias"
+                action={salvarDias}
+                className="flex flex-col gap-4"
+              >
+                <p className="max-w-2xl font-cond text-[13px] uppercase tracking-[0.02em] text-muted-3">
+                  {ta.diasNota}
+                </p>
+                <CamposDiasEvento
+                  labelCls="disp text-[22px]"
+                  defaultDias={dias}
+                  semTitulo
+                />
+              </form>
+            ),
+            acao: (
+              <BotaoAcaoBruto
+                form="form-dias"
+                className="inline-flex -skew-x-9 items-center border border-white/16 px-5 py-2.5 font-cond text-[14px] font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-brand/50 hover:text-brand-soft"
+              >
                 <span className="inline-block skew-x-9">{ta.salvarDias}</span>
               </BotaoAcaoBruto>
-            </div>
-          </form>
-        )}
-      </div>
-
-      {/* TEMPO DE LUTA (minutos por classe kids / faixa adulto+) */}
-      <CamposTemposLuta
-        valores={tempos}
-        salvar={salvarTempos}
-        aberto={temposAberto}
-        onAlternar={() => setTemposAberto((v) => !v)}
-      />
-
-      {/* SELETOR DE MODO: automático × por dia */}
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="font-cond text-[13px] font-semibold uppercase tracking-[0.1em] text-muted-3">
-          {ta.modoLabel}
-        </span>
-        <div className="flex">
-          {(
-            [
-              ["auto", ta.modoAutomatico],
-              ["porDia", ta.modoPorDia],
-            ] as ["auto" | "porDia", string][]
-          ).map(([val, rotulo]) => (
-            <button
-              key={val}
-              type="button"
-              onClick={() => setModo(val)}
-              className={cn(
-                "-skew-x-9 border px-4 py-2 font-cond text-[14px] font-semibold uppercase tracking-[0.04em] transition-colors",
-                modo === val
-                  ? "border-brand bg-brand text-white"
-                  : "border-white/16 text-muted-2 hover:border-white/30",
-              )}
-            >
-              <span className="inline-block skew-x-9">{rotulo}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* CARD DE CONTROLE (modo automático) */}
-      {modo === "auto" && (
-      <div className="relative border border-white/10 bg-surface">
-        <span className="absolute inset-y-0 left-0 w-[3px] bg-brand" />
-        <div className="grid items-center gap-x-8 gap-y-6 px-6 py-[26px] lg:grid-cols-[auto_1fr_auto]">
-          {/* Nº de áreas */}
-          <div>
-            <label
-              htmlFor="num-areas"
-              className="mb-1.5 block font-cond text-[13px] font-semibold uppercase tracking-[0.1em] text-muted-3"
-            >
-              {ta.numeroAreas}
-            </label>
-            <input
-              id="num-areas"
-              type="number"
-              min={AREAS_MIN}
-              max={AREAS_MAX}
-              value={areasN}
-              onChange={(e) => setAreasN(e.target.value)}
-              placeholder="0"
-              className="disp tnum w-[136px] border border-white/14 bg-background px-4 py-1 text-[64px] leading-none text-foreground focus:border-brand focus:outline-none"
-            />
-          </div>
-
-          {/* Categorias carregadas */}
-          <div>
-            <div className="font-cond text-[13px] font-semibold uppercase tracking-[0.1em] text-muted-3">
-              {ta.categoriasCarregadas}
-            </div>
-            <div className="disp tnum mt-1.5 text-[38px] leading-none">
-              {totalCategorias}
-            </div>
-            <div className="mt-1.5 font-cond text-[13px] uppercase tracking-[0.04em] text-muted-2">
-              {ta.em} {gruposTotal} {gruposTotal === 1 ? ta.grupo : ta.grupos}
-            </div>
-          </div>
-
-          {/* Estruturar */}
-          <form action={estruturar} className="lg:justify-self-end">
-            <input type="hidden" name="numAreas" value={nValido ? nInt : ""} />
-            <BotaoAcaoBruto
-              disabled={!nValido}
-              className="inline-flex -skew-x-9 items-center bg-brand px-6 py-4 font-cond text-lg font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <span className="inline-block skew-x-9">⚙ {ta.estruturarAreas}</span>
-            </BotaoAcaoBruto>
-          </form>
-        </div>
-
-        <p className="border-t border-white/10 px-6 py-3.5 font-cond text-[13px] uppercase leading-relaxed tracking-[0.03em] text-muted-3">
-          {ta.ajudaOrdena}
-        </p>
-      </div>
-      )}
-
-      {/* PAINEL POR DIA (modo manual) */}
-      {modo === "porDia" && (
-        <PainelPorDia
-          dias={diasDistintos}
-          dimensoes={dimensoes}
-          categorias={categoriasFiltro}
-          areasN={areasN}
-          setAreasN={setAreasN}
-          estruturar={estruturarPorDia}
-          aberto={porDiaAberto}
-          onAlternar={() => setPorDiaAberto((v) => !v)}
-        />
-      )}
-
-      {/* LEGENDA DO FUNIL */}
-      <div className="border border-white/10 bg-surface p-[22px]">
-        <div className="mb-3.5 flex items-baseline justify-between gap-3">
-          <span className="disp text-[22px]">{ta.ordemDoDia}</span>
-          <span className="font-cond text-[13px] uppercase tracking-[0.06em] text-muted-3">
-            {ta.extremosMeio}
-          </span>
-        </div>
-        <div className="flex flex-wrap items-center gap-x-1 gap-y-2.5">
-          {classesDoFunil.map((c, i) => {
-            const extremo = c.onda * 2 <= maiorOndaValor;
-            return (
-              <span key={c.id} className="flex items-center gap-1">
-                {i > 0 && <span className="mr-1 text-muted-3">›</span>}
-                <span
-                  className={cn(
-                    "inline-flex -skew-x-9 items-center gap-2 border px-3 py-1.5 font-cond text-[13px] font-semibold uppercase tracking-[0.04em]",
-                    extremo
-                      ? "border-brand/40 text-brand-soft"
-                      : "border-white/12 text-muted-2",
-                  )}
-                >
-                  <span className="inline-flex skew-x-9 items-center gap-2">
-                    <span
-                      className="h-2 w-2 shrink-0"
-                      style={{ background: corDaOnda(c.onda, maiorOndaValor) }}
-                    />
-                    {dic.classesIdade[c.id] ?? c.nome}
+            ),
+          },
+          {
+            id: "tempo",
+            titulo: ta.assistenteTempo,
+            resumo: resumoTempos,
+            conteudo: (
+              <form
+                id="form-tempos"
+                action={salvarTempos}
+                className="flex flex-col gap-4"
+              >
+                <CamposTemposLuta valores={tempos} />
+              </form>
+            ),
+            acao: (
+              <BotaoAcaoBruto
+                form="form-tempos"
+                className="inline-flex -skew-x-9 items-center border border-white/16 px-5 py-2.5 font-cond text-[14px] font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-brand/50 hover:text-brand-soft"
+              >
+                <span className="inline-block skew-x-9">{ta.temposSalvar}</span>
+              </BotaoAcaoBruto>
+            ),
+          },
+          {
+            id: "distribuicao",
+            titulo: ta.assistenteDistribuicao,
+            resumo:
+              modo === "auto"
+                ? ta.assistenteResumoAuto
+                : `${resumoPorDia(diasDistintos, filtros, categoriasFiltro).atribuidas}/${totalCategorias}`,
+            conteudo: (
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="font-cond text-[13px] font-semibold uppercase tracking-[0.1em] text-muted-3">
+                    {ta.modoLabel}
                   </span>
-                </span>
-              </span>
-            );
-          })}
-        </div>
-      </div>
+                  <div className="flex">
+                    {(
+                      [
+                        ["auto", ta.modoAutomatico],
+                        ["porDia", ta.modoPorDia],
+                      ] as ["auto" | "porDia", string][]
+                    ).map(([val, rotulo]) => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => setModo(val)}
+                        className={cn(
+                          "-skew-x-9 border px-4 py-2 font-cond text-[14px] font-semibold uppercase tracking-[0.04em] transition-colors",
+                          modo === val
+                            ? "border-brand bg-brand text-white"
+                            : "border-white/16 text-muted-2 hover:border-white/30",
+                        )}
+                      >
+                        <span className="inline-block skew-x-9">{rotulo}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {modo === "auto" ? (
+                  <p className="max-w-2xl font-cond text-[13px] uppercase leading-relaxed tracking-[0.02em] text-muted-3">
+                    {ta.ajudaOrdena}
+                  </p>
+                ) : (
+                  <PainelPorDia
+                    dias={diasDistintos}
+                    dimensoes={dimensoes}
+                    categorias={categoriasFiltro}
+                    filtros={filtros}
+                    setFiltros={setFiltros}
+                  />
+                )}
+              </div>
+            ),
+          },
+          {
+            id: "ordem",
+            titulo: ta.assistenteOrdem,
+            resumo: ta.extremosMeio,
+            conteudo: (
+              <div className="flex flex-col gap-3.5">
+                <p className="max-w-2xl font-cond text-[13px] uppercase leading-relaxed tracking-[0.02em] text-muted-3">
+                  {ta.ajudaOrdena}
+                </p>
+                <div className="flex flex-wrap items-center gap-x-1 gap-y-2.5">
+                  {classesDoFunil.map((c, i) => {
+                    const extremo = c.onda * 2 <= maiorOndaValor;
+                    return (
+                      <span key={c.id} className="flex items-center gap-1">
+                        {i > 0 && <span className="mr-1 text-muted-3">›</span>}
+                        <span
+                          className={cn(
+                            "inline-flex -skew-x-9 items-center gap-2 border px-3 py-1.5 font-cond text-[13px] font-semibold uppercase tracking-[0.04em]",
+                            extremo
+                              ? "border-brand/40 text-brand-soft"
+                              : "border-white/12 text-muted-2",
+                          )}
+                        >
+                          <span className="inline-flex skew-x-9 items-center gap-2">
+                            <span
+                              className="h-2 w-2 shrink-0"
+                              style={{
+                                background: corDaOnda(c.onda, maiorOndaValor),
+                              }}
+                            />
+                            {dic.classesIdade[c.id] ?? c.nome}
+                          </span>
+                        </span>
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            ),
+          },
+          {
+            id: "areas",
+            titulo: ta.assistenteAreas,
+            resumo: nValido ? String(nInt) : ta.assistenteResumoSemAreas,
+            conteudo: (
+              <div className="flex flex-wrap items-end gap-x-10 gap-y-6">
+                <div>
+                  <label
+                    htmlFor="num-areas"
+                    className="mb-1.5 block font-cond text-[13px] font-semibold uppercase tracking-[0.1em] text-muted-3"
+                  >
+                    {ta.numeroAreas}
+                  </label>
+                  <input
+                    id="num-areas"
+                    type="number"
+                    min={AREAS_MIN}
+                    max={AREAS_MAX}
+                    value={areasN}
+                    onChange={(e) => setAreasN(e.target.value)}
+                    placeholder="0"
+                    className="disp tnum w-[136px] border border-white/14 bg-background px-4 py-1 text-[64px] leading-none text-foreground focus:border-brand focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <div className="font-cond text-[13px] font-semibold uppercase tracking-[0.1em] text-muted-3">
+                    {ta.categoriasCarregadas}
+                  </div>
+                  <div className="disp tnum mt-1.5 text-[38px] leading-none">
+                    {modo === "auto" ? totalCategorias : atribuidasPorDia}
+                  </div>
+                  <div className="mt-1.5 font-cond text-[13px] uppercase tracking-[0.04em] text-muted-2">
+                    {ta.em} {gruposTotal}{" "}
+                    {gruposTotal === 1 ? ta.grupo : ta.grupos}
+                  </div>
+                </div>
+              </div>
+            ),
+            acao:
+              modo === "auto" ? (
+                <form action={estruturar}>
+                  <input
+                    type="hidden"
+                    name="numAreas"
+                    value={nValido ? nInt : ""}
+                  />
+                  <BotaoAcaoBruto
+                    disabled={!nValido}
+                    className="inline-flex -skew-x-9 items-center bg-brand px-6 py-3.5 font-cond text-[15px] font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <span className="inline-block skew-x-9">
+                      ⚙ {ta.estruturarAreas}
+                    </span>
+                  </BotaoAcaoBruto>
+                </form>
+              ) : (
+                <form action={estruturarPorDia}>
+                  <input
+                    type="hidden"
+                    name="numAreas"
+                    value={nValido ? nInt : ""}
+                  />
+                  <input
+                    type="hidden"
+                    name="atribuicoes"
+                    value={JSON.stringify(
+                      resumoPorDia(diasDistintos, filtros, categoriasFiltro)
+                        .atribuicoes,
+                    )}
+                  />
+                  <BotaoAcaoBruto
+                    disabled={!nValido || atribuidasPorDia === 0}
+                    className="inline-flex -skew-x-9 items-center bg-brand px-6 py-3.5 font-cond text-[15px] font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    <span className="inline-block skew-x-9">
+                      ⚙ {ta.estruturarPorDia}
+                    </span>
+                  </BotaoAcaoBruto>
+                </form>
+              ),
+          },
+        ]}
+      />
 
       {estruturado ? (
         <>
@@ -405,12 +501,17 @@ export function EstruturadorAreas({
                   onClick={() => setReordenando(false)}
                   className="inline-flex -skew-x-9 items-center bg-brand px-4 py-2 font-cond text-[13px] font-semibold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]"
                 >
-                  <span className="inline-block skew-x-9">✓ {ta.reordenarConcluir}</span>
+                  <span className="inline-block skew-x-9">
+                    ✓ {ta.reordenarConcluir}
+                  </span>
                 </button>
               </>
             ) : (
               <>
-                <BotaoImprimirPrograma cronograma={cronograma} eventoNome={eventoNome} />
+                <BotaoImprimirPrograma
+                  cronograma={cronograma}
+                  eventoNome={eventoNome}
+                />
                 <button
                   type="button"
                   onClick={() => setBuscaAberta((v) => !v)}
@@ -431,14 +532,18 @@ export function EstruturadorAreas({
                   onClick={() => setReordenando(true)}
                   className="inline-flex -skew-x-9 items-center border border-white/14 px-4 py-2 font-cond text-[13px] font-semibold uppercase tracking-[0.04em] text-muted-2 transition-colors hover:border-brand/50 hover:text-brand-soft"
                 >
-                  <span className="inline-block skew-x-9">⇅ {ta.reordenarLutas}</span>
+                  <span className="inline-block skew-x-9">
+                    ⇅ {ta.reordenarLutas}
+                  </span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setAreasFull(true)}
                   className="inline-flex -skew-x-9 items-center border border-white/14 px-4 py-2 font-cond text-[13px] font-semibold uppercase tracking-[0.04em] text-muted-2 transition-colors hover:border-brand/50 hover:text-brand-soft"
                 >
-                  <span className="inline-block skew-x-9">⤢ {ta.expandirTelaCheia}</span>
+                  <span className="inline-block skew-x-9">
+                    ⤢ {ta.expandirTelaCheia}
+                  </span>
                 </button>
               </>
             )}
@@ -491,7 +596,9 @@ export function EstruturadorAreas({
               onClick={() => setAreasFull(false)}
               className="inline-flex -skew-x-9 items-center border border-white/14 px-4 py-2 font-cond text-[13px] font-semibold uppercase tracking-[0.04em] text-muted-2 transition-colors hover:border-brand/50 hover:text-brand-soft"
             >
-              <span className="inline-block skew-x-9">✕ {ta.fecharTelaCheia}</span>
+              <span className="inline-block skew-x-9">
+                ✕ {ta.fecharTelaCheia}
+              </span>
             </button>
           </div>
           <ProgramacaoAreas
