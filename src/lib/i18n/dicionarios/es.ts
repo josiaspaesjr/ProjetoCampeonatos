@@ -984,6 +984,8 @@ export const es: Dicionario = {
       moverCategoriaPara: "¿A qué área llevar?",
       moverCategoriaVoltar: "volver",
       moverCategoriaVazio: "Ninguna división en esta área.",
+      moverCategoriaProcessando: "Moviendo la división de área…",
+      moverCategoriaProcessandoNota: "Recalculando el cronograma de las dos áreas.",
       // configuración de los días en la propia pantalla de áreas
       diasEvento: "Días del evento",
       diasNota:

@@ -1,9 +1,10 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useMemo, useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 import { useDic } from "@/lib/i18n/client";
+import { Spinner } from "@/components/ui/botao-acao";
 import { useReordenavelAreas } from "@/lib/dnd/use-reordenavel-areas";
 import {
   estadoAtleta,
@@ -88,29 +89,54 @@ export function EditorOrdemAreas({
       else onMoverLuta(s.itemId, s.destinoId, s.ordemDestino);
     });
 
+  // arrastar luta é otimista (a lista já mostra o resultado); mover a divisão
+  // inteira depende do servidor recalcular os dois tatames — daí o loading
+  const [movendoDivisao, iniciarMoverDivisao] = useTransition();
+  const moverCategoria = (categoriaId: string, areaDestinoId: string) =>
+    iniciarMoverDivisao(async () => {
+      await onMoverCategoria(categoriaId, areaDestinoId);
+    });
+
   return (
     <>
       <p className="font-cond text-[12px] uppercase leading-snug tracking-[0.03em] text-muted-3">
         {ta.moverEntreAreasDica}
       </p>
-      <div className="flex gap-4 overflow-x-auto pb-2">
-        {cronograma.map((area) => (
-          <ColunaEditavel
-            key={area.id}
-            area={area}
-            areas={cronograma}
-            ordem={ordens[area.id] ?? []}
-            linhaPorId={linhaPorId}
-            arrastandoId={arrastandoId}
-            alvoIndex={alvo?.colunaId === area.id ? alvo.index : null}
-            destacada={Boolean(
-              arrastandoId && alvo?.colunaId === area.id,
-            )}
-            registrarColuna={registrarColuna}
-            iniciarArraste={iniciarArraste}
-            onMoverCategoria={onMoverCategoria}
-          />
-        ))}
+      <div className="relative">
+        <div className="flex gap-4 overflow-x-auto pb-2">
+          {cronograma.map((area) => (
+            <ColunaEditavel
+              key={area.id}
+              area={area}
+              areas={cronograma}
+              ordem={ordens[area.id] ?? []}
+              linhaPorId={linhaPorId}
+              arrastandoId={arrastandoId}
+              alvoIndex={alvo?.colunaId === area.id ? alvo.index : null}
+              destacada={Boolean(arrastandoId && alvo?.colunaId === area.id)}
+              registrarColuna={registrarColuna}
+              iniciarArraste={iniciarArraste}
+              onMoverCategoria={moverCategoria}
+            />
+          ))}
+        </div>
+
+        {/* LOADING DA TROCA DE DIVISÃO (cobre as colunas até o servidor voltar) */}
+        {movendoDivisao && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="absolute inset-0 z-30 flex flex-col items-center justify-center gap-3 bg-background/80 px-6 text-center backdrop-blur-sm"
+          >
+            <Spinner className="h-7 w-7 border-[3px] text-brand-soft" />
+            <p className="font-cond text-[15px] font-bold uppercase tracking-[0.04em] text-foreground">
+              {ta.moverCategoriaProcessando}
+            </p>
+            <p className="font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
+              {ta.moverCategoriaProcessandoNota}
+            </p>
+          </div>
+        )}
       </div>
     </>
   );
@@ -191,7 +217,9 @@ function ColunaEditavel({
       {/* HEADER — nome do tatame, nº de lutas e o menu de mover divisões */}
       <div className="shrink-0 border-b border-white/10 px-4 pb-3 pt-4">
         <div className="flex items-baseline justify-between gap-2">
-          <span className="disp tnum text-[24px] leading-none">{area.nome}</span>
+          <span className="disp tnum text-[24px] leading-none">
+            {area.nome}
+          </span>
           <div>
             <span className="disp tnum text-[24px] leading-none text-brand">
               {ordem.length}
@@ -317,7 +345,6 @@ function ColunaEditavel({
           </ul>
         </div>
       )}
-
     </div>
   );
 }
@@ -377,7 +404,9 @@ function MenuMoverDivisao({
             <div className="border-b border-white/10 px-3 py-2 font-cond text-[10px] uppercase tracking-[0.06em] text-muted-3">
               {escolhida ? (
                 <span className="flex items-center justify-between gap-2">
-                  <span className="truncate text-text-2">{escolhida.titulo}</span>
+                  <span className="truncate text-text-2">
+                    {escolhida.titulo}
+                  </span>
                   <button
                     type="button"
                     onClick={() => setEscolhida(null)}

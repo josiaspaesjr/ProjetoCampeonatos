@@ -990,6 +990,8 @@ export const pt = {
       moverCategoriaPara: "Levar para qual tatame?",
       moverCategoriaVoltar: "voltar",
       moverCategoriaVazio: "Nenhuma divisão neste tatame.",
+      moverCategoriaProcessando: "Movendo a divisão de tatame…",
+      moverCategoriaProcessandoNota: "Recalculando o cronograma dos dois tatames.",
       // configuração dos dias na própria tela de áreas
       diasEvento: "Dias do evento",
       diasNota:

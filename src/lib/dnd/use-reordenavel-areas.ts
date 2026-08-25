@@ -32,7 +32,8 @@ export function useReordenavelAreas(
   colunasIniciais: Record<string, string[]>,
   aoSoltar: (s: Soltura) => void,
 ) {
-  const [ordens, setOrdens] = useState<Record<string, string[]>>(colunasIniciais);
+  const [ordens, setOrdens] =
+    useState<Record<string, string[]>>(colunasIniciais);
   const [arrastandoId, setArrastandoId] = useState<string | null>(null);
   const [alvo, setAlvoEstado] = useState<AlvoArraste | null>(null);
 
@@ -40,7 +41,10 @@ export function useReordenavelAreas(
   const ordensRef = useRef(ordens);
   const alvoRef = useRef<AlvoArraste | null>(null);
   const arrastando = useRef<string | null>(null);
-  const handlers = useRef<{ move?: (e: PointerEvent) => void; up?: () => void }>({});
+  const handlers = useRef<{
+    move?: (e: PointerEvent) => void;
+    up?: () => void;
+  }>({});
 
   useEffect(() => {
     ordensRef.current = ordens;
@@ -121,62 +125,76 @@ export function useReordenavelAreas(
     return { colunaId, index: indiceEm(colunaId, y) };
   }
 
-  const iniciarArraste = (id: string, origemId: string) => (e: React.PointerEvent) => {
-    if (e.pointerType === "mouse" && e.button !== 0) return;
-    e.preventDefault();
-    arrastando.current = id;
-    setArrastandoId(id);
-    setAlvo(calcularAlvo(e.clientX, e.clientY, origemId));
+  const iniciarArraste =
+    (id: string, origemId: string) => (e: React.PointerEvent) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      e.preventDefault();
+      arrastando.current = id;
+      setArrastandoId(id);
+      setAlvo(calcularAlvo(e.clientX, e.clientY, origemId));
 
-    const move = (ev: PointerEvent) => {
-      if (!arrastando.current) return;
-      setAlvo(calcularAlvo(ev.clientX, ev.clientY, origemId));
-    };
-    const up = () => {
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
-      window.removeEventListener("pointercancel", up);
-      handlers.current = {};
-      const itemId = arrastando.current;
-      const destino = alvoRef.current;
-      arrastando.current = null;
-      setArrastandoId(null);
-      setAlvo(null);
-      if (!itemId || !destino) return;
+      const move = (ev: PointerEvent) => {
+        if (!arrastando.current) return;
+        setAlvo(calcularAlvo(ev.clientX, ev.clientY, origemId));
+      };
+      const up = () => {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+        window.removeEventListener("pointercancel", up);
+        handlers.current = {};
+        const itemId = arrastando.current;
+        const destino = alvoRef.current;
+        arrastando.current = null;
+        setArrastandoId(null);
+        setAlvo(null);
+        if (!itemId || !destino) return;
 
-      const atual = ordensRef.current;
-      // mesma coluna: reordenação simples
-      if (destino.colunaId === origemId) {
-        const nova = moverParaAlvo(atual[origemId] ?? [], itemId, destino.index);
-        if (nova === (atual[origemId] ?? [])) return; // soltou no mesmo lugar
-        const proximo = { ...atual, [origemId]: nova };
+        const atual = ordensRef.current;
+        // mesma coluna: reordenação simples
+        if (destino.colunaId === origemId) {
+          const nova = moverParaAlvo(
+            atual[origemId] ?? [],
+            itemId,
+            destino.index,
+          );
+          if (nova === (atual[origemId] ?? [])) return; // soltou no mesmo lugar
+          const proximo = { ...atual, [origemId]: nova };
+          ordensRef.current = proximo;
+          setOrdens(proximo);
+          aoSoltar({
+            itemId,
+            origemId,
+            destinoId: origemId,
+            ordemDestino: nova,
+          });
+          return;
+        }
+
+        // outra coluna: sai da origem e entra na posição indicada do destino
+        const origem = (atual[origemId] ?? []).filter((v) => v !== itemId);
+        const alvoLista = [...(atual[destino.colunaId] ?? [])];
+        const at = Math.max(0, Math.min(destino.index, alvoLista.length));
+        alvoLista.splice(at, 0, itemId);
+        const proximo = {
+          ...atual,
+          [origemId]: origem,
+          [destino.colunaId]: alvoLista,
+        };
         ordensRef.current = proximo;
         setOrdens(proximo);
-        aoSoltar({ itemId, origemId, destinoId: origemId, ordemDestino: nova });
-        return;
-      }
+        aoSoltar({
+          itemId,
+          origemId,
+          destinoId: destino.colunaId,
+          ordemDestino: alvoLista,
+        });
+      };
 
-      // outra coluna: sai da origem e entra na posição indicada do destino
-      const origem = (atual[origemId] ?? []).filter((v) => v !== itemId);
-      const alvoLista = [...(atual[destino.colunaId] ?? [])];
-      const at = Math.max(0, Math.min(destino.index, alvoLista.length));
-      alvoLista.splice(at, 0, itemId);
-      const proximo = { ...atual, [origemId]: origem, [destino.colunaId]: alvoLista };
-      ordensRef.current = proximo;
-      setOrdens(proximo);
-      aoSoltar({
-        itemId,
-        origemId,
-        destinoId: destino.colunaId,
-        ordemDestino: alvoLista,
-      });
+      handlers.current = { move, up };
+      window.addEventListener("pointermove", move);
+      window.addEventListener("pointerup", up);
+      window.addEventListener("pointercancel", up);
     };
-
-    handlers.current = { move, up };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up);
-    window.addEventListener("pointercancel", up);
-  };
 
   return { ordens, arrastandoId, alvo, registrarColuna, iniciarArraste };
 }

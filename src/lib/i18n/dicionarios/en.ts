@@ -983,6 +983,8 @@ export const en: Dicionario = {
       moverCategoriaPara: "Move to which mat?",
       moverCategoriaVoltar: "back",
       moverCategoriaVazio: "No divisions on this mat.",
+      moverCategoriaProcessando: "Moving the division to the other mat…",
+      moverCategoriaProcessandoNota: "Recalculating both mats' schedules.",
       diasEvento: "Event days",
       diasNota:
         "Matches are spread within each day's windows. Repeat the date for morning and afternoon — the break between them stays match-free. Adjust before structuring.",
