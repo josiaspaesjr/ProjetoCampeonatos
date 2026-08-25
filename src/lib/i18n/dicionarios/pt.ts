@@ -981,6 +981,19 @@ export const pt = {
       estruturarPorDia: "Estruturar por dia",
       porDiaSemFiltro:
         "Marque ao menos uma classe, um sexo e uma faixa em pelo menos um dia.",
+      // recolher/expandir seções da tela de áreas
+      secaoMostrar: "Mostrar",
+      secaoOcultar: "Ocultar",
+      // busca no cronograma já distribuído
+      buscar: "Buscar",
+      buscarFechar: "Fechar busca",
+      buscarPlaceholder: "Buscar atleta, categoria ou área…",
+      buscarVazio: "Nada encontrado",
+      buscarDigite: "Digite para buscar por atleta, categoria ou área.",
+      buscarResultado: "resultado",
+      buscarResultados: "resultados",
+      buscarMais: "resultados a mais — refine a busca",
+      buscarSemChave: "sem chave gerada",
       // impressão da programação por dia
       imprimirPrograma: "Imprimir programação",
       programaTitulo: "Programação",

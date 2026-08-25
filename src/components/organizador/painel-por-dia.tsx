@@ -64,6 +64,8 @@ export function PainelPorDia({
   areasN,
   setAreasN,
   estruturar,
+  aberto = true,
+  onAlternar,
 }: {
   dias: DiaDistinto[];
   dimensoes: DimensoesGrade;
@@ -72,6 +74,9 @@ export function PainelPorDia({
   areasN: string;
   setAreasN: (v: string) => void;
   estruturar: (formData: FormData) => void | Promise<void>;
+  /** corpo visível; com `onAlternar`, o cabeçalho ganha Mostrar/Ocultar */
+  aberto?: boolean;
+  onAlternar?: () => void;
 }) {
   const dic = useDic();
   const ta = dic.admin.areas;
@@ -148,29 +153,41 @@ export function PainelPorDia({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="disp text-[22px]">{ta.porDiaTitulo}</div>
-          <p className="mt-1 max-w-xl font-cond text-[13px] uppercase tracking-[0.02em] text-muted-3">
-            {ta.porDiaTexto}
-          </p>
+          {aberto && (
+            <p className="mt-1 max-w-xl font-cond text-[13px] uppercase tracking-[0.02em] text-muted-3">
+              {ta.porDiaTexto}
+            </p>
+          )}
         </div>
-        <div>
-          <label
-            htmlFor="num-areas-dia"
-            className="mb-1.5 block font-cond text-[12px] font-semibold uppercase tracking-[0.1em] text-muted-3"
-          >
-            {ta.numeroAreas}
-          </label>
-          <input
-            id="num-areas-dia"
-            type="number"
-            min={1}
-            max={40}
-            value={areasN}
-            onChange={(e) => setAreasN(e.target.value)}
-            placeholder="0"
-            className="disp tnum w-[92px] border border-white/14 bg-background px-3 py-1 text-[40px] leading-none text-foreground focus:border-brand focus:outline-none"
-          />
+        <div className="flex items-end gap-3">
+          {aberto && (
+            <div>
+              <label
+                htmlFor="num-areas-dia"
+                className="mb-1.5 block font-cond text-[12px] font-semibold uppercase tracking-[0.1em] text-muted-3"
+              >
+                {ta.numeroAreas}
+              </label>
+              <input
+                id="num-areas-dia"
+                type="number"
+                min={1}
+                max={40}
+                value={areasN}
+                onChange={(e) => setAreasN(e.target.value)}
+                placeholder="0"
+                className="disp tnum w-[92px] border border-white/14 bg-background px-3 py-1 text-[40px] leading-none text-foreground focus:border-brand focus:outline-none"
+              />
+            </div>
+          )}
+          {onAlternar && (
+            <BotaoRecolher aberto={aberto} onClick={onAlternar} ta={ta} />
+          )}
         </div>
       </div>
+
+      {!aberto ? null : (
+        <>
 
       {/* um cartão por dia */}
       <div className="flex flex-col gap-3">
@@ -276,7 +293,44 @@ export function PainelPorDia({
           </BotaoAcaoBruto>
         </form>
       </div>
+        </>
+      )}
     </div>
+  );
+}
+
+/** botão Mostrar/Ocultar do cabeçalho das seções recolhíveis */
+export function BotaoRecolher({
+  aberto,
+  onClick,
+  ta,
+}: {
+  aberto: boolean;
+  onClick: () => void;
+  ta: { secaoMostrar: string; secaoOcultar: string };
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={aberto}
+      className="inline-flex -skew-x-9 items-center border border-white/14 px-3 py-2 font-cond text-[13px] font-semibold uppercase tracking-[0.04em] text-muted-2 transition-colors hover:border-brand/50 hover:text-brand-soft"
+    >
+      <span className="inline-flex skew-x-9 items-center gap-1.5">
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.5}
+          strokeLinecap="square"
+          className={cn("h-3.5 w-3.5 transition-transform", aberto && "rotate-90")}
+        >
+          <path d="M9 6l6 6-6 6" />
+        </svg>
+        {aberto ? ta.secaoOcultar : ta.secaoMostrar}
+      </span>
+    </button>
   );
 }
 

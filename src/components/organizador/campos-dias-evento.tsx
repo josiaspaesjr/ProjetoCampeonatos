@@ -77,10 +77,13 @@ export function CamposDiasEvento({
   labelCls,
   inputClassName,
   defaultDias,
+  semTitulo = false,
 }: {
   labelCls: string;
   inputClassName?: string;
   defaultDias?: DiaEvento[];
+  /** o título fica com quem embrulha (ex.: cabeçalho recolhível da tela de Áreas) */
+  semTitulo?: boolean;
 }) {
   const dc = useDic().admin.campos;
   const [dias, setDias] = useState<DiaGrupo[]>(
@@ -142,7 +145,7 @@ export function CamposDiasEvento({
 
   return (
     <div className="flex flex-col gap-2.5">
-      <label className={labelCls}>{dc.diasEvento}</label>
+      {!semTitulo && <label className={labelCls}>{dc.diasEvento}</label>}
 
       {dias.map((g, gi) => (
         <div

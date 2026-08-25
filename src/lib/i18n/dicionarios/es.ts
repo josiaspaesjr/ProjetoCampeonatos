@@ -975,6 +975,19 @@ export const es: Dicionario = {
       estruturarPorDia: "Estructurar por día",
       porDiaSemFiltro:
         "Marca al menos una clase, un sexo y un cinturón en al menos un día.",
+      // plegar/desplegar secciones de la pantalla de áreas
+      secaoMostrar: "Mostrar",
+      secaoOcultar: "Ocultar",
+      // búsqueda en el cronograma ya distribuido
+      buscar: "Buscar",
+      buscarFechar: "Cerrar búsqueda",
+      buscarPlaceholder: "Buscar atleta, categoría o área…",
+      buscarVazio: "Nada encontrado",
+      buscarDigite: "Escribe para buscar por atleta, categoría o área.",
+      buscarResultado: "resultado",
+      buscarResultados: "resultados",
+      buscarMais: "resultados más — refina la búsqueda",
+      buscarSemChave: "sin llave generada",
       // impresión de la programación por día
       imprimirPrograma: "Imprimir programación",
       programaTitulo: "Programación",

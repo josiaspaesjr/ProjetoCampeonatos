@@ -24,11 +24,13 @@ import {
   type DiaEvento,
 } from "@/components/organizador/campos-dias-evento";
 import {
+  BotaoRecolher,
   PainelPorDia,
   type CategoriaFiltro,
   type DiaDistinto,
   type DimensoesGrade,
 } from "@/components/organizador/painel-por-dia";
+import { BuscaCronograma } from "@/components/organizador/busca-cronograma";
 import { BotaoImprimirPrograma } from "@/components/organizador/botao-imprimir-programa";
 import { useDic } from "@/lib/i18n/client";
 
@@ -85,6 +87,9 @@ export function EstruturadorAreas({
   /** persiste a ordem manual das lutas de uma área (drag-and-drop) */
   reordenar: (areaId: string, lutaIds: string[]) => void | Promise<void>;
 }) {
+  // a estrutura vem persistida do servidor: a prévia só muda ao "Estruturar"
+  const estruturado = cronograma.length > 0;
+
   const [areasN, setAreasN] = useState(
     numAreasInicial ? String(numAreasInicial) : "",
   );
@@ -92,6 +97,10 @@ export function EstruturadorAreas({
   const [areasFull, setAreasFull] = useState(false);
   const [reordenando, setReordenando] = useState(false);
   const [lutaSel, setLutaSel] = useState<LutaSelecionada | null>(null);
+  // com as lutas já distribuídas, a configuração sai da frente (mas volta num clique)
+  const [diasAberto, setDiasAberto] = useState(!estruturado);
+  const [porDiaAberto, setPorDiaAberto] = useState(!estruturado);
+  const [buscaAberta, setBuscaAberta] = useState(false);
 
   const nInt = Math.floor(Number(areasN));
   const nValido = Number.isFinite(nInt) && nInt >= AREAS_MIN && nInt <= AREAS_MAX;
@@ -101,9 +110,6 @@ export function EstruturadorAreas({
   const maiorOndaValor = useMemo(() => maiorOndaDeCats(categorias), [categorias]);
   const gruposTotal = useMemo(() => contarGrupos(categorias), [categorias]);
   const classesDoFunil = useMemo(() => classesEmOrdem(categorias), [categorias]);
-
-  // a estrutura vem persistida do servidor: a prévia só muda ao "Estruturar"
-  const estruturado = cronograma.length > 0;
 
   // tela cheia e modal de placar: travam o scroll do body e fecham com Esc
   // (Esc fecha primeiro o modal, depois a tela cheia)
@@ -167,17 +173,32 @@ export function EstruturadorAreas({
         </div>
       )}
 
-      {/* DIAS DO EVENTO (define o período em que as lutas são encaixadas) */}
+      {/* DIAS DO EVENTO (define o período em que as lutas são encaixadas).
+          Já estruturado, começa recolhido — o cronograma é o que interessa. */}
       <div className="relative border border-white/10 bg-surface p-[22px]">
         <span className="absolute inset-y-0 left-0 w-[3px] bg-brand" />
-        <form action={salvarDias} className="flex flex-col gap-4">
-          <CamposDiasEvento labelCls="disp text-[22px]" defaultDias={dias} />
-          <div className="flex justify-end">
-            <BotaoAcaoBruto className="inline-flex -skew-x-9 items-center border border-white/16 px-5 py-2.5 font-cond text-[15px] font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-brand/50 hover:text-brand-soft">
-              <span className="inline-block skew-x-9">{ta.salvarDias}</span>
-            </BotaoAcaoBruto>
-          </div>
-        </form>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="disp text-[22px]">{ta.diasEvento}</span>
+          <BotaoRecolher
+            aberto={diasAberto}
+            onClick={() => setDiasAberto((v) => !v)}
+            ta={ta}
+          />
+        </div>
+        {diasAberto && (
+          <form action={salvarDias} className="mt-4 flex flex-col gap-4">
+            <CamposDiasEvento
+              labelCls="disp text-[22px]"
+              defaultDias={dias}
+              semTitulo
+            />
+            <div className="flex justify-end">
+              <BotaoAcaoBruto className="inline-flex -skew-x-9 items-center border border-white/16 px-5 py-2.5 font-cond text-[15px] font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-brand/50 hover:text-brand-soft">
+                <span className="inline-block skew-x-9">{ta.salvarDias}</span>
+              </BotaoAcaoBruto>
+            </div>
+          </form>
+        )}
       </div>
 
       {/* SELETOR DE MODO: automático × por dia */}
@@ -274,6 +295,8 @@ export function EstruturadorAreas({
           areasN={areasN}
           setAreasN={setAreasN}
           estruturar={estruturarPorDia}
+          aberto={porDiaAberto}
+          onAlternar={() => setPorDiaAberto((v) => !v)}
         />
       )}
 
@@ -360,6 +383,21 @@ export function EstruturadorAreas({
                 <BotaoImprimirPrograma cronograma={cronograma} eventoNome={eventoNome} />
                 <button
                   type="button"
+                  onClick={() => setBuscaAberta((v) => !v)}
+                  aria-expanded={buscaAberta}
+                  className={cn(
+                    "inline-flex -skew-x-9 items-center border px-4 py-2 font-cond text-[13px] font-semibold uppercase tracking-[0.04em] transition-colors",
+                    buscaAberta
+                      ? "border-brand bg-brand text-white"
+                      : "border-white/14 text-muted-2 hover:border-brand/50 hover:text-brand-soft",
+                  )}
+                >
+                  <span className="inline-block skew-x-9">
+                    ⌕ {buscaAberta ? ta.buscarFechar : ta.buscar}
+                  </span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => setReordenando(true)}
                   className="inline-flex -skew-x-9 items-center border border-white/14 px-4 py-2 font-cond text-[13px] font-semibold uppercase tracking-[0.04em] text-muted-2 transition-colors hover:border-brand/50 hover:text-brand-soft"
                 >
@@ -375,6 +413,11 @@ export function EstruturadorAreas({
               </>
             )}
           </div>
+
+          {/* BUSCA NO CRONOGRAMA (atleta · categoria · área) */}
+          {buscaAberta && !reordenando && (
+            <BuscaCronograma cronograma={cronograma} />
+          )}
 
           {/* COLUNAS DE ÁREA (lado a lado, scroll lateral) */}
           {reordenando ? (

@@ -974,6 +974,19 @@ export const en: Dicionario = {
       porDiaSemFiltro:
         "Select at least one class, one sex and one belt on at least one day.",
       // printable schedule by day
+      // collapse/expand sections on the mats screen
+      secaoMostrar: "Show",
+      secaoOcultar: "Hide",
+      // search across the distributed schedule
+      buscar: "Search",
+      buscarFechar: "Close search",
+      buscarPlaceholder: "Search athlete, category or mat…",
+      buscarVazio: "Nothing found",
+      buscarDigite: "Type to search by athlete, category or mat.",
+      buscarResultado: "result",
+      buscarResultados: "results",
+      buscarMais: "more results — refine your search",
+      buscarSemChave: "bracket not generated",
       imprimirPrograma: "Print schedule",
       programaTitulo: "Schedule",
       colHora: "Time",
