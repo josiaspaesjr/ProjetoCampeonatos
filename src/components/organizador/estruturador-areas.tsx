@@ -8,8 +8,6 @@ import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import {
   classesEmOrdem,
   contarGrupos,
-  corDaOnda,
-  maiorOndaDeCats,
 } from "@/lib/categorias/distribuicao-areas";
 import {
   AbrirLutaCtx,
@@ -33,6 +31,7 @@ import {
   type FiltroState,
 } from "@/components/organizador/painel-por-dia";
 import { AssistentePassos } from "@/components/organizador/assistente-passos";
+import { EditorOrdemClasses } from "@/components/organizador/editor-ordem-classes";
 import { BuscaCronograma } from "@/components/organizador/busca-cronograma";
 import { BotaoImprimirPrograma } from "@/components/organizador/botao-imprimir-programa";
 import { CamposTemposLuta } from "@/components/organizador/campos-tempos-luta";
@@ -65,11 +64,13 @@ export function EstruturadorAreas({
   dimensoes,
   categoriasFiltro,
   modoInicial,
+  ordemClasses,
   erro,
   estruturar,
   estruturarPorDia,
   salvarDias,
   salvarTempos,
+  salvarOrdemClasses,
   reordenar,
   moverLuta,
   moverCategoria,
@@ -94,6 +95,8 @@ export function EstruturadorAreas({
   categoriasFiltro: CategoriaFiltro[];
   /** modo em que a estrutura atual foi montada */
   modoInicial: "auto" | "porDia";
+  /** ordem do dia salva no evento (ids das classes) — nula = regra padrão */
+  ordemClasses: string[] | null;
   /** aviso vindo do servidor (ex.: as lutas não cabem no período) */
   erro?: string;
   estruturar: (formData: FormData) => void | Promise<void>;
@@ -101,6 +104,8 @@ export function EstruturadorAreas({
   salvarDias: (formData: FormData) => void | Promise<void>;
   /** persiste a tabela de tempos de luta do evento */
   salvarTempos: (formData: FormData) => void | Promise<void>;
+  /** persiste a ordem do dia (classes de idade) escolhida pelo organizador */
+  salvarOrdemClasses: (classeIds: string[]) => void | Promise<void>;
   /** persiste a ordem manual das lutas de uma área (drag-and-drop) */
   reordenar: (areaId: string, lutaIds: string[]) => void | Promise<void>;
   /** leva uma luta para outro tatame (com a ordem final do destino) */
@@ -158,13 +163,14 @@ export function EstruturadorAreas({
     categoriasFiltro,
   ).atribuidas;
 
-  const maiorOndaValor = useMemo(
-    () => maiorOndaDeCats(categorias),
-    [categorias],
-  );
   const gruposTotal = useMemo(() => contarGrupos(categorias), [categorias]);
+  // ordem do dia em vigor: a que o organizador salvou ou a regra padrão
   const classesDoFunil = useMemo(
-    () => classesEmOrdem(categorias),
+    () => classesEmOrdem(categorias, ordemClasses),
+    [categorias, ordemClasses],
+  );
+  const classesPadrao = useMemo(
+    () => classesEmOrdem(categorias).map((c) => c.id),
     [categorias],
   );
 
@@ -341,41 +347,16 @@ export function EstruturadorAreas({
           {
             id: "ordem",
             titulo: ta.assistenteOrdem,
-            resumo: ta.extremosMeio,
+            resumo: ordemClasses?.length
+              ? ta.assistenteResumoOrdemPropria
+              : ta.extremosMeio,
             conteudo: (
-              <div className="flex flex-col gap-3.5">
-                <p className="max-w-2xl font-cond text-[13px] uppercase leading-relaxed tracking-[0.02em] text-muted-3">
-                  {ta.ajudaOrdena}
-                </p>
-                <div className="flex flex-wrap items-center gap-x-1 gap-y-2.5">
-                  {classesDoFunil.map((c, i) => {
-                    const extremo = c.onda * 2 <= maiorOndaValor;
-                    return (
-                      <span key={c.id} className="flex items-center gap-1">
-                        {i > 0 && <span className="mr-1 text-muted-3">›</span>}
-                        <span
-                          className={cn(
-                            "inline-flex -skew-x-9 items-center gap-2 border px-3 py-1.5 font-cond text-[13px] font-semibold uppercase tracking-[0.04em]",
-                            extremo
-                              ? "border-brand/40 text-brand-soft"
-                              : "border-white/12 text-muted-2",
-                          )}
-                        >
-                          <span className="inline-flex skew-x-9 items-center gap-2">
-                            <span
-                              className="h-2 w-2 shrink-0"
-                              style={{
-                                background: corDaOnda(c.onda, maiorOndaValor),
-                              }}
-                            />
-                            {dic.classesIdade[c.id] ?? c.nome}
-                          </span>
-                        </span>
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
+              <EditorOrdemClasses
+                classes={classesDoFunil}
+                ordemPadrao={classesPadrao}
+                personalizada={Boolean(ordemClasses?.length)}
+                salvar={salvarOrdemClasses}
+              />
             ),
           },
           {

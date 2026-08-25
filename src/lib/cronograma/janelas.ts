@@ -283,12 +283,14 @@ export function verificarCapacidade(
   cats: CatCapacidade[],
   n: number,
   janelas: JanelaDia[],
+  /** ordem das classes definida pelo organizador (nula = regra padrão) */
+  ordemClasses?: string[] | null,
 ): ResultadoCapacidade {
   const capacidadeArea = janelas.reduce(
     (s, j) => s + Math.max(0, j.fimSegundos - j.inicioSegundos),
     0,
   );
-  const ordenadas = ordenarCategorias(cats);
+  const ordenadas = ordenarCategorias(cats, ordemClasses);
   const demandaTotal = ordenadas.reduce((s, c) => s + c.demandaReal, 0);
   const maiorCategoria = ordenadas.reduce(
     (m, c) => Math.max(m, c.demandaReal),

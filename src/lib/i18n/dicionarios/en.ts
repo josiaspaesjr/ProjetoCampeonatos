@@ -1013,6 +1013,12 @@ export const en: Dicionario = {
       temposMin: "min",
       temposPadrao: "default",
       temposSalvar: "Save times",
+      // editable order of the day (drag the age classes)
+      ordemClassesTexto:
+        "Drag the classes to set the sequence they run in. The default is the extremes-to-middle funnel (kids and older masters finish early, the middle runs last) — change it freely. The order applies next time you structure the mats.",
+      ordemClassesPadrao: "Following the default rule (extremes → middle)",
+      ordemClassesPropria: "Order set by you",
+      ordemClassesRestaurar: "Restore default",
       // areas setup wizard
       assistenteTitulo: "Mat setup",
       assistentePasso: "Step",
@@ -1029,6 +1035,7 @@ export const en: Dicionario = {
       assistenteResumoDias: "days",
       assistenteResumoPadrao: "CBJJ default",
       assistenteResumoAjustados: "adjusted",
+      assistenteResumoOrdemPropria: "your order",
       assistenteResumoAuto: "automatic",
       assistenteResumoSemAreas: "to define",
       // collapse/expand sections on the mats screen

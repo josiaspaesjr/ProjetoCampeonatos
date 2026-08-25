@@ -12,7 +12,8 @@ import {
   type CategoriaOrdenavel,
 } from "./distribuicao-areas";
 
-type Cat = CategoriaOrdenavel & CategoriaComCarga & { id: string; lutas?: number };
+type Cat = CategoriaOrdenavel &
+  CategoriaComCarga & { id: string; lutas?: number };
 
 /** fábrica enxuta de categorias para os testes */
 function cat(
@@ -60,7 +61,9 @@ describe("ordenarCategoriasExibicao (ordem canônica das listas)", () => {
   it("depois faixa (branca→preta) e por fim peso (leve→pesado)", () => {
     const cats = ordenarCategoriasExibicao([
       cat("preta", "adulto", "preta", "masculino", { limitePesoKg: 70 }),
-      cat("branca-pesado", "adulto", "branca", "masculino", { limitePesoKg: 94 }),
+      cat("branca-pesado", "adulto", "branca", "masculino", {
+        limitePesoKg: 94,
+      }),
       cat("branca-leve", "adulto", "branca", "masculino", { limitePesoKg: 64 }),
     ]);
     expect(cats.map((c) => c.id)).toEqual([
@@ -110,10 +113,12 @@ describe("ordenarCategorias", () => {
       cat("master", "master7", "branca"),
     ]);
     expect(cats.at(-1)!.classeIdade).toBe("adulto");
-    expect(cats.slice(0, 2).map((c) => c.classeIdade).sort()).toEqual([
-      "master7",
-      "pre_mirim",
-    ]);
+    expect(
+      cats
+        .slice(0, 2)
+        .map((c) => c.classeIdade)
+        .sort(),
+    ).toEqual(["master7", "pre_mirim"]);
   });
 
   it("dentro da mesma onda, ordena por faixa (branca→preta)", () => {
@@ -135,12 +140,22 @@ describe("ordenarCategorias", () => {
 
   it("dentro do grupo, ordena leve→pesado→pesadíssimo→absoluto", () => {
     const cats = ordenarCategorias([
-      cat("abs", "adulto", "preta", "masculino", { tipo: "absoluto", limitePesoKg: null }),
-      cat("pesadissimo", "adulto", "preta", "masculino", { limitePesoKg: null }),
+      cat("abs", "adulto", "preta", "masculino", {
+        tipo: "absoluto",
+        limitePesoKg: null,
+      }),
+      cat("pesadissimo", "adulto", "preta", "masculino", {
+        limitePesoKg: null,
+      }),
       cat("pesado", "adulto", "preta", "masculino", { limitePesoKg: 94 }),
       cat("leve", "adulto", "preta", "masculino", { limitePesoKg: 76 }),
     ]);
-    expect(cats.map((c) => c.id)).toEqual(["leve", "pesado", "pesadissimo", "abs"]);
+    expect(cats.map((c) => c.id)).toEqual([
+      "leve",
+      "pesado",
+      "pesadissimo",
+      "abs",
+    ]);
   });
 });
 
@@ -183,7 +198,9 @@ describe("distribuirBalanceado", () => {
   });
 
   it("nunca gera menos de uma área", () => {
-    expect(distribuirBalanceado([cat("a", "adulto", "preta")], 0)).toHaveLength(1);
+    expect(distribuirBalanceado([cat("a", "adulto", "preta")], 0)).toHaveLength(
+      1,
+    );
   });
 });
 
@@ -229,5 +246,71 @@ describe("corDaOnda", () => {
 
   it("centro apaga até o piso de 0,22", () => {
     expect(corDaOnda(6, 6)).toBe("rgba(238,46,36,0.220)");
+  });
+});
+
+describe("ordem do dia definida pelo organizador", () => {
+  const cats = [
+    {
+      classeIdade: "adulto",
+      sexo: "masculino",
+      faixa: "preta",
+      tipo: "peso",
+      limitePesoKg: 70,
+    },
+    {
+      classeIdade: "pre_mirim",
+      sexo: "masculino",
+      faixa: "branca",
+      tipo: "peso",
+      limitePesoKg: 30,
+    },
+    {
+      classeIdade: "master3",
+      sexo: "masculino",
+      faixa: "azul",
+      tipo: "peso",
+      limitePesoKg: 80,
+    },
+  ];
+
+  it("sem ordem manual segue o funil padrão (extremos → meio)", () => {
+    expect(ordenarCategorias(cats).map((c) => c.classeIdade)).toEqual([
+      "pre_mirim",
+      "master3",
+      "adulto",
+    ]);
+  });
+
+  it("com ordem manual, a sequência escolhida manda", () => {
+    const ordem = ["adulto", "pre_mirim", "master3"];
+    expect(ordenarCategorias(cats, ordem).map((c) => c.classeIdade)).toEqual(
+      ordem,
+    );
+  });
+
+  it("classe fora da lista cai no fim, sem quebrar a ordenação", () => {
+    const ordem = ["master3"];
+    expect(ordenarCategorias(cats, ordem).map((c) => c.classeIdade)).toEqual([
+      "master3",
+      "pre_mirim",
+      "adulto",
+    ]);
+  });
+
+  it("lista vazia volta ao padrão", () => {
+    expect(ordenarCategorias(cats, []).map((c) => c.classeIdade)).toEqual(
+      ordenarCategorias(cats).map((c) => c.classeIdade),
+    );
+  });
+
+  it("classesEmOrdem devolve as classes na ordem em vigor", () => {
+    expect(classesEmOrdem(cats).map((c) => c.id)).toEqual([
+      "pre_mirim",
+      "master3",
+      "adulto",
+    ]);
+    const ordem = ["adulto", "master3", "pre_mirim"];
+    expect(classesEmOrdem(cats, ordem).map((c) => c.id)).toEqual(ordem);
   });
 });

@@ -1020,6 +1020,12 @@ export const pt = {
       temposMin: "min",
       temposPadrao: "padrão",
       temposSalvar: "Salvar tempos",
+      // ordem do dia editável (arrastar as classes de idade)
+      ordemClassesTexto:
+        "Arraste as classes para definir em que sequência elas correm. O padrão é o funil dos extremos ao meio (kids e masters mais velhos liberam cedo, o miolo corre por último) — mude à vontade. A ordem vale na próxima vez que você estruturar as áreas.",
+      ordemClassesPadrao: "Seguindo a regra padrão (extremos → meio)",
+      ordemClassesPropria: "Ordem definida por você",
+      ordemClassesRestaurar: "Restaurar padrão",
       // assistente (wizard) da configuração das áreas
       assistenteTitulo: "Montagem das áreas",
       assistentePasso: "Passo",
@@ -1036,6 +1042,7 @@ export const pt = {
       assistenteResumoDias: "dias",
       assistenteResumoPadrao: "padrão CBJJ",
       assistenteResumoAjustados: "ajustados",
+      assistenteResumoOrdemPropria: "sua ordem",
       assistenteResumoAuto: "automático",
       assistenteResumoSemAreas: "a definir",
       // recolher/expandir seções da tela de áreas

@@ -44,7 +44,11 @@ export function ondaDaClasse(classeId: string): number {
 }
 
 /** chave do grupo de exibição de uma categoria */
-export function chaveDoGrupo(c: { classeIdade: string; sexo: string; faixa: string | null }): string {
+export function chaveDoGrupo(c: {
+  classeIdade: string;
+  sexo: string;
+  faixa: string | null;
+}): string {
   return `${c.classeIdade}|${c.sexo}|${c.faixa ?? ""}`;
 }
 
@@ -81,14 +85,43 @@ export interface CategoriaComCarga {
 }
 
 /**
- * Ordena as categorias na ordem do dia: onda asc (extremos primeiro) → faixa
- * (branca→preta) → classe → sexo (feminino antes) → peso (leve→pesado).
+ * Ordem das classes definida pelo organizador (ids na sequência em que devem
+ * correr). Nula/vazia = regra padrão das ondas (extremos → meio).
  */
-export function ordenarCategorias<T extends CategoriaOrdenavel>(cats: T[]): T[] {
+export type OrdemClasses = string[] | null | undefined;
+
+/** posição da classe na ordem manual (as fora da lista vão para o fim) */
+function posNaOrdem(classeId: string, ordem: string[]): number {
+  const i = ordem.indexOf(classeId);
+  return i === -1 ? ordem.length + indiceClasse(classeId) : i;
+}
+
+/** a ordem manual está valendo? (precisa ter ao menos uma classe) */
+const temOrdemManual = (ordem: OrdemClasses): ordem is string[] =>
+  Array.isArray(ordem) && ordem.length > 0;
+
+/**
+ * Ordena as categorias na ordem do dia.
+ *
+ * Padrão: onda asc (extremos primeiro) → faixa (branca→preta) → classe → sexo
+ * (feminino antes) → peso (leve→pesado).
+ *
+ * Com `ordemClasses` (o organizador arrastou as classes na tela de Áreas): a
+ * sequência escolhida vira a chave principal — cada classe corre inteira, na
+ * posição em que ele a colocou — e os desempates seguintes continuam iguais.
+ */
+export function ordenarCategorias<T extends CategoriaOrdenavel>(
+  cats: T[],
+  ordemClasses?: OrdemClasses,
+): T[] {
+  const manual = temOrdemManual(ordemClasses) ? ordemClasses : null;
+  const rankClasse = (id: string) =>
+    manual ? posNaOrdem(id, manual) : ondaDaClasse(id);
   return [...cats].sort(
     (a, b) =>
-      ondaDaClasse(a.classeIdade) - ondaDaClasse(b.classeIdade) ||
-      (IDX_FAIXA.get(a.faixa ?? "") ?? 99) - (IDX_FAIXA.get(b.faixa ?? "") ?? 99) ||
+      rankClasse(a.classeIdade) - rankClasse(b.classeIdade) ||
+      (IDX_FAIXA.get(a.faixa ?? "") ?? 99) -
+        (IDX_FAIXA.get(b.faixa ?? "") ?? 99) ||
       indiceClasse(a.classeIdade) - indiceClasse(b.classeIdade) ||
       sexoRank(a.sexo) - sexoRank(b.sexo) ||
       rankPeso(a) - rankPeso(b),
@@ -129,7 +162,8 @@ export function compararCategoriasExibicao(
     (IDX_CLASSE.get(a.classeIdade) ?? 999) -
       (IDX_CLASSE.get(b.classeIdade) ?? 999) ||
     sexoExibicaoRank(a.sexo) - sexoExibicaoRank(b.sexo) ||
-    (IDX_FAIXA.get(a.faixa ?? "") ?? 99) - (IDX_FAIXA.get(b.faixa ?? "") ?? 99) ||
+    (IDX_FAIXA.get(a.faixa ?? "") ?? 99) -
+      (IDX_FAIXA.get(b.faixa ?? "") ?? 99) ||
     pesoExibicaoRank(a) - pesoExibicaoRank(b)
   );
 }
@@ -209,21 +243,33 @@ export function agruparExibicao<
 /** classes distintas na ordem do dia (para a legenda do funil) */
 export function classesEmOrdem<T extends { classeIdade: string }>(
   cats: T[],
+  ordemClasses?: OrdemClasses,
 ): { id: string; nome: string; onda: number }[] {
   const vistas = new Map<string, number>();
   for (const c of cats) {
     if (!vistas.has(c.classeIdade))
       vistas.set(c.classeIdade, ondaDaClasse(c.classeIdade));
   }
-  return [...vistas].map(([id, onda]) => ({
+  const manual = temOrdemManual(ordemClasses) ? ordemClasses : null;
+  const lista = [...vistas].map(([id, onda]) => ({
     id,
     nome: nomeDaClasse(id),
     onda,
   }));
+  if (!manual) return lista.sort((a, b) => a.onda - b.onda);
+  // com ordem manual a "onda" vira a própria posição (mantém o degradê da cor)
+  return lista
+    .sort((a, b) => posNaOrdem(a.id, manual) - posNaOrdem(b.id, manual))
+    .map((c, i) => ({ ...c, onda: i }));
 }
 
 /** maior onda presente (mín. 1, para não dividir por zero na cor) */
-export function maiorOndaDeCats<T extends { classeIdade: string }>(cats: T[]): number {
+export function maiorOndaDeCats<T extends { classeIdade: string }>(
+  cats: T[],
+  ordemClasses?: OrdemClasses,
+): number {
+  if (temOrdemManual(ordemClasses))
+    return Math.max(1, classesEmOrdem(cats, ordemClasses).length - 1);
   return Math.max(1, ...cats.map((c) => ondaDaClasse(c.classeIdade)));
 }
 

@@ -190,6 +190,9 @@ export const eventos = pgTable("eventos", {
   // adulto+), em MINUTOS. Guarda só o que o organizador mudou; o resto cai na
   // tabela padrão CBJJ (ver src/lib/cronograma/tempos.ts)
   temposLuta: jsonb("tempos_luta").$type<TemposLuta>(),
+  // ordem do dia definida pelo organizador: ids das classes de idade na
+  // sequência em que devem correr. Nulo = regra padrão (ondas: extremos → meio)
+  ordemClasses: jsonb("ordem_classes").$type<string[]>(),
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
 });
 

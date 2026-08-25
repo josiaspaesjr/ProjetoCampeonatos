@@ -23,6 +23,7 @@ import {
   moverLutaParaArea,
   reordenarLutasDaArea,
   salvarDiasEvento,
+  salvarOrdemClasses,
   salvarTemposLuta,
 } from "./actions";
 
@@ -90,10 +91,12 @@ export default async function PaginaAreas({
     cats.flatMap((c) => (c.faixa ? [c.faixa] : [])),
   );
   const dimensoes = {
-    classes: CLASSES_IDADE.filter((c) => classesPresentes.has(c.id)).map((c) => ({
-      id: c.id,
-      nome: nomeDaClasse(c.id),
-    })),
+    classes: CLASSES_IDADE.filter((c) => classesPresentes.has(c.id)).map(
+      (c) => ({
+        id: c.id,
+        nome: nomeDaClasse(c.id),
+      }),
+    ),
     sexos: ["masculino", "feminino"].filter((s) =>
       cats.some((c) => c.sexo === s),
     ),
@@ -107,7 +110,9 @@ export default async function PaginaAreas({
     faixa: c.faixa,
     tipo: c.tipo,
   }));
-  const modoInicial = cats.some((c) => c.dataFixada != null) ? "porDia" : "auto";
+  const modoInicial = cats.some((c) => c.dataFixada != null)
+    ? "porDia"
+    : "auto";
 
   return (
     <EstruturadorAreas
@@ -122,11 +127,13 @@ export default async function PaginaAreas({
       dimensoes={dimensoes}
       categoriasFiltro={categoriasFiltro}
       modoInicial={modoInicial}
+      ordemClasses={evento.ordemClasses ?? null}
       erro={erro}
       estruturar={estruturarAreas.bind(null, id)}
       estruturarPorDia={estruturarPorDia.bind(null, id)}
       salvarDias={salvarDiasEvento.bind(null, id)}
       salvarTempos={salvarTemposLuta.bind(null, id)}
+      salvarOrdemClasses={salvarOrdemClasses.bind(null, id)}
       reordenar={reordenarLutasDaArea.bind(null, id)}
       moverLuta={moverLutaParaArea.bind(null, id)}
       moverCategoria={moverCategoriaParaArea.bind(null, id)}

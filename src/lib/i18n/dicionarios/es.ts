@@ -1014,6 +1014,12 @@ export const es: Dicionario = {
       temposMin: "min",
       temposPadrao: "estándar",
       temposSalvar: "Guardar tiempos",
+      // orden del día editable (arrastrar las clases de edad)
+      ordemClassesTexto:
+        "Arrastra las clases para definir en qué secuencia corren. El estándar es el embudo de los extremos al medio (kids y másteres mayores liberan temprano, el centro corre al final) — cámbialo a tu gusto. El orden vale la próxima vez que estructures las áreas.",
+      ordemClassesPadrao: "Siguiendo la regla estándar (extremos → medio)",
+      ordemClassesPropria: "Orden definido por ti",
+      ordemClassesRestaurar: "Restaurar estándar",
       // asistente de montaje de las áreas
       assistenteTitulo: "Montaje de las áreas",
       assistentePasso: "Paso",
@@ -1030,6 +1036,7 @@ export const es: Dicionario = {
       assistenteResumoDias: "días",
       assistenteResumoPadrao: "estándar CBJJ",
       assistenteResumoAjustados: "ajustados",
+      assistenteResumoOrdemPropria: "tu orden",
       assistenteResumoAuto: "automático",
       assistenteResumoSemAreas: "por definir",
       // plegar/desplegar secciones de la pantalla de áreas

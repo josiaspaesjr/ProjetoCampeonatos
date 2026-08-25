@@ -4,14 +4,23 @@ import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb, type Db } from "@/db";
-import { areas, auditoria, categorias, chaves, eventos, lutas } from "@/db/schema";
+import {
+  areas,
+  auditoria,
+  categorias,
+  chaves,
+  eventos,
+  lutas,
+} from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
 import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import {
+  classesEmOrdem,
   distribuirBalanceado,
   ordenarCategorias,
 } from "@/lib/categorias/distribuicao-areas";
+import { CLASSES_IDADE } from "@/lib/categorias/cbjj";
 import { estimarCargaCategorias } from "@/lib/cronograma/carga-areas";
 import {
   diasDoEventoOuDefault,
@@ -20,13 +29,19 @@ import {
 import { montarCronogramaDoEvento } from "@/lib/cronograma/cronograma-areas";
 import { duracaoDaCategoria } from "@/lib/cronograma/fila";
 import { CHAVES_TEMPO, normalizarTempos } from "@/lib/cronograma/tempos";
-import { verificarCapacidade, type ResultadoCapacidade } from "@/lib/cronograma/janelas";
+import {
+  verificarCapacidade,
+  type ResultadoCapacidade,
+} from "@/lib/cronograma/janelas";
 import {
   lerDiasDoForm,
   persistirDiasEvento,
   validarDias,
 } from "@/lib/eventos/dias-form";
-import { registrarResultadoNoBanco, type PlacarLuta } from "@/lib/chaves/persistencia";
+import {
+  registrarResultadoNoBanco,
+  type PlacarLuta,
+} from "@/lib/chaves/persistencia";
 import type { MetodoVitoria } from "@/lib/bracket";
 
 const AREAS_MIN = 1;
@@ -69,7 +84,8 @@ async function contexto(eventoId: string) {
 function horaInicioDoDia1(dia1?: { data: string; inicioSegundos: number }) {
   return dia1
     ? new Date(
-        new Date(`${dia1.data}T00:00:00`).getTime() + dia1.inicioSegundos * 1000,
+        new Date(`${dia1.data}T00:00:00`).getTime() +
+          dia1.inicioSegundos * 1000,
       )
     : null;
 }
@@ -197,7 +213,12 @@ export async function estruturarAreas(eventoId: string, formData: FormData) {
   if (!cats.length) erroVisivelAreas(eventoId, dic.admin.areas.gereGradeAntes);
 
   // entradas com carga (balanceamento) e demanda real (tempo) por categoria
-  const cargas = await estimarCargaCategorias(db, eventoId, cats, evento.temposLuta);
+  const cargas = await estimarCargaCategorias(
+    db,
+    eventoId,
+    cats,
+    evento.temposLuta,
+  );
   const entradas = cats.map((c) => ({
     id: c.id,
     classeIdade: c.classeIdade,
@@ -211,7 +232,12 @@ export async function estruturarAreas(eventoId: string, formData: FormData) {
   }));
 
   // VERIFICAÇÃO DE ENCAIXE: as lutas cabem no período com N áreas?
-  const cap = verificarCapacidade(entradas, nAreas, janelas);
+  const cap = verificarCapacidade(
+    entradas,
+    nAreas,
+    janelas,
+    evento.ordemClasses,
+  );
   if (!cap.cabe) {
     // não grava nada — orienta a acrescentar áreas ou dias/horas
     erroVisivelAreas(eventoId, mensagemNaoCabe(cap, dic.admin.areas));
@@ -219,15 +245,24 @@ export async function estruturarAreas(eventoId: string, formData: FormData) {
 
   // --- cabe: a partir daqui, persiste ---
   // nº de áreas planejado (reflete no chip da Visão geral, badge e checklist)
-  await db.update(eventos).set({ numAreas: nAreas }).where(eq(eventos.id, eventoId));
+  await db
+    .update(eventos)
+    .set({ numAreas: nAreas })
+    .where(eq(eventos.id, eventoId));
 
   // âncora do cronograma ao vivo de cada área: início do 1º dia
   const horaInicio = horaInicioDoDia1(janelas[0]);
-  const alvoIds = await conciliarAreas(db, eventoId, existentes, nAreas, horaInicio);
+  const alvoIds = await conciliarAreas(
+    db,
+    eventoId,
+    existentes,
+    nAreas,
+    horaInicio,
+  );
 
   // distribui reusando as MESMAS entradas do check (ordenação/carga idênticas,
   // então a área mais cheia bate com o gargalo que foi validado)
-  const ordenadas = ordenarCategorias(entradas);
+  const ordenadas = ordenarCategorias(entradas, evento.ordemClasses);
   const porArea = distribuirBalanceado(ordenadas, nAreas);
 
   // modo automático: zera `dataFixada` (o encaixe volta a decidir o dia)
@@ -308,7 +343,12 @@ export async function estruturarPorDia(eventoId: string, formData: FormData) {
   if (!cats.length) erroVisivelAreas(eventoId, dic.admin.areas.gereGradeAntes);
 
   // cargas para o balanceamento (mesma base do automático)
-  const cargas = await estimarCargaCategorias(db, eventoId, cats, evento.temposLuta);
+  const cargas = await estimarCargaCategorias(
+    db,
+    eventoId,
+    cats,
+    evento.temposLuta,
+  );
   const entradaDe = (c: (typeof cats)[number]) => ({
     id: c.id,
     classeIdade: c.classeIdade,
@@ -328,19 +368,40 @@ export async function estruturarPorDia(eventoId: string, formData: FormData) {
 
   // reconcilia N áreas
   const horaInicio = horaInicioDoDia1(janelas[0]);
-  const alvoIds = await conciliarAreas(db, eventoId, existentes, nAreas, horaInicio);
+  const alvoIds = await conciliarAreas(
+    db,
+    eventoId,
+    existentes,
+    nAreas,
+    horaInicio,
+  );
 
   // distribui POR DIA (na ordem das datas), acumulando a ordem dentro de cada
   // área para manter dia1 antes de dia2 na mesma área
   const datasOrdenadas = [...new Set([...diaDeCat.values()])].sort();
   const ordemPorArea = new Array<number>(alvoIds.length).fill(0);
-  const alocacoes: { id: string; areaId: string; ordem: number; data: string }[] = [];
+  const alocacoes: {
+    id: string;
+    areaId: string;
+    ordem: number;
+    data: string;
+  }[] = [];
   for (const data of datasOrdenadas) {
-    const doDia = cats.filter((c) => diaDeCat.get(c.id) === data).map(entradaDe);
-    const porArea = distribuirBalanceado(ordenarCategorias(doDia), nAreas);
+    const doDia = cats
+      .filter((c) => diaDeCat.get(c.id) === data)
+      .map(entradaDe);
+    const porArea = distribuirBalanceado(
+      ordenarCategorias(doDia, evento.ordemClasses),
+      nAreas,
+    );
     porArea.forEach((catsDaArea, i) => {
       for (const c of catsDaArea) {
-        alocacoes.push({ id: c.id, areaId: alvoIds[i], ordem: ordemPorArea[i]++, data });
+        alocacoes.push({
+          id: c.id,
+          areaId: alvoIds[i],
+          ordem: ordemPorArea[i]++,
+          data,
+        });
       }
     });
   }
@@ -367,7 +428,10 @@ export async function estruturarPorDia(eventoId: string, formData: FormData) {
   // re-layout dos tatames descarta a ordem manual de lutas anterior
   await zerarOrdemManual(db, eventoId);
 
-  await db.update(eventos).set({ numAreas: nAreas }).where(eq(eventos.id, eventoId));
+  await db
+    .update(eventos)
+    .set({ numAreas: nAreas })
+    .where(eq(eventos.id, eventoId));
 
   await db.insert(auditoria).values({
     usuarioId: usuario.id,
@@ -419,6 +483,52 @@ export async function salvarTemposLuta(eventoId: string, formData: FormData) {
 
   revalidatePath(`/organizador/eventos/${eventoId}`);
   revalidatePath(`/organizador/eventos/${eventoId}/areas`);
+}
+
+/**
+ * Salva a ORDEM DO DIA definida pelo organizador: ids das classes de idade na
+ * sequência em que devem correr. Lista vazia (ou só com ids desconhecidos) volta
+ * para a regra padrão das ondas (extremos → meio). Vale na próxima vez que as
+ * áreas forem estruturadas — não remexe no que já está distribuído.
+ */
+export async function salvarOrdemClasses(
+  eventoId: string,
+  classeIds: string[],
+) {
+  const { db } = await contexto(eventoId);
+
+  const validas = new Set(CLASSES_IDADE.map((c) => c.id));
+  const ordem = classeIds.filter(
+    (id, i) => validas.has(id) && classeIds.indexOf(id) === i,
+  );
+  const padrao =
+    ordem.length ===
+      classesEmOrdem(
+        (
+          await db.query.categorias.findMany({
+            where: eq(categorias.eventoId, eventoId),
+            columns: { classeIdade: true },
+          })
+        ).map((c) => ({ classeIdade: c.classeIdade })),
+      ).length && igualAoPadrao(ordem);
+
+  await db
+    .update(eventos)
+    .set({ ordemClasses: ordem.length && !padrao ? ordem : null })
+    .where(eq(eventos.id, eventoId));
+
+  revalidatePath(`/organizador/eventos/${eventoId}`);
+  revalidatePath(`/organizador/eventos/${eventoId}/areas`);
+}
+
+/** a sequência escolhida é exatamente a que a regra padrão produziria? */
+function igualAoPadrao(ordem: string[]): boolean {
+  const padrao = classesEmOrdem(ordem.map((id) => ({ classeIdade: id }))).map(
+    (c) => c.id,
+  );
+  return (
+    padrao.length === ordem.length && padrao.every((id, i) => id === ordem[i])
+  );
 }
 
 /** persiste o placar parcial para o público acompanhar (não decide a luta) */
@@ -479,7 +589,14 @@ export async function encerrarLutaDoPlacar(
   placar: PlacarLuta,
 ) {
   const { db } = await contexto(eventoId);
-  await registrarResultadoNoBanco(db, chaveId, lutaId, vencedorId, metodo, placar);
+  await registrarResultadoNoBanco(
+    db,
+    chaveId,
+    lutaId,
+    vencedorId,
+    metodo,
+    placar,
+  );
   revalidatePath(`/organizador/eventos/${eventoId}/areas`);
 }
 
@@ -519,15 +636,26 @@ export async function moverLutaParaArea(
   const override = categoria.areaId === areaDestinoId ? null : areaDestinoId;
   await db.update(lutas).set({ areaId: override }).where(eq(lutas.id, lutaId));
 
-  const validos = await idsDeLutasDaArea(db, eventoId, areaDestinoId, idsDestinoEmOrdem);
+  const validos = await idsDeLutasDaArea(
+    db,
+    eventoId,
+    areaDestinoId,
+    idsDestinoEmOrdem,
+  );
   if (validos.length) await gravarOrdem(db, validos);
 
   revalidatePath(`/organizador/eventos/${eventoId}/areas`);
-  revalidatePath(`/organizador/eventos/${eventoId}/areas/${areaDestinoId}/placar`);
+  revalidatePath(
+    `/organizador/eventos/${eventoId}/areas/${areaDestinoId}/placar`,
+  );
   if (luta.areaId && luta.areaId !== areaDestinoId)
-    revalidatePath(`/organizador/eventos/${eventoId}/areas/${luta.areaId}/placar`);
+    revalidatePath(
+      `/organizador/eventos/${eventoId}/areas/${luta.areaId}/placar`,
+    );
   if (categoria.areaId && categoria.areaId !== areaDestinoId)
-    revalidatePath(`/organizador/eventos/${eventoId}/areas/${categoria.areaId}/placar`);
+    revalidatePath(
+      `/organizador/eventos/${eventoId}/areas/${categoria.areaId}/placar`,
+    );
 }
 
 /**
@@ -552,10 +680,14 @@ export async function moverCategoriaParaArea(
 
   // entra no fim da fila de categorias do destino
   const noDestino = await db.query.categorias.findMany({
-    where: and(eq(categorias.eventoId, eventoId), eq(categorias.areaId, areaDestinoId)),
+    where: and(
+      eq(categorias.eventoId, eventoId),
+      eq(categorias.areaId, areaDestinoId),
+    ),
     columns: { ordemNaArea: true },
   });
-  const proxima = noDestino.reduce((m, c) => Math.max(m, c.ordemNaArea ?? 0), 0) + 1;
+  const proxima =
+    noDestino.reduce((m, c) => Math.max(m, c.ordemNaArea ?? 0), 0) + 1;
 
   await db
     .update(categorias)
@@ -574,9 +706,13 @@ export async function moverCategoriaParaArea(
   }
 
   revalidatePath(`/organizador/eventos/${eventoId}/areas`);
-  revalidatePath(`/organizador/eventos/${eventoId}/areas/${areaDestinoId}/placar`);
+  revalidatePath(
+    `/organizador/eventos/${eventoId}/areas/${areaDestinoId}/placar`,
+  );
   if (categoria.areaId)
-    revalidatePath(`/organizador/eventos/${eventoId}/areas/${categoria.areaId}/placar`);
+    revalidatePath(
+      `/organizador/eventos/${eventoId}/areas/${categoria.areaId}/placar`,
+    );
 }
 
 /** ids válidos (lutas que realmente correm na área) preservando a ordem pedida */
@@ -650,7 +786,11 @@ export async function definirProximaLuta(
 ) {
   const { db, evento } = await contexto(eventoId);
 
-  const cronograma = await montarCronogramaDoEvento(db, eventoId, evento.dataInicio);
+  const cronograma = await montarCronogramaDoEvento(
+    db,
+    eventoId,
+    evento.dataInicio,
+  );
   const area = cronograma.find((a) => a.id === areaId);
   if (!area) return;
 
@@ -693,7 +833,12 @@ export async function reordenarLutasDaArea(
 
   // ids válidos = lutas que correm nesta área (inclui as trazidas de outro
   // tatame e exclui as que saíram dela)
-  const ordenados = await idsDeLutasDaArea(db, eventoId, areaId, lutaIdsEmOrdem);
+  const ordenados = await idsDeLutasDaArea(
+    db,
+    eventoId,
+    areaId,
+    lutaIdsEmOrdem,
+  );
   if (!ordenados.length) return;
 
   await gravarOrdem(db, ordenados);
