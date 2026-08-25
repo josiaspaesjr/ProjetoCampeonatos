@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import type { Db } from "@/db";
 import { inscricoes } from "@/db/schema";
 import { duracaoDaCategoria } from "./fila";
+import type { TemposLuta } from "./tempos";
 
 /** carga estimada de uma categoria para equilibrar a distribuição por áreas */
 export interface CargaCategoria {
@@ -13,6 +14,7 @@ export interface CargaCategoria {
 
 type CategoriaCarga = {
   id: string;
+  classeIdade?: string | null;
   faixa: string | null;
   duracaoLutaSegundos: number | null;
 };
@@ -27,6 +29,8 @@ export async function estimarCargaCategorias(
   db: Db,
   eventoId: string,
   cats: CategoriaCarga[],
+  /** tabela de tempos do evento (null = padrões CBJJ) */
+  tempos?: TemposLuta | null,
 ): Promise<Map<string, CargaCategoria>> {
   const confirmadas = await db.query.inscricoes.findMany({
     where: and(
@@ -44,7 +48,7 @@ export async function estimarCargaCategorias(
     const lutas = Math.max(0, (contagem.get(c.id) ?? 0) - 1);
     carga.set(c.id, {
       lutas,
-      carga: Math.max(1, lutas) * duracaoDaCategoria(c),
+      carga: Math.max(1, lutas) * duracaoDaCategoria(c, tempos),
     });
   }
   return carga;

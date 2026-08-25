@@ -19,6 +19,7 @@ import {
 } from "@/lib/cronograma/dias";
 import { montarCronogramaDoEvento } from "@/lib/cronograma/cronograma-areas";
 import { duracaoDaCategoria } from "@/lib/cronograma/fila";
+import { CHAVES_TEMPO, normalizarTempos } from "@/lib/cronograma/tempos";
 import { verificarCapacidade, type ResultadoCapacidade } from "@/lib/cronograma/janelas";
 import {
   lerDiasDoForm,
@@ -196,7 +197,7 @@ export async function estruturarAreas(eventoId: string, formData: FormData) {
   if (!cats.length) erroVisivelAreas(eventoId, dic.admin.areas.gereGradeAntes);
 
   // entradas com carga (balanceamento) e demanda real (tempo) por categoria
-  const cargas = await estimarCargaCategorias(db, eventoId, cats);
+  const cargas = await estimarCargaCategorias(db, eventoId, cats, evento.temposLuta);
   const entradas = cats.map((c) => ({
     id: c.id,
     classeIdade: c.classeIdade,
@@ -205,7 +206,8 @@ export async function estruturarAreas(eventoId: string, formData: FormData) {
     tipo: c.tipo,
     limitePesoKg: c.limitePesoKg != null ? Number(c.limitePesoKg) : null,
     carga: cargas.get(c.id)?.carga ?? 1,
-    demandaReal: (cargas.get(c.id)?.lutas ?? 0) * duracaoDaCategoria(c),
+    demandaReal:
+      (cargas.get(c.id)?.lutas ?? 0) * duracaoDaCategoria(c, evento.temposLuta),
   }));
 
   // VERIFICAÇÃO DE ENCAIXE: as lutas cabem no período com N áreas?
@@ -306,7 +308,7 @@ export async function estruturarPorDia(eventoId: string, formData: FormData) {
   if (!cats.length) erroVisivelAreas(eventoId, dic.admin.areas.gereGradeAntes);
 
   // cargas para o balanceamento (mesma base do automático)
-  const cargas = await estimarCargaCategorias(db, eventoId, cats);
+  const cargas = await estimarCargaCategorias(db, eventoId, cats, evento.temposLuta);
   const entradaDe = (c: (typeof cats)[number]) => ({
     id: c.id,
     classeIdade: c.classeIdade,
@@ -393,6 +395,28 @@ export async function salvarDiasEvento(eventoId: string, formData: FormData) {
   if (erro) erroVisivelAreas(eventoId, dic.admin.erros[erro]);
 
   await persistirDiasEvento(db, eventoId, dias);
+  revalidatePath(`/organizador/eventos/${eventoId}`);
+  revalidatePath(`/organizador/eventos/${eventoId}/areas`);
+}
+
+/**
+ * Salva a tabela de tempos do evento (minutos por classe kids / faixa adulto+).
+ * Grava só o que difere do padrão CBJJ; campo vazio volta ao padrão. Como o
+ * cronograma, a fila do telão e o cronômetro do placar leem a mesma tabela, os
+ * horários se recalculam na próxima renderização.
+ */
+export async function salvarTemposLuta(eventoId: string, formData: FormData) {
+  const { db } = await contexto(eventoId);
+
+  const bruto: Record<string, unknown> = {};
+  for (const chave of CHAVES_TEMPO) bruto[chave] = formData.get(chave);
+  const tempos = normalizarTempos(bruto);
+
+  await db
+    .update(eventos)
+    .set({ temposLuta: Object.keys(tempos).length ? tempos : null })
+    .where(eq(eventos.id, eventoId));
+
   revalidatePath(`/organizador/eventos/${eventoId}`);
   revalidatePath(`/organizador/eventos/${eventoId}/areas`);
 }

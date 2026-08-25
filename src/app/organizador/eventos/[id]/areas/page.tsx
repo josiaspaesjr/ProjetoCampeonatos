@@ -15,11 +15,13 @@ import {
   EstruturadorAreas,
   type CategoriaView,
 } from "@/components/organizador/estruturador-areas";
+import { temposEfetivos } from "@/lib/cronograma/tempos";
 import {
   estruturarAreas,
   estruturarPorDia,
   reordenarLutasDaArea,
   salvarDiasEvento,
+  salvarTemposLuta,
 } from "./actions";
 
 /** "YYYY-MM-DD" → "dd/mm" */
@@ -113,6 +115,7 @@ export default async function PaginaAreas({
       eventoNome={evento.nome}
       cronograma={cronograma}
       dias={dias}
+      tempos={temposEfetivos(evento.temposLuta)}
       diasDistintos={diasDistintos}
       dimensoes={dimensoes}
       categoriasFiltro={categoriasFiltro}
@@ -121,6 +124,7 @@ export default async function PaginaAreas({
       estruturar={estruturarAreas.bind(null, id)}
       estruturarPorDia={estruturarPorDia.bind(null, id)}
       salvarDias={salvarDiasEvento.bind(null, id)}
+      salvarTempos={salvarTemposLuta.bind(null, id)}
       reordenar={reordenarLutasDaArea.bind(null, id)}
     />
   );

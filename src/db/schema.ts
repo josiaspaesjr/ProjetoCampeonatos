@@ -14,6 +14,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import type { LoteVariacao } from "@/lib/lotes/preco";
+import type { TemposLuta } from "@/lib/cronograma/tempos";
 
 // ---------------------------------------------------------------------------
 // Enums
@@ -185,6 +186,10 @@ export const eventos = pgTable("eventos", {
   politicaReembolso: text("politica_reembolso"),
   // seções do regulamento (chave → texto); só as preenchidas ficam salvas
   regulamento: jsonb("regulamento").$type<Record<string, string>>(),
+  // tempo regulamentar de luta por linha da tabela (classe kids ou faixa
+  // adulto+), em MINUTOS. Guarda só o que o organizador mudou; o resto cai na
+  // tabela padrão CBJJ (ver src/lib/cronograma/tempos.ts)
+  temposLuta: jsonb("tempos_luta").$type<TemposLuta>(),
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
 });
 

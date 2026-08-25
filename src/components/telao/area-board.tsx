@@ -42,7 +42,7 @@ export function AreaBoard({ fila, t }: { fila: FilaDaArea; t: Txt }) {
       ? hora(
           new Date(
             lista.at(-1)!.horaEstimada.getTime() +
-              duracaoDaCategoria(lista.at(-1)!.categoria) * 1000,
+              duracaoDaCategoria(lista.at(-1)!.categoria, fila.tempos) * 1000,
           ),
         )
       : null;

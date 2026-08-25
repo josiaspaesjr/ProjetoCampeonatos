@@ -32,6 +32,8 @@ import {
 } from "@/components/organizador/painel-por-dia";
 import { BuscaCronograma } from "@/components/organizador/busca-cronograma";
 import { BotaoImprimirPrograma } from "@/components/organizador/botao-imprimir-programa";
+import { CamposTemposLuta } from "@/components/organizador/campos-tempos-luta";
+import type { ChaveTempo } from "@/lib/cronograma/tempos";
 import { useDic } from "@/lib/i18n/client";
 
 const AREAS_MIN = 1;
@@ -51,6 +53,7 @@ export function EstruturadorAreas({
   eventoNome,
   cronograma,
   dias,
+  tempos,
   diasDistintos,
   dimensoes,
   categoriasFiltro,
@@ -59,6 +62,7 @@ export function EstruturadorAreas({
   estruturar,
   estruturarPorDia,
   salvarDias,
+  salvarTempos,
   reordenar,
 }: {
   categorias: CategoriaView[];
@@ -71,6 +75,8 @@ export function EstruturadorAreas({
   cronograma: AreaCron[];
   /** dias do evento (data + início/fim), para configurar aqui também */
   dias: DiaEvento[];
+  /** minutos por luta em vigor (padrão CBJJ + o que o organizador mudou) */
+  tempos: Record<ChaveTempo, number>;
   /** dias distintos do evento (para o modo "Por dia") */
   diasDistintos: DiaDistinto[];
   /** dimensões presentes na grade (classes/sexos/faixas) para os filtros por dia */
@@ -84,6 +90,8 @@ export function EstruturadorAreas({
   estruturar: (formData: FormData) => void | Promise<void>;
   estruturarPorDia: (formData: FormData) => void | Promise<void>;
   salvarDias: (formData: FormData) => void | Promise<void>;
+  /** persiste a tabela de tempos de luta do evento */
+  salvarTempos: (formData: FormData) => void | Promise<void>;
   /** persiste a ordem manual das lutas de uma área (drag-and-drop) */
   reordenar: (areaId: string, lutaIds: string[]) => void | Promise<void>;
 }) {
@@ -100,6 +108,7 @@ export function EstruturadorAreas({
   // com as lutas já distribuídas, a configuração sai da frente (mas volta num clique)
   const [diasAberto, setDiasAberto] = useState(!estruturado);
   const [porDiaAberto, setPorDiaAberto] = useState(!estruturado);
+  const [temposAberto, setTemposAberto] = useState(false);
   const [buscaAberta, setBuscaAberta] = useState(false);
 
   const nInt = Math.floor(Number(areasN));
@@ -200,6 +209,14 @@ export function EstruturadorAreas({
           </form>
         )}
       </div>
+
+      {/* TEMPO DE LUTA (minutos por classe kids / faixa adulto+) */}
+      <CamposTemposLuta
+        valores={tempos}
+        salvar={salvarTempos}
+        aberto={temposAberto}
+        onAlternar={() => setTemposAberto((v) => !v)}
+      />
 
       {/* SELETOR DE MODO: automático × por dia */}
       <div className="flex flex-wrap items-center gap-3">

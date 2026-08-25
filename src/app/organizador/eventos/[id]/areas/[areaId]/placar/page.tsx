@@ -105,7 +105,7 @@ export default async function PaginaPlacar({
         chaveId={chave!.id}
         lutaId={proxima.luta.id}
         categoriaNome={proxima.categoria.nome}
-        duracaoSegundos={tempoDeLutaSegundos(proxima.categoria.faixa)}
+        duracaoSegundos={tempoDeLutaSegundos(proxima.categoria, fila.tempos)}
         atleta1={{ id: a1, ...fila.atletas[a1] }}
         atleta2={{ id: a2, ...fila.atletas[a2] }}
         placarInicial={{

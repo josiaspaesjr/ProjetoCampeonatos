@@ -994,6 +994,17 @@ export const pt = {
       estruturarPorDia: "Estruturar por dia",
       porDiaSemFiltro:
         "Marque ao menos uma classe, um sexo e uma faixa em pelo menos um dia.",
+      // tabela de tempos de luta (minutos) editável pelo organizador
+      temposTitulo: "Tempo de luta",
+      temposTexto:
+        "Minutos regulamentares por classe (kids) e por faixa (adulto+). O cronograma soma 2 min de transição entre lutas e recalcula os horários. Campo vazio volta ao padrão CBJJ.",
+      temposKids: "Kids · por classe",
+      temposAdulto: "Adulto+ · por faixa",
+      temposNotaJuvenil:
+        "Juvenil, adulto e masters seguem a linha da faixa. Uma categoria específica pode ter tempo próprio na tela de Categorias.",
+      temposMin: "min",
+      temposPadrao: "padrão",
+      temposSalvar: "Salvar tempos",
       // recolher/expandir seções da tela de áreas
       secaoMostrar: "Mostrar",
       secaoOcultar: "Ocultar",

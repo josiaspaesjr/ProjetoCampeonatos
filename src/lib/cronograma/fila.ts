@@ -8,6 +8,11 @@ import {
   prioridadeFaseDupla,
 } from "@/lib/chaves/eliminacao-dupla";
 import { intercalarComDescanso, type UnidadeIntercalavel } from "./intercalar";
+import {
+  minutosDaCategoria,
+  type CategoriaTempo,
+  type TemposLuta,
+} from "./tempos";
 import { diasDoEventoOuDefault, type JanelaDia } from "./dias";
 import { encaixarComProgresso, type Ancora, type ItemProgresso } from "./janelas";
 import { localizarNoEixo, paredeSegundos } from "./relogio";
@@ -28,21 +33,15 @@ import { localizarNoEixo, paredeSegundos } from "./relogio";
  */
 export const TRANSICAO_SEGUNDOS = 120;
 
-/** tempo regulamentar CBJJ por faixa (kids: aproximação por faixa), em segundos */
-export function duracaoLutaSegundos(faixa: string | null): number {
-  const minutos =
-    {
-      cinza: 3,
-      amarela: 3,
-      laranja: 4,
-      verde: 4,
-      branca: 5,
-      azul: 6,
-      roxa: 7,
-      marrom: 8,
-      preta: 10,
-    }[faixa ?? ""] ?? 6;
-  return minutos * 60 + TRANSICAO_SEGUNDOS;
+/**
+ * Slot da luta no cronograma: tempo regulamentar (tabela do evento) + transição.
+ * Kids valem pela classe de idade, adulto+ pela faixa — ver `tempos.ts`.
+ */
+export function duracaoLutaSegundos(
+  categoria: CategoriaTempo,
+  tempos?: TemposLuta | null,
+): number {
+  return minutosDaCategoria(categoria, tempos) * 60 + TRANSICAO_SEGUNDOS;
 }
 
 /**
@@ -50,20 +49,23 @@ export function duracaoLutaSegundos(faixa: string | null): number {
  * placar conta. Usado pelo tablet do organizador e pelo telão da área, para que
  * ambos partam exatamente da mesma base.
  */
-export function tempoDeLutaSegundos(faixa: string | null): number {
-  return duracaoLutaSegundos(faixa) - TRANSICAO_SEGUNDOS;
+export function tempoDeLutaSegundos(
+  categoria: CategoriaTempo,
+  tempos?: TemposLuta | null,
+): number {
+  return duracaoLutaSegundos(categoria, tempos) - TRANSICAO_SEGUNDOS;
 }
 
 /**
  * Duração estimada por luta da categoria: o organizador pode definir um valor
- * próprio (equivalente ao "estimated time per match" do scoreboard); nulo cai
- * na tabela regulamentar da faixa.
+ * próprio para AQUELA categoria (equivalente ao "estimated time per match" do
+ * scoreboard); nulo cai na tabela de tempos do evento (ou na padrão CBJJ).
  */
-export function duracaoDaCategoria(categoria: {
-  faixa: string | null;
-  duracaoLutaSegundos: number | null;
-}): number {
-  return categoria.duracaoLutaSegundos ?? duracaoLutaSegundos(categoria.faixa);
+export function duracaoDaCategoria(
+  categoria: CategoriaTempo & { duracaoLutaSegundos: number | null },
+  tempos?: TemposLuta | null,
+): number {
+  return categoria.duracaoLutaSegundos ?? duracaoLutaSegundos(categoria, tempos);
 }
 
 type LutaRow = typeof lutas.$inferSelect;
@@ -81,6 +83,8 @@ export interface FilaDaArea {
   area: typeof areas.$inferSelect;
   fila: LutaNaFila[];
   atletas: Record<string, { nome: string; academia: string | null }>;
+  /** tabela de tempos do evento (null = só os padrões CBJJ) */
+  tempos: TemposLuta | null;
 }
 
 /**
@@ -104,6 +108,8 @@ export async function montarFilaDaArea(
   agora = new Date(),
   /** janelas dos dias (injetadas por montarFilasDoEvento p/ evitar N+1) */
   dias?: JanelaDia[],
+  /** tempos de luta do evento (idem — injetados para não reler o evento) */
+  tempos?: TemposLuta | null,
 ): Promise<FilaDaArea | null> {
   const area = await db.query.areas.findFirst({ where: eq(areas.id, areaId) });
   if (!area) return null;
@@ -113,15 +119,17 @@ export async function montarFilaDaArea(
     orderBy: asc(categorias.ordemNaArea),
   });
 
-  // janelas dos dias do evento (injetadas por montarFilasDoEvento p/ evitar N+1)
-  const janelas =
-    dias ??
-    (await (async (): Promise<JanelaDia[]> => {
-      const evento = await db.query.eventos.findFirst({
-        where: eq(eventos.id, area.eventoId),
-      });
-      return evento ? diasDoEventoOuDefault(db, evento) : [];
-    })());
+  // dias e tempos do evento: injetados por montarFilasDoEvento (evita N+1) ou
+  // lidos aqui numa única passada pelo evento
+  let janelas = dias;
+  let temposLuta = tempos;
+  if (!janelas || temposLuta === undefined) {
+    const evento = await db.query.eventos.findFirst({
+      where: eq(eventos.id, area.eventoId),
+    });
+    janelas ??= evento ? await diasDoEventoOuDefault(db, evento) : [];
+    if (temposLuta === undefined) temposLuta = evento?.temposLuta ?? null;
+  }
   // piso do dia fixado (modo "Por dia"): data → 1ª janela desse dia (ver janelas.ts)
   const pisoPorData = new Map<string, Ancora>();
   janelas.forEach((j, i) => {
@@ -225,7 +233,7 @@ export async function montarFilaDaArea(
   const itens: ItemProgresso[] = [
     ...decididas,
     ...ordenadas.map((o) => ({
-      duracao: duracaoDaCategoria(o.categoria),
+      duracao: duracaoDaCategoria(o.categoria, temposLuta),
       fimReal: null,
       pisoDia: pisoDaCategoria(o.categoria.dataFixada),
     })),
@@ -269,6 +277,7 @@ export async function montarFilaDaArea(
     atletas: Object.fromEntries(
       inscritos.map((i) => [i.id, { nome: i.nomeAtleta, academia: i.academiaNome }]),
     ),
+    tempos: temposLuta ?? null,
   };
 }
 
@@ -282,9 +291,10 @@ export async function montarFilasDoEvento(db: Db, eventoId: string) {
   ]);
   // carrega as janelas dos dias uma vez e injeta em cada área (evita N+1)
   const dias = evento ? await diasDoEventoOuDefault(db, evento) : [];
+  const tempos = evento?.temposLuta ?? null;
   const agora = new Date();
   const filas = await Promise.all(
-    todasAreas.map((a) => montarFilaDaArea(db, a.id, agora, dias)),
+    todasAreas.map((a) => montarFilaDaArea(db, a.id, agora, dias, tempos)),
   );
   return filas.filter((f): f is FilaDaArea => f !== null);
 }

@@ -988,6 +988,17 @@ export const es: Dicionario = {
       estruturarPorDia: "Estructurar por día",
       porDiaSemFiltro:
         "Marca al menos una clase, un sexo y un cinturón en al menos un día.",
+      // tabla de tiempos de combate (minutos) editable por el organizador
+      temposTitulo: "Tiempo de combate",
+      temposTexto:
+        "Minutos reglamentarios por clase (kids) y por cinturón (adulto+). El cronograma suma 2 min de transición entre combates y recalcula los horarios. Campo vacío vuelve al estándar CBJJ.",
+      temposKids: "Kids · por clase",
+      temposAdulto: "Adulto+ · por cinturón",
+      temposNotaJuvenil:
+        "Juvenil, adulto y másteres siguen la línea del cinturón. Una categoría puntual puede tener su propio tiempo en la pantalla de Categorías.",
+      temposMin: "min",
+      temposPadrao: "estándar",
+      temposSalvar: "Guardar tiempos",
       // plegar/desplegar secciones de la pantalla de áreas
       secaoMostrar: "Mostrar",
       secaoOcultar: "Ocultar",

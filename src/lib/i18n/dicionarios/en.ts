@@ -987,6 +987,17 @@ export const en: Dicionario = {
       porDiaSemFiltro:
         "Select at least one class, one sex and one belt on at least one day.",
       // printable schedule by day
+      // organizer-editable match-time table (minutes)
+      temposTitulo: "Match time",
+      temposTexto:
+        "Regulation minutes by age class (kids) and by belt (adult+). The schedule adds 2 min of transition between matches and recalculates the times. An empty field falls back to the CBJJ default.",
+      temposKids: "Kids · by class",
+      temposAdulto: "Adult+ · by belt",
+      temposNotaJuvenil:
+        "Juvenile, adult and masters follow the belt row. A single category can still get its own time on the Categories screen.",
+      temposMin: "min",
+      temposPadrao: "default",
+      temposSalvar: "Save times",
       // collapse/expand sections on the mats screen
       secaoMostrar: "Show",
       secaoOcultar: "Hide",

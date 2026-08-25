@@ -1,6 +1,6 @@
 import { and, asc, eq, inArray } from "drizzle-orm";
 import type { Db } from "@/db";
-import { areas, categorias, chaves, inscricoes, lutas } from "@/db/schema";
+import { areas, categorias, chaves, eventos, inscricoes, lutas } from "@/db/schema";
 import { chaveDoGrupo, nomeDaClasse } from "@/lib/categorias/distribuicao-areas";
 import { idsDeBye } from "@/lib/chaves/byes";
 import {
@@ -213,6 +213,11 @@ export async function montarCronogramaDoEvento(
     id: eventoId,
     dataInicio: inicioStr,
   });
+  // tabela de tempos do evento (kids por classe, adulto+ por faixa)
+  const eventoRow = await db.query.eventos.findFirst({
+    where: eq(eventos.id, eventoId),
+  });
+  const tempos = eventoRow?.temposLuta ?? null;
   // nº do dia de calendário (1-based) por data — para os divisores multi-dia,
   // distinto do diaIndex (que conta janelas; um dia pode ter manhã e tarde)
   const diaNumeroPorData = new Map(
@@ -316,7 +321,7 @@ export async function montarCronogramaDoEvento(
 
     // metadados por categoria + nº de "unidades de luta" (reais ou estimadas)
     const metaCats = catsDaArea.map((c) => {
-      const dur = duracaoDaCategoria(c);
+      const dur = duracaoDaCategoria(c, tempos);
       const atletas = inscritosPorCat.get(c.id) ?? [];
       const nAtletas = atletas.length;
       const grupoChave = chaveDoGrupo(c);
