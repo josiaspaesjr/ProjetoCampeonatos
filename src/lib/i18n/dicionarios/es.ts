@@ -93,8 +93,6 @@ export const es: Dicionario = {
     },
   },
   catalogo: {
-    ranking: "Ranking",
-    aoVivo: "En vivo",
     criarEvento: "Crear evento",
     circuito: "Circuito",
     buscar: "Buscar evento o ciudad",
@@ -134,22 +132,6 @@ export const es: Dicionario = {
     abaixo:
       "Todos los eventos disponibles en la plataforma están justo abajo. Filtra por modalidad o estado e inscríbete en dos clics.",
     roleCue: "Mira el calendario",
-    verTodos: "Ver todos los eventos",
-    statsEyebrow: "La plataforma en números",
-    statsTitulo: "El circuito hoy",
-    statLabels: ["Eventos", "Atletas", "Equipos", "Inscripciones"],
-    aoVivoEyebrow: "Sucediendo ahora",
-    aoVivoTitulo: "Síguelo por la llave",
-    aoVivoDesc:
-      "Marcador, ganador y próximo combate actualizados durante el evento — nadie tiene que esperar a que publiquen los resultados al final del día.",
-    aoVivoCta: "Ver la llave completa →",
-    aoVivoDemo: "Ejemplo. Cuando haya un evento en curso, aparece la llave real.",
-    rankEyebrow: "Ranking del circuito",
-    rankTitulo: "Quién está arriba",
-    rankDesc:
-      "Puntos sumados en todas las etapas publicadas en la plataforma. Se actualiza solo con cada resultado confirmado.",
-    rankVazio: "El ranking abre con la primera etapa finalizada.",
-    rankTabs: { adulto: "Adulto", master: "Master", feminino: "Femenino" },
     ctaEyebrow: "¿Organizas eventos?",
     ctaTitulo: "Monta tu",
     ctaAccent: "campeonato aquí",

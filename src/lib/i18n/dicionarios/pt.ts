@@ -92,8 +92,6 @@ export const pt = {
     },
   },
   catalogo: {
-    ranking: "Ranking",
-    aoVivo: "Ao vivo",
     criarEvento: "Criar evento",
     circuito: "Circuito",
     buscar: "Buscar evento ou cidade",
@@ -133,22 +131,6 @@ export const pt = {
     abaixo:
       "Todos os eventos disponíveis na plataforma estão logo abaixo. Filtre por modalidade ou status e inscreva-se em dois cliques.",
     roleCue: "Veja o calendário",
-    verTodos: "Ver todos os eventos",
-    statsEyebrow: "A plataforma em números",
-    statsTitulo: "O circuito hoje",
-    statLabels: ["Eventos", "Atletas", "Equipes", "Inscrições"],
-    aoVivoEyebrow: "Acontecendo agora",
-    aoVivoTitulo: "Acompanhe pela chave",
-    aoVivoDesc:
-      "Placar, vencedor e próxima luta atualizados durante o evento — ninguém precisa esperar alguém publicar o resultado no fim do dia.",
-    aoVivoCta: "Ver a chave completa →",
-    aoVivoDemo: "Exemplo. Quando um evento estiver rolando, a chave real aparece aqui.",
-    rankEyebrow: "Ranking do circuito",
-    rankTitulo: "Quem está no topo",
-    rankDesc:
-      "Pontos somados em todas as etapas publicadas na plataforma. Atualiza sozinho a cada resultado confirmado.",
-    rankVazio: "O ranking abre com a primeira etapa finalizada.",
-    rankTabs: { adulto: "Adulto", master: "Master", feminino: "Feminino" },
     ctaEyebrow: "Organiza eventos?",
     ctaTitulo: "Rode o seu",
     ctaAccent: "campeonato aqui",

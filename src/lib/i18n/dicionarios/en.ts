@@ -93,8 +93,6 @@ export const en: Dicionario = {
     },
   },
   catalogo: {
-    ranking: "Ranking",
-    aoVivo: "Live",
     criarEvento: "Create event",
     circuito: "Circuit",
     buscar: "Search event or city",
@@ -134,22 +132,6 @@ export const en: Dicionario = {
     abaixo:
       "Every event available on the platform is right below. Filter by style or status and sign up in two clicks.",
     roleCue: "See the calendar",
-    verTodos: "See all events",
-    statsEyebrow: "The platform in numbers",
-    statsTitulo: "The circuit today",
-    statLabels: ["Events", "Athletes", "Teams", "Registrations"],
-    aoVivoEyebrow: "Happening now",
-    aoVivoTitulo: "Follow it on the bracket",
-    aoVivoDesc:
-      "Score, winner and next match updated as the event runs — nobody has to wait for results to be posted at the end of the day.",
-    aoVivoCta: "See the full bracket →",
-    aoVivoDemo: "Example. Once an event is running, the real bracket shows up here.",
-    rankEyebrow: "Circuit ranking",
-    rankTitulo: "Who is on top",
-    rankDesc:
-      "Points added up across every event published on the platform. Updates on its own with each confirmed result.",
-    rankVazio: "The ranking opens with the first finished event.",
-    rankTabs: { adulto: "Adult", master: "Master", feminino: "Women" },
     ctaEyebrow: "Running events?",
     ctaTitulo: "Run your",
     ctaAccent: "championship here",

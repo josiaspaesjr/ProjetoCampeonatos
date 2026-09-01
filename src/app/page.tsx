@@ -1,20 +1,17 @@
 import Link from "next/link";
-import { asc, eq, inArray, ne } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { eventos, inscricoes, lotes } from "@/db/schema";
 import { Logo, SkewTexto } from "@/components/marca";
 import { AvisoPendencias } from "@/components/aviso-pendencias";
 import { MenuUsuarioServer } from "@/components/menu-usuario-server";
-import { buscarBracketVivo } from "@/lib/bracket-vivo";
 import { dataCurta, diaMesPartes } from "@/lib/datas";
-import { calcularRankingGeral } from "@/lib/ranking";
 import { getDicionario } from "@/lib/i18n/server";
 import { SeletorIdioma } from "@/lib/i18n/client";
 import { CatalogoClient, type CardEvento } from "./catalogo-client";
 import { MarcaViva } from "./marca-viva";
-import { VitrineClient } from "./vitrine-client";
 
-// catálogo, stats e chave ao vivo vêm do banco — nunca servir versão estática
+// o catálogo vem do banco — nunca servir versão estática
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
@@ -34,21 +31,17 @@ export default async function Home() {
     orderBy: asc(eventos.dataInicio),
   });
 
-  const [todosLotes, confirmadas, todosEventos, ranking, bracket] =
-    await Promise.all([
-      publicos.length
-        ? db.query.lotes.findMany({
-            where: inArray(lotes.eventoId, publicos.map((e) => e.id)),
-            orderBy: asc(lotes.inicio),
-          })
-        : Promise.resolve([]),
-      db.query.inscricoes.findMany({
-        where: eq(inscricoes.status, "confirmada"),
-      }),
-      db.query.eventos.findMany({ where: ne(eventos.status, "rascunho") }),
-      calcularRankingGeral(db),
-      buscarBracketVivo(),
-    ]);
+  const [todosLotes, confirmadas] = await Promise.all([
+    publicos.length
+      ? db.query.lotes.findMany({
+          where: inArray(lotes.eventoId, publicos.map((e) => e.id)),
+          orderBy: asc(lotes.inicio),
+        })
+      : Promise.resolve([]),
+    db.query.inscricoes.findMany({
+      where: eq(inscricoes.status, "confirmada"),
+    }),
+  ]);
 
   const agora = new Date();
   const anoAtual = agora.getFullYear();
@@ -105,18 +98,6 @@ export default async function Home() {
     };
   });
 
-  const totalAtletas = new Set(confirmadas.map((i) => i.usuarioId)).size;
-  const totalEquipes = new Set(
-    confirmadas.map((i) => i.academiaNome).filter(Boolean),
-  ).size;
-
-  const stats = [
-    { valor: String(todosEventos.length), destaque: false },
-    { valor: String(totalAtletas), destaque: false },
-    { valor: String(totalEquipes), destaque: true },
-    { valor: String(confirmadas.length), destaque: false },
-  ];
-
   return (
     <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <AvisoPendencias />
@@ -125,12 +106,6 @@ export default async function Home() {
       <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-white/8 bg-ink/90 px-6 py-4 backdrop-blur-xl md:px-12">
         <Logo />
         <div className="flex items-center gap-6 font-cond text-base font-semibold uppercase tracking-[0.04em]">
-          <a href="#aovivo" className="max-md:hidden transition-colors hover:text-brand">
-            {dc.aoVivo}
-          </a>
-          <a href="#ranking" className="max-md:hidden transition-colors hover:text-brand">
-            {dc.ranking}
-          </a>
           <Link
             href="/plataforma"
             className="max-sm:hidden transition-colors hover:text-brand"
@@ -181,7 +156,37 @@ export default async function Home() {
 
       <CatalogoClient eventos={cards} />
 
-      <VitrineClient stats={stats} bracket={bracket} ranking={ranking} />
+      {/* CONVITE PARA A PLATAFORMA */}
+      <section className="relative overflow-hidden border-t border-white/8 px-6 py-[94px] text-center md:px-12">
+        <div className="disp pointer-events-none absolute inset-x-0 top-0 flex justify-center whitespace-nowrap text-[280px] leading-none text-brand/[0.045]">
+          ARENA
+        </div>
+        <div className="relative">
+          <div className="mb-4 font-cond text-base font-semibold uppercase tracking-[0.14em] text-brand">
+            {dh.ctaEyebrow}
+          </div>
+          <h2 className="disp text-[clamp(48px,8vw,110px)]">
+            {dh.ctaTitulo} <span className="text-brand">{dh.ctaAccent}</span>.
+          </h2>
+          <p className="mx-auto mt-5 max-w-[560px] text-[18px] font-medium leading-normal text-text-2">
+            {dh.ctaDesc}
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
+            <Link
+              href="/plataforma"
+              className="-skew-x-9 bg-brand px-9 py-4 font-cond text-lg font-bold uppercase tracking-[0.04em] text-white"
+            >
+              <SkewTexto>{dh.ctaBtn1}</SkewTexto>
+            </Link>
+            <Link
+              href="/organizador"
+              className="-skew-x-9 border border-white/28 px-9 py-4 font-cond text-lg font-bold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-white/55"
+            >
+              <SkewTexto>{dh.ctaBtn2}</SkewTexto>
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* FOOTER */}
       <footer className="flex flex-wrap items-center justify-between gap-6 border-t border-white/8 px-6 py-[34px] md:px-12">

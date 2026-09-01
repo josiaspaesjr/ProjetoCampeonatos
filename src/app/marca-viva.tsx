@@ -5,8 +5,12 @@ import { cn } from "@/lib/utils";
 /**
  * Marca em movimento do topo da home.
  *
- * Parada, ela respira e solta ondas concêntricas — é o que puxa o olho para o
- * topo da página. No hover ela dá uma volta completa e assenta 45° à frente:
+ * Parada, ela respira devagar e solta ondas concêntricas — é o que puxa o olho
+ * para o topo da página. A respiração roda em 4,5s em vez dos 1,8s do token
+ * `marca-breathe`: o ritmo curto é da tela de carregamento, onde serve para
+ * dizer "estou trabalhando"; aqui o clima é de calma.
+ *
+ * No hover ela dá uma volta completa e assenta 45° à frente:
  * o losango vira quadrado, as camadas giram em sentidos opostos, o miolo
  * acende em vermelho e quatro losangos menores saltam nas diagonais. Tudo em
  * transform/opacity, então não causa reflow; quem pediu menos movimento no
@@ -57,7 +61,7 @@ export function MarcaViva({ className }: { className?: string }) {
       ))}
 
       {/* o losango: respiração por fora, giro do hover por dentro */}
-      <div className="relative h-[46%] w-[46%] animate-marca-breathe group-hover:[animation-play-state:paused] motion-reduce:animate-none">
+      <div className="relative h-[46%] w-[46%] animate-marca-breathe [animation-duration:4.5s] group-hover:[animation-play-state:paused] motion-reduce:animate-none">
         <div
           style={{ transitionTimingFunction: MOLA }}
           className="relative h-full w-full transition-transform duration-700 group-hover:rotate-[405deg] group-hover:scale-110"
