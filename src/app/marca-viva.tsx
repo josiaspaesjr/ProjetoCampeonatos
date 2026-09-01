@@ -28,23 +28,31 @@ const FAISCAS: [string, string][] = [
 /** Mola curta — dá o "pop" no giro e nas faíscas. */
 const MOLA = "cubic-bezier(0.34,1.56,0.64,1)";
 
+/**
+ * Ritmo do topo da home. Respiração e ondas dividem o mesmo ciclo, com a
+ * segunda onda meio ciclo atrás — assim sai uma onda a cada 2,25s em vez das
+ * duas por segundo do token `marca-ripple` (1,8s), que é o ritmo apressado da
+ * tela de carregamento. No hover a terceira onda entra em ritmo dobrado.
+ */
+const CICLO = 4.5;
+
 export function MarcaViva({ className }: { className?: string }) {
   return (
     <div
       aria-hidden
+      style={{ "--ciclo": `${CICLO}s` } as React.CSSProperties}
       className={cn(
         "group relative grid aspect-square w-[150px] place-items-center sm:w-[190px] lg:w-[230px]",
         className,
       )}
     >
       {/* ondas concêntricas — a terceira só entra no hover, e mais rápida */}
-      <Onda className="animate-marca-ripple motion-reduce:animate-none" />
-      <Onda className="animate-marca-ripple [animation-delay:0.9s] motion-reduce:animate-none" />
+      <Onda duracao={CICLO} atraso={0} />
+      <Onda duracao={CICLO} atraso={CICLO / 2} />
       <Onda
-        className={cn(
-          "opacity-0 transition-opacity duration-300 group-hover:opacity-100",
-          "animate-marca-ripple [animation-delay:0.45s] [animation-duration:1.1s] motion-reduce:animate-none",
-        )}
+        duracao={CICLO / 2}
+        atraso={CICLO / 4}
+        className="opacity-0 transition-opacity duration-300 group-hover:opacity-100"
       />
 
       {/* faíscas: losangos pequenos que saltam nas diagonais */}
@@ -61,7 +69,7 @@ export function MarcaViva({ className }: { className?: string }) {
       ))}
 
       {/* o losango: respiração por fora, giro do hover por dentro */}
-      <div className="relative h-[46%] w-[46%] animate-marca-breathe [animation-duration:4.5s] group-hover:[animation-play-state:paused] motion-reduce:animate-none">
+      <div className="relative h-[46%] w-[46%] animate-marca-breathe [animation-duration:var(--ciclo)] group-hover:[animation-play-state:paused] motion-reduce:animate-none">
         <div
           style={{ transitionTimingFunction: MOLA }}
           className="relative h-full w-full transition-transform duration-700 group-hover:rotate-[405deg] group-hover:scale-110"
@@ -93,12 +101,25 @@ function Camada({ pontos, className }: { pontos: string; className?: string }) {
   );
 }
 
-/** Contorno de losango que expande e some — a onda. */
-function Onda({ className }: { className?: string }) {
+/** Contorno de losango que expande e some — a onda. Ritmo em segundos. */
+function Onda({
+  duracao,
+  atraso,
+  className,
+}: {
+  duracao: number;
+  atraso: number;
+  className?: string;
+}) {
   return (
     <svg
       viewBox="0 0 100 100"
-      className={cn("absolute h-[52%] w-[52%] text-brand", className)}
+      style={{ animationDuration: `${duracao}s`, animationDelay: `${atraso}s` }}
+      className={cn(
+        "absolute h-[52%] w-[52%] text-brand",
+        "animate-marca-ripple motion-reduce:animate-none",
+        className,
+      )}
     >
       <polygon
         points="50,6 94,50 50,94 6,50"
