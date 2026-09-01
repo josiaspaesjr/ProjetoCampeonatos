@@ -741,7 +741,7 @@ export const es: Dicionario = {
       linhaTempoPrecos: "Línea de tiempo de precios",
       hoje: "Hoy",
       nenhumPosicionar: "Aún no hay lotes para posicionar.",
-      nenhumCadastrado: "Ningún lote creado. Crea el primero al lado.",
+      nenhumCadastrado: "Ningún lote creado. Crea el primero en el formulario de arriba.",
       sobreposto: "Superpuesto",
       dia: "día",
       dias: "días",

@@ -747,7 +747,7 @@ export const pt = {
       linhaTempoPrecos: "Linha do tempo de preços",
       hoje: "Hoje",
       nenhumPosicionar: "Nenhum lote para posicionar ainda.",
-      nenhumCadastrado: "Nenhum lote cadastrado. Crie o primeiro ao lado.",
+      nenhumCadastrado: "Nenhum lote cadastrado. Crie o primeiro no formulário acima.",
       sobreposto: "Sobreposto",
       dia: "dia",
       dias: "dias",

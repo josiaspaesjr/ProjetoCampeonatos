@@ -740,7 +740,7 @@ export const en: Dicionario = {
       linhaTempoPrecos: "Price timeline",
       hoje: "Today",
       nenhumPosicionar: "No tiers to place yet.",
-      nenhumCadastrado: "No tiers yet. Create the first one on the side.",
+      nenhumCadastrado: "No tiers yet. Create the first one in the form above.",
       sobreposto: "Overlapping",
       dia: "day",
       dias: "days",

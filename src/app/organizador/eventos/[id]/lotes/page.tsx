@@ -161,6 +161,13 @@ export default async function LotesEvento({
         />
       </div>
 
+      {/* NOVO LOTE — logo abaixo dos indicadores: criar é a ação principal daqui */}
+      <NovoLote
+        criar={criarLote.bind(null, evento.id)}
+        moeda={evento.moeda}
+        lotesExistentes={janelas}
+      />
+
       {/* LINHA DO TEMPO DE PREÇOS */}
       <div className="border border-white/10 bg-surface p-[22px]">
         <div className="mb-4 flex items-baseline justify-between gap-3">
@@ -234,11 +241,9 @@ export default async function LotesEvento({
         )}
       </div>
 
-      {/* CRIADOR (esq.) + LISTA (dir.) — form à esquerda via row-reverse */}
-      <div className="flex flex-col gap-5 lg:flex-row-reverse lg:items-start">
-        {/* LISTA (DOM primeiro → direita no desktop) */}
-        <div className="flex-1 lg:min-w-0">
-          {lts.length === 0 ? (
+      {/* LISTA */}
+      <div>
+        {lts.length === 0 ? (
             <div className="border border-white/10 bg-surface px-[22px] py-12 text-center font-cond text-[15px] uppercase text-muted-3">
               {tl.nenhumCadastrado}
             </div>
@@ -367,17 +372,7 @@ export default async function LotesEvento({
                 );
               })}
             </div>
-          )}
-        </div>
-
-        {/* CRIADOR (DOM depois → esquerda no desktop) */}
-        <div className="w-full lg:sticky lg:top-4 lg:w-[380px] lg:shrink-0">
-          <NovoLote
-            criar={criarLote.bind(null, evento.id)}
-            moeda={evento.moeda}
-            lotesExistentes={janelas}
-          />
-        </div>
+        )}
       </div>
     </>
   );
