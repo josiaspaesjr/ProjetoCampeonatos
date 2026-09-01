@@ -1,6 +1,6 @@
 "use server";
 
-import { desc, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { notFound, redirect } from "next/navigation";
 import { getDb } from "@/db";
 import {
@@ -12,36 +12,39 @@ import {
   pagamentos,
 } from "@/db/schema";
 import { getAtletaAtual } from "@/lib/sessao";
+import { cobrancaQueCobre } from "@/lib/pagamentos/agrupar";
 import { criarCobrancaPixParaInscricoes } from "@/lib/pagamentos/cobranca";
 import { dentroDoPrazoDePagamento } from "@/lib/pagamentos/prazo";
 
 /**
- * Gera (ou retoma) a cobrança Pix de uma inscrição pendente do atleta logado —
- * usado pelo "pagar agora" de Minhas inscrições e pelo "gerar novo Pix" do
- * checkout quando a cobrança expirou. Só funciona dentro do prazo de pagamento
- * do campeonato (último dia de inscrição).
+ * Gera (ou retoma) uma única cobrança Pix com TODAS as inscrições pendentes do
+ * atleta num campeonato — usado pelo "pagar agora" de Minhas inscrições e pelo
+ * "gerar novo Pix" do checkout quando a cobrança expirou.
+ *
+ * É por campeonato, não por inscrição: quem se inscreve na categoria de peso e
+ * no absoluto deve um valor só, num Pix só. Só funciona dentro do prazo de
+ * pagamento do campeonato (último dia de inscrição).
  */
-export async function gerarCobrancaInscricao(inscricaoId: string) {
+export async function gerarCobrancaEvento(eventoId: string) {
   const atleta = await getAtletaAtual();
   if (!atleta) {
     redirect(`/entrar?next=${encodeURIComponent("/minhas-inscricoes")}`);
   }
 
   const db = await getDb();
-  const inscricao = await db.query.inscricoes.findFirst({
-    where: eq(inscricoes.id, inscricaoId),
+  const pendentes = await db.query.inscricoes.findMany({
+    where: and(
+      eq(inscricoes.usuarioId, atleta.id),
+      eq(inscricoes.eventoId, eventoId),
+      eq(inscricoes.status, "pendente_pagamento"),
+    ),
   });
-  if (!inscricao || inscricao.usuarioId !== atleta.id) notFound();
-
-  // nada a pagar
-  if (inscricao.status === "confirmada") redirect("/minhas-inscricoes");
-  if (inscricao.status !== "pendente_pagamento") {
-    throw new Error("Esta inscrição não está aguardando pagamento.");
-  }
+  // nada a pagar (já confirmadas, canceladas ou evento errado)
+  if (pendentes.length === 0) redirect("/minhas-inscricoes");
 
   const [evento, lotesEvento] = await Promise.all([
-    db.query.eventos.findFirst({ where: eq(eventos.id, inscricao.eventoId) }),
-    db.query.lotes.findMany({ where: eq(lotes.eventoId, inscricao.eventoId) }),
+    db.query.eventos.findFirst({ where: eq(eventos.id, eventoId) }),
+    db.query.lotes.findMany({ where: eq(lotes.eventoId, eventoId) }),
   ]);
   if (!evento) notFound();
 
@@ -49,49 +52,61 @@ export async function gerarCobrancaInscricao(inscricaoId: string) {
     throw new Error("O prazo de pagamento deste campeonato já encerrou.");
   }
 
-  // reaproveita uma cobrança ainda viva; senão, herda o valor da última
-  const vinculos = await db.query.pagamentoInscricoes.findMany({
-    where: eq(pagamentoInscricoes.inscricaoId, inscricaoId),
-  });
+  // uma cobrança ainda viva que cubra exatamente essas inscrições é retomada
+  // em vez de duplicada
   const agora = new Date();
-  let ultimoValor: number | null = null;
+  const vinculos = await db.query.pagamentoInscricoes.findMany({
+    where: inArray(
+      pagamentoInscricoes.inscricaoId,
+      pendentes.map((i) => i.id),
+    ),
+  });
   if (vinculos.length) {
     const pags = await db.query.pagamentos.findMany({
-      where: inArray(
-        pagamentos.id,
-        vinculos.map((v) => v.pagamentoId),
-      ),
-      orderBy: desc(pagamentos.criadoEm),
+      where: inArray(pagamentos.id, [
+        ...new Set(vinculos.map((v) => v.pagamentoId)),
+      ]),
     });
-    const viva = pags.find(
-      (p) => p.status === "criado" && p.expiraEm && p.expiraEm > agora,
+    const vivas = pags
+      .filter((p) => p.status === "criado" && p.expiraEm && p.expiraEm > agora)
+      .map((p) => ({
+        id: p.id,
+        inscricaoIds: vinculos
+          .filter((v) => v.pagamentoId === p.id)
+          .map((v) => v.inscricaoId),
+      }));
+    const reaproveitar = cobrancaQueCobre(
+      vivas,
+      pendentes.map((i) => i.id),
     );
-    if (viva) redirect(`/checkout/${viva.id}`);
-    ultimoValor = pags[0]?.valorBrutoCentavos ?? null;
+    if (reaproveitar) redirect(`/checkout/${reaproveitar}`);
   }
 
-  const valorCentavos = inscricao.precoCentavos ?? ultimoValor;
-  if (valorCentavos == null) {
+  const cats = await db.query.categorias.findMany({
+    where: inArray(
+      categorias.id,
+      pendentes.map((i) => i.categoriaId),
+    ),
+  });
+  const nomeCategoria = new Map(cats.map((c) => [c.id, c.nome]));
+
+  // preço travado na inscrição; sem ele não dá para cobrar
+  const semPreco = pendentes.find((i) => i.precoCentavos == null);
+  if (semPreco) {
     throw new Error("Inscrição sem preço definido — refaça a inscrição.");
   }
-
-  const categoria = await db.query.categorias.findFirst({
-    where: eq(categorias.id, inscricao.categoriaId),
-  });
 
   const pagamentoId = await criarCobrancaPixParaInscricoes(db, {
     eventoId: evento.id,
     usuarioId: atleta.id,
     moeda: evento.moeda,
     emailPagador: atleta.email,
-    nomePagador: inscricao.nomeAtleta,
-    itens: [
-      {
-        inscricaoId: inscricao.id,
-        descricao: `${evento.nome} — ${categoria?.nome ?? "Inscrição"}`,
-        valorCentavos,
-      },
-    ],
+    nomePagador: pendentes[0].nomeAtleta,
+    itens: pendentes.map((i) => ({
+      inscricaoId: i.id,
+      descricao: `${evento.nome} — ${nomeCategoria.get(i.categoriaId) ?? "Inscrição"}`,
+      valorCentavos: i.precoCentavos!,
+    })),
   });
 
   redirect(`/checkout/${pagamentoId}`);

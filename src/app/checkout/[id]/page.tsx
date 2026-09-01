@@ -20,7 +20,7 @@ import { dataCurta } from "@/lib/datas";
 import { obterPixQrCodeAsaas } from "@/lib/pagamentos/asaas";
 import { dentroDoPrazoDePagamento } from "@/lib/pagamentos/prazo";
 import { getDicionario } from "@/lib/i18n/server";
-import { gerarCobrancaInscricao } from "@/app/minhas-inscricoes/actions";
+import { gerarCobrancaEvento } from "@/app/minhas-inscricoes/actions";
 import { simularPagamentoAprovado } from "./actions";
 import { ContagemRegressiva } from "./contagem-regressiva";
 import { CopiarPix } from "./copiar-pix";
@@ -300,9 +300,9 @@ export default async function PaginaCheckout({
                       </p>
                       {podePagarAinda && inscricaoParaCobranca ? (
                         <form
-                          action={gerarCobrancaInscricao.bind(
+                          action={gerarCobrancaEvento.bind(
                             null,
-                            inscricaoParaCobranca,
+                            pagamento.eventoId,
                           )}
                         >
                           <BotaoAcaoBruto className="flex h-[52px] w-full cursor-pointer items-center justify-center bg-brand text-lg font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">

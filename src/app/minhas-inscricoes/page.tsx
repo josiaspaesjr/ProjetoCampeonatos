@@ -13,7 +13,7 @@ import {
 } from "@/lib/pagamentos/prazo";
 import { getAtletaAtual } from "@/lib/sessao";
 import { getDicionario } from "@/lib/i18n/server";
-import { gerarCobrancaInscricao } from "./actions";
+import { gerarCobrancaEvento } from "./actions";
 
 export default async function MinhasInscricoes() {
   const atleta = await getAtletaAtual();
@@ -81,6 +81,26 @@ export default async function MinhasInscricoes() {
     ),
   );
 
+  // Agrupado por campeonato: o pagamento é um só por evento, somando as
+  // pendentes — peso + absoluto viram um Pix, não dois.
+  const porEvento = eventoIds.map((eventoId) => {
+    const doEvento = minhas.filter((i) => i.eventoId === eventoId);
+    const pendentes = doEvento.filter((i) => i.status === "pendente_pagamento");
+    const evento = eventoPorId.get(eventoId);
+    const lotesDoEvento = lotesPorEvento.get(eventoId) ?? [];
+    return {
+      eventoId,
+      evento,
+      linhas: doEvento,
+      pendentes,
+      totalCentavos: pendentes.reduce((s, i) => s + (i.precoCentavos ?? 0), 0),
+      dentroPrazo: evento
+        ? dentroDoPrazoDePagamento(evento, lotesDoEvento)
+        : false,
+      prazo: evento ? prazoDePagamento(evento, lotesDoEvento) : null,
+    };
+  });
+
   return (
     <PublicShell>
       <h1 className="text-2xl font-bold">{dm.titulo}</h1>
@@ -88,71 +108,104 @@ export default async function MinhasInscricoes() {
         {atleta.nome} · {atleta.email}
       </p>
 
-      <ul className="mt-6 divide-y divide-border rounded-xl border bg-card">
-        {minhas.map((i) => {
-          const evento = eventoPorId.get(i.eventoId);
-          const lotesDoEvento = lotesPorEvento.get(i.eventoId) ?? [];
-          const dentroPrazo = evento
-            ? dentroDoPrazoDePagamento(evento, lotesDoEvento)
-            : false;
-          const prazo = evento ? prazoDePagamento(evento, lotesDoEvento) : null;
-          const [rotulo, variante] = rotuloStatus[i.status] ?? [i.status, "outline" as const];
+      <div className="mt-6 flex flex-col gap-5">
+        {porEvento.map((g) => {
+          const fmt = new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: g.evento?.moeda ?? "BRL",
+          });
           return (
-            <li key={i.id} className="flex items-center justify-between px-5 py-4">
-              <div className="flex items-center gap-4">
-                {qrPorInscricao.has(i.id) && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={qrPorInscricao.get(i.id)}
-                    alt={dm.qrAlt}
-                    className="h-20 w-20 shrink-0 rounded-lg border"
-                  />
-                )}
-                <div>
-                  <p className="font-medium">{evento?.nome}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {nomeCategoria.get(i.categoriaId)}
-                  </p>
-                  {qrPorInscricao.has(i.id) && (
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {dm.checkinInfo}{" "}
-                      <span className="font-cond">{codigoCurto(i.id)}</span>
-                    </p>
-                  )}
-                </div>
-              </div>
-              <div className="text-right">
-                <Badge variant={variante}>{rotulo}</Badge>
-                {i.status === "pendente_pagamento" &&
-                  (dentroPrazo ? (
-                    <form
-                      action={gerarCobrancaInscricao.bind(null, i.id)}
-                      className="mt-1.5"
-                    >
-                      <BotaoAcaoBruto className="inline-flex cursor-pointer items-center bg-brand px-3 py-1.5 font-cond text-xs font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">
-                        {dm.pagarAgora}
-                      </BotaoAcaoBruto>
-                      {prazo && (
-                        <span className="mt-1 block text-[11px] text-muted-foreground">
-                          {dm.pagueAte} {dataHora(prazo)}
+            <section key={g.eventoId} className="rounded-xl border bg-card">
+              <div className="flex flex-wrap items-center justify-between gap-4 border-b px-5 py-4">
+                <p className="font-medium">{g.evento?.nome}</p>
+                {g.pendentes.length > 0 &&
+                  (g.dentroPrazo ? (
+                    <form action={gerarCobrancaEvento.bind(null, g.eventoId)}>
+                      <div className="flex flex-wrap items-center justify-end gap-3">
+                        <span className="text-sm text-muted-foreground">
+                          {dm.totalAPagar}{" "}
+                          <span className="font-cond text-base font-bold text-foreground">
+                            {fmt.format(g.totalCentavos / 100)}
+                          </span>
+                          {g.pendentes.length > 1 && (
+                            <span className="ml-1">
+                              · {g.pendentes.length} {dm.nInscricoes}
+                            </span>
+                          )}
+                        </span>
+                        <BotaoAcaoBruto className="inline-flex cursor-pointer items-center bg-brand px-3 py-1.5 font-cond text-xs font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]">
+                          {dm.pagarAgora}
+                        </BotaoAcaoBruto>
+                      </div>
+                      {g.prazo && (
+                        <span className="mt-1 block text-right text-[11px] text-muted-foreground">
+                          {dm.pagueAte} {dataHora(g.prazo)}
                         </span>
                       )}
                     </form>
                   ) : (
-                    <p className="mt-1 text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground">
                       {dm.prazoEncerrado}
                     </p>
                   ))}
               </div>
-            </li>
+
+              <ul className="divide-y divide-border">
+                {g.linhas.map((i) => {
+                  const [rotulo, variante] = rotuloStatus[i.status] ?? [
+                    i.status,
+                    "outline" as const,
+                  ];
+                  return (
+                    <li
+                      key={i.id}
+                      className="flex items-center justify-between gap-4 px-5 py-4"
+                    >
+                      <div className="flex items-center gap-4">
+                        {qrPorInscricao.has(i.id) && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={qrPorInscricao.get(i.id)}
+                            alt={dm.qrAlt}
+                            className="h-20 w-20 shrink-0 rounded-lg border"
+                          />
+                        )}
+                        <div>
+                          <p className="text-sm">
+                            {nomeCategoria.get(i.categoriaId)}
+                          </p>
+                          {qrPorInscricao.has(i.id) && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {dm.checkinInfo}{" "}
+                              <span className="font-cond">
+                                {codigoCurto(i.id)}
+                              </span>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-3">
+                        {i.precoCentavos != null && (
+                          <span className="font-cond text-sm text-muted-foreground">
+                            {fmt.format(i.precoCentavos / 100)}
+                          </span>
+                        )}
+                        <Badge variant={variante}>{rotulo}</Badge>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
           );
         })}
+
         {minhas.length === 0 && (
-          <li className="px-5 py-8 text-center text-muted-foreground">
+          <p className="rounded-xl border bg-card px-5 py-8 text-center text-muted-foreground">
             {dm.nenhumaAinda}
-          </li>
+          </p>
         )}
-      </ul>
+      </div>
     </PublicShell>
   );
 }
