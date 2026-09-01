@@ -82,7 +82,13 @@ describe("gerarGrade com kids", () => {
     });
     const compativeis = grade.filter((c) =>
       categoriaCompativel(
-        { sexo: c.sexo, faixa: c.faixa, idadeMin: c.idadeMin, idadeMax: c.idadeMax },
+        {
+          sexo: c.sexo,
+          faixa: c.faixa,
+          classeIdade: c.classeIdade,
+          idadeMin: c.idadeMin,
+          idadeMax: c.idadeMax,
+        },
         { sexo: "masculino", faixa: "cinza", idade: 8 },
       ),
     );

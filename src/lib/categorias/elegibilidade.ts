@@ -1,3 +1,8 @@
+import { CLASSES_IDADE } from "./cbjj";
+
+/** idade a partir da qual a divisão é "adulta" (adulto e masters) */
+const IDADE_ADULTO = 18;
+
 /**
  * Regra CBJJ: a idade do atleta é a que ele completa no ano do evento
  * (ano do evento menos ano de nascimento), não a idade na data da luta.
@@ -15,6 +20,7 @@ export function idadeNoAnoDoEvento(
 interface CategoriaElegivel {
   sexo: string;
   faixa: string | null;
+  classeIdade: string;
   idadeMin: number | null;
   idadeMax: number | null;
 }
@@ -26,10 +32,24 @@ interface PerfilAtleta {
 }
 
 /**
- * Masters aninham para baixo por escolha do atleta (um Master 3 pode lutar
- * no Adulto), então só o limite mínimo de idade é eliminatório junto com o
- * máximo. Faixa precisa bater exatamente; categoria sem faixa (custom) aceita
- * qualquer uma.
+ * Classes em que o atleta pode descer: adulto e os masters. Sai da própria
+ * tabela CBJJ (idade mínima de 18 para cima) em vez de uma lista à mão.
+ */
+const CLASSES_ADULTAS = new Set(
+  CLASSES_IDADE.filter((c) => c.idadeMin >= IDADE_ADULTO).map((c) => c.id),
+);
+
+/**
+ * Masters descem por escolha do atleta: um Master 3 pode lutar Master 3,
+ * Master 2, Master 1 ou Adulto — qualquer divisão adulta abaixo da dele. Por
+ * isso o teto de idade não elimina nessas classes; só o piso, que é o que
+ * impede subir (um adulto de 25 não entra no Master 1).
+ *
+ * Kids e juvenil mantêm o teto rígido: são divisões fechadas por idade, e um
+ * adulto não desce para elas.
+ *
+ * Faixa precisa bater exatamente; categoria sem faixa (custom) aceita qualquer
+ * uma.
  */
 export function categoriaCompativel(
   cat: CategoriaElegivel,
@@ -38,7 +58,10 @@ export function categoriaCompativel(
   if (cat.sexo !== atleta.sexo) return false;
   if (cat.faixa && cat.faixa !== atleta.faixa) return false;
   if (cat.idadeMin != null && atleta.idade < cat.idadeMin) return false;
-  if (cat.idadeMax != null && atleta.idade > cat.idadeMax) return false;
+  const podeDescer = CLASSES_ADULTAS.has(cat.classeIdade);
+  if (cat.idadeMax != null && atleta.idade > cat.idadeMax && !podeDescer) {
+    return false;
+  }
   return true;
 }
 

@@ -17,6 +17,7 @@ describe("categoriaCompativel", () => {
   const adultoPreta = {
     sexo: "masculino",
     faixa: "preta",
+    classeIdade: "adulto",
     idadeMin: 18,
     idadeMax: null,
   };
@@ -33,20 +34,58 @@ describe("categoriaCompativel", () => {
   });
 
   it("categoria sem faixa aceita qualquer uma", () => {
-    const custom = { sexo: "masculino", faixa: null, idadeMin: null, idadeMax: null };
+    const custom = {
+      sexo: "masculino",
+      faixa: null,
+      classeIdade: "adulto",
+      idadeMin: null,
+      idadeMax: null,
+    };
     expect(
       categoriaCompativel(custom, { sexo: "masculino", faixa: "azul", idade: 25 }),
     ).toBe(true);
   });
 
-  it("master pode descer para o adulto, mas o adulto não sobe", () => {
-    const master1 = { sexo: "masculino", faixa: "preta", idadeMin: 30, idadeMax: 35 };
-    const master = { sexo: "masculino", faixa: "preta", idade: 32 };
-    expect(categoriaCompativel(adultoPreta, master)).toBe(true);
-    expect(categoriaCompativel(master1, master)).toBe(true);
+  const masterPreta = (n: number, min: number, max: number) => ({
+    sexo: "masculino",
+    faixa: "preta",
+    classeIdade: `master${n}`,
+    idadeMin: min,
+    idadeMax: max,
+  });
+  const M1 = masterPreta(1, 30, 35);
+  const M2 = masterPreta(2, 36, 40);
+  const M3 = masterPreta(3, 41, 45);
+  const M4 = masterPreta(4, 46, 50);
+
+  it("master desce por TODAS as divisões adultas abaixo da dele", () => {
+    // um master 3 pode lutar master 3, 2, 1 ou adulto
+    const m3 = { sexo: "masculino", faixa: "preta", idade: 43 };
+    expect(categoriaCompativel(M3, m3)).toBe(true);
+    expect(categoriaCompativel(M2, m3)).toBe(true);
+    expect(categoriaCompativel(M1, m3)).toBe(true);
+    expect(categoriaCompativel(adultoPreta, m3)).toBe(true);
+  });
+
+  it("mas não sobe: o piso de idade continua eliminando", () => {
+    const m3 = { sexo: "masculino", faixa: "preta", idade: 43 };
+    expect(categoriaCompativel(M4, m3)).toBe(false);
 
     const adulto = { sexo: "masculino", faixa: "preta", idade: 25 };
-    expect(categoriaCompativel(master1, adulto)).toBe(false);
+    expect(categoriaCompativel(M1, adulto)).toBe(false);
+    expect(categoriaCompativel(adultoPreta, adulto)).toBe(true);
+  });
+
+  it("kids e juvenil mantêm o teto: adulto não desce para eles", () => {
+    const juvenil = {
+      sexo: "masculino",
+      faixa: "azul",
+      classeIdade: "juvenil",
+      idadeMin: 16,
+      idadeMax: 17,
+    };
+    const adulto = { sexo: "masculino", faixa: "azul", idade: 25 };
+    expect(categoriaCompativel(juvenil, adulto)).toBe(false);
   });
 });
 

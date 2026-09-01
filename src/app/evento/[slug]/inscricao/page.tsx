@@ -48,13 +48,20 @@ export default async function PaginaInscricao({
       })
     : null;
 
-  // o país não fica no perfil, só na inscrição — para quem já se inscreveu
-  // antes, repetimos o da última em vez de voltar ao padrão
-  const ultimaInscricao = atleta
+  // O perfil (`usuarios`) só é gravado ao CONCLUIR uma inscrição, e nem tudo
+  // que o formulário pede cabe nele — país, por exemplo, mora na inscrição.
+  // Então a última inscrição do atleta serve de segunda fonte: o que faltar no
+  // perfil vem dela. Sexo sai da categoria em que ele lutou.
+  const ultima = atleta
     ? await db.query.inscricoes.findFirst({
         where: eq(inscricoes.usuarioId, atleta.id),
         orderBy: desc(inscricoes.criadoEm),
-        columns: { pais: true },
+      })
+    : null;
+  const categoriaUltima = ultima
+    ? await db.query.categorias.findFirst({
+        where: eq(categorias.id, ultima.categoriaId),
+        columns: { sexo: true },
       })
     : null;
 
@@ -108,14 +115,16 @@ export default async function PaginaInscricao({
           perfil={
             atleta
               ? {
-                  nome: atleta.nome,
+                  nome: atleta.nome || ultima?.nomeAtleta || undefined,
                   email: atleta.email,
-                  dataNascimento: atleta.dataNascimento ?? undefined,
-                  sexo: atleta.sexo ?? undefined,
-                  faixa: atleta.faixaAtual ?? undefined,
-                  pais: ultimaInscricao?.pais ?? undefined,
-                  academiaId: atleta.academiaId ?? undefined,
-                  academiaNome: academiaAtleta?.nome ?? undefined,
+                  dataNascimento:
+                    atleta.dataNascimento ?? ultima?.dataNascimento ?? undefined,
+                  sexo: atleta.sexo ?? categoriaUltima?.sexo ?? undefined,
+                  faixa: atleta.faixaAtual ?? ultima?.faixa ?? undefined,
+                  pais: ultima?.pais ?? undefined,
+                  academiaId: atleta.academiaId ?? ultima?.academiaId ?? undefined,
+                  academiaNome:
+                    academiaAtleta?.nome ?? ultima?.academiaNome ?? undefined,
                   cpf: atleta.cpf ?? undefined,
                   cep: atleta.enderecoCep ?? undefined,
                   logradouro: atleta.enderecoLogradouro ?? undefined,
