@@ -241,6 +241,19 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
     enderecoCompleto
   );
 
+  // Nascimento mora na seção 1 e o aviso aparece na 2 — então ele diz o que
+  // falta e, quando o campo está na outra seção, onde procurar.
+  const faltando = [
+    !nascimento && `${di.nascimento} (${di.emSecao} ${di.secaoPessoais})`,
+    !sexo && di.sexo,
+    !faixa && di.faixa,
+  ].filter((x): x is string => !!x);
+  const avisoFaltando = `${di.preenchaPre} ${
+    faltando.length > 1
+      ? `${faltando.slice(0, -1).join(", ")} ${di.conectorE} ${faltando.at(-1)}`
+      : faltando[0]
+  } ${di.preenchaPos}`;
+
   const fmt = new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: evento.moeda,
@@ -650,7 +663,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
                 </>
               ) : (
                 <p className="border border-dashed border-white/16 p-5 font-cond text-[13px] text-muted-3 sm:col-span-2 xl:col-span-4">
-                  {perfilCompleto ? di.semCategoriaCompat : di.preenchaPerfil}
+                  {perfilCompleto ? di.semCategoriaCompat : avisoFaltando}
                 </p>
               )}
             </div>
