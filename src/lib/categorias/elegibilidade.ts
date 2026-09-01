@@ -41,3 +41,25 @@ export function categoriaCompativel(
   if (cat.idadeMax != null && atleta.idade > cat.idadeMax) return false;
   return true;
 }
+
+interface CategoriaAbsoluto {
+  classeIdade: string;
+}
+
+/**
+ * Qual absoluto acompanha a categoria de peso escolhida.
+ *
+ * Masters aninham para baixo (um master 1 pode lutar o adulto), então o atleta
+ * pode ter mais de um absoluto compatível — e o certo é o da mesma classe da
+ * categoria que ele escolheu. Sem um da classe, devolve o primeiro compatível:
+ * o atleta pediu absoluto, então dar algum é melhor do que engolir o pedido.
+ */
+export function absolutoDaCategoria<T extends CategoriaAbsoluto>(
+  absolutos: T[],
+  classeIdadeEscolhida: string,
+): T | null {
+  if (absolutos.length === 0) return null;
+  return (
+    absolutos.find((a) => a.classeIdade === classeIdadeEscolhida) ?? absolutos[0]
+  );
+}

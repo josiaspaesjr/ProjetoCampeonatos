@@ -15,16 +15,21 @@ import { PAISES, nomePaisLocale } from "@/lib/paises";
 import { formatarCep, formatarCpf, soDigitos, validarCpf } from "@/lib/cpf";
 import { buscarCep } from "@/lib/cep";
 import {
+  absolutoDaCategoria,
   categoriaCompativel,
   idadeNoAnoDoEvento,
 } from "@/lib/categorias/elegibilidade";
-import { precoDoGrupoCentavos, type LoteVariacao } from "@/lib/lotes/preco";
+import { precoInscricaoCentavos, type LoteVariacao } from "@/lib/lotes/preco";
 import { cn } from "@/lib/utils";
 import { useDic, useIdioma } from "@/lib/i18n/client";
 
 export interface CategoriaOpcao {
   id: string;
   nome: string;
+  /** absoluto é oferecido à parte (pergunta), não na lista de categorias */
+  tipo: "peso" | "absoluto" | "custom";
+  /** classe CBJJ (adulto, master1…) — casa o absoluto com a categoria de peso */
+  classeIdade: string;
   sexo: string;
   faixa: string | null;
   idadeMin: number | null;
@@ -158,6 +163,8 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
   const cepAbortRef = useRef<AbortController | null>(null);
   const ultimoCepRef = useRef("");
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
+  // null = ainda não respondeu; o absoluto é um adicional, cobrado como 2ª inscrição
+  const [querAbsoluto, setQuerAbsoluto] = useState<boolean | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState<"pagar_agora" | "pagar_depois" | null>(
     null,
@@ -174,7 +181,16 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
     return categorias.filter((c) => categoriaCompativel(c, { sexo, faixa, idade }));
   }, [perfilCompleto, sexo, faixa, nascimento, categorias, dataEvento]);
 
-  const categoriaEscolhida = compativeis.find((c) => c.id === categoriaId) ?? null;
+  // o absoluto sai da lista de categorias e vira uma pergunta à parte
+  const pesos = compativeis.filter((c) => c.tipo !== "absoluto");
+  const absolutos = compativeis.filter((c) => c.tipo === "absoluto");
+
+  const categoriaEscolhida = pesos.find((c) => c.id === categoriaId) ?? null;
+
+  const absolutoEscolhido =
+    querAbsoluto && categoriaEscolhida
+      ? absolutoDaCategoria(absolutos, categoriaEscolhida.classeIdade)
+      : null;
   const divisaoId = nascimento
     ? divisaoDaIdade(idadeNoAnoDoEvento(nascimento, dataEvento))
     : null;
@@ -191,6 +207,8 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
     email &&
     perfilCompleto &&
     categoriaEscolhida &&
+    // com absoluto no evento, sim/não precisa estar respondido
+    (absolutos.length === 0 || querAbsoluto !== null) &&
     cpfValido &&
     enderecoCompleto
   );
@@ -200,18 +218,35 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
     currency: evento.moeda,
     maximumFractionDigits: 0,
   });
-  // preço próprio (entry) ou preço do grupo da categoria; senão o base do lote
-  const precoDaCategoria = (c: CategoriaOpcao): number | null =>
-    c.precoCentavos ?? precoDoGrupoCentavos(evento.variacoes, c.grupoPreco);
-  const precoExibido =
-    (categoriaEscolhida && precoDaCategoria(categoriaEscolhida)) ??
-    evento.precoCentavos;
+  // mesmo cálculo da server action, para os dois lados nunca divergirem
+  const precoDaCategoria = (c: CategoriaOpcao, ehSegundaInscricao: boolean) =>
+    precoInscricaoCentavos({
+      categoriaPrecoCentavos: c.precoCentavos,
+      grupoPreco: c.grupoPreco,
+      loteVariacoes: evento.variacoes,
+      lotePrecoCentavos: evento.precoCentavos,
+      lotePrecoSegundaCentavos: evento.precoSegundaCentavos,
+      ehSegundaInscricao,
+    });
+  const precoCategoria = categoriaEscolhida
+    ? precoDaCategoria(categoriaEscolhida, false)
+    : evento.precoCentavos;
+  // o absoluto entra como 2ª inscrição — é o preço de segunda do lote
+  const precoAbsoluto = absolutoEscolhido
+    ? precoDaCategoria(absolutoEscolhido, true)
+    : 0;
+  // quanto custa somar o absoluto, mesmo antes de escolher a categoria de peso
+  const precoAbsolutoPrevisto = absolutos.length
+    ? precoDaCategoria(absolutos[0], true)
+    : 0;
+  const precoTotal = precoCategoria + precoAbsoluto;
 
   const aoMudarPerfil =
     <T,>(setter: (v: T) => void) =>
     (v: T) => {
       setter(v);
       setCategoriaId(null);
+      setQuerAbsoluto(null);
     };
 
   // Ao completar os 8 dígitos do CEP (só Brasil), consulta o ViaCEP e
@@ -546,14 +581,47 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
             </div>
           </div>
 
+          {/* ABSOLUTO — perguntado antes das categorias: é um adicional, não uma
+              opção da lista, e sai pelo preço de 2ª inscrição do lote */}
+          {absolutos.length > 0 && (
+            <div>
+              <span className={labelCls}>{di.absolutoPergunta} *</span>
+              <div className="flex gap-2">
+                {([
+                  [true, di.sim],
+                  [false, di.nao],
+                ] as const).map(([valor, rotulo]) => (
+                  <button
+                    key={rotulo}
+                    type="button"
+                    onClick={() => setQuerAbsoluto(valor)}
+                    className={cn(
+                      "flex-1 border px-4 py-3 font-cond text-lg font-semibold uppercase tracking-[0.02em] transition-colors",
+                      querAbsoluto === valor
+                        ? "border-brand bg-brand text-white"
+                        : "border-white/12 bg-raised text-text-2 hover:border-brand/50",
+                    )}
+                  >
+                    {rotulo}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-2 font-cond text-[13px] text-muted-3">
+                {di.absolutoNota}
+                {precoAbsolutoPrevisto > 0 &&
+                  ` · +${fmt.format(precoAbsolutoPrevisto / 100)}`}
+              </p>
+            </div>
+          )}
+
           <div>
             <span className={labelCls}>{di.categoria} *</span>
             {perfilCompleto ? (
-              compativeis.length ? (
+              pesos.length ? (
                 <div className="flex flex-col gap-2">
-                  {compativeis.map((c) => {
+                  {pesos.map((c) => {
                     const sel = c.id === categoriaId;
-                    const precoCat = precoDaCategoria(c);
+                    const precoCat = precoDaCategoria(c, false);
                     return (
                       <button
                         key={c.id}
@@ -573,11 +641,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
                             sel ? "text-white/70" : "text-muted-3",
                           )}
                         >
-                          {sel
-                            ? di.selecionada
-                            : precoCat != null
-                              ? fmt.format(precoCat / 100)
-                              : ""}
+                          {sel ? di.selecionada : fmt.format(precoCat / 100)}
                         </span>
                       </button>
                     );
@@ -594,6 +658,11 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
               </p>
             )}
             <input type="hidden" name="categoriaId" value={categoriaId ?? ""} />
+            <input
+              type="hidden"
+              name="absolutoId"
+              value={absolutoEscolhido?.id ?? ""}
+            />
           </div>
 
           <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-stretch">
@@ -631,9 +700,23 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
             v: categoriaEscolhida?.nome ?? null,
             dourado: true,
           },
+          ...(absolutos.length
+            ? [
+                {
+                  k: di.resumo.absoluto,
+                  v:
+                    querAbsoluto === null
+                      ? null
+                      : querAbsoluto
+                        ? `${di.sim} · +${fmt.format((precoAbsoluto || precoAbsolutoPrevisto) / 100)}`
+                        : di.nao,
+                  dourado: querAbsoluto === true,
+                },
+              ]
+            : []),
         ]}
         precoRotulo={di.resumo.taxaInscricao}
-        precoValor={fmt.format(precoExibido / 100)}
+        precoValor={fmt.format(precoTotal / 100)}
         notaRodape={
           evento.precoSegundaCentavos != null
             ? `${di.segundaCategoria}: +${fmt.format(evento.precoSegundaCentavos / 100)} · ${di.viaPix}`

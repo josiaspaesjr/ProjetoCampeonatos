@@ -74,6 +74,8 @@ export default async function PaginaInscricao({
           categorias={cats.map((c) => ({
             id: c.id,
             nome: c.nome,
+            tipo: c.tipo,
+            classeIdade: c.classeIdade,
             sexo: c.sexo,
             faixa: c.faixa,
             idadeMin: c.idadeMin,

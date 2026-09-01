@@ -12,6 +12,8 @@ import {
   usuarios,
 } from "@/db/schema";
 import type { Faixa } from "@/lib/categorias/cbjj";
+
+type Categoria = typeof categorias.$inferSelect;
 import {
   categoriaCompativel,
   idadeNoAnoDoEvento,
@@ -19,7 +21,7 @@ import {
 import { criarCobrancaPixParaInscricoes } from "@/lib/pagamentos/cobranca";
 import { normalizarPais } from "@/lib/paises";
 import { soDigitos, validarCpf } from "@/lib/cpf";
-import { precoInscricaoCentavos } from "@/lib/lotes/preco";
+import { montarPedido } from "@/lib/inscricoes/pedido";
 import { getUsuarioSessao } from "@/lib/auth";
 import { definirSessaoAtleta } from "@/lib/sessao";
 import { supabaseConfigurado } from "@/lib/supabase/server";
@@ -61,6 +63,8 @@ export async function criarInscricao(eventoSlug: string, formData: FormData) {
   const enderecoCidade = String(formData.get("cidade") ?? "").trim() || null;
   const enderecoUf = String(formData.get("uf") ?? "").trim().toUpperCase() || null;
   const categoriaId = String(formData.get("categoriaId") ?? "");
+  // absoluto é opcional e vai como inscrição própria, cobrada como 2ª
+  const absolutoId = String(formData.get("absolutoId") ?? "");
 
   if (!nome || !email || !dataNascimento || !sexo || !faixa || !categoriaId) {
     throw new Error("Preencha todos os campos obrigatórios");
@@ -162,34 +166,54 @@ export async function criarInscricao(eventoSlug: string, formData: FormData) {
     throw new Error("Você já tem inscrição nesta categoria");
   }
 
-  // --- preço: categoria com preço próprio (entry) > desconto de 2ª inscrição
-  // (garantido quando habilitado) > grupo de preço da categoria > base ------
-  const ehSegundaInscricao = minhasInscricoes.length > 0;
-  const valorCentavos = precoInscricaoCentavos({
-    categoriaPrecoCentavos: categoria.precoCentavos,
-    grupoPreco: categoria.grupoPreco,
-    loteVariacoes: lote.variacoes,
-    lotePrecoCentavos: lote.precoCentavos,
-    lotePrecoSegundaCentavos: lote.precoSegundaInscricaoCentavos,
-    ehSegundaInscricao,
+  // --- absoluto (opcional) ------------------------------------------------
+  // O atleta pede o absoluto na pergunta antes das categorias; ele vira uma
+  // inscrição própria e, por já haver a de peso, sempre entra como 2ª.
+  let absoluto: Categoria | null = null;
+  if (absolutoId && absolutoId !== categoriaId) {
+    absoluto =
+      (await db.query.categorias.findFirst({
+        where: and(eq(categorias.id, absolutoId), eq(categorias.eventoId, evento.id)),
+      })) ?? null;
+    if (!absoluto || absoluto.status !== "aberta") {
+      throw new Error("Absoluto inválido ou fechado");
+    }
+    if (absoluto.tipo !== "absoluto") {
+      throw new Error("A categoria adicional precisa ser um absoluto");
+    }
+    if (!categoriaCompativel(absoluto, { sexo, faixa, idade })) {
+      throw new Error("Você não é elegível para este absoluto (idade, sexo ou faixa)");
+    }
+    if (minhasInscricoes.some((i) => i.categoriaId === absolutoId)) {
+      throw new Error("Você já tem inscrição neste absoluto");
+    }
+  }
+
+  // --- inscrições e preços -------------------------------------------------
+  const aCriar = montarPedido({
+    categoria,
+    absoluto,
+    lote,
+    jaTemInscricao: minhasInscricoes.length > 0,
   });
 
-  // --- inscrição ----------------------------------------------------------
   // preço travado na inscrição: pagando agora ou depois, cobra-se este valor
-  const [inscricao] = await db
+  const criadas = await db
     .insert(inscricoes)
-    .values({
-      usuarioId: usuario.id,
-      eventoId: evento.id,
-      categoriaId,
-      nomeAtleta: nome,
-      faixa,
-      dataNascimento,
-      academiaId,
-      academiaNome: academiaNome || null,
-      pais,
-      precoCentavos: valorCentavos,
-    })
+    .values(
+      aCriar.map((item) => ({
+        usuarioId: usuario.id,
+        eventoId: evento.id,
+        categoriaId: item.categoria.id,
+        nomeAtleta: nome,
+        faixa,
+        dataNascimento,
+        academiaId,
+        academiaNome: academiaNome || null,
+        pais,
+        precoCentavos: item.valorCentavos,
+      })),
+    )
     .returning();
 
   // "pagar depois": a inscrição fica pendente e o atleta gera o Pix quando
@@ -206,13 +230,14 @@ export async function criarInscricao(eventoSlug: string, formData: FormData) {
     moeda: evento.moeda,
     emailPagador: email,
     nomePagador: nome,
-    itens: [
-      {
-        inscricaoId: inscricao.id,
-        descricao: `${evento.nome} — ${categoria.nome}`,
-        valorCentavos,
-      },
-    ],
+    itens: criadas.map((insc) => {
+      const item = aCriar.find((x) => x.categoria.id === insc.categoriaId)!;
+      return {
+        inscricaoId: insc.id,
+        descricao: `${evento.nome} — ${item.categoria.nome}`,
+        valorCentavos: item.valorCentavos,
+      };
+    }),
   });
 
   redirect(`/checkout/${pagamentoId}`);
