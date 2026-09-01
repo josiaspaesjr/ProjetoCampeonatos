@@ -97,9 +97,6 @@ export const es: Dicionario = {
     aoVivo: "En vivo",
     criarEvento: "Crear evento",
     circuito: "Circuito",
-    titulo: "Todos los eventos",
-    subtitulo:
-      "Cada etapa publicada en la plataforma. Filtra por modalidad o estado e inscríbete en dos clics.",
     buscar: "Buscar evento o ciudad",
     filtros: {
       todos: "Todos",
@@ -132,12 +129,17 @@ export const es: Dicionario = {
     },
   },
   home: {
+    slogan: "El tatami",
+    sloganAccent: "empieza aquí",
+    abaixo:
+      "Todos los eventos disponibles en la plataforma están justo abajo. Filtra por modalidad o estado e inscríbete en dos clics.",
+    roleCue: "Mira el calendario",
     verTodos: "Ver todos los eventos",
     statsEyebrow: "La plataforma en números",
     statsTitulo: "El circuito hoy",
     statLabels: ["Eventos", "Atletas", "Equipos", "Inscripciones"],
     aoVivoEyebrow: "Sucediendo ahora",
-    aoVivoTitulo: "Seguilo por la llave",
+    aoVivoTitulo: "Síguelo por la llave",
     aoVivoDesc:
       "Marcador, ganador y próximo combate actualizados durante el evento — nadie tiene que esperar a que publiquen los resultados al final del día.",
     aoVivoCta: "Ver la llave completa →",
@@ -148,11 +150,11 @@ export const es: Dicionario = {
       "Puntos sumados en todas las etapas publicadas en la plataforma. Se actualiza solo con cada resultado confirmado.",
     rankVazio: "El ranking abre con la primera etapa finalizada.",
     rankTabs: { adulto: "Adulto", master: "Master", feminino: "Femenino" },
-    ctaEyebrow: "¿Organizás eventos?",
-    ctaTitulo: "Corré tu",
-    ctaAccent: "campeonato acá",
+    ctaEyebrow: "¿Organizas eventos?",
+    ctaTitulo: "Monta tu",
+    ctaAccent: "campeonato aquí",
     ctaDesc:
-      "Inscripciones, llaves, áreas, check-in, marcador y resultados en un solo lugar — del primer inscripto al podio.",
+      "Inscripciones, llaves, áreas, check-in, marcador y resultados en un solo lugar — del primer inscrito al podio.",
     ctaBtn1: "Conocer la plataforma",
     ctaBtn2: "Crear evento",
   },

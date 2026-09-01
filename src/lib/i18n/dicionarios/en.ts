@@ -97,9 +97,6 @@ export const en: Dicionario = {
     aoVivo: "Live",
     criarEvento: "Create event",
     circuito: "Circuit",
-    titulo: "All events",
-    subtitulo:
-      "Every stage published on the platform. Filter by format or status and register in two clicks.",
     buscar: "Search event or city",
     filtros: {
       todos: "All",
@@ -132,6 +129,11 @@ export const en: Dicionario = {
     },
   },
   home: {
+    slogan: "The mat",
+    sloganAccent: "starts here",
+    abaixo:
+      "Every event available on the platform is right below. Filter by style or status and sign up in two clicks.",
+    roleCue: "See the calendar",
     verTodos: "See all events",
     statsEyebrow: "The platform in numbers",
     statsTitulo: "The circuit today",

@@ -96,9 +96,6 @@ export const pt = {
     aoVivo: "Ao vivo",
     criarEvento: "Criar evento",
     circuito: "Circuito",
-    titulo: "Todos os eventos",
-    subtitulo:
-      "Cada etapa publicada na plataforma. Filtre por modalidade ou status e inscreva-se em dois cliques.",
     buscar: "Buscar evento ou cidade",
     filtros: {
       todos: "Todos",
@@ -131,6 +128,11 @@ export const pt = {
     },
   },
   home: {
+    slogan: "O tatame",
+    sloganAccent: "começa aqui",
+    abaixo:
+      "Todos os eventos disponíveis na plataforma estão logo abaixo. Filtre por modalidade ou status e inscreva-se em dois cliques.",
+    roleCue: "Veja o calendário",
     verTodos: "Ver todos os eventos",
     statsEyebrow: "A plataforma em números",
     statsTitulo: "O circuito hoje",

@@ -11,6 +11,7 @@ import { calcularRankingGeral } from "@/lib/ranking";
 import { getDicionario } from "@/lib/i18n/server";
 import { SeletorIdioma } from "@/lib/i18n/client";
 import { CatalogoClient, type CardEvento } from "./catalogo-client";
+import { MarcaViva } from "./marca-viva";
 import { VitrineClient } from "./vitrine-client";
 
 // catálogo, stats e chave ao vivo vêm do banco — nunca servir versão estática
@@ -20,6 +21,7 @@ export default async function Home() {
   const db = await getDb();
   const dic = await getDicionario();
   const dc = dic.catalogo;
+  const dh = dic.home;
   const modalidades = dic.evento.modalidades as Record<string, string>;
 
   const publicos = await db.query.eventos.findMany({
@@ -146,20 +148,35 @@ export default async function Home() {
         </div>
       </nav>
 
-      {/* HEADER */}
-      <header className="relative overflow-hidden border-b border-white/8 px-6 pb-10 pt-14 md:px-12">
-        <div className="disp pointer-events-none absolute -right-8 top-1/2 -translate-y-1/2 whitespace-nowrap text-[240px] text-white/[0.03]">
-          CALENDÁRIO
+      {/* HEADER — slogan de um lado, marca em movimento do outro */}
+      <header className="relative overflow-hidden border-b border-white/8 px-6 pb-12 pt-14 md:px-12">
+        <div className="grid items-center gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,1fr)_auto]">
+          <div>
+            <div className="mb-1.5 font-cond text-base font-semibold uppercase tracking-[0.14em] text-brand">
+              {dc.circuito} · {anoAtual}
+            </div>
+            <h1 className="disp text-[clamp(56px,8vw,124px)]">
+              {dh.slogan} <span className="text-brand">{dh.sloganAccent}</span>.
+            </h1>
+            <p className="mt-4 max-w-[620px] text-lg font-medium text-muted-2">
+              {dh.abaixo}
+            </p>
+            <div className="mt-6 inline-flex items-center gap-2.5 font-cond text-sm font-bold uppercase tracking-[0.1em] text-brand-soft">
+              <svg
+                aria-hidden
+                viewBox="0 0 24 24"
+                className="h-4 w-4 animate-bounce motion-reduce:animate-none"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3"
+              >
+                <path d="M12 4v15M5 13l7 7 7-7" />
+              </svg>
+              {dh.roleCue}
+            </div>
+          </div>
+          <MarcaViva className="justify-self-center max-lg:order-first lg:justify-self-end" />
         </div>
-        <div className="relative mb-1.5 font-cond text-base font-semibold uppercase tracking-[0.14em] text-brand">
-          {dc.circuito} · {anoAtual}
-        </div>
-        <h1 className="disp relative text-[clamp(64px,9vw,132px)]">
-          {dc.titulo}
-        </h1>
-        <p className="relative mt-2 max-w-[560px] text-lg font-medium text-muted-2">
-          {dc.subtitulo}
-        </p>
       </header>
 
       <CatalogoClient eventos={cards} />
