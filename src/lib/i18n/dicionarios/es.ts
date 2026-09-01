@@ -4,6 +4,7 @@ export const es: Dicionario = {
   rodape: "Sistema de competiciones de artes marciales",
   nav: {
     eventos: "Eventos",
+    plataforma: "La plataforma",
     minhasInscricoes: "Mis inscripciones",
     minhaArea: "Mi área",
     painel: "Panel del organizador",
@@ -129,6 +130,31 @@ export const es: Dicionario = {
       finalizado: "Finalizado",
       encerradas: "Inscripciones cerradas",
     },
+  },
+  home: {
+    verTodos: "Ver todos los eventos",
+    statsEyebrow: "La plataforma en números",
+    statsTitulo: "El circuito hoy",
+    statLabels: ["Eventos", "Atletas", "Equipos", "Inscripciones"],
+    aoVivoEyebrow: "Sucediendo ahora",
+    aoVivoTitulo: "Seguilo por la llave",
+    aoVivoDesc:
+      "Marcador, ganador y próximo combate actualizados durante el evento — nadie tiene que esperar a que publiquen los resultados al final del día.",
+    aoVivoCta: "Ver la llave completa →",
+    aoVivoDemo: "Ejemplo. Cuando haya un evento en curso, aparece la llave real.",
+    rankEyebrow: "Ranking del circuito",
+    rankTitulo: "Quién está arriba",
+    rankDesc:
+      "Puntos sumados en todas las etapas publicadas en la plataforma. Se actualiza solo con cada resultado confirmado.",
+    rankVazio: "El ranking abre con la primera etapa finalizada.",
+    rankTabs: { adulto: "Adulto", master: "Master", feminino: "Femenino" },
+    ctaEyebrow: "¿Organizás eventos?",
+    ctaTitulo: "Corré tu",
+    ctaAccent: "campeonato acá",
+    ctaDesc:
+      "Inscripciones, llaves, áreas, check-in, marcador y resultados en un solo lugar — del primer inscripto al podio.",
+    ctaBtn1: "Conocer la plataforma",
+    ctaBtn2: "Crear evento",
   },
   inscricao: {
     voltarAoEvento: "Volver al evento",

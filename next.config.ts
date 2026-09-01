@@ -6,6 +6,12 @@ const nextConfig: NextConfig = {
   // abas públicas renomeadas/fundidas — links antigos continuam valendo
   async redirects() {
     return [
+      // o catálogo de eventos virou a home; /eventos continua valendo
+      {
+        source: "/eventos",
+        destination: "/",
+        permanent: true,
+      },
       {
         source: "/evento/:slug/atletas",
         destination: "/evento/:slug/checagem",

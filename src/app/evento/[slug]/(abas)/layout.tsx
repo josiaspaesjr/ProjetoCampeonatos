@@ -36,7 +36,7 @@ export default async function LayoutEvento({
         <Logo tamanho={30} />
         <div className="flex items-center gap-7 font-cond text-base font-semibold uppercase tracking-[0.04em]">
           <Link
-            href="/eventos"
+            href="/"
             className="max-sm:hidden transition-colors hover:text-brand"
           >
             ← {dic.evento.todosEventos}

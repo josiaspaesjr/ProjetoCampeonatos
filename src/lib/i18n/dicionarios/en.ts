@@ -4,6 +4,7 @@ export const en: Dicionario = {
   rodape: "Martial arts competition system",
   nav: {
     eventos: "Events",
+    plataforma: "The platform",
     minhasInscricoes: "My registrations",
     minhaArea: "My area",
     painel: "Organizer dashboard",
@@ -129,6 +130,31 @@ export const en: Dicionario = {
       finalizado: "Finished",
       encerradas: "Registration closed",
     },
+  },
+  home: {
+    verTodos: "See all events",
+    statsEyebrow: "The platform in numbers",
+    statsTitulo: "The circuit today",
+    statLabels: ["Events", "Athletes", "Teams", "Registrations"],
+    aoVivoEyebrow: "Happening now",
+    aoVivoTitulo: "Follow it on the bracket",
+    aoVivoDesc:
+      "Score, winner and next match updated as the event runs — nobody has to wait for results to be posted at the end of the day.",
+    aoVivoCta: "See the full bracket →",
+    aoVivoDemo: "Example. Once an event is running, the real bracket shows up here.",
+    rankEyebrow: "Circuit ranking",
+    rankTitulo: "Who is on top",
+    rankDesc:
+      "Points added up across every event published on the platform. Updates on its own with each confirmed result.",
+    rankVazio: "The ranking opens with the first finished event.",
+    rankTabs: { adulto: "Adult", master: "Master", feminino: "Women" },
+    ctaEyebrow: "Running events?",
+    ctaTitulo: "Run your",
+    ctaAccent: "championship here",
+    ctaDesc:
+      "Registrations, brackets, mat areas, check-in, scoreboard and results in one place — from the first sign-up to the podium.",
+    ctaBtn1: "Explore the platform",
+    ctaBtn2: "Create event",
   },
   inscricao: {
     voltarAoEvento: "Back to event",

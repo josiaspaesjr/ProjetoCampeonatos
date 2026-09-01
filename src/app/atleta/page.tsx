@@ -71,7 +71,7 @@ export default async function AreaAtleta() {
       <nav className="sticky top-0 z-50 flex items-center justify-between border-b border-white/8 bg-ink/90 px-6 py-4 backdrop-blur-xl md:px-12">
         <Logo />
         <div className="flex items-center gap-6 font-cond text-base font-semibold uppercase tracking-[0.04em]">
-          <Link href="/eventos" className="max-sm:hidden transition-colors hover:text-brand">
+          <Link href="/" className="max-sm:hidden transition-colors hover:text-brand">
             Eventos
           </Link>
           <MenuUsuarioServer />
@@ -175,7 +175,7 @@ export default async function AreaAtleta() {
               um campeonato.
             </p>
             <Link
-              href="/eventos"
+              href="/"
               className="mt-6 inline-flex -skew-x-9 items-center bg-brand px-6 py-3 font-cond text-base font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]"
             >
               <span className="inline-block skew-x-9">Ver campeonatos →</span>

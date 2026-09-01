@@ -16,7 +16,7 @@ export function PublicNav({ menu }: { menu: PropsMenuUsuario }) {
 
   return (
     <nav className="flex items-center gap-5 font-cond text-base font-semibold uppercase tracking-[0.04em] md:gap-6">
-      <Link href="/eventos" className="max-sm:hidden transition-colors hover:text-brand">
+      <Link href="/" className="max-sm:hidden transition-colors hover:text-brand">
         {dic.nav.eventos}
       </Link>
       <SeletorIdioma className="max-sm:hidden" />

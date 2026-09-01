@@ -7,25 +7,12 @@ import { MenuUsuario } from "@/components/menu-usuario";
 import { useIdioma } from "@/lib/i18n/client";
 import type { PropsMenuUsuario } from "@/lib/menu-usuario";
 import { cn } from "@/lib/utils";
+import type { BracketVivo } from "@/lib/bracket-vivo";
 import type { RankingGeral } from "@/lib/ranking";
 
 /* ------------------------------------------------------------------------ */
 /* Dados vindos do servidor                                                  */
 /* ------------------------------------------------------------------------ */
-
-export interface LadoBracket {
-  nome: string;
-  placar: string;
-  venceu: boolean;
-}
-
-export interface BracketVivo {
-  demo: boolean;
-  titulo: string;
-  esquerda: LadoBracket[];
-  direita: LadoBracket[];
-  href: string;
-}
 
 export interface StatLanding {
   valor: string;
@@ -1164,7 +1151,7 @@ export function LandingClient({
           <a href="#preco" className="max-lg:hidden transition-colors hover:text-brand">
             {t.nav.preco}
           </a>
-          <Link href="/eventos" className="max-md:hidden transition-colors hover:text-brand">
+          <Link href="/" className="max-md:hidden transition-colors hover:text-brand">
             {t.nav.eventos}
           </Link>
           <div className="flex items-center border border-white/16 max-sm:hidden">
@@ -1221,7 +1208,7 @@ export function LandingClient({
                 <SkewTexto>{t.hero.btn1}</SkewTexto>
               </Link>
               <Link
-                href="/eventos"
+                href="/"
                 className="-skew-x-9 border border-white/28 px-8 py-4 font-cond text-[19px] font-bold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-white/55"
               >
                 <SkewTexto>{t.hero.btn2}</SkewTexto>
@@ -1680,7 +1667,7 @@ export function LandingClient({
               <SkewTexto>{t.ctaBtn1}</SkewTexto>
             </Link>
             <Link
-              href="/eventos"
+              href="/"
               className="-skew-x-9 border border-white/28 px-10 py-[17px] font-cond text-xl font-bold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-white/55"
             >
               <SkewTexto>{t.ctaBtn2}</SkewTexto>
@@ -1711,7 +1698,7 @@ export function LandingClient({
           <FooterCol
             titulo={t.foot.colAtleta}
             links={[
-              { label: t.foot.lkEventos, href: "/eventos" },
+              { label: t.foot.lkEventos, href: "/" },
               { label: t.foot.lkInscricoes, href: "/minhas-inscricoes" },
               { label: t.foot.lkEntrar, href: "/acesso" },
             ]}

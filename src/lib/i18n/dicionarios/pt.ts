@@ -3,6 +3,7 @@ export const pt = {
   rodape: "Sistema de competições de artes marciais",
   nav: {
     eventos: "Eventos",
+    plataforma: "A plataforma",
     minhasInscricoes: "Minhas inscrições",
     minhaArea: "Minha área",
     painel: "Painel do organizador",
@@ -128,6 +129,31 @@ export const pt = {
       finalizado: "Finalizado",
       encerradas: "Inscrições encerradas",
     },
+  },
+  home: {
+    verTodos: "Ver todos os eventos",
+    statsEyebrow: "A plataforma em números",
+    statsTitulo: "O circuito hoje",
+    statLabels: ["Eventos", "Atletas", "Equipes", "Inscrições"],
+    aoVivoEyebrow: "Acontecendo agora",
+    aoVivoTitulo: "Acompanhe pela chave",
+    aoVivoDesc:
+      "Placar, vencedor e próxima luta atualizados durante o evento — ninguém precisa esperar alguém publicar o resultado no fim do dia.",
+    aoVivoCta: "Ver a chave completa →",
+    aoVivoDemo: "Exemplo. Quando um evento estiver rolando, a chave real aparece aqui.",
+    rankEyebrow: "Ranking do circuito",
+    rankTitulo: "Quem está no topo",
+    rankDesc:
+      "Pontos somados em todas as etapas publicadas na plataforma. Atualiza sozinho a cada resultado confirmado.",
+    rankVazio: "O ranking abre com a primeira etapa finalizada.",
+    rankTabs: { adulto: "Adulto", master: "Master", feminino: "Feminino" },
+    ctaEyebrow: "Organiza eventos?",
+    ctaTitulo: "Rode o seu",
+    ctaAccent: "campeonato aqui",
+    ctaDesc:
+      "Inscrições, chaves, áreas, check-in, placar e resultados no mesmo lugar — do primeiro inscrito ao pódio.",
+    ctaBtn1: "Conhecer a plataforma",
+    ctaBtn2: "Criar evento",
   },
   inscricao: {
     voltarAoEvento: "Voltar ao evento",
