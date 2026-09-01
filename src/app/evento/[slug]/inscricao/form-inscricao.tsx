@@ -394,20 +394,6 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
                   onChange={(e) => aoMudarPerfil(setNascimento)(e.target.value)}
                 />
               </Campo>
-              <Campo id="insc-sexo" rotulo={`${di.sexo} *`}>
-                <NativeSelect
-                  id="insc-sexo"
-                  name="sexo"
-                  required
-                  value={sexo}
-                  onChange={(e) => aoMudarPerfil(setSexo)(e.target.value)}
-                  className={sexo ? "" : "text-muted-3"}
-                >
-                  <option value="">{di.selecione}</option>
-                  <option value="masculino">{di.masculino}</option>
-                  <option value="feminino">{di.feminino}</option>
-                </NativeSelect>
-              </Campo>
               <Campo id="insc-pais" rotulo={`${di.pais} *`}>
                 <NativeSelect
                   id="insc-pais"
@@ -503,7 +489,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
                   onChange={(e) => setComplemento(e.target.value)}
                 />
               </Campo>
-              <Campo id="insc-bairro" rotulo={`${di.bairro} *`}>
+              <Campo className="xl:col-span-2" id="insc-bairro" rotulo={`${di.bairro} *`}>
                 <Input
                   id="insc-bairro"
                   name="bairro"
@@ -537,6 +523,20 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
           {/* 2 — DADOS DO ATLETA */}
           <Secao numero="2" titulo={di.secaoAtleta}>
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+              <Campo id="insc-sexo" rotulo={`${di.sexo} *`}>
+                <NativeSelect
+                  id="insc-sexo"
+                  name="sexo"
+                  required
+                  value={sexo}
+                  onChange={(e) => aoMudarPerfil(setSexo)(e.target.value)}
+                  className={sexo ? "" : "text-muted-3"}
+                >
+                  <option value="">{di.selecione}</option>
+                  <option value="masculino">{di.masculino}</option>
+                  <option value="feminino">{di.feminino}</option>
+                </NativeSelect>
+              </Campo>
               <Campo id="insc-faixa" rotulo={`${di.faixa} *`}>
                 <NativeSelect
                   id="insc-faixa"
@@ -555,7 +555,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
                 </NativeSelect>
               </Campo>
               <Campo
-                className="sm:col-span-1 xl:col-span-3"
+                className="sm:col-span-1 xl:col-span-2"
                 id="insc-academia"
                 rotulo={di.academiaEquipe}
               >
