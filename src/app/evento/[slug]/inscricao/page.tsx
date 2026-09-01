@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { academias, categorias, eventos, lotes } from "@/db/schema";
+import { academias, categorias, eventos, inscricoes, lotes } from "@/db/schema";
 import { Logo } from "@/components/marca";
 import { dataCurta } from "@/lib/datas";
 import { getAtletaAtual } from "@/lib/sessao";
@@ -45,6 +45,16 @@ export default async function PaginaInscricao({
     ? await db.query.academias.findFirst({
         where: eq(academias.id, atleta.academiaId),
         columns: { nome: true },
+      })
+    : null;
+
+  // o país não fica no perfil, só na inscrição — para quem já se inscreveu
+  // antes, repetimos o da última em vez de voltar ao padrão
+  const ultimaInscricao = atleta
+    ? await db.query.inscricoes.findFirst({
+        where: eq(inscricoes.usuarioId, atleta.id),
+        orderBy: desc(inscricoes.criadoEm),
+        columns: { pais: true },
       })
     : null;
 
@@ -103,6 +113,7 @@ export default async function PaginaInscricao({
                   dataNascimento: atleta.dataNascimento ?? undefined,
                   sexo: atleta.sexo ?? undefined,
                   faixa: atleta.faixaAtual ?? undefined,
+                  pais: ultimaInscricao?.pais ?? undefined,
                   academiaId: atleta.academiaId ?? undefined,
                   academiaNome: academiaAtleta?.nome ?? undefined,
                   cpf: atleta.cpf ?? undefined,

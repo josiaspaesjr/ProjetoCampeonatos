@@ -88,6 +88,16 @@ function divisaoDaIdade(idade: number): string | null {
 
 const capitalizar = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
+/** ordem canônica das classes de idade (kids → adulto → masters) */
+const ORDEM_CLASSES = CLASSES_IDADE.map((c) => c.id);
+
+/**
+ * Só o trecho de peso do nome da categoria. Dentro do select já se sabe a
+ * classe, o sexo e a faixa, então "Adulto / Masculino / Azul / Leve (até 76kg)"
+ * vira "Leve (até 76kg)". Nome sem barras (custom) fica inteiro.
+ */
+const rotuloPeso = (nome: string) => nome.split(" / ").pop() ?? nome;
+
 function BotoesEnvio({
   habilitado,
   enviando,
@@ -163,6 +173,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
   const cepAbortRef = useRef<AbortController | null>(null);
   const ultimoCepRef = useRef("");
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
+  const [classeId, setClasseId] = useState<string | null>(null);
   // null = ainda não respondeu; o absoluto é um adicional, cobrado como 2ª inscrição
   const [querAbsoluto, setQuerAbsoluto] = useState<boolean | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -185,15 +196,32 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
   const pesos = compativeis.filter((c) => c.tipo !== "absoluto");
   const absolutos = compativeis.filter((c) => c.tipo === "absoluto");
 
-  const categoriaEscolhida = pesos.find((c) => c.id === categoriaId) ?? null;
+  const divisaoId = nascimento
+    ? divisaoDaIdade(idadeNoAnoDoEvento(nascimento, dataEvento))
+    : null;
+
+  // classes de idade disponíveis, na ordem canônica CBJJ (adulto antes dos
+  // masters) — um master pode descer para o adulto, então costuma ter mais de
+  // uma opção
+  const classes = ORDEM_CLASSES.filter((id) =>
+    pesos.some((c) => c.classeIdade === id),
+  );
+  // sem escolha explícita, vale a classe natural da idade; e com uma só
+  // compatível, nem faz sentido pedir para escolher
+  const classeEfetiva =
+    (classeId && classes.includes(classeId) ? classeId : null) ??
+    (divisaoId && classes.includes(divisaoId) ? divisaoId : null) ??
+    (classes.length === 1 ? classes[0] : null);
+
+  const pesosDaClasse = pesos.filter((c) => c.classeIdade === classeEfetiva);
+  // buscar na classe (e não em `pesos`) invalida sozinho a categoria quando a
+  // classe muda por baixo — sem precisar de efeito
+  const categoriaEscolhida = pesosDaClasse.find((c) => c.id === categoriaId) ?? null;
 
   const absolutoEscolhido =
     querAbsoluto && categoriaEscolhida
       ? absolutoDaCategoria(absolutos, categoriaEscolhida.classeIdade)
       : null;
-  const divisaoId = nascimento
-    ? divisaoDaIdade(idadeNoAnoDoEvento(nascimento, dataEvento))
-    : null;
   const divisao = divisaoId
     ? (dic.classesIdade[divisaoId] ?? divisaoId)
     : null;
@@ -245,6 +273,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
     <T,>(setter: (v: T) => void) =>
     (v: T) => {
       setter(v);
+      setClasseId(null);
       setCategoriaId(null);
       setQuerAbsoluto(null);
     };
@@ -322,7 +351,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
               setErro(e instanceof Error ? e.message : di.erroGenerico);
             }
           }}
-          className="flex max-w-[640px] flex-col gap-[26px]"
+          className="flex flex-col gap-6"
         >
           {erro && (
             <p className="border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -330,342 +359,311 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
             </p>
           )}
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            <div>
-              <label className={labelCls} htmlFor="insc-nome">
-                {di.nomeCompleto} *
-              </label>
-              <Input
-                id="insc-nome"
-                name="nome"
-                required
-                placeholder={di.seuNome}
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className={labelCls} htmlFor="insc-email">
-                {di.email} *
-              </label>
-              <Input
-                id="insc-email"
-                name="email"
-                type="email"
-                required
-                placeholder="voce@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-          </div>
+          {/* 1 — DADOS PESSOAIS */}
+          <Secao numero="1" titulo={di.secaoPessoais}>
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+              <Campo className="sm:col-span-2" id="insc-nome" rotulo={`${di.nomeCompleto} *`}>
+                <Input
+                  id="insc-nome"
+                  name="nome"
+                  required
+                  placeholder={di.seuNome}
+                  value={nome}
+                  onChange={(e) => setNome(e.target.value)}
+                />
+              </Campo>
+              <Campo className="sm:col-span-2" id="insc-email" rotulo={`${di.email} *`}>
+                <Input
+                  id="insc-email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="voce@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </Campo>
 
-          <div className="grid gap-5 sm:grid-cols-3">
-            <div>
-              <label className={labelCls} htmlFor="insc-nascimento">
-                {di.nascimento} *
-              </label>
-              <Input
-                id="insc-nascimento"
-                name="dataNascimento"
-                type="date"
-                required
-                value={nascimento}
-                onChange={(e) => aoMudarPerfil(setNascimento)(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className={labelCls} htmlFor="insc-sexo">
-                {di.sexo} *
-              </label>
-              <NativeSelect
-                id="insc-sexo"
-                name="sexo"
-                required
-                value={sexo}
-                onChange={(e) => aoMudarPerfil(setSexo)(e.target.value)}
-                className={sexo ? "" : "text-muted-3"}
-              >
-                <option value="">{di.selecione}</option>
-                <option value="masculino">{di.masculino}</option>
-                <option value="feminino">{di.feminino}</option>
-              </NativeSelect>
-            </div>
-            <div>
-              <label className={labelCls} htmlFor="insc-faixa">
-                {di.faixa} *
-              </label>
-              <NativeSelect
-                id="insc-faixa"
-                name="faixa"
-                required
-                value={faixa}
-                onChange={(e) => aoMudarPerfil(setFaixa)(e.target.value)}
-                className={faixa ? "" : "text-muted-3"}
-              >
-                <option value="">{di.selecione}</option>
-                {FAIXAS.map((f) => (
-                  <option key={f} value={f}>
-                    {nomeFaixa[f] ?? capitalizar(f)}
-                  </option>
-                ))}
-              </NativeSelect>
-            </div>
-          </div>
+              <Campo id="insc-nascimento" rotulo={`${di.nascimento} *`}>
+                <Input
+                  id="insc-nascimento"
+                  name="dataNascimento"
+                  type="date"
+                  required
+                  value={nascimento}
+                  onChange={(e) => aoMudarPerfil(setNascimento)(e.target.value)}
+                />
+              </Campo>
+              <Campo id="insc-sexo" rotulo={`${di.sexo} *`}>
+                <NativeSelect
+                  id="insc-sexo"
+                  name="sexo"
+                  required
+                  value={sexo}
+                  onChange={(e) => aoMudarPerfil(setSexo)(e.target.value)}
+                  className={sexo ? "" : "text-muted-3"}
+                >
+                  <option value="">{di.selecione}</option>
+                  <option value="masculino">{di.masculino}</option>
+                  <option value="feminino">{di.feminino}</option>
+                </NativeSelect>
+              </Campo>
+              <Campo id="insc-pais" rotulo={`${di.pais} *`}>
+                <NativeSelect
+                  id="insc-pais"
+                  name="pais"
+                  required
+                  value={pais}
+                  onChange={(e) => setPais(e.target.value)}
+                >
+                  {PAISES.map((pa) => (
+                    <option key={pa.codigo} value={pa.codigo}>
+                      {nomePaisLocale(pa.codigo, locale)}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </Campo>
+              {ehBrasil && (
+                <Campo id="insc-cpf" rotulo={`${di.cpf} *`}>
+                  <Input
+                    id="insc-cpf"
+                    name="cpf"
+                    inputMode="numeric"
+                    required
+                    placeholder="000.000.000-00"
+                    maxLength={14}
+                    value={cpf}
+                    onChange={(e) => setCpf(formatarCpf(e.target.value))}
+                    aria-invalid={!!cpf && !cpfValido}
+                  />
+                  {!!cpf && !cpfValido && (
+                    <p className="mt-1.5 font-cond text-[13px] text-destructive">
+                      {di.cpfInvalido}
+                    </p>
+                  )}
+                </Campo>
+              )}
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            <div>
-              <label className={labelCls} htmlFor="insc-pais">
-                {di.pais} *
-              </label>
-              <NativeSelect
-                id="insc-pais"
-                name="pais"
-                required
-                value={pais}
-                onChange={(e) => setPais(e.target.value)}
-              >
-                {PAISES.map((p) => (
-                  <option key={p.codigo} value={p.codigo}>
-                    {nomePaisLocale(p.codigo, locale)}
-                  </option>
-                ))}
-              </NativeSelect>
-            </div>
-            <div>
-              <label className={labelCls} htmlFor="insc-academia">
-                {di.academiaEquipe}
-              </label>
-              <SeletorAcademia
-                id="insc-academia"
-                name="academiaId"
-                defaultId={perfil?.academiaId}
-                defaultNome={perfil?.academiaNome}
-              />
-            </div>
-          </div>
-
-          {ehBrasil && (
-            <div>
-              <label className={labelCls} htmlFor="insc-cpf">
-                {di.cpf} *
-              </label>
-              <Input
-                id="insc-cpf"
-                name="cpf"
-                inputMode="numeric"
-                required
-                placeholder="000.000.000-00"
-                maxLength={14}
-                value={cpf}
-                onChange={(e) => setCpf(formatarCpf(e.target.value))}
-                aria-invalid={!!cpf && !cpfValido}
-              />
-              {!!cpf && !cpfValido && (
-                <p className="mt-1.5 font-cond text-[13px] text-destructive">
-                  {di.cpfInvalido}
-                </p>
-              )}
-            </div>
-          )}
-
-          <div className="grid gap-5 sm:grid-cols-[170px_1fr]">
-            <div>
-              <label className={labelCls} htmlFor="insc-cep">
-                {di.cep} *
-              </label>
-              <Input
-                id="insc-cep"
-                name="cep"
-                inputMode="numeric"
-                required
-                placeholder="00000-000"
-                maxLength={9}
-                value={cep}
-                onChange={(e) => aoMudarCep(e.target.value)}
-                aria-busy={cepStatus === "carregando"}
-              />
-              {cepStatus === "carregando" && (
-                <p className="mt-1.5 flex items-center gap-1.5 font-cond text-[13px] text-muted-3">
-                  <Spinner className="h-3 w-3" /> {di.cepBuscando}
-                </p>
-              )}
-              {cepStatus === "nao_encontrado" && (
-                <p className="mt-1.5 font-cond text-[13px] text-destructive">
-                  {di.cepNaoEncontrado}
-                </p>
-              )}
-              {cepStatus === "erro" && (
-                <p className="mt-1.5 font-cond text-[13px] text-warning-foreground">
-                  {di.cepErro}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className={labelCls} htmlFor="insc-logradouro">
-                {di.logradouro} *
-              </label>
-              <Input
+              <Campo id="insc-cep" rotulo={`${di.cep} *`}>
+                <Input
+                  id="insc-cep"
+                  name="cep"
+                  inputMode="numeric"
+                  required
+                  placeholder="00000-000"
+                  maxLength={9}
+                  value={cep}
+                  onChange={(e) => aoMudarCep(e.target.value)}
+                  aria-busy={cepStatus === "carregando"}
+                />
+                {cepStatus === "carregando" && (
+                  <p className="mt-1.5 flex items-center gap-1.5 font-cond text-[13px] text-muted-3">
+                    <Spinner className="h-3 w-3" /> {di.cepBuscando}
+                  </p>
+                )}
+                {cepStatus === "nao_encontrado" && (
+                  <p className="mt-1.5 font-cond text-[13px] text-destructive">
+                    {di.cepNaoEncontrado}
+                  </p>
+                )}
+                {cepStatus === "erro" && (
+                  <p className="mt-1.5 font-cond text-[13px] text-warning-foreground">
+                    {di.cepErro}
+                  </p>
+                )}
+              </Campo>
+              <Campo
+                className="xl:col-span-2"
                 id="insc-logradouro"
-                name="logradouro"
-                required
-                value={logradouro}
-                onChange={(e) => setLogradouro(e.target.value)}
-              />
-            </div>
-          </div>
+                rotulo={`${di.logradouro} *`}
+              >
+                <Input
+                  id="insc-logradouro"
+                  name="logradouro"
+                  required
+                  value={logradouro}
+                  onChange={(e) => setLogradouro(e.target.value)}
+                />
+              </Campo>
+              <Campo id="insc-numero" rotulo={`${di.numero} *`}>
+                <Input
+                  id="insc-numero"
+                  name="numero"
+                  required
+                  value={numero}
+                  onChange={(e) => setNumero(e.target.value)}
+                />
+              </Campo>
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            <div>
-              <label className={labelCls} htmlFor="insc-numero">
-                {di.numero} *
-              </label>
-              <Input
-                id="insc-numero"
-                name="numero"
-                required
-                value={numero}
-                onChange={(e) => setNumero(e.target.value)}
-              />
+              <Campo id="insc-complemento" rotulo={di.complemento}>
+                <Input
+                  id="insc-complemento"
+                  name="complemento"
+                  value={complemento}
+                  onChange={(e) => setComplemento(e.target.value)}
+                />
+              </Campo>
+              <Campo id="insc-bairro" rotulo={`${di.bairro} *`}>
+                <Input
+                  id="insc-bairro"
+                  name="bairro"
+                  required
+                  value={bairro}
+                  onChange={(e) => setBairro(e.target.value)}
+                />
+              </Campo>
+              <Campo id="insc-cidade" rotulo={`${di.cidade} *`}>
+                <Input
+                  id="insc-cidade"
+                  name="cidade"
+                  required
+                  value={cidade}
+                  onChange={(e) => setCidade(e.target.value)}
+                />
+              </Campo>
+              <Campo id="insc-uf" rotulo={`${di.uf} *`}>
+                <Input
+                  id="insc-uf"
+                  name="uf"
+                  required
+                  maxLength={2}
+                  value={uf}
+                  onChange={(e) => setUf(e.target.value.toUpperCase())}
+                />
+              </Campo>
             </div>
-            <div>
-              <label className={labelCls} htmlFor="insc-complemento">
-                {di.complemento}
-              </label>
-              <Input
-                id="insc-complemento"
-                name="complemento"
-                value={complemento}
-                onChange={(e) => setComplemento(e.target.value)}
-              />
-            </div>
-          </div>
+          </Secao>
 
-          <div className="grid gap-5 sm:grid-cols-[1fr_1fr_90px]">
-            <div>
-              <label className={labelCls} htmlFor="insc-bairro">
-                {di.bairro} *
-              </label>
-              <Input
-                id="insc-bairro"
-                name="bairro"
-                required
-                value={bairro}
-                onChange={(e) => setBairro(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className={labelCls} htmlFor="insc-cidade">
-                {di.cidade} *
-              </label>
-              <Input
-                id="insc-cidade"
-                name="cidade"
-                required
-                value={cidade}
-                onChange={(e) => setCidade(e.target.value)}
-              />
-            </div>
-            <div>
-              <label className={labelCls} htmlFor="insc-uf">
-                {di.uf} *
-              </label>
-              <Input
-                id="insc-uf"
-                name="uf"
-                required
-                maxLength={2}
-                value={uf}
-                onChange={(e) => setUf(e.target.value.toUpperCase())}
-              />
-            </div>
-          </div>
+          {/* 2 — DADOS DO ATLETA */}
+          <Secao numero="2" titulo={di.secaoAtleta}>
+            <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+              <Campo id="insc-faixa" rotulo={`${di.faixa} *`}>
+                <NativeSelect
+                  id="insc-faixa"
+                  name="faixa"
+                  required
+                  value={faixa}
+                  onChange={(e) => aoMudarPerfil(setFaixa)(e.target.value)}
+                  className={faixa ? "" : "text-muted-3"}
+                >
+                  <option value="">{di.selecione}</option>
+                  {FAIXAS.map((f) => (
+                    <option key={f} value={f}>
+                      {nomeFaixa[f] ?? capitalizar(f)}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </Campo>
+              <Campo
+                className="sm:col-span-1 xl:col-span-3"
+                id="insc-academia"
+                rotulo={di.academiaEquipe}
+              >
+                <SeletorAcademia
+                  id="insc-academia"
+                  name="academiaId"
+                  defaultId={perfil?.academiaId}
+                  defaultNome={perfil?.academiaNome}
+                />
+              </Campo>
 
-          {/* ABSOLUTO — perguntado antes das categorias: é um adicional, não uma
-              opção da lista, e sai pelo preço de 2ª inscrição do lote */}
-          {absolutos.length > 0 && (
-            <div>
-              <span className={labelCls}>{di.absolutoPergunta} *</span>
-              <div className="flex gap-2">
-                {([
-                  [true, di.sim],
-                  [false, di.nao],
-                ] as const).map(([valor, rotulo]) => (
-                  <button
-                    key={rotulo}
-                    type="button"
-                    onClick={() => setQuerAbsoluto(valor)}
-                    className={cn(
-                      "flex-1 border px-4 py-3 font-cond text-lg font-semibold uppercase tracking-[0.02em] transition-colors",
-                      querAbsoluto === valor
-                        ? "border-brand bg-brand text-white"
-                        : "border-white/12 bg-raised text-text-2 hover:border-brand/50",
-                    )}
-                  >
-                    {rotulo}
-                  </button>
-                ))}
-              </div>
-              <p className="mt-2 font-cond text-[13px] text-muted-3">
-                {di.absolutoNota}
-                {precoAbsolutoPrevisto > 0 &&
-                  ` · +${fmt.format(precoAbsolutoPrevisto / 100)}`}
-              </p>
-            </div>
-          )}
-
-          <div>
-            <span className={labelCls}>{di.categoria} *</span>
-            {perfilCompleto ? (
-              pesos.length ? (
-                <div className="flex flex-col gap-2">
-                  {pesos.map((c) => {
-                    const sel = c.id === categoriaId;
-                    const precoCat = precoDaCategoria(c, false);
-                    return (
+              {/* ABSOLUTO — antes das categorias: é um adicional, não uma opção
+                  da lista, e sai pelo preço de 2ª inscrição do lote */}
+              {absolutos.length > 0 && (
+                <div className="sm:col-span-2 xl:col-span-4">
+                  <span className={labelCls}>{di.absolutoPergunta} *</span>
+                  <div className="flex max-w-[420px] gap-2">
+                    {(
+                      [
+                        [true, di.sim],
+                        [false, di.nao],
+                      ] as const
+                    ).map(([valor, rotulo]) => (
                       <button
-                        key={c.id}
+                        key={rotulo}
                         type="button"
-                        onClick={() => setCategoriaId(c.id)}
+                        onClick={() => setQuerAbsoluto(valor)}
                         className={cn(
-                          "flex items-center justify-between border px-4 py-3 text-left font-cond text-lg font-semibold uppercase tracking-[0.02em] transition-colors",
-                          sel
+                          "flex-1 border px-4 py-3 font-cond text-lg font-semibold uppercase tracking-[0.02em] transition-colors",
+                          querAbsoluto === valor
                             ? "border-brand bg-brand text-white"
                             : "border-white/12 bg-raised text-text-2 hover:border-brand/50",
                         )}
                       >
-                        <span>{c.nome}</span>
-                        <span
-                          className={cn(
-                            "font-cond text-[13px] normal-case",
-                            sel ? "text-white/70" : "text-muted-3",
-                          )}
-                        >
-                          {sel ? di.selecionada : fmt.format(precoCat / 100)}
-                        </span>
+                        {rotulo}
                       </button>
-                    );
-                  })}
+                    ))}
+                  </div>
+                  <p className="mt-2 font-cond text-[13px] text-muted-3">
+                    {di.absolutoNota}
+                    {precoAbsolutoPrevisto > 0 &&
+                      ` · +${fmt.format(precoAbsolutoPrevisto / 100)}`}
+                  </p>
                 </div>
+              )}
+
+              {perfilCompleto && pesos.length > 0 ? (
+                <>
+                  <Campo
+                    className="sm:col-span-1 xl:col-span-2"
+                    id="insc-classe"
+                    rotulo={`${di.classeIdade} *`}
+                  >
+                    <NativeSelect
+                      id="insc-classe"
+                      value={classeEfetiva ?? ""}
+                      onChange={(e) => {
+                        setClasseId(e.target.value || null);
+                        setCategoriaId(null);
+                      }}
+                      className={classeEfetiva ? "" : "text-muted-3"}
+                    >
+                      <option value="">{di.selecione}</option>
+                      {classes.map((id) => (
+                        <option key={id} value={id}>
+                          {dic.classesIdade[id] ?? id}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  </Campo>
+                  <Campo
+                    className="sm:col-span-1 xl:col-span-2"
+                    id="insc-categoria"
+                    rotulo={`${di.categoriaPeso} *`}
+                  >
+                    <NativeSelect
+                      id="insc-categoria"
+                      value={categoriaId ?? ""}
+                      onChange={(e) => setCategoriaId(e.target.value || null)}
+                      disabled={!classeEfetiva}
+                      className={categoriaId ? "" : "text-muted-3"}
+                    >
+                      <option value="">{di.selecione}</option>
+                      {pesosDaClasse.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {rotuloPeso(c.nome)} ·{" "}
+                          {fmt.format(precoDaCategoria(c, false) / 100)}
+                        </option>
+                      ))}
+                    </NativeSelect>
+                  </Campo>
+                </>
               ) : (
-                <p className="border border-dashed border-white/16 p-5 font-cond text-[13px] text-warning-foreground">
-                  {di.semCategoriaCompat}
+                <p className="border border-dashed border-white/16 p-5 font-cond text-[13px] text-muted-3 sm:col-span-2 xl:col-span-4">
+                  {perfilCompleto ? di.semCategoriaCompat : di.preenchaPerfil}
                 </p>
-              )
-            ) : (
-              <p className="border border-dashed border-white/16 p-5 font-cond text-[13px] text-muted-3">
-                {di.preenchaPerfil}
-              </p>
-            )}
+              )}
+            </div>
+
             <input type="hidden" name="categoriaId" value={categoriaId ?? ""} />
             <input
               type="hidden"
               name="absolutoId"
               value={absolutoEscolhido?.id ?? ""}
             />
-          </div>
+          </Secao>
 
-          <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-stretch">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
             <Link
               href={`/evento/${evento.slug}`}
               className="flex items-center justify-center border border-white/18 px-[26px] py-3 font-cond text-[17px] font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-white/40"
@@ -723,6 +721,54 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
             : di.viaPix
         }
       />
+    </div>
+  );
+}
+
+/** Bloco numerado do formulário (1 · Dados pessoais, 2 · Dados do atleta). */
+function Secao({
+  numero,
+  titulo,
+  children,
+}: {
+  numero: string;
+  titulo: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="border border-white/10 bg-surface p-6 md:p-7">
+      <div className="mb-6 flex items-center gap-3 border-b border-white/8 pb-4">
+        <span className="disp flex h-8 w-8 shrink-0 items-center justify-center bg-brand text-[20px] leading-none text-white">
+          {numero}
+        </span>
+        <h2 className="disp text-[26px]">{titulo}</h2>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** Rótulo + campo, empilhados — evita repetir a casca em cada um. */
+function Campo({
+  id,
+  rotulo,
+  className,
+  children,
+}: {
+  id: string;
+  rotulo: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={cn("min-w-0", className)}>
+      <label
+        className="mb-[9px] block font-cond text-[13px] font-semibold uppercase tracking-[0.08em] text-muted-2"
+        htmlFor={id}
+      >
+        {rotulo}
+      </label>
+      {children}
     </div>
   );
 }
