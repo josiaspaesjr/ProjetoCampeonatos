@@ -219,11 +219,11 @@ export function VitrineClient({
 
       {/* CONVITE PARA A PLATAFORMA */}
       <section className="relative overflow-hidden px-6 py-[94px] text-center md:px-12">
-        <div className="disp pointer-events-none absolute inset-0 flex items-center justify-center whitespace-nowrap text-[280px] text-brand/6">
+        <div className="disp pointer-events-none absolute inset-x-0 top-0 flex justify-center whitespace-nowrap text-[280px] leading-none text-brand/[0.045]">
           ARENA
         </div>
         <div className="relative">
-          <div className="mb-1.5 font-cond text-base font-semibold uppercase tracking-[0.14em] text-brand">
+          <div className="mb-4 font-cond text-base font-semibold uppercase tracking-[0.14em] text-brand">
             {t.ctaEyebrow}
           </div>
           <h2 className="disp text-[clamp(48px,8vw,110px)]">
