@@ -1,6 +1,6 @@
 "use server";
 
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, or } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getDb } from "@/db";
 import {
@@ -23,8 +23,33 @@ import { normalizarPais } from "@/lib/paises";
 import { soDigitos, validarCpf } from "@/lib/cpf";
 import { montarPedido } from "@/lib/inscricoes/pedido";
 import { getUsuarioSessao } from "@/lib/auth";
-import { definirSessaoAtleta } from "@/lib/sessao";
+import { definirCadastroPendente, definirSessaoAtleta } from "@/lib/sessao";
 import { supabaseConfigurado } from "@/lib/supabase/server";
+
+/**
+ * O CPF já tem conta na plataforma?
+ *
+ * Chamada pelo formulário assim que o CPF fica válido: existindo conta, a tela
+ * pede login antes de continuar, em vez de deixar a pessoa preencher tudo para
+ * descobrir no fim. Devolve só um booleano — nada de nome ou e-mail —, e só
+ * responde a CPF bem formado.
+ *
+ * Ressalva: é um endpoint público que confirma se um CPF está cadastrado, o
+ * mesmo tipo de exposição que "e-mail já cadastrado" em qualquer signup. Se
+ * virar problema, o caminho é limitar taxa por IP.
+ */
+export async function cpfJaTemConta(cpfBruto: string): Promise<boolean> {
+  const cpf = soDigitos(cpfBruto);
+  if (!validarCpf(cpf)) return false;
+  const db = await getDb();
+  const dono = await db.query.usuarios.findFirst({
+    where: eq(usuarios.cpf, cpf),
+    columns: { id: true, authId: true },
+  });
+  // só conta com login de verdade bloqueia: linha sem authId é de alguém que
+  // se inscreveu e ainda não escolheu senha — essa pessoa segue o fluxo
+  return !!dono?.authId;
+}
 
 export async function criarInscricao(eventoSlug: string, formData: FormData) {
   const db = await getDb();
@@ -115,17 +140,46 @@ export async function criarInscricao(eventoSlug: string, formData: FormData) {
   };
 
   let usuario;
+  // sem sessão, a conta nasce aqui e a senha é escolhida logo depois — quem
+  // preencheu a inscrição inteira não é mandado para o login de mãos vazias
+  let precisaCriarSenha = false;
   if (supabaseConfigurado()) {
-    // login obrigatório: a inscrição pertence à conta autenticada
     const sessao = await getUsuarioSessao();
-    if (!sessao) {
-      redirect(`/entrar?next=${encodeURIComponent(`/evento/${eventoSlug}/inscricao`)}`);
+    if (sessao) {
+      [usuario] = await db
+        .update(usuarios)
+        .set(dadosPerfil)
+        .where(eq(usuarios.id, sessao.id))
+        .returning();
+    } else {
+      // CPF ou e-mail de conta já registrada: aí sim é caso de entrar antes,
+      // senão a inscrição iria parar na conta de outra pessoa
+      const existente = await db.query.usuarios.findFirst({
+        where: cpf ? or(eq(usuarios.cpf, cpf), eq(usuarios.email, email)) : eq(usuarios.email, email),
+      });
+      if (existente?.authId) {
+        throw new Error(
+          "Você já tem conta na plataforma. Entre antes de se inscrever.",
+        );
+      }
+      // reaproveita a linha sem login (inscrição anterior que não virou conta)
+      usuario = existente
+        ? (
+            await db
+              .update(usuarios)
+              .set(dadosPerfil)
+              .where(eq(usuarios.id, existente.id))
+              .returning()
+          )[0]
+        : (
+            await db
+              .insert(usuarios)
+              .values({ ...dadosPerfil, email })
+              .returning()
+          )[0];
+      await definirCadastroPendente(usuario.id);
+      precisaCriarSenha = true;
     }
-    [usuario] = await db
-      .update(usuarios)
-      .set(dadosPerfil)
-      .where(eq(usuarios.id, sessao.id))
-      .returning();
   } else {
     // dev sem Supabase: reutiliza por e-mail ou cria, sessão via cookie
     const usuarioExistente = await db.query.usuarios.findFirst({
@@ -219,6 +273,16 @@ export async function criarInscricao(eventoSlug: string, formData: FormData) {
   // "pagar depois": a inscrição fica pendente e o atleta gera o Pix quando
   // quiser em Minhas inscrições (dentro do prazo do campeonato).
   const pagarDepois = String(formData.get("intent") ?? "") === "pagar_depois";
+
+  // Sem conta ainda: a senha vem antes de qualquer outra coisa. A inscrição já
+  // está gravada, então nada se perde — e o destino segue guardado no `next`.
+  if (precisaCriarSenha) {
+    const destino = pagarDepois ? "/minhas-inscricoes" : null;
+    if (destino) {
+      redirect(`/criar-senha?next=${encodeURIComponent(destino)}`);
+    }
+  }
+
   if (pagarDepois) {
     redirect("/minhas-inscricoes");
   }
@@ -240,5 +304,10 @@ export async function criarInscricao(eventoSlug: string, formData: FormData) {
     }),
   });
 
+  if (precisaCriarSenha) {
+    redirect(
+      `/criar-senha?next=${encodeURIComponent(`/checkout/${pagamentoId}`)}`,
+    );
+  }
   redirect(`/checkout/${pagamentoId}`);
 }

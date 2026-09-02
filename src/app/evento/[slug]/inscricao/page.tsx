@@ -8,7 +8,7 @@ import { dataCurta } from "@/lib/datas";
 import { getAtletaAtual } from "@/lib/sessao";
 import { getDicionario } from "@/lib/i18n/server";
 import { ordenarCategoriasExibicao } from "@/lib/categorias/distribuicao-areas";
-import { criarInscricao } from "./actions";
+import { cpfJaTemConta, criarInscricao } from "./actions";
 import { FormInscricao } from "./form-inscricao";
 
 export default async function PaginaInscricao({
@@ -112,6 +112,7 @@ export default async function PaginaInscricao({
             moeda: evento.moeda,
           }}
           acao={acao}
+          verificarCpf={atleta ? undefined : cpfJaTemConta}
           perfil={
             atleta
               ? {

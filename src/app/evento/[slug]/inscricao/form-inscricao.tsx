@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useFormStatus } from "react-dom";
 import { Eyebrow } from "@/components/marca";
 import { Spinner } from "@/components/ui/botao-acao";
@@ -58,6 +59,8 @@ interface Props {
   categorias: CategoriaOpcao[];
   evento: EventoResumo;
   acao: (formData: FormData) => Promise<void>;
+  /** consulta se o CPF já tem conta; ausente quando o atleta já está logado */
+  verificarCpf?: (cpf: string) => Promise<boolean>;
   perfil?: {
     nome?: string;
     email?: string;
@@ -152,7 +155,14 @@ function BotoesEnvio({
   );
 }
 
-export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: Props) {
+export function FormInscricao({
+  dataEvento,
+  categorias,
+  evento,
+  acao,
+  verificarCpf,
+  perfil,
+}: Props) {
   const [nome, setNome] = useState(perfil?.nome ?? "");
   const [email, setEmail] = useState(perfil?.email ?? "");
   const [sexo, setSexo] = useState(perfil?.sexo ?? "");
@@ -173,6 +183,10 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
   const cepAbortRef = useRef<AbortController | null>(null);
   const ultimoCepRef = useRef("");
   const [categoriaId, setCategoriaId] = useState<string | null>(null);
+  // conta já existente para o CPF: bloqueia com modal pedindo login
+  const [cpfComConta, setCpfComConta] = useState(false);
+  const [cpfChecando, setCpfChecando] = useState(false);
+  const cpfCheckadoRef = useRef("");
   const [classeId, setClasseId] = useState<string | null>(null);
   // null = ainda não respondeu; o absoluto é um adicional, cobrado como 2ª inscrição
   const [querAbsoluto, setQuerAbsoluto] = useState<boolean | null>(null);
@@ -238,6 +252,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
     // com absoluto no evento, sim/não precisa estar respondido
     (absolutos.length === 0 || querAbsoluto !== null) &&
     cpfValido &&
+    !cpfComConta &&
     enderecoCompleto
   );
 
@@ -320,6 +335,32 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
     }
   }
 
+  /**
+   * Assim que o CPF fica válido, pergunta ao servidor se já existe conta. Ter
+   * conta e continuar preenchendo daria numa inscrição na conta errada, então
+   * a tela para aqui e pede login. Só consulta uma vez por CPF.
+   */
+  async function aoMudarCpf(valor: string) {
+    const formatado = formatarCpf(valor);
+    setCpf(formatado);
+    const digitos = soDigitos(formatado);
+    if (!verificarCpf || !validarCpf(digitos)) {
+      cpfCheckadoRef.current = "";
+      return;
+    }
+    if (digitos === cpfCheckadoRef.current) return;
+    cpfCheckadoRef.current = digitos;
+    setCpfChecando(true);
+    try {
+      const existe = await verificarCpf(digitos);
+      // ignora resposta de um CPF que já não é o digitado
+      if (cpfCheckadoRef.current !== digitos) return;
+      setCpfComConta(existe);
+    } finally {
+      setCpfChecando(false);
+    }
+  }
+
   function aoMudarCep(valor: string) {
     const formatado = formatarCep(valor);
     setCep(formatado);
@@ -375,6 +416,32 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
           {/* 1 — DADOS PESSOAIS */}
           <Secao numero="1" titulo={di.secaoPessoais}>
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+              {ehBrasil && (
+                <Campo id="insc-cpf" rotulo={`${di.cpf} *`}>
+                  <Input
+                    id="insc-cpf"
+                    name="cpf"
+                    inputMode="numeric"
+                    required
+                    placeholder="000.000.000-00"
+                    maxLength={14}
+                    value={cpf}
+                    onChange={(e) => aoMudarCpf(e.target.value)}
+                    aria-invalid={!!cpf && !cpfValido}
+                    aria-busy={cpfChecando}
+                  />
+                  {cpfChecando && (
+                    <p className="mt-1.5 flex items-center gap-1.5 font-cond text-[13px] text-muted-3">
+                      <Spinner className="h-3 w-3" /> {di.cpfVerificando}
+                    </p>
+                  )}
+                  {!cpfChecando && !!cpf && !cpfValido && (
+                    <p className="mt-1.5 font-cond text-[13px] text-destructive">
+                      {di.cpfInvalido}
+                    </p>
+                  )}
+                </Campo>
+              )}
               <Campo className="sm:col-span-2" id="insc-nome" rotulo={`${di.nomeCompleto} *`}>
                 <Input
                   id="insc-nome"
@@ -385,7 +452,7 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
                   onChange={(e) => setNome(e.target.value)}
                 />
               </Campo>
-              <Campo className="sm:col-span-2" id="insc-email" rotulo={`${di.email} *`}>
+              <Campo className="xl:col-span-2" id="insc-email" rotulo={`${di.email} *`}>
                 <Input
                   id="insc-email"
                   name="email"
@@ -422,26 +489,6 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
                   ))}
                 </NativeSelect>
               </Campo>
-              {ehBrasil && (
-                <Campo id="insc-cpf" rotulo={`${di.cpf} *`}>
-                  <Input
-                    id="insc-cpf"
-                    name="cpf"
-                    inputMode="numeric"
-                    required
-                    placeholder="000.000.000-00"
-                    maxLength={14}
-                    value={cpf}
-                    onChange={(e) => setCpf(formatarCpf(e.target.value))}
-                    aria-invalid={!!cpf && !cpfValido}
-                  />
-                  {!!cpf && !cpfValido && (
-                    <p className="mt-1.5 font-cond text-[13px] text-destructive">
-                      {di.cpfInvalido}
-                    </p>
-                  )}
-                </Campo>
-              )}
 
               <Campo id="insc-cep" rotulo={`${di.cep} *`}>
                 <Input
@@ -692,6 +739,17 @@ export function FormInscricao({ dataEvento, categorias, evento, acao, perfil }: 
         </form>
       </div>
 
+      {cpfComConta && (
+        <ModalContaExiste
+          slug={evento.slug}
+          aoFechar={() => {
+            setCpfComConta(false);
+            setCpf("");
+            cpfCheckadoRef.current = "";
+          }}
+        />
+      )}
+
       {/* RESUMO */}
       <ResumoEvento
         nomeEvento={evento.nome}
@@ -783,5 +841,85 @@ function Campo({
       </label>
       {children}
     </div>
+  );
+}
+
+/**
+ * CPF já cadastrado: a inscrição para aqui. Continuar preencheria dados de uma
+ * pessoa que já tem conta e gravaria a inscrição numa conta nova e paralela —
+ * então as saídas são entrar (voltando para esta mesma inscrição) ou corrigir
+ * o CPF.
+ */
+function ModalContaExiste({
+  slug,
+  aoFechar,
+}: {
+  slug: string;
+  aoFechar: () => void;
+}) {
+  const di = useDic().inscricao;
+  const tituloId = useId();
+  const descId = useId();
+  const fecharRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const overflowAnterior = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") aoFechar();
+    };
+    window.addEventListener("keydown", onKey);
+    fecharRef.current?.focus();
+    return () => {
+      document.body.style.overflow = overflowAnterior;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [aoFechar]);
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[220] flex items-center justify-center bg-black/60 p-4 animate-[fade-in_0.18s_ease]"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) aoFechar();
+      }}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={tituloId}
+        aria-describedby={descId}
+        className="relative w-[min(440px,94vw)] border border-white/10 bg-surface animate-[pop-in_0.18s_cubic-bezier(0.16,1,0.3,1)]"
+      >
+        <span className="absolute inset-x-0 top-0 h-[3px] bg-brand" />
+        <div className="p-6">
+          <h2 id={tituloId} className="disp text-[26px] leading-none">
+            {di.cpfContaTitulo}
+          </h2>
+          <p
+            id={descId}
+            className="mt-3 text-sm leading-normal text-muted-2"
+          >
+            {di.cpfContaDesc}
+          </p>
+          <div className="mt-6 flex gap-2.5">
+            <button
+              ref={fecharRef}
+              type="button"
+              onClick={aoFechar}
+              className="inline-flex h-10 flex-1 cursor-pointer items-center justify-center border border-white/16 px-4 font-cond text-sm font-semibold uppercase tracking-[0.04em] text-text-2 transition-colors hover:border-white/35 hover:text-foreground"
+            >
+              {di.cpfContaFechar}
+            </button>
+            <Link
+              href={`/entrar?next=${encodeURIComponent(`/evento/${slug}/inscricao`)}`}
+              className="inline-flex h-10 flex-1 items-center justify-center bg-brand px-4 font-cond text-sm font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d]"
+            >
+              {di.cpfContaBotao}
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
