@@ -356,6 +356,8 @@ export const es: Dicionario = {
     modoTelao: "Modo pantalla",
   },
   resultadosTab: {
+    abaPodios: "Podios",
+    abaQuadro: "Medallero",
     titulo: "Resultados",
     subtitulo: "Podio de cada división ya concluida",
     vazioTitulo: "Ninguna división concluida",

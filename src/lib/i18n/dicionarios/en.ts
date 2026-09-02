@@ -356,6 +356,8 @@ export const en: Dicionario = {
     modoTelao: "Big-screen mode",
   },
   resultadosTab: {
+    abaPodios: "Podiums",
+    abaQuadro: "Medal table",
     titulo: "Results",
     subtitulo: "Podium for every finished division",
     vazioTitulo: "No division finished yet",

@@ -357,6 +357,8 @@ export const pt = {
     modoTelao: "Modo telão",
   },
   resultadosTab: {
+    abaPodios: "Pódios",
+    abaQuadro: "Quadro de medalhas",
     titulo: "Resultados",
     subtitulo: "Pódio de cada divisão já concluída",
     vazioTitulo: "Nenhuma divisão concluída",
