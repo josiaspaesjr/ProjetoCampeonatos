@@ -179,18 +179,47 @@ export async function montarFilaDaArea(
   };
   const unidades: UnidadeFila[] = [];
   const decididas: ItemProgresso[] = [];
+
+  // Chaves e lutas de todas as categorias da área numa passada só. Isto já foi
+  // duas consultas por categoria dentro do laço abaixo: com dezenas de
+  // categorias passava despercebido, com mil derrubava a página (cada ida ao
+  // Postgres remoto custa dezenas de ms, e eram 2N idas em série).
+  const catIds = cats.map((c) => c.id);
+  const chavesDaArea = catIds.length
+    ? await db.query.chaves.findMany({
+        where: inArray(chaves.categoriaId, catIds),
+      })
+    : [];
+  const chavePorCategoria = new Map<string, (typeof chavesDaArea)[number]>();
+  for (const c of chavesDaArea) {
+    // uma chave por categoria; havendo mais, fica a primeira (era o que o
+    // findFirst devolvia)
+    if (!chavePorCategoria.has(c.categoriaId)) {
+      chavePorCategoria.set(c.categoriaId, c);
+    }
+  }
+  const chaveIds = [...chavePorCategoria.values()].map((c) => c.id);
+  const lutasDasChaves = chaveIds.length
+    ? await db.query.lutas.findMany({
+        where: inArray(lutas.chaveId, chaveIds),
+        orderBy: [asc(lutas.rodada), asc(lutas.posicao)],
+      })
+    : [];
+  // agrupa preservando a ordem global (rodada, posição) dentro de cada chave
+  const lutasPorChave = new Map<string, LutaRow[]>();
+  for (const l of lutasDasChaves) {
+    const arr = lutasPorChave.get(l.chaveId);
+    if (arr) arr.push(l);
+    else lutasPorChave.set(l.chaveId, [l]);
+  }
+
   for (const categoria of cats) {
-    const chave = await db.query.chaves.findFirst({
-      where: eq(chaves.categoriaId, categoria.id),
-    });
+    const chave = chavePorCategoria.get(categoria.id);
     if (!chave || chave.status === "rascunho" || chave.status === "concluida") {
       continue;
     }
 
-    const todasDaChave = await db.query.lutas.findMany({
-      where: eq(lutas.chaveId, chave.id),
-      orderBy: [asc(lutas.rodada), asc(lutas.posicao)],
-    });
+    const todasDaChave = lutasPorChave.get(chave.id) ?? [];
     // só as que correm NESTA área (as levadas para outro tatame saem daqui);
     // a classificação de byes/eliminação dupla usa a chave inteira
     const linhas = todasDaChave.filter((l) => corrreNestaArea(l, categoria));
