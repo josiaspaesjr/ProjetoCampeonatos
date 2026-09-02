@@ -12,10 +12,10 @@ type Aba = "blocos" | "lutas";
 /**
  * As duas leituras do cronograma, em abas.
  *
- * "Horário por divisão" é a que o atleta quer — quando a faixa dele entra — e
- * por isso abre primeiro. "Ordem das lutas" é a sequência dentro do tatame,
- * para quem já está no ginásio acompanhando. Separadas porque respondem a
- * perguntas diferentes; juntas, uma empurrava a outra para fora da tela.
+ * "Ordem das lutas" abre primeiro: é a sequência dentro do tatame, para quem
+ * está acompanhando o evento. "Horário por divisão" diz quando cada faixa
+ * entra. Separadas porque respondem a perguntas diferentes; juntas, uma
+ * empurrava a outra para fora da tela.
  */
 export function CronogramaAbas({
   blocos,
@@ -29,11 +29,11 @@ export function CronogramaAbas({
   multiDia: boolean;
 }) {
   const db = useDic().blocosHorario;
-  const [aba, setAba] = useState<Aba>("blocos");
+  const [aba, setAba] = useState<Aba>("lutas");
 
   const abas: { id: Aba; rotulo: string; n: number }[] = [
-    { id: "blocos", rotulo: db.abaBlocos, n: blocos.length },
     { id: "lutas", rotulo: db.abaLutas, n: itens.length },
+    { id: "blocos", rotulo: db.abaBlocos, n: blocos.length },
   ];
 
   return (
