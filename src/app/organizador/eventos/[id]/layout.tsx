@@ -51,13 +51,18 @@ export default async function LayoutConsoleEvento({
   const evento = await eventoGerenciavel(db, id, usuario.id);
   if (!evento) notFound();
 
-  const [meusEventos, cats, lts, ars, confirmadas, diasRows] = await Promise.all([
+  const [meusEventos, cats, lts, ars, inscritas, diasRows] = await Promise.all([
     eventosGerenciaveis(db, usuario.id),
     db.query.categorias.findMany({ where: eq(categorias.eventoId, id) }),
     db.query.lotes.findMany({ where: eq(lotes.eventoId, id) }),
     db.query.areas.findMany({ where: eq(areas.eventoId, id) }),
+    // inscritos "ativos" — confirmadas + pendentes, mesma conta da aba Inscrições
     db.query.inscricoes.findMany({
-      where: and(eq(inscricoes.eventoId, id), eq(inscricoes.status, "confirmada")),
+      where: and(
+        eq(inscricoes.eventoId, id),
+        inArray(inscricoes.status, ["confirmada", "pendente_pagamento"]),
+      ),
+      columns: { status: true },
     }),
     db.query.eventoDias.findMany({
       where: eq(eventoDias.eventoId, id),
@@ -79,7 +84,11 @@ export default async function LayoutConsoleEvento({
       rotulo: nav.inscricoes,
       icone: "◇",
       href: `${base}/inscricoes`,
-      badge: confirmadas.length ? String(confirmadas.length) : undefined,
+      // pagas / inscritas — o organizador precisa das duas para saber o que
+      // ainda falta receber
+      badge: inscritas.length
+        ? `${inscritas.filter((i) => i.status === "confirmada").length}/${inscritas.length}`
+        : undefined,
     },
     {
       id: "lotes",
