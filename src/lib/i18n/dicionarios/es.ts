@@ -150,6 +150,8 @@ export const es: Dicionario = {
     botao: "Crear contraseña y continuar →",
   },
   blocosHorario: {
+    luta: "combate",
+    lutas: "combates",
     abaBlocos: "Por división",
     abaLutas: "Orden de combates",
     titulo: "Horario por división",

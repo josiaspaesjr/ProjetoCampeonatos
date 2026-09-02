@@ -16,7 +16,7 @@ function cat(over: Partial<CategoriaCron>): CategoriaCron {
     dataLabel: "30/10",
     diaIndex: 0,
     diaNumero: 1,
-    nLutas: 0,
+    nLutas: 3,
     chaveGerada: false,
     atletas: [],
     lutas: [],
@@ -99,5 +99,38 @@ describe("blocosPorGrupo", () => {
 
   it("sem áreas, sem blocos", () => {
     expect(blocosPorGrupo([])).toEqual([]);
+  });
+});
+
+describe("blocosPorGrupo — divisões vazias", () => {
+  it("divisão sem luta fica de fora", () => {
+    // o motor não encaixa categoria vazia: ela cai na abertura do dia e
+    // apareceria marcando o horário de início junto com todo mundo
+    const blocos = blocosPorGrupo([
+      area("Área 01", [
+        cat({ grupoChave: BRANCA, hora: "09:00", nLutas: 0 }),
+        cat({ grupoChave: AZUL, hora: "10:00", nLutas: 4, grupoRotulo: "Adulto · Masculino · Azul" }),
+      ]),
+    ]);
+    expect(blocos.map((b) => b.rotulo)).toEqual(["Adulto · Masculino · Azul"]);
+  });
+
+  it("soma as lutas do bloco espalhado em vários tatames", () => {
+    const blocos = blocosPorGrupo([
+      area("Área 01", [cat({ grupoChave: BRANCA, hora: "10:00", nLutas: 3 })]),
+      area("Área 02", [cat({ grupoChave: BRANCA, hora: "09:30", nLutas: 5 })]),
+    ]);
+    expect(blocos[0].nLutas).toBe(8);
+    expect(blocos[0].hora).toBe("09:30");
+  });
+
+  it("grade inteira vazia não gera bloco nenhum", () => {
+    const blocos = blocosPorGrupo([
+      area("Área 01", [
+        cat({ grupoChave: BRANCA, nLutas: 0 }),
+        cat({ grupoChave: AZUL, nLutas: 0 }),
+      ]),
+    ]);
+    expect(blocos).toEqual([]);
   });
 });

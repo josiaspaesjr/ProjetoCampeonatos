@@ -149,6 +149,8 @@ export const pt = {
     botao: "Criar senha e continuar →",
   },
   blocosHorario: {
+    luta: "luta",
+    lutas: "lutas",
     abaBlocos: "Horário por divisão",
     abaLutas: "Ordem das lutas",
     titulo: "Horário por divisão",

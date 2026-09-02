@@ -55,12 +55,16 @@ export function BlocosHorario({
               <span className="font-cond text-[18px] font-semibold uppercase tracking-[0.02em]">
                 {b.rotulo}
               </span>
-              {b.areas.length > 0 && (
-                <span className="ml-2.5 font-cond text-[13px] uppercase tracking-[0.05em] text-muted-3">
-                  {b.areas.length === 1 ? db.tatame : db.tatames}{" "}
-                  {b.areas.join(" · ")}
-                </span>
-              )}
+              <span className="ml-2.5 font-cond text-[13px] uppercase tracking-[0.05em] text-muted-3">
+                {b.nLutas} {b.nLutas === 1 ? db.luta : db.lutas}
+                {b.areas.length > 0 && (
+                  <>
+                    {" · "}
+                    {b.areas.length === 1 ? db.tatame : db.tatames}{" "}
+                    {b.areas.join(" · ")}
+                  </>
+                )}
+              </span>
             </div>
             <span className="disp tnum shrink-0 text-[22px] leading-none text-brand-soft">
               {multiDia && (

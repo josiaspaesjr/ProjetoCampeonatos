@@ -150,6 +150,8 @@ export const en: Dicionario = {
     botao: "Create password and continue →",
   },
   blocosHorario: {
+    luta: "match",
+    lutas: "matches",
     abaBlocos: "By division",
     abaLutas: "Match order",
     titulo: "Schedule by division",
