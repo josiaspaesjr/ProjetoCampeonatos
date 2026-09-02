@@ -145,6 +145,17 @@ function CardArea({
             ))}
           </div>
         </div>
+
+        {/* OPERAR PLACAR — no topo e em destaque: no dia do evento é o que a
+            mesa mais abre, e no rodapé ficava atrás de centenas de categorias */}
+        {base && (
+          <Link
+            href={`${base}/areas/${area.id}/placar`}
+            className="mt-3 flex h-10 -skew-x-9 items-center justify-center bg-brand font-cond text-[13px] font-bold uppercase tracking-[0.06em] text-white transition-colors hover:bg-[#d5261d]"
+          >
+            <span className="inline-block skew-x-9">{dp.operarPlacar} →</span>
+          </Link>
+        )}
       </div>
 
       {/* CORPO (scroll interno só no layout de colunas) */}
@@ -182,17 +193,6 @@ function CardArea({
         )}
       </div>
 
-      {/* RODAPÉ (organizador: operar placar) */}
-      {base && (
-        <div className="flex shrink-0 items-center justify-end gap-4 border-t border-white/10 px-4 py-2.5">
-          <Link
-            href={`${base}/areas/${area.id}/placar`}
-            className="font-cond text-[12px] font-semibold uppercase tracking-[0.05em] text-muted-3 transition-colors hover:text-brand-soft"
-          >
-            {dp.operarPlacar} →
-          </Link>
-        </div>
-      )}
     </div>
   );
 }
