@@ -357,10 +357,22 @@ export const pt = {
     modoTelao: "Modo telão",
   },
   resultadosTab: {
-    emBreve: "Em breve",
     titulo: "Resultados",
-    descricao:
-      "Resultados por atleta e academia com filtros e impressão, além do quadro de medalhas do evento assim que as chaves forem concluídas.",
+    subtitulo: "Pódio de cada divisão já concluída",
+    vazioTitulo: "Nenhuma divisão concluída",
+    vazioDesc:
+      "Os pódios aparecem aqui assim que as chaves forem encerradas. Enquanto isso, acompanhe pelas chaves e pelo cronograma.",
+    colDivisao: "Divisão",
+    concluida: "concluída",
+    concluidas: "concluídas",
+    ouro: "1º",
+    prata: "2º",
+    bronze: "3º",
+    quadroTitulo: "Quadro de medalhas",
+    quadroDesc: "Academias somadas por medalha, ouro primeiro.",
+    academia: "Academia",
+    semAcademia: "Sem academia",
+    total: "Total",
   },
   placar: {
     catAbrev: "cat.",

@@ -356,10 +356,22 @@ export const en: Dicionario = {
     modoTelao: "Big-screen mode",
   },
   resultadosTab: {
-    emBreve: "Coming soon",
     titulo: "Results",
-    descricao:
-      "Results by athlete and academy with filters and printing, plus the event medal table once brackets are complete.",
+    subtitulo: "Podium for every finished division",
+    vazioTitulo: "No division finished yet",
+    vazioDesc:
+      "Podiums show up here as brackets are closed. Until then, follow along in the brackets and the schedule.",
+    colDivisao: "Division",
+    concluida: "finished",
+    concluidas: "finished",
+    ouro: "1st",
+    prata: "2nd",
+    bronze: "3rd",
+    quadroTitulo: "Medal table",
+    quadroDesc: "Gyms by medal count, gold first.",
+    academia: "Gym",
+    semAcademia: "No gym",
+    total: "Total",
   },
   placar: {
     catAbrev: "div.",

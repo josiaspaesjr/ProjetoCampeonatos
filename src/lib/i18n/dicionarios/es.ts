@@ -356,10 +356,22 @@ export const es: Dicionario = {
     modoTelao: "Modo pantalla",
   },
   resultadosTab: {
-    emBreve: "Próximamente",
     titulo: "Resultados",
-    descricao:
-      "Resultados por atleta y academia con filtros e impresión, además del medallero del evento cuando se completen las llaves.",
+    subtitulo: "Podio de cada división ya concluida",
+    vazioTitulo: "Ninguna división concluida",
+    vazioDesc:
+      "Los podios aparecen acá a medida que se cierran las llaves. Mientras tanto, seguí por las llaves y el cronograma.",
+    colDivisao: "División",
+    concluida: "concluida",
+    concluidas: "concluidas",
+    ouro: "1º",
+    prata: "2º",
+    bronze: "3º",
+    quadroTitulo: "Medallero",
+    quadroDesc: "Academias sumadas por medalla, oro primero.",
+    academia: "Academia",
+    semAcademia: "Sin academia",
+    total: "Total",
   },
   placar: {
     catAbrev: "cat.",
