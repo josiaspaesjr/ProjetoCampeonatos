@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { LinhaQuadro } from "@/lib/chaves/quadro-medalhas";
+import { MEDALHAS, type TipoMedalha } from "@/lib/chaves/medalhas";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 import { useDic } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
@@ -25,10 +26,6 @@ export interface PodioDivisao {
 }
 
 type Aba = "podios" | "quadro";
-
-const COR_OURO = "#F1C85A";
-const COR_PRATA = "#CFD7DF";
-const COR_BRONZE = "#D5894F";
 
 /**
  * As duas leituras do resultado, em abas.
@@ -94,7 +91,7 @@ export function ResultadosAbas({
 
       {aba === "podios" ? (
         <div className="border border-white/10">
-          <div className="hidden grid-cols-[minmax(0,1.1fr)_repeat(3,minmax(0,1fr))] gap-4 border-b border-white/10 bg-white/[0.03] px-5 py-3 font-cond text-[12px] uppercase tracking-[0.1em] text-muted-3 md:grid">
+          <div className="hidden grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))] gap-4 border-b border-white/10 bg-white/[0.03] px-5 py-3 font-cond text-[12px] uppercase tracking-[0.1em] text-muted-3 md:grid">
             <span>{dr.colDivisao}</span>
             <span>{dr.ouro}</span>
             <span>{dr.prata}</span>
@@ -105,7 +102,7 @@ export function ResultadosAbas({
               key={p.categoriaId}
               href={`/evento/${slug}/chaves/${p.categoriaId}`}
               className={cn(
-                "grid grid-cols-1 gap-x-4 gap-y-2 border-b border-white/6 px-5 py-4 transition-colors last:border-b-0 hover:bg-white/[0.03] md:grid-cols-[minmax(0,1.1fr)_repeat(3,minmax(0,1fr))]",
+                "grid grid-cols-1 gap-x-4 gap-y-2 border-b border-white/6 px-5 py-4 transition-colors last:border-b-0 hover:bg-white/[0.03] md:grid-cols-[minmax(0,1.6fr)_repeat(3,minmax(0,1fr))]",
                 i % 2 === 1 && "bg-white/[0.015]",
               )}
             >
@@ -118,14 +115,9 @@ export function ResultadosAbas({
                   {p.nome}
                 </span>
               </div>
-              <Posicao rotulo={dr.ouro} atleta={p.ouro} cor={COR_OURO} />
-              <Posicao rotulo={dr.prata} atleta={p.prata} cor={COR_PRATA} />
-              <Posicao
-                rotulo={dr.bronze}
-                atleta={p.bronzes[0] ?? null}
-                extra={p.bronzes[1] ?? null}
-                cor={COR_BRONZE}
-              />
+              <Posicao tipo="ouro" posicao={1} atletas={p.ouro ? [p.ouro] : []} />
+              <Posicao tipo="prata" posicao={2} atletas={p.prata ? [p.prata] : []} />
+              <Posicao tipo="bronze" posicao={3} atletas={p.bronzes} />
             </Link>
           ))}
         </div>
@@ -153,19 +145,19 @@ export function ResultadosAbas({
                 </span>
                 <span
                   className="tnum text-right font-cond text-[15px]"
-                  style={{ color: COR_OURO }}
+                  style={{ color: MEDALHAS.ouro.anel }}
                 >
                   {l.ouro}
                 </span>
                 <span
                   className="tnum text-right font-cond text-[15px]"
-                  style={{ color: COR_PRATA }}
+                  style={{ color: MEDALHAS.prata.anel }}
                 >
                   {l.prata}
                 </span>
                 <span
                   className="tnum text-right font-cond text-[15px]"
-                  style={{ color: COR_BRONZE }}
+                  style={{ color: MEDALHAS.bronze.anel }}
                 >
                   {l.bronze}
                 </span>
@@ -182,47 +174,71 @@ export function ResultadosAbas({
 }
 
 /**
- * Uma posição do pódio. O rótulo (1º/2º/3º) aparece só no mobile, onde não há
- * cabeçalho de coluna para dizer o que é cada campo.
+ * Uma posição do pódio na linha da divisão.
+ *
+ * O disco de medalha é o mesmo metal do pódio grande da chave — o número vive
+ * nele, então a coluna não precisa repetir "1º". O campeão vem em caixa alta,
+ * com o brilho do ouro por trás: numa tabela de dezenas de divisões, é o que
+ * o olho procura primeiro.
+ *
+ * Bronze recebe uma lista: nas artes marciais são dois terceiros lugares, e
+ * ambos merecem disco próprio em vez de um virar nota de rodapé do outro.
  */
 function Posicao({
-  rotulo,
-  atleta,
-  extra,
-  cor,
+  tipo,
+  posicao,
+  atletas,
 }: {
-  rotulo: string;
-  atleta: Medalhista | null;
-  extra?: Medalhista | null;
-  cor: string;
+  tipo: TipoMedalha;
+  posicao: number;
+  atletas: Medalhista[];
 }) {
-  if (!atleta) {
-    return <span className="font-cond text-sm text-muted-3">—</span>;
-  }
-  return (
-    <div className="min-w-0">
+  const m = MEDALHAS[tipo];
+
+  if (atletas.length === 0) {
+    return (
       <span
-        className="mr-1.5 font-cond text-[11px] uppercase tracking-[0.08em] md:hidden"
-        style={{ color: cor }}
-      >
-        {rotulo}
-      </span>
-      <span className="truncate text-sm font-medium">{atleta.nome}</span>
-      {atleta.academia && (
-        <div className="truncate font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
-          {atleta.academia}
-        </div>
-      )}
-      {extra && (
-        <div className="mt-1.5 border-t border-white/6 pt-1.5">
-          <span className="truncate text-sm font-medium">{extra.nome}</span>
-          {extra.academia && (
-            <div className="truncate font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
-              {extra.academia}
+        aria-hidden
+        className="mt-1 block h-[26px] w-[26px] rounded-full border border-dashed border-white/12"
+      />
+    );
+  }
+
+  return (
+    <div className="flex min-w-0 flex-col gap-2">
+      {atletas.map((a, i) => (
+        <div key={`${a.nome}-${i}`} className="flex min-w-0 items-center gap-2.5">
+          <span
+            aria-hidden
+            className="disp flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-full text-[15px] leading-none"
+            style={{
+              background: m.disco,
+              color: m.tinta,
+              boxShadow: `0 0 0 1.5px ${m.anel}, 0 2px 10px ${m.glow}`,
+            }}
+          >
+            {posicao}
+          </span>
+          <div className="min-w-0">
+            <div
+              className={cn(
+                "truncate",
+                tipo === "ouro"
+                  ? "font-cond text-[16px] font-bold uppercase tracking-[0.02em]"
+                  : "text-sm font-medium",
+              )}
+              style={tipo === "ouro" ? { color: m.anel } : undefined}
+            >
+              {a.nome}
             </div>
-          )}
+            {a.academia && (
+              <div className="truncate font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
+                {a.academia}
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      ))}
     </div>
   );
 }
