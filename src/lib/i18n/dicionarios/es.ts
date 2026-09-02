@@ -150,6 +150,8 @@ export const es: Dicionario = {
     botao: "Crear contraseña y continuar →",
   },
   blocosHorario: {
+    abaBlocos: "Por división",
+    abaLutas: "Orden de combates",
     titulo: "Horario por división",
     desc: "El llamado es por edad, sexo y cinturón — el peso corre dentro del bloque. Los horarios por combate no se publican porque no se sostienen en un evento real.",
     tatame: "Tatami",

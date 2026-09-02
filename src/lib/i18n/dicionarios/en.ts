@@ -150,6 +150,8 @@ export const en: Dicionario = {
     botao: "Create password and continue →",
   },
   blocosHorario: {
+    abaBlocos: "By division",
+    abaLutas: "Match order",
     titulo: "Schedule by division",
     desc: "Call-up goes by age, sex and belt — weight classes run inside the block. Per-match times are not published because they never hold up at a real event.",
     tatame: "Mat",

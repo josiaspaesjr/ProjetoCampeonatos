@@ -149,6 +149,8 @@ export const pt = {
     botao: "Criar senha e continuar →",
   },
   blocosHorario: {
+    abaBlocos: "Horário por divisão",
+    abaLutas: "Ordem das lutas",
     titulo: "Horário por divisão",
     desc: "A chamada é por idade, sexo e faixa — o peso corre dentro do bloco. Os horários por luta não são publicados porque não se sustentam num evento real.",
     tatame: "Tatame",

@@ -7,8 +7,8 @@ import { getEventoPublico } from "@/lib/evento-publico";
 import { getDicionario } from "@/lib/i18n/server";
 import { montarCronogramaDoEvento } from "@/lib/cronograma/cronograma-areas";
 import { blocosPorGrupo } from "@/lib/cronograma/blocos";
-import { BlocosHorario } from "@/components/cronograma/blocos-horario";
-import { LutasLista, type LutaItem } from "@/components/evento/lutas-lista";
+import { CronogramaAbas } from "@/components/cronograma/cronograma-abas";
+import type { LutaItem } from "@/components/evento/lutas-lista";
 
 export default async function AbaCronograma({
   params,
@@ -21,7 +21,6 @@ export default async function AbaCronograma({
   const { evento } = dados;
   const dic = await getDicionario();
   const dcr = dic.cronogramaTab;
-  const dbl = dic.blocosHorario;
 
   const db = await getDb();
   const [cronograma, confirmadas] = await Promise.all([
@@ -76,13 +75,12 @@ export default async function AbaCronograma({
           {dcr.modoTelao}
         </Link>
       </div>
-      <section className="mb-10">
-        <h2 className="disp mb-3 text-[26px]">{dbl.titulo}</h2>
-        <BlocosHorario blocos={blocos} multiDia={multiDia} />
-      </section>
-
-      <h2 className="disp mb-3 text-[26px]">{dbl.verLutas}</h2>
-      <LutasLista itens={itens} areas={areasNomes} multiDia={multiDia} />
+      <CronogramaAbas
+        blocos={blocos}
+        itens={itens}
+        areas={areasNomes}
+        multiDia={multiDia}
+      />
     </div>
   );
 }
