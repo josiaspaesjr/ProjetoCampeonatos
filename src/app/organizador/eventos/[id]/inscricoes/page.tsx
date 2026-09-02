@@ -8,10 +8,14 @@ import { getUsuarioAtual } from "@/lib/auth";
 import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
 import { formatarCep, formatarCpf } from "@/lib/cpf";
+import { dataCurta, dataHora } from "@/lib/datas";
+import { nomePaisLocale } from "@/lib/paises";
+import { getLocale } from "@/lib/i18n/server";
 import { fundirCategorias } from "./actions";
 import {
   PainelInscricoes,
   type CategoriaAberta,
+  type DetalheInscrito,
   type LinhaInscricao,
 } from "./painel-inscricoes";
 
@@ -49,6 +53,12 @@ export default async function PaginaInscricoes({
   const nPendentes = lista.filter((i) => i.status === "pendente_pagamento").length;
   const nAtivas = nConfirmadas + nPendentes;
   const nInativas = lista.length - nAtivas;
+  const locale = await getLocale();
+  const di = dic.inscricao;
+  const fmtMoeda = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: evento.moeda,
+  });
   const contar = (n: number, sing: string, plur: string) =>
     `${n} ${n === 1 ? sing : plur}`;
 
@@ -59,6 +69,9 @@ export default async function PaginaInscricoes({
         where: inArray(usuarios.id, usuarioIds),
         columns: {
           id: true,
+          email: true,
+          telefone: true,
+          sexo: true,
           cpf: true,
           enderecoCep: true,
           enderecoLogradouro: true,
@@ -89,8 +102,27 @@ export default async function PaginaInscricoes({
     const cpfTxt = u && u.cpf ? `${dic.inscricao.cpf} ${formatarCpf(u.cpf)}` : "";
     const docLinha = [cpfTxt, endereco].filter(Boolean).join(" · ");
     const categoriaNome = nomeCategoria.get(i.categoriaId) ?? "";
+    const detalhes: DetalheInscrito = {
+      email: u?.email ?? null,
+      telefone: u?.telefone ?? null,
+      cpf: u?.cpf ? formatarCpf(u.cpf) : null,
+      sexo: u?.sexo ? (u.sexo === "feminino" ? di.feminino : di.masculino) : null,
+      nascimento: i.dataNascimento ? dataCurta(i.dataNascimento) : null,
+      pais: i.pais ? nomePaisLocale(i.pais, locale) : null,
+      logradouro: [u?.enderecoLogradouro, u?.enderecoNumero]
+        .filter(Boolean)
+        .join(", ") || null,
+      complemento: u?.enderecoComplemento ?? null,
+      bairro: u?.enderecoBairro ?? null,
+      cidadeUf:
+        [u?.enderecoCidade, u?.enderecoUf].filter(Boolean).join("/") || null,
+      cep: u?.enderecoCep ? formatarCep(u.enderecoCep) : null,
+      valor: i.precoCentavos != null ? fmtMoeda.format(i.precoCentavos / 100) : null,
+      inscritoEm: dataHora(i.criadoEm),
+    };
     return {
       id: i.id,
+      detalhes,
       nome: i.nomeAtleta,
       status: i.status,
       categoriaId: i.categoriaId,

@@ -17,10 +17,28 @@ import {
   reembolsarInscricao,
 } from "./actions";
 
-/** Linha da lista, já serializada pelo Server Component (sem PII crua além do
- *  que já aparece na tela). `busca` reúne os campos pesquisáveis num só texto. */
+/** Perfil completo do inscrito, para o modal de detalhes. */
+export interface DetalheInscrito {
+  email: string | null;
+  telefone: string | null;
+  cpf: string | null;
+  sexo: string | null;
+  nascimento: string | null;
+  pais: string | null;
+  logradouro: string | null;
+  complemento: string | null;
+  bairro: string | null;
+  cidadeUf: string | null;
+  cep: string | null;
+  valor: string | null;
+  inscritoEm: string | null;
+}
+
+/** Linha da lista, já serializada pelo Server Component. `busca` reúne os
+ *  campos pesquisáveis num só texto. */
 export interface LinhaInscricao {
   id: string;
+  detalhes: DetalheInscrito;
   nome: string;
   status: string;
   categoriaId: string;
@@ -73,6 +91,7 @@ export function PainelInscricoes({
   const [filtro, setFiltro] = useState<Filtro>("todas");
   const [busca, setBusca] = useState("");
   const [modalAberto, setModalAberto] = useState(false);
+  const [detalhe, setDetalhe] = useState<LinhaInscricao | null>(null);
 
   const contagem = useMemo(() => {
     let confirmadas = 0;
@@ -170,9 +189,14 @@ export function PainelInscricoes({
               key={i.id}
               className="flex flex-col gap-2.5 px-5 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
             >
-              <div className="flex min-w-0 items-center gap-2.5">
+              <button
+                type="button"
+                onClick={() => setDetalhe(i)}
+                title={t.verDetalhes}
+                className="flex min-w-0 cursor-pointer items-center gap-2.5 text-left"
+              >
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
+                  <p className="truncate text-sm font-medium underline decoration-transparent underline-offset-4 transition-colors hover:decoration-brand">
                     {i.nome}
                     <span className="ml-2 font-normal capitalize text-muted-foreground">
                       {faixaLabel}
@@ -188,7 +212,7 @@ export function PainelInscricoes({
                     </p>
                   )}
                 </div>
-              </div>
+              </button>
 
               <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 max-sm:w-full">
                 <Badge variant={variante}>{rotulo}</Badge>
@@ -245,6 +269,19 @@ export function PainelInscricoes({
           </li>
         )}
       </ul>
+
+      {detalhe && (
+        <ModalDetalhes
+          linha={detalhe}
+          rotuloStatus={dic.admin.statusInscricao[detalhe.status] ?? detalhe.status}
+          faixaLabel={
+            dic.evento.faixaNomes[
+              detalhe.faixa as keyof typeof dic.evento.faixaNomes
+            ] ?? detalhe.faixa
+          }
+          aoFechar={() => setDetalhe(null)}
+        />
+      )}
 
       {modalAberto && (
         <ModalInscricaoManual
@@ -398,6 +435,148 @@ function ModalInscricaoManual({
               <BotaoAcao disabled={enviando}>{t.inscreverManualmente}</BotaoAcao>
             </div>
           </form>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+/**
+ * Ficha do inscrito: tudo o que a plataforma tem sobre ele, agrupado em
+ * atleta / contato / endereço / inscrição. É só leitura — as ações continuam
+ * na linha da lista. Campo vazio some em vez de mostrar traço, para a ficha
+ * não virar um mural de lacunas.
+ */
+function ModalDetalhes({
+  linha,
+  rotuloStatus,
+  faixaLabel,
+  aoFechar,
+}: {
+  linha: LinhaInscricao;
+  rotuloStatus: string;
+  faixaLabel: string;
+  aoFechar: () => void;
+}) {
+  const dic = useDic();
+  const t = dic.admin.inscricoes;
+  const di = dic.inscricao;
+  const c = dic.admin.comum;
+  const d = linha.detalhes;
+  const tituloId = useId();
+  const fecharRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const overflowAnterior = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") aoFechar();
+    };
+    window.addEventListener("keydown", onKey);
+    fecharRef.current?.focus();
+    return () => {
+      document.body.style.overflow = overflowAnterior;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [aoFechar]);
+
+  const grupos: { titulo: string; itens: [string, string | null][] }[] = [
+    {
+      titulo: di.secaoAtleta,
+      itens: [
+        [di.faixa, faixaLabel],
+        [di.sexo, d.sexo],
+        [di.nascimento, d.nascimento],
+        [di.academiaEquipe, linha.academiaNome],
+        [di.pais, d.pais],
+      ],
+    },
+    {
+      titulo: t.contato,
+      itens: [
+        [di.email, d.email],
+        [t.telefone, d.telefone],
+        [di.cpf, d.cpf],
+      ],
+    },
+    {
+      titulo: t.endereco,
+      itens: [
+        [di.logradouro, d.logradouro],
+        [di.complemento, d.complemento],
+        [di.bairro, d.bairro],
+        [di.cidade, d.cidadeUf],
+        [di.cep, d.cep],
+      ],
+    },
+    {
+      titulo: t.inscricaoLabel,
+      itens: [
+        [di.categoria, linha.categoriaNome],
+        [t.statusLabel, rotuloStatus],
+        [t.valor, d.valor],
+        [t.inscritoEm, d.inscritoEm],
+      ],
+    },
+  ];
+
+  return createPortal(
+    <div className="fixed inset-0 z-[220] overflow-y-auto bg-black/60 animate-[fade-in_0.18s_ease]">
+      <div
+        className="flex min-h-full items-center justify-center p-4"
+        onClick={(e) => {
+          if (e.target === e.currentTarget) aoFechar();
+        }}
+      >
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={tituloId}
+          className="relative w-[min(560px,95vw)] border border-white/10 bg-surface animate-[pop-in_0.18s_cubic-bezier(0.16,1,0.3,1)]"
+        >
+          <span className="absolute inset-x-0 top-0 h-[3px] bg-brand" />
+
+          <div className="flex items-start justify-between gap-4 border-b border-white/8 p-5">
+            <h2 id={tituloId} className="disp text-[24px] leading-none">
+              {linha.nome}
+            </h2>
+            <button
+              ref={fecharRef}
+              type="button"
+              onClick={aoFechar}
+              aria-label={c.fechar}
+              className="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center text-muted-3 transition-colors hover:text-foreground"
+            >
+              <span aria-hidden className="text-2xl leading-none">
+                ×
+              </span>
+            </button>
+          </div>
+
+          <div className="max-h-[70vh] overflow-y-auto p-5">
+            {grupos.map((g) => {
+              const preenchidos = g.itens.filter(([, v]) => !!v);
+              if (preenchidos.length === 0) return null;
+              return (
+                <div key={g.titulo} className="mb-5 last:mb-0">
+                  <div className="mb-2 border-b border-white/8 pb-1.5 font-cond text-[12px] font-semibold uppercase tracking-[0.1em] text-brand">
+                    {g.titulo}
+                  </div>
+                  <dl className="grid gap-x-5 gap-y-2 sm:grid-cols-2">
+                    {preenchidos.map(([rotulo, valor]) => (
+                      <div key={rotulo} className="min-w-0">
+                        <dt className="font-cond text-[11px] uppercase tracking-[0.08em] text-muted-3">
+                          {rotulo}
+                        </dt>
+                        <dd className="truncate text-sm text-foreground">{valor}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>,
