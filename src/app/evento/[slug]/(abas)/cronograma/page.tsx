@@ -6,6 +6,8 @@ import { inscricoes } from "@/db/schema";
 import { getEventoPublico } from "@/lib/evento-publico";
 import { getDicionario } from "@/lib/i18n/server";
 import { montarCronogramaDoEvento } from "@/lib/cronograma/cronograma-areas";
+import { blocosPorGrupo } from "@/lib/cronograma/blocos";
+import { BlocosHorario } from "@/components/cronograma/blocos-horario";
 import { LutasLista, type LutaItem } from "@/components/evento/lutas-lista";
 
 export default async function AbaCronograma({
@@ -17,7 +19,9 @@ export default async function AbaCronograma({
   const dados = await getEventoPublico(slug);
   if (!dados) notFound();
   const { evento } = dados;
-  const dcr = (await getDicionario()).cronogramaTab;
+  const dic = await getDicionario();
+  const dcr = dic.cronogramaTab;
+  const dbl = dic.blocosHorario;
 
   const db = await getDb();
   const [cronograma, confirmadas] = await Promise.all([
@@ -53,6 +57,8 @@ export default async function AbaCronograma({
   const areasNomes = cronograma.map((a) => a.nome);
   // evento com mais de um dia distinto → mostra a data em cada luta
   const multiDia = new Set(itens.map((i) => i.luta.data)).size > 1;
+  // o horário publicado é por divisão (idade·sexo·faixa), não por luta
+  const blocos = blocosPorGrupo(cronograma);
 
   return (
     <div className="px-6 pb-20 pt-10 md:px-12">
@@ -70,6 +76,12 @@ export default async function AbaCronograma({
           {dcr.modoTelao}
         </Link>
       </div>
+      <section className="mb-10">
+        <h2 className="disp mb-3 text-[26px]">{dbl.titulo}</h2>
+        <BlocosHorario blocos={blocos} multiDia={multiDia} />
+      </section>
+
+      <h2 className="disp mb-3 text-[26px]">{dbl.verLutas}</h2>
       <LutasLista itens={itens} areas={areasNomes} multiDia={multiDia} />
     </div>
   );

@@ -17,6 +17,8 @@ import {
 } from "@/components/cronograma/programacao-areas";
 import { EditorOrdemAreas } from "@/components/cronograma/editor-ordem-areas";
 import type { AreaCron } from "@/lib/cronograma/cronograma-areas";
+import { blocosPorGrupo } from "@/lib/cronograma/blocos";
+import { BlocosHorario } from "@/components/cronograma/blocos-horario";
 import {
   CamposDiasEvento,
   type DiaEvento,
@@ -141,6 +143,7 @@ export function EstruturadorAreas({
 
   const dic = useDic();
   const ta = dic.admin.areas;
+  const db = dic.blocosHorario;
 
   const nInt = Math.floor(Number(areasN));
   const nValido =
@@ -533,6 +536,22 @@ export function EstruturadorAreas({
           {/* BUSCA NO CRONOGRAMA (atleta · categoria · área) */}
           {buscaAberta && !reordenando && (
             <BuscaCronograma cronograma={cronograma} />
+          )}
+
+          {/* HORÁRIO POR DIVISÃO — é o que vai para os atletas. O tempo por
+              luta segue distribuindo as lutas nos tatames, mas não é publicado. */}
+          {!reordenando && (
+            <details className="border border-white/10 bg-surface">
+              <summary className="cursor-pointer list-none px-[22px] py-3.5 font-cond text-[13px] font-semibold uppercase tracking-[0.06em] text-muted-2 transition-colors hover:text-foreground">
+                {db.verBlocos}
+              </summary>
+              <div className="border-t border-white/8 px-[22px] py-5">
+                <BlocosHorario
+                  blocos={blocosPorGrupo(cronograma)}
+                  multiDia={cronograma.some((a) => a.dias.length > 1)}
+                />
+              </div>
+            </details>
           )}
 
           {/* COLUNAS DE ÁREA (lado a lado, scroll lateral) */}

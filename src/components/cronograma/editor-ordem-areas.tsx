@@ -289,12 +289,9 @@ function ColunaEditavel({
                     <span className="text-[15px] leading-none">⠿</span>
                   </button>
 
-                  {/* HORA + Ln */}
+                  {/* ORDEM (Ln) — sem relógio: o tempo por luta só distribui */}
                   <div className="w-11 shrink-0 py-2">
-                    <div className="disp tnum text-[15px] leading-none">
-                      {luta.hora}
-                    </div>
-                    <div className="mt-1 font-cond text-[10px] uppercase tracking-[0.06em] text-muted-3">
+                    <div className="disp tnum text-[15px] leading-none text-muted-2">
                       {luta.label}
                     </div>
                   </div>

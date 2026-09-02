@@ -9,14 +9,6 @@ import { montarFilasDoEvento } from "@/lib/cronograma/fila";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 import { compararCategoriasExibicao } from "@/lib/categorias/distribuicao-areas";
 
-const quando = (d: Date) =>
-  d.toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
 export default async function AbaChaves({
   params,
 }: {
@@ -105,17 +97,16 @@ export default async function AbaChaves({
       ) : (
         <div className="border border-white/10">
           {/* CABEÇALHO */}
-          <div className="hidden grid-cols-[minmax(0,1fr)_90px_140px_120px] gap-4 border-b border-white/10 bg-white/[0.03] px-5 py-3 font-cond text-[12px] uppercase tracking-[0.1em] text-muted-3 md:grid">
+          <div className="hidden grid-cols-[minmax(0,1fr)_90px_140px] gap-4 border-b border-white/10 bg-white/[0.03] px-5 py-3 font-cond text-[12px] uppercase tracking-[0.1em] text-muted-3 md:grid">
             <span>{dk.colDivisao}</span>
             <span className="text-right">{dk.colInscritos}</span>
-            <span>{dk.colInicio}</span>
             <span>{dk.colTatame}</span>
           </div>
           {linhas.map(({ c, inscritos, ag }, i) => (
             <Link
               key={c.id}
               href={`/evento/${evento.slug}/chaves/${c.id}`}
-              className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-white/6 px-5 py-4 transition-colors last:border-b-0 hover:bg-white/[0.03] md:grid-cols-[minmax(0,1fr)_90px_140px_120px] ${
+              className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-b border-white/6 px-5 py-4 transition-colors last:border-b-0 hover:bg-white/[0.03] md:grid-cols-[minmax(0,1fr)_90px_140px] ${
                 i % 2 === 1 ? "bg-white/[0.015]" : ""
               }`}
             >
@@ -130,13 +121,6 @@ export default async function AbaChaves({
               </div>
               <span className="text-right font-cond text-sm tabular-nums text-muted-2 md:text-base">
                 {inscritos}
-              </span>
-              <span className="font-cond text-sm tracking-[0.02em] text-text-2 max-md:col-span-2">
-                {ag ? (
-                  <span className="text-brand-soft">{quando(ag.inicio)}</span>
-                ) : (
-                  <span className="text-muted-3">{dk.aDefinir}</span>
-                )}
               </span>
               <span className="font-cond text-sm uppercase tracking-[0.04em] text-muted-2 max-md:col-span-2">
                 {ag ? ag.area : "—"}

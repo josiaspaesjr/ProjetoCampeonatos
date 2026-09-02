@@ -168,7 +168,7 @@ export function BuscaCronograma({ cronograma }: { cronograma: AreaCron[] }) {
                     className="flex w-full items-center gap-3 px-1 py-2.5 text-left transition-colors hover:bg-white/[0.04] focus-visible:bg-white/[0.04] focus-visible:outline-none"
                   >
                     <Quando
-                      hora={a.luta.hora}
+                      rotulo={a.luta.label}
                       dataLabel={a.luta.dataLabel}
                       multiDia={multiDia}
                     />
@@ -202,7 +202,7 @@ export function BuscaCronograma({ cronograma }: { cronograma: AreaCron[] }) {
                   className="flex items-center gap-3 border-b border-white/8 px-1 py-2.5"
                 >
                   <Quando
-                    hora={a.hora}
+                    rotulo=""
                     dataLabel={a.dataLabel}
                     multiDia={multiDia}
                   />
@@ -239,12 +239,16 @@ export function BuscaCronograma({ cronograma }: { cronograma: AreaCron[] }) {
 }
 
 /** bloco de horário (com a data quando o evento tem mais de um dia) */
+/**
+ * Só o dia, e apenas em evento multi-dia. O horário por luta não aparece: ele
+ * serve para distribuir as lutas nos tatames, não para ser lido como promessa.
+ */
 function Quando({
-  hora,
+  rotulo,
   dataLabel,
   multiDia,
 }: {
-  hora: string;
+  rotulo: string;
   dataLabel: string;
   multiDia: boolean;
 }) {
@@ -255,7 +259,9 @@ function Quando({
           {dataLabel}
         </div>
       )}
-      <div className="disp tnum text-[15px] leading-tight">{hora}</div>
+      <div className="disp tnum text-[15px] leading-tight text-muted-2">
+        {rotulo}
+      </div>
     </div>
   );
 }

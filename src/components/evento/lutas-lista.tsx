@@ -131,7 +131,7 @@ export function LutasLista({
         <ul className="flex flex-col border border-white/10 bg-surface">
           {filtradas.map((it, i) => (
             <LinhaLutaLista
-              key={`${it.luta.data}-${it.luta.hora}-${it.area}-${i}`}
+              key={`${it.luta.id}-${it.area}-${i}`}
               item={it}
               multiDia={multiDia}
             />
@@ -187,14 +187,18 @@ function LinhaLutaLista({
         }
         className="grid w-full grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-white/[0.04] focus-visible:bg-white/[0.04] focus-visible:outline-none"
       >
-        {/* dia (multi-dia) + horário + área */}
+        {/* dia (multi-dia) + ordem + área. O horário da luta NÃO aparece: a
+            estimativa serve para distribuir as lutas nos tatames, não para
+            virar promessa ao atleta — ele recebe a hora do bloco da faixa. */}
         <div className="w-16 shrink-0">
           {multiDia && (
             <div className="tnum font-cond text-[10px] uppercase tracking-[0.05em] text-brand-soft">
               {luta.dataLabel}
             </div>
           )}
-          <div className="disp tnum text-[16px] leading-none">{luta.hora}</div>
+          <div className="disp tnum text-[16px] leading-none text-muted-2">
+            {luta.label}
+          </div>
           <div className="mt-1 truncate font-cond text-[10px] uppercase tracking-[0.05em] text-muted-3">
             {area}
           </div>

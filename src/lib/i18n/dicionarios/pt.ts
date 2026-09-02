@@ -148,6 +148,15 @@ export const pt = {
     confirmar: "Confirme a senha",
     botao: "Criar senha e continuar →",
   },
+  blocosHorario: {
+    titulo: "Horário por divisão",
+    desc: "A chamada é por idade, sexo e faixa — o peso corre dentro do bloco. Os horários por luta não são publicados porque não se sustentam num evento real.",
+    tatame: "Tatame",
+    tatames: "Tatames",
+    vazio: "Os horários aparecem quando o organizador montar os tatames.",
+    verBlocos: "Ver horário por divisão",
+    verLutas: "Ver a ordem das lutas",
+  },
   inscricao: {
     voltarAoEvento: "Voltar ao evento",
     encerradasTag: "Inscrições encerradas",
@@ -324,10 +333,8 @@ export const pt = {
       "Nenhuma chave publicada ainda — volte mais perto do evento.",
     colDivisao: "Divisão",
     colInscritos: "Inscritos",
-    colInicio: "Início est.",
     colTatame: "Tatame",
-    aDefinir: "a definir",
-    nota: "Horários são estimativas e mudam em tempo real conforme o andamento das lutas. Toque numa divisão para ver a chave completa.",
+    nota: "O horário de entrada é por divisão (idade, sexo e faixa) e está no cronograma. Toque numa divisão para ver a chave completa.",
     todasAsChaves: "Todas as chaves",
     podio: "Pódio",
     campeao: "Campeão",
@@ -342,7 +349,7 @@ export const pt = {
   },
   cronogramaTab: {
     titulo: "Cronograma",
-    subtitulo: "Horários estimados · busque por atleta ou academia · atualiza sozinho",
+    subtitulo: "Horário por divisão · ordem das lutas · busque por atleta ou academia",
     modoTelao: "Modo telão",
   },
   resultadosTab: {

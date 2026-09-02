@@ -149,6 +149,15 @@ export const en: Dicionario = {
     confirmar: "Confirm password",
     botao: "Create password and continue →",
   },
+  blocosHorario: {
+    titulo: "Schedule by division",
+    desc: "Call-up goes by age, sex and belt — weight classes run inside the block. Per-match times are not published because they never hold up at a real event.",
+    tatame: "Mat",
+    tatames: "Mats",
+    vazio: "Times show up once the organiser sets the mats.",
+    verBlocos: "See schedule by division",
+    verLutas: "See the match order",
+  },
   inscricao: {
     voltarAoEvento: "Back to event",
     encerradasTag: "Registration closed",
@@ -323,10 +332,8 @@ export const en: Dicionario = {
     vazioSemChave: "No brackets published yet — check back closer to the event.",
     colDivisao: "Division",
     colInscritos: "Registered",
-    colInicio: "Est. start",
     colTatame: "Mat",
-    aDefinir: "TBD",
-    nota: "Times are estimates and change in real time as matches progress. Tap a division to see the full bracket.",
+    nota: "Call-up times are per division (age, sex and belt) and live in the schedule. Tap a division to see the full bracket.",
     todasAsChaves: "All brackets",
     podio: "Podium",
     campeao: "Champion",
@@ -341,7 +348,7 @@ export const en: Dicionario = {
   },
   cronogramaTab: {
     titulo: "Schedule",
-    subtitulo: "Estimated times · search by athlete or academy · auto-updates",
+    subtitulo: "Schedule by division · match order · search by athlete or gym",
     modoTelao: "Big-screen mode",
   },
   resultadosTab: {

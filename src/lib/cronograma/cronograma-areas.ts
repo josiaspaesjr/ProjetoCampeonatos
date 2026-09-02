@@ -124,6 +124,9 @@ export interface CategoriaCron {
   categoriaId: string;
   /** chave classe·sexo·faixa (para contar grupos distintos na área) */
   grupoChave: string;
+  /** rótulo do grupo: "Adulto · Masculino · Branca" — é a granularidade que os
+   *  atletas recebem como horário (o horário por luta não é publicado) */
+  grupoRotulo: string;
   faixa: string | null;
   /** título forte: "Preta · Pena (até 70kg)" */
   titulo: string;
@@ -589,6 +592,7 @@ export async function montarCronogramaDoEvento(
     ): CategoriaCron => ({
       categoriaId: m.c.id,
       grupoChave: m.grupoChave,
+      grupoRotulo: `${nomeDaClasse(m.c.classeIdade)} · ${ROTULO_SEXO[m.c.sexo] ?? cap(m.c.sexo)} · ${m.c.faixa ? cap(m.c.faixa) : "—"}`,
       faixa: m.c.faixa,
       titulo: `${m.c.faixa ? cap(m.c.faixa) : "—"} · ${rotuloPeso(m.c.nome, m.c.tipo)}`,
       subtitulo: `${nomeDaClasse(m.c.classeIdade)} · ${ROTULO_SEXO[m.c.sexo] ?? cap(m.c.sexo)} · ${m.nAtletas} atleta${m.nAtletas === 1 ? "" : "s"}`,

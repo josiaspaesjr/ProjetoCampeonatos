@@ -149,6 +149,15 @@ export const es: Dicionario = {
     confirmar: "Confirma la contraseña",
     botao: "Crear contraseña y continuar →",
   },
+  blocosHorario: {
+    titulo: "Horario por división",
+    desc: "El llamado es por edad, sexo y cinturón — el peso corre dentro del bloque. Los horarios por combate no se publican porque no se sostienen en un evento real.",
+    tatame: "Tatami",
+    tatames: "Tatamis",
+    vazio: "Los horarios aparecen cuando el organizador arme los tatamis.",
+    verBlocos: "Ver horario por división",
+    verLutas: "Ver el orden de los combates",
+  },
   inscricao: {
     voltarAoEvento: "Volver al evento",
     encerradasTag: "Inscripciones cerradas",
@@ -323,10 +332,8 @@ export const es: Dicionario = {
     vazioSemChave: "Aún no hay llaves publicadas — vuelve más cerca del evento.",
     colDivisao: "División",
     colInscritos: "Inscritos",
-    colInicio: "Inicio est.",
     colTatame: "Tatami",
-    aDefinir: "por definir",
-    nota: "Los horarios son estimados y cambian en tiempo real según avanzan los combates. Toca una división para ver la llave completa.",
+    nota: "El horario de entrada es por división (edad, sexo y cinturón) y está en el cronograma. Toca una división para ver la llave completa.",
     todasAsChaves: "Todas las llaves",
     podio: "Podio",
     campeao: "Campeón",
@@ -341,7 +348,7 @@ export const es: Dicionario = {
   },
   cronogramaTab: {
     titulo: "Cronograma",
-    subtitulo: "Horarios estimados · busca por atleta o academia · se actualiza solo",
+    subtitulo: "Horario por división · orden de los combates · busca por atleta o academia",
     modoTelao: "Modo pantalla",
   },
   resultadosTab: {

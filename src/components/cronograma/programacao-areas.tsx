@@ -172,7 +172,7 @@ function CardArea({
                 )}
                 {aposIntervalo && (
                   <div className="border-b border-white/10 bg-white/[0.02] px-4 py-1.5 font-cond text-[11px] font-bold uppercase tracking-[0.08em] text-muted-3">
-                    {dp.aposIntervalo} · {cat.hora}
+                    {dp.aposIntervalo}
                   </div>
                 )}
                 <BlocoCategoria cat={cat} />
@@ -223,11 +223,11 @@ function BlocoCategoria({ cat }: { cat: CategoriaCron }) {
           <div className="shrink-0 text-right">
             <span className="inline-flex -skew-x-9 items-center bg-brand px-2 py-0.5">
               <span className="disp tnum inline-block skew-x-9 text-[15px] leading-none text-white">
-                {cat.hora}
+                {cat.nLutas}
               </span>
             </span>
             <div className="tnum mt-1 font-cond text-[11px] uppercase tracking-[0.04em] text-muted-3">
-              {cat.nLutas} {cat.nLutas === 1 ? dp.luta : dp.lutas}
+              {cat.nLutas === 1 ? dp.luta : dp.lutas}
             </div>
           </div>
         </div>
@@ -251,7 +251,7 @@ function BlocoCategoria({ cat }: { cat: CategoriaCron }) {
                 )}
                 {aposIntervalo && (
                   <li className="border-y border-white/10 bg-white/[0.02] px-4 py-1 font-cond text-[10px] font-bold uppercase tracking-[0.08em] text-muted-3">
-                    {dp.aposIntervalo} · {l.hora}
+                    {dp.aposIntervalo}
                   </li>
                 )}
                 <LinhaLuta
@@ -314,8 +314,7 @@ function LinhaLuta({
               {luta.dataLabel}
             </div>
           )}
-          <div className="disp tnum text-[15px] leading-none">{luta.hora}</div>
-          <div className="mt-1 font-cond text-[10px] uppercase tracking-[0.06em] text-muted-3">
+          <div className="disp tnum text-[15px] leading-none text-muted-2">
             {luta.label}
           </div>
         </div>
@@ -445,15 +444,12 @@ export function ModalPlacar({
           </button>
         </div>
 
-        {/* META: horário · luta · status */}
+        {/* META: ordem · status (sem relógio — ver comentário no topo) */}
         <div className="flex items-center gap-2.5 border-b border-white/10 px-5 py-2.5">
           <span className="inline-flex -skew-x-9 items-center bg-brand px-2 py-0.5">
             <span className="disp tnum inline-block skew-x-9 text-[15px] leading-none text-white">
-              {luta.hora}
+              {luta.label}
             </span>
-          </span>
-          <span className="font-cond text-[12px] font-semibold uppercase tracking-[0.05em] text-muted-2">
-            {luta.label}
           </span>
           <span className="ml-auto font-cond text-[11px] uppercase tracking-[0.06em] text-muted-3">
             {status}
