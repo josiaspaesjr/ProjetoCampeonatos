@@ -254,11 +254,19 @@ export interface ResultadoCapacidade {
   soAdicionandoTempo: boolean;
   /** menor nº de áreas (≥ atual, ≤ 40) que faz caber; null se áreas não resolvem */
   areasSugeridas: number | null;
+  /**
+   * menor nº de áreas (a partir de 1) em que todas as lutas cabem no período —
+   * a recomendação da tela de Áreas. Pode ser MENOR que o atual (tatame
+   * sobrando). null quando nem 40 áreas resolvem.
+   */
+  areasIdeais: number | null;
+  /** demanda do tatame mais cheio com `areasIdeais`, em segundos */
+  demandaNoIdealSegundos: number;
   /** déficit da área mais carregada (quanto falta de tempo por área), em segundos */
   segundosFaltantesPorArea: number;
 }
 
-const AREAS_MAX = 40;
+export const AREAS_MAX = 40;
 
 /** demanda (segundos) da área mais carregada após distribuir `cats` em `n` áreas */
 function gargalo(cats: CatCapacidade[], n: number): number {
@@ -303,10 +311,19 @@ export function verificarCapacidade(
   // maior categoria não cabe nem sozinha numa área, mais áreas não resolvem.
   const soAdicionandoTempo = maiorCategoria > capacidadeArea;
 
+  // uma varredura só resolve as duas perguntas: o menor nº de áreas que faz
+  // caber (recomendação) e o menor a partir do atual (o que sugerir no erro).
+  let areasIdeais: number | null = null;
   let areasSugeridas: number | null = null;
+  let demandaNoIdeal = 0;
   if (capacidadeArea > 0 && !soAdicionandoTempo) {
-    for (let k = n; k <= AREAS_MAX; k++) {
-      if (gargalo(ordenadas, k) <= capacidadeArea) {
+    for (let k = 1; k <= AREAS_MAX; k++) {
+      if (gargalo(ordenadas, k) > capacidadeArea) continue;
+      if (areasIdeais === null) {
+        areasIdeais = k;
+        demandaNoIdeal = gargalo(ordenadas, k);
+      }
+      if (k >= n) {
         areasSugeridas = k;
         break;
       }
@@ -323,6 +340,8 @@ export function verificarCapacidade(
     maiorCategoriaSegundos: maiorCategoria,
     soAdicionandoTempo,
     areasSugeridas,
+    areasIdeais,
+    demandaNoIdealSegundos: demandaNoIdeal,
     segundosFaltantesPorArea: Math.max(0, gargaloAtual - capacidadeArea),
   };
 }

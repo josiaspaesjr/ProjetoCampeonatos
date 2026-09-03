@@ -264,6 +264,28 @@ describe("verificarCapacidade", () => {
     expect(r.areasSugeridas).toBe(2); // 1 categoria por área → 10000 ≤ 15000
   });
 
+  it("recomenda o mínimo a partir de 1, mesmo com mais áreas em uso", () => {
+    // 2 categorias de 10000s numa janela de 36000s: 1 tatame basta, ainda que
+    // o evento esteja montado com 5. `areasSugeridas` (≥ atual) fica em 5.
+    const r = verificarCapacidade([cat(10000), cat(10000)], 5, [dia("d", 0, 36000)]);
+    expect(r.areasIdeais).toBe(1);
+    expect(r.areasSugeridas).toBe(5);
+    expect(r.demandaNoIdealSegundos).toBe(20000);
+  });
+
+  it("ideal acompanha a sugestão quando faltam áreas", () => {
+    const r = verificarCapacidade([cat(10000), cat(10000)], 1, [dia("d", 0, 15000)]);
+    expect(r.areasIdeais).toBe(2);
+    expect(r.areasSugeridas).toBe(2);
+    expect(r.demandaNoIdealSegundos).toBe(10000);
+  });
+
+  it("sem ideal quando nem o teto de áreas resolve", () => {
+    const r = verificarCapacidade([cat(20000)], 1, [dia("d", 0, 15000)]);
+    expect(r.areasIdeais).toBeNull();
+    expect(r.soAdicionandoTempo).toBe(true);
+  });
+
   it("uma categoria que excede a janela só se resolve com mais tempo/dias", () => {
     const r = verificarCapacidade([cat(20000)], 5, [dia("d", 0, 15000)]);
     expect(r.cabe).toBe(false);

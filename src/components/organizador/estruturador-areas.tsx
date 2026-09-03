@@ -43,6 +43,8 @@ import {
   type ChaveTempo,
 } from "@/lib/cronograma/tempos";
 import { useDic } from "@/lib/i18n/client";
+import { RecomendacaoAreasWidget } from "@/components/organizador/recomendacao-areas";
+import type { RecomendacaoAreas } from "@/lib/cronograma/recomendacao";
 
 const AREAS_MIN = 1;
 const AREAS_MAX = 40;
@@ -57,6 +59,7 @@ export interface CategoriaView {
 export function EstruturadorAreas({
   categorias,
   numAreasInicial,
+  recomendacao,
   base,
   eventoNome,
   cronograma,
@@ -79,6 +82,8 @@ export function EstruturadorAreas({
 }: {
   categorias: CategoriaView[];
   numAreasInicial: number | null;
+  /** quantos tatames as lutas previstas pedem; null sem grade ou sem período */
+  recomendacao: RecomendacaoAreas | null;
   /** caminho base do evento, ex.: `/organizador/eventos/:id` */
   base: string;
   /** nome do evento (título da programação imprimível) */
@@ -445,6 +450,9 @@ export function EstruturadorAreas({
           },
         ]}
       />
+
+      {/* RECOMENDAÇÃO DE TATAMES — vale antes e depois de estruturar */}
+      {recomendacao && <RecomendacaoAreasWidget dados={recomendacao} />}
 
       {estruturado ? (
         <>

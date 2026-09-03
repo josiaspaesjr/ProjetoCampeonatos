@@ -10,6 +10,7 @@ import {
 } from "@/lib/categorias/distribuicao-areas";
 import { CLASSES_IDADE, FAIXAS } from "@/lib/categorias/cbjj";
 import { montarCronogramaDoEvento } from "@/lib/cronograma/cronograma-areas";
+import { recomendarAreas } from "@/lib/cronograma/recomendacao";
 import { minutosParaHHMM } from "@/lib/cronograma/dias";
 import {
   EstruturadorAreas,
@@ -71,6 +72,10 @@ export default async function PaginaAreas({
   // cronograma real por área (categorias → lutas, horários e placar)
   const cronograma = await montarCronogramaDoEvento(db, id, evento.dataInicio);
 
+  // quantos tatames as lutas previstas pedem para caber no período do evento
+  const numAreasAtual = evento.numAreas ?? (todasAreas.length || null);
+  const recomendacao = await recomendarAreas(db, evento, cats, numAreasAtual);
+
   // dias configurados (ou uma linha default para o organizador preencher)
   const dias = diasRows.length
     ? diasRows.map((d) => ({
@@ -117,7 +122,8 @@ export default async function PaginaAreas({
   return (
     <EstruturadorAreas
       categorias={categoriasView}
-      numAreasInicial={evento.numAreas ?? (todasAreas.length || null)}
+      numAreasInicial={numAreasAtual}
+      recomendacao={recomendacao}
       base={`/organizador/eventos/${id}`}
       eventoNome={evento.nome}
       cronograma={cronograma}

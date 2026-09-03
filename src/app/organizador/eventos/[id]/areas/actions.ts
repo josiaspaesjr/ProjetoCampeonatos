@@ -27,12 +27,12 @@ import {
   formatarDuracaoSegundos,
 } from "@/lib/cronograma/dias";
 import { montarCronogramaDoEvento } from "@/lib/cronograma/cronograma-areas";
-import { duracaoDaCategoria } from "@/lib/cronograma/fila";
 import { CHAVES_TEMPO, normalizarTempos } from "@/lib/cronograma/tempos";
 import {
   verificarCapacidade,
   type ResultadoCapacidade,
 } from "@/lib/cronograma/janelas";
+import { entradasDeCapacidade } from "@/lib/cronograma/recomendacao";
 import {
   lerDiasDoForm,
   persistirDiasEvento,
@@ -212,24 +212,14 @@ export async function estruturarAreas(eventoId: string, formData: FormData) {
   ]);
   if (!cats.length) erroVisivelAreas(eventoId, dic.admin.areas.gereGradeAntes);
 
-  // entradas com carga (balanceamento) e demanda real (tempo) por categoria
-  const cargas = await estimarCargaCategorias(
+  // entradas com carga (balanceamento) e demanda real (tempo) por categoria —
+  // as mesmas que alimentam o widget de recomendação da tela
+  const entradas = await entradasDeCapacidade(
     db,
     eventoId,
     cats,
     evento.temposLuta,
   );
-  const entradas = cats.map((c) => ({
-    id: c.id,
-    classeIdade: c.classeIdade,
-    sexo: c.sexo,
-    faixa: c.faixa,
-    tipo: c.tipo,
-    limitePesoKg: c.limitePesoKg != null ? Number(c.limitePesoKg) : null,
-    carga: cargas.get(c.id)?.carga ?? 1,
-    demandaReal:
-      (cargas.get(c.id)?.lutas ?? 0) * duracaoDaCategoria(c, evento.temposLuta),
-  }));
 
   // VERIFICAÇÃO DE ENCAIXE: as lutas cabem no período com N áreas?
   const cap = verificarCapacidade(
