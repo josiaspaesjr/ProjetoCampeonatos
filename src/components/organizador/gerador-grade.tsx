@@ -414,12 +414,22 @@ export function GeradorGrade({
           <div className="disp leading-none text-brand text-[clamp(56px,8vw,76px)]">
             {resumo.novas}
           </div>
-          <div className="mb-5 mt-1 font-cond text-[13px] uppercase tracking-[0.08em] text-muted-3">
-            {ger.prontasGerar}
+          <div className="mb-5">
+            <div className="mt-1 font-cond text-[13px] uppercase tracking-[0.08em] text-muted-3">
+              {ger.prontasGerar}
+            </div>
+
+            {/* o que a seleção repete da grade: explica a diferença entre o
+                total escolhido e o número acima, que é só o que será somado */}
             {resumo.repetidas > 0 && (
-              <span className="mt-1 block text-muted-3/80">
-                {resumo.repetidas} {ger.jaNaGrade}
-              </span>
+              <div className="mt-3.5 flex items-center gap-2.5 border border-white/14 bg-white/[0.04] px-3.5 py-2.5">
+                <span className="disp tnum text-[26px] leading-none text-foreground">
+                  {resumo.repetidas}
+                </span>
+                <span className="font-cond text-[13px] font-semibold uppercase leading-tight tracking-[0.06em] text-text-2">
+                  {ger.jaNaGrade}
+                </span>
+              </div>
             )}
           </div>
 
