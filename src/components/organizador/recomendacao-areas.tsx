@@ -106,7 +106,12 @@ export function RecomendacaoAreasWidget({
       : tom === "alerta"
         ? "text-warning-foreground"
         : "text-muted-2";
+  // a barra mede o cenário RECOMENDADO, não o montado hoje: quando faltam
+  // tatames a frase fala de um nº e a barra de outro, então ela diz de qual
   const pct = Math.min(100, Math.round(ocupacaoNoIdeal * 100));
+  const ocupacaoTexto = temNumero
+    ? `${pct}% ${t.ocupacaoLabel} (${t.ocupacaoCom} ${nTatames(ideal!)})`
+    : "";
 
   return (
     <section
@@ -155,7 +160,7 @@ export function RecomendacaoAreasWidget({
                 <div
                   className="h-1.5 w-full overflow-hidden bg-white/10"
                   role="img"
-                  aria-label={`${pct}% ${t.ocupacaoLabel}`}
+                  aria-label={ocupacaoTexto}
                 >
                   <div
                     className={cn(
@@ -166,7 +171,7 @@ export function RecomendacaoAreasWidget({
                   />
                 </div>
                 <p className="mt-1.5 font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
-                  {pct}% {t.ocupacaoLabel}
+                  {ocupacaoTexto}
                 </p>
               </div>
             )}

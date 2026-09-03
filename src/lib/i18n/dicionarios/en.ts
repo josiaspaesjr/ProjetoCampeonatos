@@ -1170,6 +1170,7 @@ export const en: Dicionario = {
         unidade: "mat",
         unidadePlural: "mats",
         ocupacaoLabel: "of the window on the busiest mat",
+        ocupacaoCom: "with",
         lutasPrevistas: "Estimated matches",
         tempoDeLuta: "Mat time",
         janelaPorTatame: "Window per mat",

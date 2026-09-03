@@ -1178,6 +1178,7 @@ export const pt = {
         unidade: "tatame",
         unidadePlural: "tatames",
         ocupacaoLabel: "do período no tatame mais cheio",
+        ocupacaoCom: "com",
         lutasPrevistas: "Lutas previstas",
         tempoDeLuta: "Tempo de luta",
         janelaPorTatame: "Período por tatame",

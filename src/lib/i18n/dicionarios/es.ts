@@ -1172,6 +1172,7 @@ export const es: Dicionario = {
         unidade: "tatami",
         unidadePlural: "tatamis",
         ocupacaoLabel: "del período en el tatami más cargado",
+        ocupacaoCom: "con",
         lutasPrevistas: "Luchas previstas",
         tempoDeLuta: "Tiempo de lucha",
         janelaPorTatame: "Período por tatami",

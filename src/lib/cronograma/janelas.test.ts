@@ -280,6 +280,21 @@ describe("verificarCapacidade", () => {
     expect(r.demandaNoIdealSegundos).toBe(10000);
   });
 
+  it("a ocupação do ideal é medida no ideal, não no nº montado hoje", () => {
+    // caso real (Copa Teste): 26h26 de luta numa janela de 24h por tatame.
+    // Com 1 tatame estoura (110%); a barra do widget mostra ~55%, que é o
+    // tatame mais cheio COM 2 — daí o rótulo precisar dizer de qual cenário.
+    const janela = 24 * 3600;
+    const metade = (26 * 3600 + 26 * 60) / 2;
+    const r = verificarCapacidade([cat(metade), cat(metade)], 1, [
+      dia("d", 0, janela),
+    ]);
+    expect(r.cabe).toBe(false);
+    expect(r.demandaMaxSegundos / janela).toBeCloseTo(1.101, 2); // hoje: 110%
+    expect(r.areasIdeais).toBe(2);
+    expect(r.demandaNoIdealSegundos / janela).toBeCloseTo(0.551, 2); // ideal: 55%
+  });
+
   it("sem ideal quando nem o teto de áreas resolve", () => {
     const r = verificarCapacidade([cat(20000)], 1, [dia("d", 0, 15000)]);
     expect(r.areasIdeais).toBeNull();
