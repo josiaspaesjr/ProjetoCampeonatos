@@ -6,6 +6,7 @@ import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
 import {
   CLASSES_IDADE,
   FAIXAS,
+  gerarGrade,
   tabelaPesos,
   type Faixa,
   type Sexo,
@@ -64,22 +65,48 @@ const chipInativo = "border-white/14 text-text-2 hover:border-white/30";
 const miniAcao =
   "font-cond text-[13px] uppercase tracking-[0.06em] text-muted-3 transition-colors hover:text-foreground";
 
+/** o que a grade já montada tem — semeia o gerador ao abrir */
+export interface SelecaoAtual {
+  classes: string[];
+  sexos: Sexo[];
+  faixas: Faixa[];
+  absoluto: boolean;
+}
+
+/** seleção de partida com a grade ainda vazia (a montagem mais comum) */
+const PADRAO_GRADE_VAZIA: SelecaoAtual = {
+  classes: ["adulto"],
+  sexos: ["masculino", "feminino"],
+  faixas: ["branca", "azul"],
+  absoluto: false,
+};
+
 export function GeradorGrade({
   gerar,
   modalidade,
+  selecaoAtual,
+  nomesExistentes,
 }: {
   gerar: (formData: FormData) => void | Promise<void>;
   modalidade: "gi" | "nogi" | "gi_nogi";
+  /** composição da grade já gerada; vazia = evento novo */
+  selecaoAtual: SelecaoAtual;
+  /** nomes já na grade — o gerador soma sem duplicar, então a prévia desconta */
+  nomesExistentes: string[];
 }) {
-  // abre já na seleção mais comum (adulto, ambos os sexos, branca + azul)
-  const [classes, setClasses] = useState<Set<string>>(new Set(["adulto"]));
-  const [sexos, setSexos] = useState<Set<Sexo>>(
-    new Set<Sexo>(["masculino", "feminino"]),
+  // abre no que a grade já tem (para revisar ou acrescentar uma faixa/classe);
+  // com a grade vazia, na montagem mais comum
+  const inicial = selecaoAtual.classes.length
+    ? selecaoAtual
+    : PADRAO_GRADE_VAZIA;
+  const [classes, setClasses] = useState<Set<string>>(
+    () => new Set(inicial.classes),
   );
+  const [sexos, setSexos] = useState<Set<Sexo>>(() => new Set(inicial.sexos));
   const [faixas, setFaixas] = useState<Set<Faixa>>(
-    new Set<Faixa>(["branca", "azul"]),
+    () => new Set(inicial.faixas),
   );
-  const [absoluto, setAbsoluto] = useState(false);
+  const [absoluto, setAbsoluto] = useState(inicial.absoluto);
   // tabela de peso: Gi por padrão; No-Gi automático em evento só No-Gi. Em
   // evento Gi+No-Gi o organizador alterna e gera cada tabela.
   const [comKimono, setComKimono] = useState(modalidade !== "nogi");
@@ -107,20 +134,30 @@ export function GeradorGrade({
     setAbsoluto(false);
   }
 
-  // conta pesos e total respeitando as faixas permitidas por classe (como o gerador)
+  const jaNaGrade = useMemo(
+    () => new Set(nomesExistentes),
+    [nomesExistentes],
+  );
+
+  // roda o MESMO gerador do servidor para saber o que a seleção produz, e
+  // desconta o que já está na grade — a action soma sem duplicar, então
+  // prometer "gerar N" incluindo as repetidas enganaria
   const resumo = useMemo(() => {
     const contagensPeso: number[] = [];
-    let total = 0;
     for (const classeId of classes) {
-      const classe = CLASSES_IDADE.find((c) => c.id === classeId);
-      if (!classe) continue;
-      const faixasValidas = [...faixas].filter((f) => classe.faixas.includes(f));
+      if (!CLASSES_IDADE.some((c) => c.id === classeId)) continue;
       for (const sexo of sexos) {
-        const nPesos = tabelaPesos(classeId, sexo, comKimono).length;
-        contagensPeso.push(nPesos);
-        total += faixasValidas.length * (nPesos + (absoluto ? 1 : 0));
+        contagensPeso.push(tabelaPesos(classeId, sexo, comKimono).length);
       }
     }
+    const grade = gerarGrade({
+      classes: [...classes],
+      sexos: [...sexos],
+      faixas: [...faixas],
+      incluirAbsoluto: absoluto,
+      comKimono,
+    });
+    const novas = grade.filter((c) => !jaNaGrade.has(c.nome)).length;
     const min = contagensPeso.length ? Math.min(...contagensPeso) : 0;
     const max = contagensPeso.length ? Math.max(...contagensPeso) : 0;
     return {
@@ -128,9 +165,11 @@ export function GeradorGrade({
       sexos: sexos.size,
       faixas: faixas.size,
       pesos: min === max ? String(min) : `${min}–${max}`,
-      total,
+      total: grade.length,
+      novas,
+      repetidas: grade.length - novas,
     };
-  }, [classes, sexos, faixas, absoluto, comKimono]);
+  }, [classes, sexos, faixas, absoluto, comKimono, jaNaGrade]);
 
   return (
     <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
@@ -373,10 +412,15 @@ export function GeradorGrade({
             {ger.totalCategorias}
           </div>
           <div className="disp leading-none text-brand text-[clamp(56px,8vw,76px)]">
-            {resumo.total}
+            {resumo.novas}
           </div>
           <div className="mb-5 mt-1 font-cond text-[13px] uppercase tracking-[0.08em] text-muted-3">
             {ger.prontasGerar}
+            {resumo.repetidas > 0 && (
+              <span className="mt-1 block text-muted-3/80">
+                {resumo.repetidas} {ger.jaNaGrade}
+              </span>
+            )}
           </div>
 
           <form action={gerar}>
@@ -396,12 +440,14 @@ export function GeradorGrade({
               value={comKimono ? "gi" : "nogi"}
             />
             <BotaoAcaoBruto
-              disabled={resumo.total === 0}
+              disabled={resumo.novas === 0}
               className="flex w-full items-center justify-center bg-brand py-4 font-cond text-lg font-bold uppercase tracking-[0.04em] text-white transition-colors hover:bg-[#d5261d] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              {resumo.total > 0
-                ? `${ger.gerarPre} ${resumo.total} ${d.admin.categorias.categorias}`
-                : ger.selecioneGrade}
+              {resumo.novas > 0
+                ? `${ger.gerarPre} ${resumo.novas} ${d.admin.categorias.categorias}`
+                : resumo.total > 0
+                  ? ger.tudoNaGrade
+                  : ger.selecioneGrade}
             </BotaoAcaoBruto>
           </form>
 

@@ -5,7 +5,11 @@ import { categorias } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
 import { eventoGerenciavel } from "@/lib/eventos/acesso";
 import { getDicionario } from "@/lib/i18n/server";
-import { CLASSES_IDADE } from "@/lib/categorias/cbjj";
+import {
+  CLASSES_IDADE,
+  type Faixa,
+  type Sexo,
+} from "@/lib/categorias/cbjj";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 import { ordenarCategoriasExibicao } from "@/lib/categorias/distribuicao-areas";
 import { GRUPOS_PRECO_PRESETS } from "@/lib/lotes/preco";
@@ -66,6 +70,15 @@ export default async function CategoriasEvento({
     where: eq(categorias.eventoId, id),
   });
 
+  // o gerador abre no que a grade já tem (revisar ou acrescentar uma faixa),
+  // e desconta da prévia o que já existe — ele soma sem duplicar
+  const selecaoAtual = {
+    classes: [...new Set(cats.map((c) => c.classeIdade))],
+    sexos: [...new Set(cats.map((c) => c.sexo))] as Sexo[],
+    faixas: [...new Set(cats.flatMap((c) => (c.faixa ? [c.faixa] : [])))] as Faixa[],
+    absoluto: cats.some((c) => c.tipo === "absoluto"),
+  };
+
   // grupos de preço: presets fixos (mesma lista do select de variação do lote)
   const grupos = [...GRUPOS_PRECO_PRESETS];
 
@@ -86,6 +99,8 @@ export default async function CategoriasEvento({
       {/* GERADOR CBJJ */}
       <GeradorGrade
         modalidade={evento.modalidade}
+        selecaoAtual={selecaoAtual}
+        nomesExistentes={cats.map((c) => c.nome)}
         gerar={gerarCategoriasCbjj.bind(null, evento.id)}
       />
 

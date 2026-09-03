@@ -816,6 +816,8 @@ export const pt = {
       gerarPre: "Gerar",
       selecioneGrade: "Selecione a grade",
       somaGrade: "Soma à grade atual, sem duplicar · editável depois",
+      jaNaGrade: "já na grade",
+      tudoNaGrade: "Tudo isso já está na grade",
     },
     lotes: {
       statusVigente: "Vigente",

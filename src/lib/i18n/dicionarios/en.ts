@@ -809,6 +809,8 @@ export const en: Dicionario = {
       gerarPre: "Generate",
       selecioneGrade: "Select the grid",
       somaGrade: "Adds to the current grid, no duplicates · editable later",
+      jaNaGrade: "already in the grid",
+      tudoNaGrade: "All of this is already in the grid",
     },
     lotes: {
       statusVigente: "Active",

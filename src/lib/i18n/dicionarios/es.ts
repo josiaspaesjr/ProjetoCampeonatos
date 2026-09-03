@@ -810,6 +810,8 @@ export const es: Dicionario = {
       gerarPre: "Generar",
       selecioneGrade: "Selecciona la grilla",
       somaGrade: "Se suma a la grilla actual, sin duplicar · editable después",
+      jaNaGrade: "ya en la grilla",
+      tudoNaGrade: "Todo esto ya está en la grilla",
     },
     lotes: {
       statusVigente: "Vigente",
