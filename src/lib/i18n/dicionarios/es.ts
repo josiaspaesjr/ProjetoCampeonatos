@@ -1086,7 +1086,9 @@ export const es: Dicionario = {
       diasEvento: "Días del evento",
       diasNota:
         "Las luchas se distribuyen dentro de las franjas de cada día. Repite la fecha para tener mañana y tarde — el intervalo entre ellas queda sin luchas. Ajusta antes de estructurar.",
-      salvarDias: "Guardar días",
+      rascunhoNota:
+        "Estructurar guarda de una vez todo lo que ajustaste en los pasos: período, tiempo de lucha, orden del día y el nº de tatamis.",
+      rascunhoPendente: "cambios sin guardar",
       // modo de estructuración: automático × por día (manual)
       modoLabel: "Modo",
       modoAutomatico: "Automático",
@@ -1109,7 +1111,6 @@ export const es: Dicionario = {
         "Juvenil, adulto y másteres siguen la línea del cinturón. Una categoría puntual puede tener su propio tiempo en la pantalla de Categorías.",
       temposMin: "min",
       temposPadrao: "estándar",
-      temposSalvar: "Guardar tiempos",
       // orden del día editable (arrastrar las clases de edad)
       ordemClassesTexto:
         "Arrastra las clases para definir en qué secuencia corren. El estándar es el embudo de los extremos al medio (kids y másteres mayores liberan temprano, el centro corre al final) — cámbialo a tu gusto. El orden vale la próxima vez que estructures las áreas.",

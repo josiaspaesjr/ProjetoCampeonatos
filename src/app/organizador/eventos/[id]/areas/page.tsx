@@ -11,7 +11,7 @@ import {
 } from "@/lib/categorias/distribuicao-areas";
 import { CLASSES_IDADE, FAIXAS } from "@/lib/categorias/cbjj";
 import { montarCronogramaDoEvento } from "@/lib/cronograma/cronograma-areas";
-import { recomendarAreas } from "@/lib/cronograma/recomendacao";
+import { categoriasParaRecomendacao } from "@/lib/cronograma/recomendacao";
 import { COOKIE_RECOMENDACAO_AREAS } from "@/components/organizador/recomendacao-config";
 import { minutosParaHHMM } from "@/lib/cronograma/dias";
 import {
@@ -25,16 +25,7 @@ import {
   moverCategoriaParaArea,
   moverLutaParaArea,
   reordenarLutasDaArea,
-  salvarDiasEvento,
-  salvarOrdemClasses,
-  salvarTemposLuta,
 } from "./actions";
-
-/** "YYYY-MM-DD" → "dd/mm" */
-function dataLabel(data: string): string {
-  const [, mm, dd] = data.slice(0, 10).split("-");
-  return dd && mm ? `${dd}/${mm}` : data;
-}
 
 export default async function PaginaAreas({
   params,
@@ -76,7 +67,14 @@ export default async function PaginaAreas({
 
   // quantos tatames as lutas previstas pedem para caber no período do evento
   const numAreasAtual = evento.numAreas ?? (todasAreas.length || null);
-  const recomendacao = await recomendarAreas(db, evento, cats, numAreasAtual);
+  // as lutas de cada categoria vêm contadas daqui (dependem das inscrições); o
+  // cliente refaz a recomendação sozinho a cada mexida no assistente
+  const categoriasRecomendacao = await categoriasParaRecomendacao(
+    db,
+    id,
+    cats,
+    evento.temposLuta,
+  );
   // preferência de recolhido: semeada no servidor para não piscar aberto
   const recomendacaoRecolhida =
     (await cookies()).get(COOKIE_RECOMENDACAO_AREAS)?.value === "1";
@@ -89,11 +87,6 @@ export default async function PaginaAreas({
         fim: minutosParaHHMM(d.fimMinutos),
       }))
     : [{ data: evento.dataInicio, inicio: "09:00", fim: "18:00" }];
-
-  // dias distintos (uma linha por data de calendário) para o modo "Por dia"
-  const diasDistintos = [...new Set(dias.map((d) => d.data.slice(0, 10)))]
-    .sort()
-    .map((data) => ({ data, label: dataLabel(data) }));
 
   // dimensões presentes na grade (só o que existe aparece nos filtros por dia)
   const classesPresentes = new Set(cats.map((c) => c.classeIdade));
@@ -128,14 +121,13 @@ export default async function PaginaAreas({
     <EstruturadorAreas
       categorias={categoriasView}
       numAreasInicial={numAreasAtual}
-      recomendacao={recomendacao}
+      categoriasRecomendacao={categoriasRecomendacao}
       recomendacaoRecolhida={recomendacaoRecolhida}
       base={`/organizador/eventos/${id}`}
       eventoNome={evento.nome}
       cronograma={cronograma}
       dias={dias}
       tempos={temposEfetivos(evento.temposLuta)}
-      diasDistintos={diasDistintos}
       dimensoes={dimensoes}
       categoriasFiltro={categoriasFiltro}
       modoInicial={modoInicial}
@@ -143,9 +135,6 @@ export default async function PaginaAreas({
       erro={erro}
       estruturar={estruturarAreas.bind(null, id)}
       estruturarPorDia={estruturarPorDia.bind(null, id)}
-      salvarDias={salvarDiasEvento.bind(null, id)}
-      salvarTempos={salvarTemposLuta.bind(null, id)}
-      salvarOrdemClasses={salvarOrdemClasses.bind(null, id)}
       reordenar={reordenarLutasDaArea.bind(null, id)}
       moverLuta={moverLutaParaArea.bind(null, id)}
       moverCategoria={moverCategoriaParaArea.bind(null, id)}

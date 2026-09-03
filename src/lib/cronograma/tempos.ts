@@ -135,3 +135,45 @@ export function temposEfetivos(tempos?: TemposLuta | null): Record<ChaveTempo, n
   }
   return saida;
 }
+
+/**
+ * Tempo de "organização" entre lutas (segundos): somado ao tempo regulamentar
+ * para estimar quando a próxima luta começa — chamada dos atletas, ajuste do
+ * placar etc. É o intervalo que separa o fim de uma luta do início da seguinte.
+ */
+export const TRANSICAO_SEGUNDOS = 120;
+
+/**
+ * Slot da luta no cronograma: tempo regulamentar (tabela do evento) + transição.
+ * Kids valem pela classe de idade, adulto+ pela faixa.
+ */
+export function duracaoLutaSegundos(
+  categoria: CategoriaTempo,
+  tempos?: TemposLuta | null,
+): number {
+  return minutosDaCategoria(categoria, tempos) * 60 + TRANSICAO_SEGUNDOS;
+}
+
+/**
+ * Tempo regulamentar puro da luta (sem a transição) — é o que o cronômetro do
+ * placar conta. Usado pelo tablet do organizador e pelo telão da área, para que
+ * ambos partam exatamente da mesma base.
+ */
+export function tempoDeLutaSegundos(
+  categoria: CategoriaTempo,
+  tempos?: TemposLuta | null,
+): number {
+  return duracaoLutaSegundos(categoria, tempos) - TRANSICAO_SEGUNDOS;
+}
+
+/**
+ * Duração estimada por luta da categoria: o organizador pode definir um valor
+ * próprio para AQUELA categoria (equivalente ao "estimated time per match" do
+ * scoreboard); nulo cai na tabela de tempos do evento (ou na padrão CBJJ).
+ */
+export function duracaoDaCategoria(
+  categoria: CategoriaTempo & { duracaoLutaSegundos: number | null },
+  tempos?: TemposLuta | null,
+): number {
+  return categoria.duracaoLutaSegundos ?? duracaoLutaSegundos(categoria, tempos);
+}

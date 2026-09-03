@@ -1,7 +1,7 @@
 import type { Db } from "@/db";
 import { estimarCargaCategorias } from "./carga-areas";
-import { diasDoEventoOuDefault } from "./dias";
-import { duracaoDaCategoria } from "./fila";
+import { diasDoEventoOuDefault, type JanelaDia } from "./dias";
+import { duracaoDaCategoria } from "./tempos";
 import {
   AREAS_MAX,
   verificarCapacidade,
@@ -87,6 +87,68 @@ export interface RecomendacaoAreas {
 }
 
 /**
+ * Categoria como o cliente precisa dela para refazer a recomendação enquanto o
+ * organizador mexe no assistente: as lutas já contadas no servidor (dependem
+ * das inscrições) + o que decide a duração (faixa/classe e a duração própria).
+ */
+export interface CategoriaRecomendacao {
+  classeIdade: string;
+  sexo: string;
+  faixa: string | null;
+  tipo: string;
+  limitePesoKg: number | null;
+  /** lutas estimadas (≈ confirmados − 1) — vem pronto do servidor */
+  lutas: number;
+  /** duração própria da categoria, quando o organizador definiu uma */
+  duracaoLutaSegundos: number | null;
+}
+
+/**
+ * Refaz a recomendação com um período e uma tabela de tempos QUE AINDA NÃO
+ * FORAM SALVOS — é o que mantém o widget em dia enquanto o assistente é
+ * editado. Puro: roda no cliente, sobre as lutas que o servidor já contou.
+ */
+export function recomendarAreasDe(
+  cats: CategoriaRecomendacao[],
+  janelas: JanelaDia[],
+  tempos: TemposLuta | null,
+  ordemClasses: string[] | null,
+  atual: number | null,
+): RecomendacaoAreas | null {
+  if (!cats.length) return null;
+
+  const entradas: CatCapacidade[] = cats.map((c) => {
+    const duracao = duracaoDaCategoria(c, tempos);
+    return {
+      classeIdade: c.classeIdade,
+      sexo: c.sexo,
+      faixa: c.faixa,
+      tipo: c.tipo,
+      limitePesoKg: c.limitePesoKg,
+      carga: Math.max(1, c.lutas) * duracao,
+      demandaReal: c.lutas * duracao,
+    };
+  });
+
+  const n = atual && atual > 0 ? atual : 1;
+  const cap = verificarCapacidade(entradas, n, janelas, ordemClasses);
+  if (cap.capacidadeAreaSegundos <= 0) return null;
+
+  return {
+    ideal: cap.areasIdeais,
+    atual: atual && atual > 0 ? atual : null,
+    lutasPrevistas: cats.reduce((s, c) => s + c.lutas, 0),
+    demandaTotalSegundos: cap.demandaTotalSegundos,
+    janelaPorAreaSegundos: cap.capacidadeAreaSegundos,
+    demandaNoIdealSegundos: cap.demandaNoIdealSegundos,
+    ocupacaoNoIdeal: cap.demandaNoIdealSegundos / cap.capacidadeAreaSegundos,
+    soAdicionandoTempo: cap.soAdicionandoTempo,
+    cabeHoje: atual && atual > 0 ? cap.cabe : null,
+    areasMax: AREAS_MAX,
+  };
+}
+
+/**
  * Situação do evento diante da recomendação — decide o que o widget diz.
  *
  * - `semDados`: nenhuma luta estimada (sem inscrição confirmada)
@@ -132,29 +194,38 @@ export async function recomendarAreas(
   atual: number | null,
 ): Promise<RecomendacaoAreas | null> {
   if (!cats.length) return null;
-
-  const [entradas, janelas] = await Promise.all([
-    entradasDeCapacidade(db, evento.id, cats, evento.temposLuta),
+  const [categorias, janelas] = await Promise.all([
+    categoriasParaRecomendacao(db, evento.id, cats, evento.temposLuta),
     diasDoEventoOuDefault(db, evento),
   ]);
+  return recomendarAreasDe(
+    categorias,
+    janelas,
+    evento.temposLuta,
+    evento.ordemClasses,
+    atual,
+  );
+}
 
-  // `ideal` varre de 1 até o teto e não depende de `n`; o `n` daqui só serve
-  // para responder se o arranjo de hoje cabe
-  const n = atual && atual > 0 ? atual : 1;
-  const cap = verificarCapacidade(entradas, n, janelas, evento.ordemClasses);
-  if (cap.capacidadeAreaSegundos <= 0) return null;
-
-  return {
-    ideal: cap.areasIdeais,
-    atual: atual && atual > 0 ? atual : null,
-    lutasPrevistas: entradas.reduce((s, e) => s + e.lutas, 0),
-    demandaTotalSegundos: cap.demandaTotalSegundos,
-    janelaPorAreaSegundos: cap.capacidadeAreaSegundos,
-    demandaNoIdealSegundos: cap.demandaNoIdealSegundos,
-    ocupacaoNoIdeal:
-      cap.demandaNoIdealSegundos / cap.capacidadeAreaSegundos,
-    soAdicionandoTempo: cap.soAdicionandoTempo,
-    cabeHoje: atual && atual > 0 ? cap.cabe : null,
-    areasMax: AREAS_MAX,
-  };
+/**
+ * Categorias com as lutas já contadas — o que o cliente precisa para refazer a
+ * recomendação sozinho enquanto o assistente é editado (a contagem de lutas
+ * depende das inscrições, então só o servidor a produz).
+ */
+export async function categoriasParaRecomendacao(
+  db: Db,
+  eventoId: string,
+  cats: CategoriaDoEvento[],
+  tempos: TemposLuta | null,
+): Promise<CategoriaRecomendacao[]> {
+  const cargas = await estimarCargaCategorias(db, eventoId, cats, tempos);
+  return cats.map((c) => ({
+    classeIdade: c.classeIdade,
+    sexo: c.sexo,
+    faixa: c.faixa,
+    tipo: c.tipo,
+    limitePesoKg: c.limitePesoKg != null ? Number(c.limitePesoKg) : null,
+    lutas: cargas.get(c.id)?.lutas ?? 0,
+    duracaoLutaSegundos: c.duracaoLutaSegundos,
+  }));
 }

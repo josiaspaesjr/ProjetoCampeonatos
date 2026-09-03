@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useDic } from "@/lib/i18n/client";
 
@@ -63,6 +63,13 @@ function agrupar(dias: DiaEvento[]): DiaGrupo[] {
   return grupos;
 }
 
+/** desagrupa (dia → turnos) de volta em uma linha por turno */
+function achatar(grupos: DiaGrupo[]): DiaEvento[] {
+  return grupos.flatMap((g) =>
+    g.turnos.map((t) => ({ data: g.data, inicio: t.inicio, fim: t.fim })),
+  );
+}
+
 /**
  * Lista dinâmica de dias do evento. Cada **dia** tem uma data e um ou mais
  * **turnos** (janelas de horário) — o intervalo entre turnos fica livre de
@@ -78,12 +85,19 @@ export function CamposDiasEvento({
   inputClassName,
   defaultDias,
   semTitulo = false,
+  onChange,
 }: {
   labelCls: string;
   inputClassName?: string;
   defaultDias?: DiaEvento[];
   /** o título fica com quem embrulha (ex.: cabeçalho recolhível da tela de Áreas) */
   semTitulo?: boolean;
+  /**
+   * Avisa o rascunho a cada edição. O assistente de Áreas usa para os outros
+   * passos (e a recomendação) enxergarem o período que está sendo digitado,
+   * antes de salvar. Sem ele o componente segue autônomo, como no cadastro.
+   */
+  onChange?: (dias: DiaEvento[]) => void;
 }) {
   const dc = useDic().admin.campos;
   const [dias, setDias] = useState<DiaGrupo[]>(
@@ -91,6 +105,18 @@ export function CamposDiasEvento({
       ? agrupar(defaultDias)
       : [{ data: "", turnos: [{ inicio: "09:00", fim: "18:00" }] }],
   );
+
+  // avisa o rascunho a cada edição; o 1º render não conta (o pai já semeou)
+  const primeiroRender = useRef(true);
+  useEffect(() => {
+    if (primeiroRender.current) {
+      primeiroRender.current = false;
+      return;
+    }
+    onChange?.(achatar(dias));
+    // `onChange` é recriado a cada render do pai; o gatilho é a edição
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dias]);
 
   const setData = (gi: number, data: string) =>
     setDias((ds) => ds.map((g, k) => (k === gi ? { ...g, data } : g)));

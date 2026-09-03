@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+
 import { cn } from "@/lib/utils";
 import { corDaFaixa } from "@/lib/categorias/faixa-cores";
 import { useDic } from "@/lib/i18n/client";
@@ -21,12 +21,28 @@ import {
  */
 export function CamposTemposLuta({
   valores,
+  onChange,
 }: {
   /** minutos efetivos por linha (padrão + o que o organizador mudou) */
   valores: Record<ChaveTempo, number>;
+  /**
+   * Avisa o rascunho a cada edição. O assistente de Áreas usa para o resumo do
+   * passo e a recomendação acompanharem o que está sendo digitado, antes de
+   * salvar. Sem ele o componente segue autônomo (só emite no FormData).
+   */
+  onChange?: (valores: Record<ChaveTempo, number>) => void;
 }) {
   const dic = useDic();
   const ta = dic.admin.areas;
+
+  const trocar = (chave: ChaveTempo, texto: string) => {
+    const n = Number(texto);
+    // vazio/inválido volta para o padrão CBJJ — mesma regra de `normalizarTempos`
+    onChange?.({
+      ...valores,
+      [chave]: Number.isFinite(n) && n > 0 ? n : TEMPOS_PADRAO[chave],
+    });
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -41,6 +57,7 @@ export function CamposTemposLuta({
             chave={chave}
             rotulo={dic.classesIdade[chave] ?? chave}
             valor={valores[chave]}
+            onChange={trocar}
             min={ta.temposMin}
             padrao={ta.temposPadrao}
           />
@@ -59,6 +76,7 @@ export function CamposTemposLuta({
             }
             cor={corDaFaixa(chave)}
             valor={valores[chave]}
+            onChange={trocar}
             min={ta.temposMin}
             padrao={ta.temposPadrao}
           />
@@ -93,6 +111,7 @@ function CampoTempo({
   chave,
   rotulo,
   valor,
+  onChange,
   cor,
   min,
   padrao,
@@ -100,13 +119,13 @@ function CampoTempo({
   chave: ChaveTempo;
   rotulo: string;
   valor: number;
+  onChange: (chave: ChaveTempo, texto: string) => void;
   /** cor da faixa (só nas linhas de faixa) */
   cor?: string;
   min: string;
   padrao: string;
 }) {
-  const [texto, setTexto] = useState(String(valor));
-  const ehPadrao = Number(texto) === TEMPOS_PADRAO[chave];
+  const ehPadrao = valor === TEMPOS_PADRAO[chave];
 
   return (
     <label className="flex w-[168px] flex-col gap-1 border border-white/10 bg-background p-3">
@@ -126,8 +145,8 @@ function CampoTempo({
           min={TEMPO_MIN_MINUTOS}
           max={TEMPO_MAX_MINUTOS}
           step={1}
-          value={texto}
-          onChange={(e) => setTexto(e.target.value)}
+          value={String(valor)}
+          onChange={(e) => onChange(chave, e.target.value)}
           placeholder={String(TEMPOS_PADRAO[chave])}
           className="disp tnum w-16 border border-white/14 bg-background px-2 py-0.5 text-[28px] leading-none text-foreground focus:border-brand focus:outline-none"
         />

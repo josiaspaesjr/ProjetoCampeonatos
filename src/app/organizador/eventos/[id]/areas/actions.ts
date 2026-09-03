@@ -25,9 +25,14 @@ import { estimarCargaCategorias } from "@/lib/cronograma/carga-areas";
 import {
   diasDoEventoOuDefault,
   formatarDuracaoSegundos,
+  normalizarDias,
 } from "@/lib/cronograma/dias";
 import { montarCronogramaDoEvento } from "@/lib/cronograma/cronograma-areas";
-import { CHAVES_TEMPO, normalizarTempos } from "@/lib/cronograma/tempos";
+import {
+  CHAVES_TEMPO,
+  normalizarTempos,
+  type TemposLuta,
+} from "@/lib/cronograma/tempos";
 import {
   verificarCapacidade,
   type ResultadoCapacidade,
@@ -37,6 +42,7 @@ import {
   lerDiasDoForm,
   persistirDiasEvento,
   validarDias,
+  type DiaForm,
 } from "@/lib/eventos/dias-form";
 import {
   registrarResultadoNoBanco,
@@ -70,6 +76,70 @@ function mensagemNaoCabe(cap: ResultadoCapacidade, ta: AvisoAreas): string {
     ? `${ta.naoCabeAreasPre}${cap.areasSugeridas}${ta.naoCabeAreasPos}`
     : ta.naoCabeTempo;
   return base + sugestao;
+}
+
+/**
+ * Rascunho do assistente que veio no formulário do "Estruturar".
+ *
+ * O assistente edita dias, tempos e ordem do dia no cliente e manda tudo junto
+ * com a estruturação — é o "salvar tudo no fim". O campo `rascunho` marca esse
+ * envio; sem ele (form antigo em cache), cada valor vira null e o que está no
+ * banco é mantido.
+ */
+interface RascunhoAssistente {
+  dias: DiaForm[] | null;
+  tempos: TemposLuta | null;
+  /** [] = voltar para a regra padrão; null = manter a do banco */
+  ordemClasses: string[] | null;
+}
+
+function lerRascunho(formData: FormData): RascunhoAssistente {
+  if (formData.get("rascunho") !== "1") {
+    return { dias: null, tempos: null, ordemClasses: null };
+  }
+  const bruto: Record<string, unknown> = {};
+  for (const chave of CHAVES_TEMPO) bruto[chave] = formData.get(chave);
+  let cru: string[] = [];
+  try {
+    const lido = JSON.parse(String(formData.get("ordemClasses") ?? "[]"));
+    if (Array.isArray(lido)) cru = lido.map(String);
+  } catch {
+    /* JSON torto: cai na regra padrão */
+  }
+  // só classes conhecidas, sem repetir; e se a sequência é a que a regra padrão
+  // produziria, guarda vazio (= voltar ao padrão) em vez de fixá-la
+  const validas = new Set(CLASSES_IDADE.map((c) => c.id));
+  const ordem = cru.filter(
+    (id, i) => validas.has(id) && cru.indexOf(id) === i,
+  );
+  return {
+    dias: lerDiasDoForm(formData),
+    tempos: normalizarTempos(bruto),
+    ordemClasses: igualAoPadrao(ordem) ? [] : ordem,
+  };
+}
+
+/**
+ * Grava o rascunho do assistente (dias, tempos, ordem do dia). Chamado só
+ * depois de a capacidade ser validada — se as lutas não couberem, nada disso
+ * é escrito.
+ */
+async function persistirRascunho(
+  db: Db,
+  eventoId: string,
+  r: RascunhoAssistente,
+) {
+  if (r.dias) await persistirDiasEvento(db, eventoId, r.dias);
+  const campos: { temposLuta?: TemposLuta | null; ordemClasses?: string[] | null } = {};
+  if (r.tempos) {
+    campos.temposLuta = Object.keys(r.tempos).length ? r.tempos : null;
+  }
+  if (r.ordemClasses) {
+    campos.ordemClasses = r.ordemClasses.length ? r.ordemClasses : null;
+  }
+  if (Object.keys(campos).length) {
+    await db.update(eventos).set(campos).where(eq(eventos.id, eventoId));
+  }
 }
 
 async function contexto(eventoId: string) {
@@ -201,8 +271,15 @@ export async function estruturarAreas(eventoId: string, formData: FormData) {
     erroVisivelAreas(eventoId, dic.admin.erros.numAreasInvalido);
   }
 
-  // só leitura até a validação passar — nada é gravado se não couber
-  const [cats, existentes, janelas] = await Promise.all([
+  // rascunho do assistente (dias/tempos/ordem) — valida ANTES de gravar
+  const rascunho = lerRascunho(formData);
+  if (rascunho.dias) {
+    const erroDias = validarDias(rascunho.dias);
+    if (erroDias) erroVisivelAreas(eventoId, dic.admin.erros[erroDias]);
+  }
+
+  // grade e áreas atuais, para medir o encaixe e reconciliar os tatames
+  const [cats, existentes, janelasBanco] = await Promise.all([
     db.query.categorias.findMany({ where: eq(categorias.eventoId, eventoId) }),
     db.query.areas.findMany({
       where: eq(areas.eventoId, eventoId),
@@ -212,28 +289,39 @@ export async function estruturarAreas(eventoId: string, formData: FormData) {
   ]);
   if (!cats.length) erroVisivelAreas(eventoId, dic.admin.areas.gereGradeAntes);
 
+  // o encaixe é medido no que o organizador acabou de configurar, não no que
+  // está salvo — é o mesmo cenário que a recomendação da tela mostrava
+  const janelas = rascunho.dias
+    ? normalizarDias(
+        rascunho.dias.map((d, i) => ({ ...d, ordem: i })),
+        { dataInicio: rascunho.dias[0].data },
+      )
+    : janelasBanco;
+  const tempos = rascunho.tempos ?? evento.temposLuta;
+  const ordemClasses = rascunho.ordemClasses?.length
+    ? rascunho.ordemClasses
+    : rascunho.ordemClasses
+      ? null
+      : evento.ordemClasses;
+
   // entradas com carga (balanceamento) e demanda real (tempo) por categoria —
   // as mesmas que alimentam o widget de recomendação da tela
-  const entradas = await entradasDeCapacidade(
-    db,
-    eventoId,
-    cats,
-    evento.temposLuta,
-  );
+  const entradas = await entradasDeCapacidade(db, eventoId, cats, tempos);
+
+  // O que passou pelo assistente é gravado ANTES do encaixe: o erro recarrega a
+  // página, e perder o período recém-digitado seria justo quando o organizador
+  // precisa dele para corrigir. A distribuição é que fica de fora se não couber.
+  await persistirRascunho(db, eventoId, rascunho);
 
   // VERIFICAÇÃO DE ENCAIXE: as lutas cabem no período com N áreas?
-  const cap = verificarCapacidade(
-    entradas,
-    nAreas,
-    janelas,
-    evento.ordemClasses,
-  );
+  const cap = verificarCapacidade(entradas, nAreas, janelas, ordemClasses);
   if (!cap.cabe) {
-    // não grava nada — orienta a acrescentar áreas ou dias/horas
+    // tatames e distribuição ficam como estavam — orienta a acrescentar áreas
+    // ou a ampliar os dias/horas
+    revalidatePath(`/organizador/eventos/${eventoId}/areas`);
     erroVisivelAreas(eventoId, mensagemNaoCabe(cap, dic.admin.areas));
   }
 
-  // --- cabe: a partir daqui, persiste ---
   // nº de áreas planejado (reflete no chip da Visão geral, badge e checklist)
   await db
     .update(eventos)
@@ -252,7 +340,7 @@ export async function estruturarAreas(eventoId: string, formData: FormData) {
 
   // distribui reusando as MESMAS entradas do check (ordenação/carga idênticas,
   // então a área mais cheia bate com o gargalo que foi validado)
-  const ordenadas = ordenarCategorias(entradas, evento.ordemClasses);
+  const ordenadas = ordenarCategorias(entradas, ordemClasses);
   const porArea = distribuirBalanceado(ordenadas, nAreas);
 
   // modo automático: zera `dataFixada` (o encaixe volta a decidir o dia)
@@ -322,7 +410,14 @@ export async function estruturarPorDia(eventoId: string, formData: FormData) {
     erroVisivelAreas(eventoId, dic.admin.areas.porDiaSemFiltro);
   }
 
-  const [cats, existentes, janelas] = await Promise.all([
+  // rascunho do assistente: valida os dias antes de gravar qualquer coisa
+  const rascunho = lerRascunho(formData);
+  if (rascunho.dias) {
+    const erroDias = validarDias(rascunho.dias);
+    if (erroDias) erroVisivelAreas(eventoId, dic.admin.erros[erroDias]);
+  }
+
+  const [cats, existentes, janelasBanco] = await Promise.all([
     db.query.categorias.findMany({ where: eq(categorias.eventoId, eventoId) }),
     db.query.areas.findMany({
       where: eq(areas.eventoId, eventoId),
@@ -332,12 +427,22 @@ export async function estruturarPorDia(eventoId: string, formData: FormData) {
   ]);
   if (!cats.length) erroVisivelAreas(eventoId, dic.admin.areas.gereGradeAntes);
 
+  // o modo "Por dia" não bloqueia por capacidade, mas grava o mesmo rascunho:
+  // é o "salvar tudo no fim" do assistente
+  await persistirRascunho(db, eventoId, rascunho);
+  const janelas = rascunho.dias
+    ? normalizarDias(
+        rascunho.dias.map((d, i) => ({ ...d, ordem: i })),
+        { dataInicio: rascunho.dias[0].data },
+      )
+    : janelasBanco;
+
   // cargas para o balanceamento (mesma base do automático)
   const cargas = await estimarCargaCategorias(
     db,
     eventoId,
     cats,
-    evento.temposLuta,
+    rascunho.tempos ?? evento.temposLuta,
   );
   const entradaDe = (c: (typeof cats)[number]) => ({
     id: c.id,
@@ -381,7 +486,12 @@ export async function estruturarPorDia(eventoId: string, formData: FormData) {
       .filter((c) => diaDeCat.get(c.id) === data)
       .map(entradaDe);
     const porArea = distribuirBalanceado(
-      ordenarCategorias(doDia, evento.ordemClasses),
+      ordenarCategorias(
+        doDia,
+        rascunho.ordemClasses?.length
+          ? rascunho.ordemClasses
+          : (rascunho.ordemClasses ?? evento.ordemClasses),
+      ),
       nAreas,
     );
     porArea.forEach((catsDaArea, i) => {
@@ -439,77 +549,8 @@ export async function estruturarPorDia(eventoId: string, formData: FormData) {
   revalidatePath(`/organizador/eventos/${eventoId}/areas`);
 }
 
-/** salva os dias/horários do evento a partir da tela de Áreas */
-export async function salvarDiasEvento(eventoId: string, formData: FormData) {
-  const { db } = await contexto(eventoId);
-  const dic = await getDicionario();
 
-  const dias = lerDiasDoForm(formData);
-  const erro = validarDias(dias);
-  if (erro) erroVisivelAreas(eventoId, dic.admin.erros[erro]);
 
-  await persistirDiasEvento(db, eventoId, dias);
-  revalidatePath(`/organizador/eventos/${eventoId}`);
-  revalidatePath(`/organizador/eventos/${eventoId}/areas`);
-}
-
-/**
- * Salva a tabela de tempos do evento (minutos por classe kids / faixa adulto+).
- * Grava só o que difere do padrão CBJJ; campo vazio volta ao padrão. Como o
- * cronograma, a fila do telão e o cronômetro do placar leem a mesma tabela, os
- * horários se recalculam na próxima renderização.
- */
-export async function salvarTemposLuta(eventoId: string, formData: FormData) {
-  const { db } = await contexto(eventoId);
-
-  const bruto: Record<string, unknown> = {};
-  for (const chave of CHAVES_TEMPO) bruto[chave] = formData.get(chave);
-  const tempos = normalizarTempos(bruto);
-
-  await db
-    .update(eventos)
-    .set({ temposLuta: Object.keys(tempos).length ? tempos : null })
-    .where(eq(eventos.id, eventoId));
-
-  revalidatePath(`/organizador/eventos/${eventoId}`);
-  revalidatePath(`/organizador/eventos/${eventoId}/areas`);
-}
-
-/**
- * Salva a ORDEM DO DIA definida pelo organizador: ids das classes de idade na
- * sequência em que devem correr. Lista vazia (ou só com ids desconhecidos) volta
- * para a regra padrão das ondas (extremos → meio). Vale na próxima vez que as
- * áreas forem estruturadas — não remexe no que já está distribuído.
- */
-export async function salvarOrdemClasses(
-  eventoId: string,
-  classeIds: string[],
-) {
-  const { db } = await contexto(eventoId);
-
-  const validas = new Set(CLASSES_IDADE.map((c) => c.id));
-  const ordem = classeIds.filter(
-    (id, i) => validas.has(id) && classeIds.indexOf(id) === i,
-  );
-  const padrao =
-    ordem.length ===
-      classesEmOrdem(
-        (
-          await db.query.categorias.findMany({
-            where: eq(categorias.eventoId, eventoId),
-            columns: { classeIdade: true },
-          })
-        ).map((c) => ({ classeIdade: c.classeIdade })),
-      ).length && igualAoPadrao(ordem);
-
-  await db
-    .update(eventos)
-    .set({ ordemClasses: ordem.length && !padrao ? ordem : null })
-    .where(eq(eventos.id, eventoId));
-
-  revalidatePath(`/organizador/eventos/${eventoId}`);
-  revalidatePath(`/organizador/eventos/${eventoId}/areas`);
-}
 
 /** a sequência escolhida é exatamente a que a regra padrão produziria? */
 function igualAoPadrao(ordem: string[]): boolean {

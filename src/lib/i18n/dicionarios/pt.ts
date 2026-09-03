@@ -1092,7 +1092,9 @@ export const pt = {
       diasEvento: "Dias do evento",
       diasNota:
         "As lutas são distribuídas dentro das janelas de cada dia. Repita a data para ter manhã e tarde — o intervalo entre elas fica sem lutas. Ajuste antes de estruturar.",
-      salvarDias: "Salvar dias",
+      rascunhoNota:
+        "Estruturar grava de uma vez tudo o que você ajustou nos passos: período, tempo de luta, ordem do dia e o nº de tatames.",
+      rascunhoPendente: "alterações não salvas",
       // modo de estruturação: automático × por dia (manual)
       modoLabel: "Modo",
       modoAutomatico: "Automático",
@@ -1115,7 +1117,6 @@ export const pt = {
         "Juvenil, adulto e masters seguem a linha da faixa. Uma categoria específica pode ter tempo próprio na tela de Categorias.",
       temposMin: "min",
       temposPadrao: "padrão",
-      temposSalvar: "Salvar tempos",
       // ordem do dia editável (arrastar as classes de idade)
       ordemClassesTexto:
         "Arraste as classes para definir em que sequência elas correm. O padrão é o funil dos extremos ao meio (kids e masters mais velhos liberam cedo, o miolo corre por último) — mude à vontade. A ordem vale na próxima vez que você estruturar as áreas.",

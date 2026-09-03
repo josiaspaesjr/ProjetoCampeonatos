@@ -1084,7 +1084,9 @@ export const en: Dicionario = {
       diasEvento: "Event days",
       diasNota:
         "Matches are spread within each day's windows. Repeat the date for morning and afternoon — the break between them stays match-free. Adjust before structuring.",
-      salvarDias: "Save days",
+      rascunhoNota:
+        "Structuring saves everything you adjusted in the steps at once: window, mat time, day order and the number of mats.",
+      rascunhoPendente: "unsaved changes",
       // structuring mode: automatic × by day (manual)
       modoLabel: "Mode",
       modoAutomatico: "Automatic",
@@ -1108,7 +1110,6 @@ export const en: Dicionario = {
         "Juvenile, adult and masters follow the belt row. A single category can still get its own time on the Categories screen.",
       temposMin: "min",
       temposPadrao: "default",
-      temposSalvar: "Save times",
       // editable order of the day (drag the age classes)
       ordemClassesTexto:
         "Drag the classes to set the sequence they run in. The default is the extremes-to-middle funnel (kids and older masters finish early, the middle runs last) — change it freely. The order applies next time you structure the mats.",

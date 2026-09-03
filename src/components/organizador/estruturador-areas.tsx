@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { AutoRefresh } from "@/components/auto-refresh";
 import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
@@ -28,7 +28,6 @@ import {
   PainelPorDia,
   resumoPorDia,
   type CategoriaFiltro,
-  type DiaDistinto,
   type DimensoesGrade,
   type FiltroState,
 } from "@/components/organizador/painel-por-dia";
@@ -44,10 +43,59 @@ import {
 } from "@/lib/cronograma/tempos";
 import { useDic } from "@/lib/i18n/client";
 import { RecomendacaoAreasWidget } from "@/components/organizador/recomendacao-areas";
-import type { RecomendacaoAreas } from "@/lib/cronograma/recomendacao";
+import {
+  recomendarAreasDe,
+  type CategoriaRecomendacao,
+} from "@/lib/cronograma/recomendacao";
+import {
+  diasDistintosDoRascunho,
+  janelasDoRascunho,
+} from "@/lib/cronograma/rascunho-dias";
 
 const AREAS_MIN = 1;
 const AREAS_MAX = 40;
+
+
+/**
+ * Campos ocultos com o rascunho do assistente (dias, tempos e ordem do dia).
+ * Vão junto com o "Estruturar" para que uma submissão só grave tudo o que o
+ * organizador mexeu nos passos — é o que faz o assistente salvar no fim.
+ */
+function CamposRascunho({
+  dias,
+  tempos,
+  ordemClasses,
+}: {
+  dias: DiaEvento[];
+  tempos: Record<ChaveTempo, number>;
+  ordemClasses: string[] | null;
+}) {
+  return (
+    <>
+      <input type="hidden" name="rascunho" value="1" />
+      {dias.map((d, i) => (
+        <Fragment key={i}>
+          <input type="hidden" name="diaData" value={d.data} />
+          <input type="hidden" name="diaInicio" value={d.inicio} />
+          <input type="hidden" name="diaFim" value={d.fim} />
+        </Fragment>
+      ))}
+      {CHAVES_TEMPO.map((chave) => (
+        <input
+          key={chave}
+          type="hidden"
+          name={chave}
+          value={String(tempos[chave])}
+        />
+      ))}
+      <input
+        type="hidden"
+        name="ordemClasses"
+        value={JSON.stringify(ordemClasses ?? [])}
+      />
+    </>
+  );
+}
 
 /** categoria enxuta usada só na legenda do funil e no resumo (4 stats) */
 export interface CategoriaView {
@@ -59,14 +107,13 @@ export interface CategoriaView {
 export function EstruturadorAreas({
   categorias,
   numAreasInicial,
-  recomendacao,
+  categoriasRecomendacao,
   recomendacaoRecolhida,
   base,
   eventoNome,
   cronograma,
   dias,
   tempos,
-  diasDistintos,
   dimensoes,
   categoriasFiltro,
   modoInicial,
@@ -74,9 +121,6 @@ export function EstruturadorAreas({
   erro,
   estruturar,
   estruturarPorDia,
-  salvarDias,
-  salvarTempos,
-  salvarOrdemClasses,
   reordenar,
   moverLuta,
   moverCategoria,
@@ -84,7 +128,8 @@ export function EstruturadorAreas({
   categorias: CategoriaView[];
   numAreasInicial: number | null;
   /** quantos tatames as lutas previstas pedem; null sem grade ou sem período */
-  recomendacao: RecomendacaoAreas | null;
+  /** categorias com as lutas já contadas — base da recomendação ao vivo */
+  categoriasRecomendacao: CategoriaRecomendacao[];
   /** preferência salva: começar com a recomendação recolhida */
   recomendacaoRecolhida: boolean;
   /** caminho base do evento, ex.: `/organizador/eventos/:id` */
@@ -97,8 +142,6 @@ export function EstruturadorAreas({
   dias: DiaEvento[];
   /** minutos por luta em vigor (padrão CBJJ + o que o organizador mudou) */
   tempos: Record<ChaveTempo, number>;
-  /** dias distintos do evento (para o modo "Por dia") */
-  diasDistintos: DiaDistinto[];
   /** dimensões presentes na grade (classes/sexos/faixas) para os filtros por dia */
   dimensoes: DimensoesGrade;
   /** categorias enxutas (para casar os filtros no cliente) */
@@ -111,11 +154,6 @@ export function EstruturadorAreas({
   erro?: string;
   estruturar: (formData: FormData) => void | Promise<void>;
   estruturarPorDia: (formData: FormData) => void | Promise<void>;
-  salvarDias: (formData: FormData) => void | Promise<void>;
-  /** persiste a tabela de tempos de luta do evento */
-  salvarTempos: (formData: FormData) => void | Promise<void>;
-  /** persiste a ordem do dia (classes de idade) escolhida pelo organizador */
-  salvarOrdemClasses: (classeIds: string[]) => void | Promise<void>;
   /** persiste a ordem manual das lutas de uma área (drag-and-drop) */
   reordenar: (areaId: string, lutaIds: string[]) => void | Promise<void>;
   /** leva uma luta para outro tatame (com a ordem final do destino) */
@@ -143,11 +181,44 @@ export function EstruturadorAreas({
   // com as lutas já distribuídas o assistente começa recolhido (vira resumo)
   const [assistenteAberto, setAssistenteAberto] = useState(!estruturado);
   const [buscaAberta, setBuscaAberta] = useState(false);
+
+  // ---- RASCUNHO DO ASSISTENTE -------------------------------------------
+  // Os passos editam este rascunho, não o banco: mexer nos dias muda na hora
+  // o que os outros passos (e a recomendação) enxergam. Só o "Estruturar" do
+  // último passo grava — de uma vez, tudo o que passou pelo assistente.
+  const [diasDraft, setDiasDraft] = useState<DiaEvento[]>(dias);
+  const [temposDraft, setTemposDraft] =
+    useState<Record<ChaveTempo, number>>(tempos);
+  const [ordemDraft, setOrdemDraft] = useState<string[] | null>(ordemClasses);
+
+  // dias distintos saem do rascunho: adicionar um dia no passo 1 já cria a
+  // coluna dele no passo "Categorias por dia"
+  const diasDistintos = useMemo(() => diasDistintosDoRascunho(diasDraft), [diasDraft]);
+
   // filtros do modo "Por dia" moram aqui: o assistente mostra os filtros num
   // passo e o botão de estruturar em outro
-  const [filtros, setFiltros] = useState<FiltroState[]>(() =>
+  const [filtrosBrutos, setFiltrosBrutos] = useState<FiltroState[]>(() =>
     filtrosVazios(diasDistintos.length),
   );
+  // um dia a mais/a menos no rascunho muda o nº de colunas do passo "Por dia".
+  // O alinhamento é derivado (não um efeito): o que já foi marcado nos dias
+  // que continuam existindo é preservado, e o dia novo entra vazio.
+  const alinhar = (fs: FiltroState[], n: number) =>
+    fs.length === n
+      ? fs
+      : Array.from({ length: n }, (_, i) => fs[i] ?? filtrosVazios(1)[0]);
+  const filtros = useMemo(
+    () => alinhar(filtrosBrutos, diasDistintos.length),
+    [filtrosBrutos, diasDistintos.length],
+  );
+  const setFiltros: React.Dispatch<React.SetStateAction<FiltroState[]>> = (
+    acao,
+  ) =>
+    setFiltrosBrutos((atuais) =>
+      typeof acao === "function"
+        ? acao(alinhar(atuais, diasDistintos.length))
+        : acao,
+    );
 
   const dic = useDic();
   const ta = dic.admin.areas;
@@ -160,10 +231,10 @@ export function EstruturadorAreas({
   const temCategorias = totalCategorias > 0;
 
   // resumo de cada passo (aparece na trilha e no modo recolhido)
-  const diasDistintosN = new Set(dias.map((d) => d.data.slice(0, 10))).size;
-  const resumoDias = `${diasDistintosN} ${diasDistintosN === 1 ? ta.assistenteResumoDia : ta.assistenteResumoDias} · ${dias[0]?.inicio ?? ""}–${dias[dias.length - 1]?.fim ?? ""}`;
+  const diasDistintosN = diasDistintos.length;
+  const resumoDias = `${diasDistintosN} ${diasDistintosN === 1 ? ta.assistenteResumoDia : ta.assistenteResumoDias} · ${diasDraft[0]?.inicio ?? ""}–${diasDraft[diasDraft.length - 1]?.fim ?? ""}`;
   const ajustados = CHAVES_TEMPO.filter(
-    (k) => tempos[k] !== TEMPOS_PADRAO[k],
+    (k) => temposDraft[k] !== TEMPOS_PADRAO[k],
   ).length;
   const resumoTempos = ajustados
     ? `${ajustados} ${ta.assistenteResumoAjustados}`
@@ -174,11 +245,34 @@ export function EstruturadorAreas({
     categoriasFiltro,
   ).atribuidas;
 
+  // RECOMENDAÇÃO AO VIVO: refeita a cada mexida no assistente (período, tempo
+  // de luta, ordem do dia e nº de tatames), sem ida ao servidor
+  const recomendacao = useMemo(
+    () =>
+      recomendarAreasDe(
+        categoriasRecomendacao,
+        janelasDoRascunho(diasDraft),
+        temposDraft,
+        ordemDraft,
+        nValido ? nInt : null,
+      ),
+    [categoriasRecomendacao, diasDraft, temposDraft, ordemDraft, nValido, nInt],
+  );
+
+  // algum passo difere do que está no banco? (avisa que falta estruturar)
+  const rascunhoSujo = useMemo(
+    () =>
+      JSON.stringify(diasDraft) !== JSON.stringify(dias) ||
+      CHAVES_TEMPO.some((k) => temposDraft[k] !== tempos[k]) ||
+      JSON.stringify(ordemDraft ?? []) !== JSON.stringify(ordemClasses ?? []),
+    [diasDraft, dias, temposDraft, tempos, ordemDraft, ordemClasses],
+  );
+
   const gruposTotal = useMemo(() => contarGrupos(categorias), [categorias]);
   // ordem do dia em vigor: a que o organizador salvou ou a regra padrão
   const classesDoFunil = useMemo(
-    () => classesEmOrdem(categorias, ordemClasses),
-    [categorias, ordemClasses],
+    () => classesEmOrdem(categorias, ordemDraft),
+    [categorias, ordemDraft],
   );
   const classesPadrao = useMemo(
     () => classesEmOrdem(categorias).map((c) => c.id),
@@ -256,28 +350,17 @@ export function EstruturadorAreas({
             titulo: ta.assistenteDias,
             resumo: resumoDias,
             conteudo: (
-              <form
-                id="form-dias"
-                action={salvarDias}
-                className="flex flex-col gap-4"
-              >
+              <div className="flex flex-col gap-4">
                 <p className="max-w-2xl font-cond text-[13px] uppercase tracking-[0.02em] text-muted-3">
                   {ta.diasNota}
                 </p>
                 <CamposDiasEvento
                   labelCls="disp text-[22px]"
                   defaultDias={dias}
+                  onChange={setDiasDraft}
                   semTitulo
                 />
-              </form>
-            ),
-            acao: (
-              <BotaoAcaoBruto
-                form="form-dias"
-                className="inline-flex -skew-x-9 items-center border border-white/16 px-5 py-2.5 font-cond text-[14px] font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-brand/50 hover:text-brand-soft"
-              >
-                <span className="inline-block skew-x-9">{ta.salvarDias}</span>
-              </BotaoAcaoBruto>
+              </div>
             ),
           },
           {
@@ -285,21 +368,10 @@ export function EstruturadorAreas({
             titulo: ta.assistenteTempo,
             resumo: resumoTempos,
             conteudo: (
-              <form
-                id="form-tempos"
-                action={salvarTempos}
-                className="flex flex-col gap-4"
-              >
-                <CamposTemposLuta valores={tempos} />
-              </form>
-            ),
-            acao: (
-              <BotaoAcaoBruto
-                form="form-tempos"
-                className="inline-flex -skew-x-9 items-center border border-white/16 px-5 py-2.5 font-cond text-[14px] font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-brand/50 hover:text-brand-soft"
-              >
-                <span className="inline-block skew-x-9">{ta.temposSalvar}</span>
-              </BotaoAcaoBruto>
+              <CamposTemposLuta
+                valores={temposDraft}
+                onChange={setTemposDraft}
+              />
             ),
           },
           {
@@ -358,15 +430,15 @@ export function EstruturadorAreas({
           {
             id: "ordem",
             titulo: ta.assistenteOrdem,
-            resumo: ordemClasses?.length
+            resumo: ordemDraft?.length
               ? ta.assistenteResumoOrdemPropria
               : ta.extremosMeio,
             conteudo: (
               <EditorOrdemClasses
                 classes={classesDoFunil}
                 ordemPadrao={classesPadrao}
-                personalizada={Boolean(ordemClasses?.length)}
-                salvar={salvarOrdemClasses}
+                personalizada={Boolean(ordemDraft?.length)}
+                salvar={setOrdemDraft}
               />
             ),
           },
@@ -394,6 +466,17 @@ export function EstruturadorAreas({
                     className="disp tnum w-[136px] border border-white/14 bg-background px-4 py-1 text-[64px] leading-none text-foreground focus:border-brand focus:outline-none"
                   />
                 </div>
+                <div className="w-full max-w-xl">
+                  <p className="font-cond text-[13px] uppercase leading-relaxed tracking-[0.02em] text-muted-3">
+                    {ta.rascunhoNota}
+                  </p>
+                  {rascunhoSujo && (
+                    <span className="mt-2 inline-flex items-center gap-2 border border-brand/40 bg-brand/10 px-2.5 py-1 font-cond text-[12px] font-semibold uppercase tracking-[0.06em] text-brand-soft">
+                      <span className="h-1.5 w-1.5 -skew-x-9 bg-brand" />
+                      {ta.rascunhoPendente}
+                    </span>
+                  )}
+                </div>
                 <div>
                   <div className="font-cond text-[13px] font-semibold uppercase tracking-[0.1em] text-muted-3">
                     {ta.categoriasCarregadas}
@@ -411,6 +494,11 @@ export function EstruturadorAreas({
             acao:
               modo === "auto" ? (
                 <form action={estruturar}>
+                  <CamposRascunho
+                    dias={diasDraft}
+                    tempos={temposDraft}
+                    ordemClasses={ordemDraft}
+                  />
                   <input
                     type="hidden"
                     name="numAreas"
@@ -427,6 +515,11 @@ export function EstruturadorAreas({
                 </form>
               ) : (
                 <form action={estruturarPorDia}>
+                  <CamposRascunho
+                    dias={diasDraft}
+                    tempos={temposDraft}
+                    ordemClasses={ordemDraft}
+                  />
                   <input
                     type="hidden"
                     name="numAreas"
