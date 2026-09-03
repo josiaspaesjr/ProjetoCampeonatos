@@ -1165,6 +1165,8 @@ export const es: Dicionario = {
       naoCabeTempo: " Amplía los horarios de los días o agrega otro día.",
       recomendacao: {
         titulo: "Tatamis recomendados",
+        ocultar: "ocultar",
+        mostrar: "mostrar",
         tatameIdeal: "tatami ideal",
         tatamesIdeais: "tatamis ideales",
         unidade: "tatami",

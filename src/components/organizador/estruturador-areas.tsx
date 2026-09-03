@@ -60,6 +60,7 @@ export function EstruturadorAreas({
   categorias,
   numAreasInicial,
   recomendacao,
+  recomendacaoRecolhida,
   base,
   eventoNome,
   cronograma,
@@ -84,6 +85,8 @@ export function EstruturadorAreas({
   numAreasInicial: number | null;
   /** quantos tatames as lutas previstas pedem; null sem grade ou sem período */
   recomendacao: RecomendacaoAreas | null;
+  /** preferência salva: começar com a recomendação recolhida */
+  recomendacaoRecolhida: boolean;
   /** caminho base do evento, ex.: `/organizador/eventos/:id` */
   base: string;
   /** nome do evento (título da programação imprimível) */
@@ -452,7 +455,12 @@ export function EstruturadorAreas({
       />
 
       {/* RECOMENDAÇÃO DE TATAMES — vale antes e depois de estruturar */}
-      {recomendacao && <RecomendacaoAreasWidget dados={recomendacao} />}
+      {recomendacao && (
+        <RecomendacaoAreasWidget
+          dados={recomendacao}
+          recolhidoInicial={recomendacaoRecolhida}
+        />
+      )}
 
       {estruturado ? (
         <>

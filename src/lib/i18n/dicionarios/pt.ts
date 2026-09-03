@@ -1171,6 +1171,8 @@ export const pt = {
       naoCabeTempo: " Amplie os horários dos dias ou adicione mais um dia.",
       recomendacao: {
         titulo: "Tatames recomendados",
+        ocultar: "ocultar",
+        mostrar: "mostrar",
         tatameIdeal: "tatame ideal",
         tatamesIdeais: "tatames ideais",
         unidade: "tatame",

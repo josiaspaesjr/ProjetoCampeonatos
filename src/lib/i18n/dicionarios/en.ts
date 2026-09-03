@@ -1163,6 +1163,8 @@ export const en: Dicionario = {
       naoCabeTempo: " Extend the daily times or add another day.",
       recomendacao: {
         titulo: "Recommended mats",
+        ocultar: "hide",
+        mostrar: "show",
         tatameIdeal: "ideal mat",
         tatamesIdeais: "ideal mats",
         unidade: "mat",

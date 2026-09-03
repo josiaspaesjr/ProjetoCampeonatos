@@ -1,3 +1,4 @@
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
 import { getDb } from "@/db";
@@ -11,6 +12,7 @@ import {
 import { CLASSES_IDADE, FAIXAS } from "@/lib/categorias/cbjj";
 import { montarCronogramaDoEvento } from "@/lib/cronograma/cronograma-areas";
 import { recomendarAreas } from "@/lib/cronograma/recomendacao";
+import { COOKIE_RECOMENDACAO_AREAS } from "@/components/organizador/recomendacao-config";
 import { minutosParaHHMM } from "@/lib/cronograma/dias";
 import {
   EstruturadorAreas,
@@ -75,6 +77,9 @@ export default async function PaginaAreas({
   // quantos tatames as lutas previstas pedem para caber no período do evento
   const numAreasAtual = evento.numAreas ?? (todasAreas.length || null);
   const recomendacao = await recomendarAreas(db, evento, cats, numAreasAtual);
+  // preferência de recolhido: semeada no servidor para não piscar aberto
+  const recomendacaoRecolhida =
+    (await cookies()).get(COOKIE_RECOMENDACAO_AREAS)?.value === "1";
 
   // dias configurados (ou uma linha default para o organizador preencher)
   const dias = diasRows.length
@@ -124,6 +129,7 @@ export default async function PaginaAreas({
       categorias={categoriasView}
       numAreasInicial={numAreasAtual}
       recomendacao={recomendacao}
+      recomendacaoRecolhida={recomendacaoRecolhida}
       base={`/organizador/eventos/${id}`}
       eventoNome={evento.nome}
       cronograma={cronograma}

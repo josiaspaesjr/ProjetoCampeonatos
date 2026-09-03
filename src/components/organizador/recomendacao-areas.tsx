@@ -1,10 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import {
   situacaoRecomendacao,
   type RecomendacaoAreas,
 } from "@/lib/cronograma/recomendacao";
 import { formatarDuracaoSegundos } from "@/lib/cronograma/dias";
+import { COOKIE_RECOMENDACAO_AREAS } from "@/components/organizador/recomendacao-config";
 import { useDic } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 
@@ -15,9 +17,31 @@ type Tom = "ok" | "alerta" | "neutro";
  * janela de cada dia (início → término) e recomenda o menor nº de tatames em
  * que tudo cabe. Sai do mesmo motor que valida o "Estruturar", então o número
  * daqui é exatamente o que faz o gerador passar.
+ *
+ * Dá para recolher: quem já decidiu o nº de tatames não precisa da conta toda
+ * ocupando o topo da tela. Fica só a faixa do título com o botão de mostrar, e
+ * a escolha é lembrada em cookie (semeada no servidor, sem flash).
  */
-export function RecomendacaoAreasWidget({ dados }: { dados: RecomendacaoAreas }) {
+export function RecomendacaoAreasWidget({
+  dados,
+  recolhidoInicial = false,
+}: {
+  dados: RecomendacaoAreas;
+  /** preferência salva do organizador (cookie lido no servidor) */
+  recolhidoInicial?: boolean;
+}) {
   const t = useDic().admin.areas.recomendacao;
+  const [recolhido, definirRecolhido] = useState(recolhidoInicial);
+
+  const alternar = () => {
+    const v = !recolhido;
+    definirRecolhido(v);
+    try {
+      document.cookie = `${COOKIE_RECOMENDACAO_AREAS}=${v ? "1" : "0"};path=/;max-age=31536000;samesite=lax`;
+    } catch {
+      /* cookie indisponível */
+    }
+  };
   const {
     ideal,
     atual,
@@ -85,65 +109,84 @@ export function RecomendacaoAreasWidget({ dados }: { dados: RecomendacaoAreas })
   const pct = Math.min(100, Math.round(ocupacaoNoIdeal * 100));
 
   return (
-    <section className="relative border border-white/10 bg-surface px-6 py-5">
+    <section
+      className={cn(
+        "relative border border-white/10 bg-surface px-6",
+        recolhido ? "py-3" : "py-5",
+      )}
+    >
       <span className="absolute inset-y-0 left-0 w-[3px] bg-brand" />
 
-      <div className="font-cond text-[12px] font-semibold uppercase tracking-[0.1em] text-muted-3">
-        {t.titulo}
+      <div className="flex items-center justify-between gap-4">
+        <div className="font-cond text-[12px] font-semibold uppercase tracking-[0.1em] text-muted-3">
+          {t.titulo}
+        </div>
+        <button
+          type="button"
+          onClick={alternar}
+          aria-expanded={!recolhido}
+          className="shrink-0 cursor-pointer font-cond text-[12px] uppercase tracking-[0.06em] text-muted-3 transition-colors hover:text-foreground"
+        >
+          {recolhido ? `${t.mostrar} ▾` : `${t.ocultar} ▴`}
+        </button>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-start gap-x-8 gap-y-4">
-        {/* NÚMERO RECOMENDADO — some quando não há número a dar */}
-        {temNumero && (
-          <div className="shrink-0">
-            <div className="disp tnum text-[52px] leading-none text-brand">
-              {ideal}
-            </div>
-            <div className="mt-1 font-cond text-[13px] uppercase tracking-[0.06em] text-muted-2">
-              {ideal === 1 ? t.tatameIdeal : t.tatamesIdeais}
-            </div>
-          </div>
-        )}
-
-        {/* RECADO + OCUPAÇÃO */}
-        <div className="min-w-[240px] flex-1">
-          <p className={cn("text-sm leading-snug", corTom)}>{recado}</p>
-
+      {recolhido ? null : (
+        <>
+        <div className="mt-3 flex flex-wrap items-start gap-x-8 gap-y-4">
+          {/* NÚMERO RECOMENDADO — some quando não há número a dar */}
           {temNumero && (
-            <div className="mt-3">
-              <div
-                className="h-1.5 w-full overflow-hidden bg-white/10"
-                role="img"
-                aria-label={`${pct}% ${t.ocupacaoLabel}`}
-              >
-                <div
-                  className={cn(
-                    "h-full",
-                    pct >= 90 ? "bg-warning" : "bg-brand",
-                  )}
-                  style={{ width: `${Math.max(2, pct)}%` }}
-                />
+            <div className="shrink-0">
+              <div className="disp tnum text-[52px] leading-none text-brand">
+                {ideal}
               </div>
-              <p className="mt-1.5 font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
-                {pct}% {t.ocupacaoLabel}
-              </p>
+              <div className="mt-1 font-cond text-[13px] uppercase tracking-[0.06em] text-muted-2">
+                {ideal === 1 ? t.tatameIdeal : t.tatamesIdeais}
+              </div>
             </div>
           )}
-        </div>
-      </div>
 
-      {/* BASE DO CÁLCULO */}
-      <dl className="mt-5 flex flex-wrap gap-x-7 gap-y-2 border-t border-white/8 pt-3.5 font-cond text-[12px] uppercase tracking-[0.04em]">
-        <Fato rotulo={t.lutasPrevistas} valor={String(lutasPrevistas)} />
-        <Fato
-          rotulo={t.tempoDeLuta}
-          valor={formatarDuracaoSegundos(demandaTotalSegundos)}
-        />
-        <Fato
-          rotulo={t.janelaPorTatame}
-          valor={formatarDuracaoSegundos(janelaPorAreaSegundos)}
-        />
-      </dl>
+          {/* RECADO + OCUPAÇÃO */}
+          <div className="min-w-[240px] flex-1">
+            <p className={cn("text-sm leading-snug", corTom)}>{recado}</p>
+
+            {temNumero && (
+              <div className="mt-3">
+                <div
+                  className="h-1.5 w-full overflow-hidden bg-white/10"
+                  role="img"
+                  aria-label={`${pct}% ${t.ocupacaoLabel}`}
+                >
+                  <div
+                    className={cn(
+                      "h-full",
+                      pct >= 90 ? "bg-warning" : "bg-brand",
+                    )}
+                    style={{ width: `${Math.max(2, pct)}%` }}
+                  />
+                </div>
+                <p className="mt-1.5 font-cond text-[12px] uppercase tracking-[0.04em] text-muted-3">
+                  {pct}% {t.ocupacaoLabel}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* BASE DO CÁLCULO */}
+        <dl className="mt-5 flex flex-wrap gap-x-7 gap-y-2 border-t border-white/8 pt-3.5 font-cond text-[12px] uppercase tracking-[0.04em]">
+          <Fato rotulo={t.lutasPrevistas} valor={String(lutasPrevistas)} />
+          <Fato
+            rotulo={t.tempoDeLuta}
+            valor={formatarDuracaoSegundos(demandaTotalSegundos)}
+          />
+          <Fato
+            rotulo={t.janelaPorTatame}
+            valor={formatarDuracaoSegundos(janelaPorAreaSegundos)}
+          />
+        </dl>
+        </>
+      )}
     </section>
   );
 }
