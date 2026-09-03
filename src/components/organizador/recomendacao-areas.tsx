@@ -142,7 +142,14 @@ export function RecomendacaoAreasWidget({
           {/* NÚMERO RECOMENDADO — some quando não há número a dar */}
           {temNumero && (
             <div className="shrink-0">
-              <div className="disp tnum text-[52px] leading-none text-brand">
+              {/* verde quando os tatames de hoje já dão conta; vermelho
+                  enquanto for um alvo a alcançar (faltam, ou nenhum definido) */}
+              <div
+                className={cn(
+                  "disp tnum text-[52px] leading-none",
+                  tom === "ok" ? "text-success" : "text-brand",
+                )}
+              >
                 {ideal}
               </div>
               <div className="mt-1 font-cond text-[13px] uppercase tracking-[0.06em] text-muted-2">
