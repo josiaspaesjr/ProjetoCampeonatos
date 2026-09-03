@@ -28,6 +28,27 @@ describe("classes infantis", () => {
     expect(faixasDe("infanto_juvenil")).not.toContain("azul");
   });
 
+  it("idade mínima de cada faixa adulta (tabela de graduação IBJJF)", () => {
+    const faixasDe = (id: string) =>
+      CLASSES_IDADE.find((c) => c.id === id)!.faixas;
+    // azul E roxa liberam aos 16 — juvenil (16-17) tem as duas
+    expect(faixasDe("juvenil")).toContain("azul");
+    expect(faixasDe("juvenil")).toContain("roxa");
+    // marrom só aos 18 e preta aos 19: fora do juvenil
+    expect(faixasDe("juvenil")).not.toContain("marrom");
+    expect(faixasDe("juvenil")).not.toContain("preta");
+    // juvenil não herda faixa infantil
+    expect(faixasDe("juvenil")).not.toContain("verde");
+    // adulto (18+) tem a régua inteira
+    expect(faixasDe("adulto")).toEqual([
+      "branca",
+      "azul",
+      "roxa",
+      "marrom",
+      "preta",
+    ]);
+  });
+
   it("tabelas de peso kids são crescentes e terminam sem limite", () => {
     for (const classe of ["pre_mirim", "mirim", "infantil", "infanto_juvenil"]) {
       const pesos = tabelaPesos(classe, "masculino");

@@ -56,7 +56,7 @@ export const CLASSES_IDADE: ClasseIdade[] = [
   { id: "mirim", nome: "Mirim", idadeMin: 7, idadeMax: 9, faixas: ["branca", "cinza", "amarela"] },
   { id: "infantil", nome: "Infantil", idadeMin: 10, idadeMax: 12, faixas: ["branca", "cinza", "amarela", "laranja"] },
   { id: "infanto_juvenil", nome: "Infanto-Juvenil", idadeMin: 13, idadeMax: 15, faixas: ["branca", "cinza", "amarela", "laranja", "verde"] },
-  { id: "juvenil", nome: "Juvenil", idadeMin: 16, idadeMax: 17, faixas: ["branca", "azul"] },
+  { id: "juvenil", nome: "Juvenil", idadeMin: 16, idadeMax: 17, faixas: ["branca", "azul", "roxa"] },
   { id: "adulto", nome: "Adulto", idadeMin: 18, idadeMax: null, faixas: ["branca", "azul", "roxa", "marrom", "preta"] },
   { id: "master1", nome: "Master 1", idadeMin: 30, idadeMax: 35, faixas: ["branca", "azul", "roxa", "marrom", "preta"] },
   { id: "master2", nome: "Master 2", idadeMin: 36, idadeMax: 40, faixas: ["branca", "azul", "roxa", "marrom", "preta"] },
