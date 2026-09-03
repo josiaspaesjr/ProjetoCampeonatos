@@ -10,7 +10,7 @@ import {
   type Faixa,
   type Sexo,
 } from "@/lib/categorias/cbjj";
-import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { fundoDaFaixa } from "@/lib/categorias/faixa-cores";
 import { ordenarCategoriasExibicao } from "@/lib/categorias/distribuicao-areas";
 import { GRUPOS_PRECO_PRESETS } from "@/lib/lotes/preco";
 import { GeradorGrade } from "@/components/organizador/gerador-grade";
@@ -176,7 +176,7 @@ export default async function CategoriasEvento({
                         <span className="flex w-[104px] shrink-0 items-center gap-2 font-cond text-sm font-semibold uppercase tracking-[0.03em]">
                           <span
                             className="h-2.5 w-2.5 shrink-0 -skew-x-9 border border-white/25"
-                            style={{ background: corDaFaixa(fg.chave || null) }}
+                            style={{ background: fundoDaFaixa(fg.chave || null) }}
                           />
                           {fg.chave
                             ? (dic.evento.faixaNomes[

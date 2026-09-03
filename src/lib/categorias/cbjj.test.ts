@@ -39,14 +39,44 @@ describe("classes infantis", () => {
     expect(faixasDe("juvenil")).not.toContain("preta");
     // juvenil não herda faixa infantil
     expect(faixasDe("juvenil")).not.toContain("verde");
-    // adulto (18+) tem a régua inteira
+    // adulto (18+) não tem teto de idade: chega às graduações acima da preta
     expect(faixasDe("adulto")).toEqual([
       "branca",
       "azul",
       "roxa",
       "marrom",
       "preta",
+      "vermelha_preta",
+      "vermelha_branca",
+      "vermelha",
     ]);
+  });
+
+  it("bicolores entram no nome por extenso, sem o underscore do id", () => {
+    const grade = gerarGrade({
+      classes: ["master7"],
+      sexos: ["masculino"],
+      faixas: ["vermelha_preta", "vermelha_branca", "vermelha"],
+      incluirAbsoluto: true,
+    });
+    expect(grade.length).toBeGreaterThan(0);
+    for (const c of grade) expect(c.nome).not.toContain("_");
+    expect(grade.some((c) => c.nome.includes("Vermelha e Preta"))).toBe(true);
+    expect(grade.some((c) => c.nome.includes("Vermelha e Branca"))).toBe(true);
+  });
+
+  it("graduações acima da preta só nas classes que alcançam a idade mínima", () => {
+    const faixasDe = (id: string) =>
+      CLASSES_IDADE.find((c) => c.id === id)!.faixas;
+    // coral 7º grau: 50 anos — master 4 (46-50) já alcança
+    expect(faixasDe("master3")).not.toContain("vermelha_preta");
+    expect(faixasDe("master4")).toContain("vermelha_preta");
+    // coral 8º grau: 57 anos — entra no master 6 (56-60), não antes
+    expect(faixasDe("master5")).not.toContain("vermelha_branca");
+    expect(faixasDe("master6")).toContain("vermelha_branca");
+    // vermelha 9º grau: 67 anos — só no master 7 (61+)
+    expect(faixasDe("master6")).not.toContain("vermelha");
+    expect(faixasDe("master7")).toContain("vermelha");
   });
 
   it("tabelas de peso kids são crescentes e terminam sem limite", () => {

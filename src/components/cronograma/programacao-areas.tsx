@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { createContext, Fragment, useContext } from "react";
 import { cn } from "@/lib/utils";
-import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { fundoDaFaixa } from "@/lib/categorias/faixa-cores";
 import { useDic } from "@/lib/i18n/client";
 import type {
   AreaCron,
@@ -209,7 +209,7 @@ function BlocoCategoria({ cat }: { cat: CategoriaCron }) {
           <div className="flex min-w-0 items-start gap-2">
             <span
               className="mt-[3px] h-3 w-3 shrink-0 -skew-x-9 border border-white/25"
-              style={{ background: corDaFaixa(cat.faixa) }}
+              style={{ background: fundoDaFaixa(cat.faixa) }}
             />
             <div className="min-w-0">
               <div className="truncate font-cond text-sm font-bold uppercase tracking-[0.02em] text-white">

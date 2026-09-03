@@ -1,7 +1,7 @@
 "use client";
 
 import { useContext, useEffect, useMemo, useRef, useState } from "react";
-import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { fundoDaFaixa } from "@/lib/categorias/faixa-cores";
 import { useDic } from "@/lib/i18n/client";
 import {
   AbrirLutaCtx,
@@ -282,7 +282,7 @@ function Contexto({
     <div className="flex min-w-0 items-start gap-2">
       <span
         className="mt-1 h-3 w-3 shrink-0 -skew-x-9 border border-white/25"
-        style={{ background: corDaFaixa(faixa) }}
+        style={{ background: fundoDaFaixa(faixa) }}
       />
       <div className="min-w-0">
         <div className="truncate font-cond text-[13px] font-semibold uppercase tracking-[0.02em] text-foreground">

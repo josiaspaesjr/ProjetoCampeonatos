@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { cn } from "@/lib/utils";
-import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { fundoDaFaixa } from "@/lib/categorias/faixa-cores";
 import { useDic } from "@/lib/i18n/client";
 
 /** categoria enxuta para casar os filtros no cliente (contagem ao vivo) */
@@ -230,7 +230,7 @@ export function PainelPorDia({
                   >
                     <span
                       className="h-3 w-3 shrink-0 border border-white/25"
-                      style={{ background: corDaFaixa(f) }}
+                      style={{ background: fundoDaFaixa(f) }}
                     />
                     {nomeFaixa(f)}
                   </Chip>

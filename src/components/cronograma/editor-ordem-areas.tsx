@@ -2,7 +2,7 @@
 
 import { Fragment, useMemo, useState, useTransition } from "react";
 import { cn } from "@/lib/utils";
-import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { fundoDaFaixa } from "@/lib/categorias/faixa-cores";
 import { useDic } from "@/lib/i18n/client";
 import { Spinner } from "@/components/ui/botao-acao";
 import { useReordenavelAreas } from "@/lib/dnd/use-reordenavel-areas";
@@ -301,7 +301,7 @@ function ColunaEditavel({
                     <div className="flex min-w-0 items-center gap-1.5">
                       <span
                         className="h-2 w-2 shrink-0 -skew-x-9 border border-white/25"
-                        style={{ background: corDaFaixa(linha.faixa) }}
+                        style={{ background: fundoDaFaixa(linha.faixa) }}
                       />
                       <span className="truncate font-cond text-[10px] uppercase tracking-[0.04em] text-muted-2">
                         {linha.catTitulo}
@@ -346,7 +346,7 @@ function ColunaEditavel({
               >
                 <span
                   className="h-2 w-2 shrink-0 -skew-x-9 border border-white/25"
-                  style={{ background: corDaFaixa(c.faixa) }}
+                  style={{ background: fundoDaFaixa(c.faixa) }}
                 />
                 <span className="truncate">{c.titulo}</span>
               </li>
@@ -467,7 +467,7 @@ function MenuMoverDivisao({
                     >
                       <span
                         className="h-2.5 w-2.5 shrink-0 -skew-x-9 border border-white/25"
-                        style={{ background: corDaFaixa(c.faixa) }}
+                        style={{ background: fundoDaFaixa(c.faixa) }}
                       />
                       <span className="min-w-0 flex-1 truncate font-cond text-[12px] uppercase tracking-[0.02em] text-text-2">
                         {c.titulo}

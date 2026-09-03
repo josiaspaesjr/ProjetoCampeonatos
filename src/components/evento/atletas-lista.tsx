@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { fundoDaFaixa } from "@/lib/categorias/faixa-cores";
 import { bandeiraPais, nomePaisLocale } from "@/lib/paises";
 import { useDic, useIdioma } from "@/lib/i18n/client";
 import type { Dicionario } from "@/lib/i18n/dicionarios/pt";
@@ -126,7 +126,7 @@ function montarHtmlImpressao({
         : "";
       return `<tr>
         <td class="num">${i + 1}</td>
-        <td class="nome"><span class="faixa" style="background:${corDaFaixa(a.faixa)}"></span>${escaparHtml(a.nome)}</td>
+        <td class="nome"><span class="faixa" style="background:${fundoDaFaixa(a.faixa)}"></span>${escaparHtml(a.nome)}</td>
         <td class="cat">${escaparHtml(a.divisao)}</td>
         ${celPais}
         <td><span class="badge ${ok ? "ok" : "pend"}">${escaparHtml(ok ? dat.statusConfirmado : dat.statusPendente)}</span></td>
@@ -489,7 +489,7 @@ function Grupo({
           ) : (
             <span
               className="mt-0.5 h-3.5 w-3.5 shrink-0 -skew-x-9 border border-white/25"
-              style={{ background: corDaFaixa(grupo.faixa) }}
+              style={{ background: fundoDaFaixa(grupo.faixa) }}
             />
           )}
           <div className="min-w-0">
@@ -631,7 +631,7 @@ function CardAtleta({
       <div className="flex min-w-0 items-center gap-2.5">
         <span
           className="h-3 w-3 shrink-0 -skew-x-9 border border-white/25"
-          style={{ background: corDaFaixa(atleta.faixa) }}
+          style={{ background: fundoDaFaixa(atleta.faixa) }}
         />
         <div className="min-w-0">
           <div className="truncate font-cond text-[15px] font-semibold uppercase tracking-[0.01em] text-foreground">

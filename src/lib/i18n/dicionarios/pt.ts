@@ -89,6 +89,9 @@ export const pt = {
       roxa: "Roxa",
       marrom: "Marrom",
       preta: "Preta",
+      vermelha_preta: "Vermelha e Preta",
+      vermelha_branca: "Vermelha e Branca",
+      vermelha: "Vermelha",
     },
   },
   catalogo: {

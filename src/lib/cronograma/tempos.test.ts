@@ -7,6 +7,18 @@ import {
   TEMPOS_PADRAO,
 } from "./tempos";
 
+describe("graduações acima da preta", () => {
+  it("coral e vermelha lutam o tempo da preta, não o do fallback", () => {
+    // são faixas-pretas graduadas: cair no fallback (azul) encurtaria a luta
+    for (const faixa of ["vermelha_preta", "vermelha_branca", "vermelha"]) {
+      expect(chaveDoTempo({ classeIdade: "master6", faixa })).toBe("preta");
+      expect(minutosDaCategoria({ classeIdade: "master6", faixa })).toBe(
+        TEMPOS_PADRAO.preta,
+      );
+    }
+  });
+});
+
 describe("chaveDoTempo", () => {
   it("kids valem pela classe de idade (qualquer faixa da classe)", () => {
     expect(chaveDoTempo({ classeIdade: "pre_mirim", faixa: "branca" })).toBe("pre_mirim");

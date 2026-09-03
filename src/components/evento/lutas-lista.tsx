@@ -2,7 +2,7 @@
 
 import { useContext, useEffect, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { fundoDaFaixa } from "@/lib/categorias/faixa-cores";
 import { useDic } from "@/lib/i18n/client";
 import { AutoRefresh } from "@/components/auto-refresh";
 import {
@@ -209,7 +209,7 @@ function LinhaLutaLista({
           <div className="flex items-center gap-1.5">
             <span
               className="h-2.5 w-2.5 shrink-0 -skew-x-9 border border-white/25"
-              style={{ background: corDaFaixa(faixaDoTitulo(catTitulo)) }}
+              style={{ background: fundoDaFaixa(faixaDoTitulo(catTitulo)) }}
             />
             <span className="truncate font-cond text-[11px] uppercase tracking-[0.03em] text-muted-3">
               {catTitulo} · {catSubtitulo}

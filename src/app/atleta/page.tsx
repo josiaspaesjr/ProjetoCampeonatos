@@ -7,7 +7,7 @@ import { academias } from "@/db/schema";
 import { Logo } from "@/components/marca";
 import { MenuUsuarioServer } from "@/components/menu-usuario-server";
 import { historicoDoAtleta, type Colocacao } from "@/lib/atleta";
-import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { corDaFaixa, fundoDaFaixa } from "@/lib/categorias/faixa-cores";
 import { dataCurta } from "@/lib/datas";
 import { perfilDeAcesso } from "@/lib/perfil-acesso";
 import { supabaseConfigurado } from "@/lib/supabase/server";
@@ -104,7 +104,7 @@ export default async function AreaAtleta() {
                 <span className="inline-flex items-center gap-2">
                   <span
                     className="h-2.5 w-2.5 -skew-x-9 border border-white/20"
-                    style={{ background: corDaFaixa(faixa) }}
+                    style={{ background: fundoDaFaixa(faixa) }}
                   />
                   Faixa {capitalizar(faixa)}
                 </span>

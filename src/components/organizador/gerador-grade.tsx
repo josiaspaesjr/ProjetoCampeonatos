@@ -11,7 +11,7 @@ import {
   type Faixa,
   type Sexo,
 } from "@/lib/categorias/cbjj";
-import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { fundoDaFaixa } from "@/lib/categorias/faixa-cores";
 import { useDic } from "@/lib/i18n/client";
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -370,7 +370,7 @@ export function GeradorGrade({
                   >
                     <span
                       className="h-3.5 w-3.5 shrink-0 border border-white/25"
-                      style={{ background: corDaFaixa(f) }}
+                      style={{ background: fundoDaFaixa(f) }}
                     />
                     {d.evento.faixaNomes[
                       f as keyof typeof d.evento.faixaNomes

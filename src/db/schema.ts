@@ -33,6 +33,10 @@ export const faixaEnum = pgEnum("faixa", [
   "roxa",
   "marrom",
   "preta",
+  // graduações acima da preta (IBJJF): coral 7º grau, coral 8º e vermelha 9º
+  "vermelha_preta",
+  "vermelha_branca",
+  "vermelha",
 ]);
 
 export const eventoStatusEnum = pgEnum("evento_status", [

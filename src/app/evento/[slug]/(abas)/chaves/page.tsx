@@ -6,7 +6,7 @@ import { categorias, chaves, inscricoes } from "@/db/schema";
 import { getEventoPublico } from "@/lib/evento-publico";
 import { getDicionario } from "@/lib/i18n/server";
 import { montarFilasDoEvento } from "@/lib/cronograma/fila";
-import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { fundoDaFaixa } from "@/lib/categorias/faixa-cores";
 import { compararCategoriasExibicao } from "@/lib/categorias/distribuicao-areas";
 
 export default async function AbaChaves({
@@ -113,7 +113,7 @@ export default async function AbaChaves({
               <div className="flex min-w-0 items-center gap-[13px]">
                 <span
                   className="h-[9px] w-[9px] shrink-0 -skew-x-9 border border-white/20"
-                  style={{ background: corDaFaixa(c.faixa) }}
+                  style={{ background: fundoDaFaixa(c.faixa) }}
                 />
                 <span className="truncate font-cond text-[18px] font-semibold uppercase tracking-[0.02em]">
                   {c.nome}

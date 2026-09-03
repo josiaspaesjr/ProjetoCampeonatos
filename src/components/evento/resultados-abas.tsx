@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import type { LinhaQuadro } from "@/lib/chaves/quadro-medalhas";
 import { MEDALHAS, type TipoMedalha } from "@/lib/chaves/medalhas";
-import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { fundoDaFaixa } from "@/lib/categorias/faixa-cores";
 import { useDic } from "@/lib/i18n/client";
 import { cn } from "@/lib/utils";
 
@@ -109,7 +109,7 @@ export function ResultadosAbas({
               <div className="flex min-w-0 items-center gap-[13px]">
                 <span
                   className="h-[9px] w-[9px] shrink-0 -skew-x-9 border border-white/20"
-                  style={{ background: corDaFaixa(p.faixa) }}
+                  style={{ background: fundoDaFaixa(p.faixa) }}
                 />
                 <span className="truncate font-cond text-[17px] font-semibold uppercase tracking-[0.02em]">
                   {p.nome}

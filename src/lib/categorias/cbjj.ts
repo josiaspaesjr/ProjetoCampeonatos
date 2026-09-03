@@ -28,7 +28,10 @@ export type Faixa =
   | "azul"
   | "roxa"
   | "marrom"
-  | "preta";
+  | "preta"
+  | "vermelha_preta"
+  | "vermelha_branca"
+  | "vermelha";
 
 /** ordem de exibição nos formulários (kids → adulto) */
 export const FAIXAS: Faixa[] = [
@@ -41,6 +44,9 @@ export const FAIXAS: Faixa[] = [
   "roxa",
   "marrom",
   "preta",
+  "vermelha_preta",
+  "vermelha_branca",
+  "vermelha",
 ];
 
 export interface ClasseIdade {
@@ -57,14 +63,54 @@ export const CLASSES_IDADE: ClasseIdade[] = [
   { id: "infantil", nome: "Infantil", idadeMin: 10, idadeMax: 12, faixas: ["branca", "cinza", "amarela", "laranja"] },
   { id: "infanto_juvenil", nome: "Infanto-Juvenil", idadeMin: 13, idadeMax: 15, faixas: ["branca", "cinza", "amarela", "laranja", "verde"] },
   { id: "juvenil", nome: "Juvenil", idadeMin: 16, idadeMax: 17, faixas: ["branca", "azul", "roxa"] },
-  { id: "adulto", nome: "Adulto", idadeMin: 18, idadeMax: null, faixas: ["branca", "azul", "roxa", "marrom", "preta"] },
+  { id: "adulto", nome: "Adulto", idadeMin: 18, idadeMax: null, faixas: [
+      "branca",
+      "azul",
+      "roxa",
+      "marrom",
+      "preta",
+      "vermelha_preta",
+      "vermelha_branca",
+      "vermelha",
+    ] },
   { id: "master1", nome: "Master 1", idadeMin: 30, idadeMax: 35, faixas: ["branca", "azul", "roxa", "marrom", "preta"] },
   { id: "master2", nome: "Master 2", idadeMin: 36, idadeMax: 40, faixas: ["branca", "azul", "roxa", "marrom", "preta"] },
   { id: "master3", nome: "Master 3", idadeMin: 41, idadeMax: 45, faixas: ["branca", "azul", "roxa", "marrom", "preta"] },
-  { id: "master4", nome: "Master 4", idadeMin: 46, idadeMax: 50, faixas: ["branca", "azul", "roxa", "marrom", "preta"] },
-  { id: "master5", nome: "Master 5", idadeMin: 51, idadeMax: 55, faixas: ["branca", "azul", "roxa", "marrom", "preta"] },
-  { id: "master6", nome: "Master 6", idadeMin: 56, idadeMax: 60, faixas: ["branca", "azul", "roxa", "marrom", "preta"] },
-  { id: "master7", nome: "Master 7", idadeMin: 61, idadeMax: null, faixas: ["branca", "azul", "roxa", "marrom", "preta"] },
+  { id: "master4", nome: "Master 4", idadeMin: 46, idadeMax: 50, faixas: [
+      "branca",
+      "azul",
+      "roxa",
+      "marrom",
+      "preta",
+      "vermelha_preta",
+    ] },
+  { id: "master5", nome: "Master 5", idadeMin: 51, idadeMax: 55, faixas: [
+      "branca",
+      "azul",
+      "roxa",
+      "marrom",
+      "preta",
+      "vermelha_preta",
+    ] },
+  { id: "master6", nome: "Master 6", idadeMin: 56, idadeMax: 60, faixas: [
+      "branca",
+      "azul",
+      "roxa",
+      "marrom",
+      "preta",
+      "vermelha_preta",
+      "vermelha_branca",
+    ] },
+  { id: "master7", nome: "Master 7", idadeMin: 61, idadeMax: null, faixas: [
+      "branca",
+      "azul",
+      "roxa",
+      "marrom",
+      "preta",
+      "vermelha_preta",
+      "vermelha_branca",
+      "vermelha",
+    ] },
 ];
 
 export interface CategoriaPeso {
@@ -276,6 +322,20 @@ function capitalizar(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
+/**
+ * Nome da faixa dentro do nome da categoria. Só as bicolores precisam de
+ * entrada: o resto capitaliza o próprio id. Sem isto, `vermelha_preta` viraria
+ * "Vermelha_preta" no nome que o atleta lê na chave e na programação.
+ */
+const NOME_FAIXA: Partial<Record<Faixa, string>> = {
+  vermelha_preta: "Vermelha e Preta",
+  vermelha_branca: "Vermelha e Branca",
+};
+
+function rotuloFaixa(faixa: Faixa): string {
+  return NOME_FAIXA[faixa] ?? capitalizar(faixa);
+}
+
 /** produto cartesiano classes × sexos × faixas × pesos da seleção */
 export function gerarGrade(selecao: SelecaoGrade): CategoriaGerada[] {
   const resultado: CategoriaGerada[] = [];
@@ -294,7 +354,7 @@ export function gerarGrade(selecao: SelecaoGrade): CategoriaGerada[] {
 
         for (const peso of tabelaPesos(classeId, sexo, comKimono)) {
           resultado.push({
-            nome: `${classe.nome} / ${rotuloSexo[sexo]} / ${capitalizar(faixa)} / ${peso.nome}${peso.limiteKg ? ` (até ${peso.limiteKg}kg)` : ""}${marcaNogi}`,
+            nome: `${classe.nome} / ${rotuloSexo[sexo]} / ${rotuloFaixa(faixa)} / ${peso.nome}${peso.limiteKg ? ` (até ${peso.limiteKg}kg)` : ""}${marcaNogi}`,
             tipo: "peso",
             sexo,
             faixa,
@@ -307,7 +367,7 @@ export function gerarGrade(selecao: SelecaoGrade): CategoriaGerada[] {
 
         if (selecao.incluirAbsoluto) {
           resultado.push({
-            nome: `${classe.nome} / ${rotuloSexo[sexo]} / ${capitalizar(faixa)} / Absoluto${marcaNogi}`,
+            nome: `${classe.nome} / ${rotuloSexo[sexo]} / ${rotuloFaixa(faixa)} / Absoluto${marcaNogi}`,
             tipo: "absoluto",
             sexo,
             faixa,

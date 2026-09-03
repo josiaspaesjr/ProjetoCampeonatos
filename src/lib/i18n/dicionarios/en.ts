@@ -90,6 +90,9 @@ export const en: Dicionario = {
       roxa: "Purple",
       marrom: "Brown",
       preta: "Black",
+      vermelha_preta: "Red and Black",
+      vermelha_branca: "Red and White",
+      vermelha: "Red",
     },
   },
   catalogo: {

@@ -1,4 +1,4 @@
-import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { fundoDaFaixa } from "@/lib/categorias/faixa-cores";
 import { duracaoDaCategoria, type FilaDaArea } from "@/lib/cronograma/fila";
 import { hora, rotuloCat } from "@/lib/cronograma/telao-format";
 import { cn } from "@/lib/utils";
@@ -106,7 +106,7 @@ export function AreaBoard({ fila, t }: { fila: FilaDaArea; t: Txt }) {
                     {/* SWATCH DA FAIXA */}
                     <span
                       className="hidden h-6 w-6 shrink-0 -skew-x-9 border border-white/25 md:block"
-                      style={{ background: corDaFaixa(i.categoria.faixa) }}
+                      style={{ background: fundoDaFaixa(i.categoria.faixa) }}
                     />
 
                     {/* ATLETAS + CATEGORIA */}

@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { areas, categorias, inscricoes } from "@/db/schema";
-import { corDaFaixa } from "@/lib/categorias/faixa-cores";
+import { fundoDaFaixa } from "@/lib/categorias/faixa-cores";
 import { dataHora, diaMes } from "@/lib/datas";
 import { secoesPreenchidas } from "@/lib/regulamento";
 import { getEventoPublico, statusDoEvento } from "@/lib/evento-publico";
@@ -141,7 +141,7 @@ export default async function AbaInformacoes({
                     key={f}
                     title={nomeFaixa[f] ?? f}
                     className="h-6 w-6 shrink-0 -skew-x-9 border border-white/25 md:h-7 md:w-7"
-                    style={{ background: corDaFaixa(f) }}
+                    style={{ background: fundoDaFaixa(f) }}
                   />
                 ))}
               </div>

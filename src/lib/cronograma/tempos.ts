@@ -59,6 +59,17 @@ export const TEMPOS_PADRAO: Record<ChaveTempo, number> = {
 /** linha usada quando a categoria não casa com nenhuma (faixa kids fora de classe kids) */
 const CHAVE_FALLBACK: ChaveTempo = "azul";
 
+/**
+ * Faixas sem linha própria que devem seguir outra. As graduações acima da preta
+ * (corais e vermelha) são faixas-pretas graduadas: lutam o tempo da preta, não
+ * o do fallback.
+ */
+const FAIXA_HERDA: Record<string, ChaveTempo> = {
+  vermelha_preta: "preta",
+  vermelha_branca: "preta",
+  vermelha: "preta",
+};
+
 /** limites aceitos ao salvar (minutos) — evita 0 e valores absurdos no encaixe */
 export const TEMPO_MIN_MINUTOS = 1;
 export const TEMPO_MAX_MINUTOS = 60;
@@ -81,7 +92,7 @@ export function chaveDoTempo(cat: CategoriaTempo): ChaveTempo {
   if (KIDS.has(classe)) return classe as ChaveTempo;
   const faixa = cat.faixa ?? "";
   if (FAIXAS.has(faixa)) return faixa as ChaveTempo;
-  return CHAVE_FALLBACK;
+  return FAIXA_HERDA[faixa] ?? CHAVE_FALLBACK;
 }
 
 /** minutos regulamentares da categoria: config do evento > tabela padrão */
