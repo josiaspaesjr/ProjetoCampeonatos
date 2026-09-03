@@ -31,7 +31,7 @@ export default async function PaginaInscricoes({
   const t = dic.admin.inscricoes;
   const ov = dic.admin.overview;
 
-  const evento = await eventoGerenciavel(db, id, usuario.id);
+  const evento = await eventoGerenciavel(db, id, usuario.id, "inscricoes");
   if (!evento) notFound();
 
   const [lista, cats] = await Promise.all([

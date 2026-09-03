@@ -65,9 +65,12 @@ function BotaoSalvar() {
 export function TopbarEvento({
   evento,
   editar,
+  podeEditar,
 }: {
   evento: EventoEditavel;
   editar: (formData: FormData) => Promise<void>;
+  /** false p/ colaborador sem a permissão "evento": some o botão e o drawer */
+  podeEditar: boolean;
 }) {
   const pathname = usePathname();
   const [aberto, setAberto] = useState(false);
@@ -138,17 +141,19 @@ export function TopbarEvento({
           >
             <span className="hidden sm:inline">{ed.verPagina}&nbsp;</span>↗
           </Link>
-          <button
-            onClick={abrir}
-            className="h-[38px] cursor-pointer border border-white/20 px-3 font-cond text-sm font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-white/40 md:px-3.5"
-          >
-            ✎<span className="hidden sm:inline">&nbsp;{ed.editarEvento}</span>
-          </button>
+          {podeEditar && (
+            <button
+              onClick={abrir}
+              className="h-[38px] cursor-pointer border border-white/20 px-3 font-cond text-sm font-semibold uppercase tracking-[0.04em] text-foreground transition-colors hover:border-white/40 md:px-3.5"
+            >
+              ✎<span className="hidden sm:inline">&nbsp;{ed.editarEvento}</span>
+            </button>
+          )}
         </div>
       </div>
 
       {/* DRAWER EDITAR EVENTO */}
-      {aberto && (
+      {aberto && podeEditar && (
         <>
           <div
             className="fixed inset-0 z-[100] bg-black/60 animate-[fade-in_0.2s_ease]"

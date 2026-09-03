@@ -45,7 +45,7 @@ export default async function PaginaAreas({
   const db = await getDb();
   const usuario = await getUsuarioAtual();
 
-  const evento = await eventoGerenciavel(db, id, usuario.id);
+  const evento = await eventoGerenciavel(db, id, usuario.id, "areas");
   if (!evento) notFound();
 
   const [cats, todasAreas, diasRows] = await Promise.all([

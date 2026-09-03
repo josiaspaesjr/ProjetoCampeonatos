@@ -23,7 +23,8 @@ import {
   type EventoEditavel,
 } from "@/components/organizador/topbar-evento";
 import { getUsuarioAtual } from "@/lib/auth";
-import { eventoGerenciavel, eventosGerenciaveis } from "@/lib/eventos/acesso";
+import { acessoAoEvento, eventosGerenciaveis } from "@/lib/eventos/acesso";
+import { temAcesso, type Secao } from "@/lib/eventos/permissoes";
 import { getDicionario } from "@/lib/i18n/server";
 import { dataCurta } from "@/lib/datas";
 import { editarEvento } from "../actions";
@@ -48,8 +49,10 @@ export default async function LayoutConsoleEvento({
   const sidebarColapsada =
     (await cookies()).get(COOKIE_SIDEBAR)?.value === "1";
 
-  const evento = await eventoGerenciavel(db, id, usuario.id);
-  if (!evento) notFound();
+  const acesso = await acessoAoEvento(db, id, usuario.id);
+  // sem acesso, ou colaborador sem nenhuma seção liberada: o evento não existe
+  if (!acesso || (!acesso.ehDono && acesso.permissoes.length === 0)) notFound();
+  const { evento, ehDono, permissoes } = acesso;
 
   const [meusEventos, cats, lts, ars, inscritas, diasRows] = await Promise.all([
     eventosGerenciaveis(db, usuario.id),
@@ -77,10 +80,13 @@ export default async function LayoutConsoleEvento({
     : [];
 
   const base = `/organizador/eventos/${id}`;
-  const itens: ItemNav[] = [
-    { id: "overview", rotulo: nav.overview, icone: "◧", href: base },
+  // cada item declara a permissão que exige; o menu mostra só o que a pessoa
+  // pode abrir (a checagem de verdade está em `eventoGerenciavel`)
+  const todosItens: (ItemNav & { secao: Secao })[] = [
+    { id: "overview", secao: "evento", rotulo: nav.overview, icone: "◧", href: base },
     {
       id: "inscricoes",
+      secao: "inscricoes",
       rotulo: nav.inscricoes,
       icone: "◇",
       href: `${base}/inscricoes`,
@@ -92,6 +98,7 @@ export default async function LayoutConsoleEvento({
     },
     {
       id: "lotes",
+      secao: "lotes",
       rotulo: nav.lotes,
       icone: "❏",
       href: `${base}/lotes`,
@@ -99,6 +106,7 @@ export default async function LayoutConsoleEvento({
     },
     {
       id: "categorias",
+      secao: "categorias",
       rotulo: nav.categorias,
       icone: "▦",
       href: `${base}/categorias`,
@@ -106,6 +114,7 @@ export default async function LayoutConsoleEvento({
     },
     {
       id: "chaves",
+      secao: "chaves",
       rotulo: nav.chaves,
       icone: "⑃",
       href: `${base}/chaves`,
@@ -113,14 +122,20 @@ export default async function LayoutConsoleEvento({
     },
     {
       id: "areas",
+      secao: "areas",
       rotulo: nav.areas,
       icone: "⬒",
       href: `${base}/areas`,
       badge: ars.length ? String(ars.length) : undefined,
     },
-    { id: "checkin", rotulo: nav.checkin, icone: "✔", href: `${base}/checkin` },
-    { id: "equipe", rotulo: nav.equipe, icone: "⧉", href: `${base}/equipe` },
+    { id: "checkin", secao: "checkin", rotulo: nav.checkin, icone: "✔", href: `${base}/checkin` },
   ];
+
+  const itens: ItemNav[] = todosItens.filter((i) => temAcesso(permissoes, i.secao));
+  // gerenciar a equipe é exclusivo do dono
+  if (ehDono) {
+    itens.push({ id: "equipe", rotulo: nav.equipe, icone: "⧉", href: `${base}/equipe` });
+  }
 
   const editavel: EventoEditavel = {
     id: evento.id,
@@ -165,7 +180,11 @@ export default async function LayoutConsoleEvento({
         }
       >
         <div className="flex min-w-0 flex-col">
-          <TopbarEvento evento={editavel} editar={editarEvento.bind(null, evento.id)} />
+          <TopbarEvento
+            evento={editavel}
+            editar={editarEvento.bind(null, evento.id)}
+            podeEditar={temAcesso(permissoes, "evento")}
+          />
           <div className="flex flex-col gap-8 px-6 pb-[90px] pt-8 md:px-10">
             {children}
           </div>

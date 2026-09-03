@@ -27,7 +27,7 @@ export default async function PaginaPlacar({
   const dic = await getDicionario();
   const p = dic.admin.placar;
 
-  const evento = await eventoGerenciavel(db, id, usuario.id);
+  const evento = await eventoGerenciavel(db, id, usuario.id, "areas");
   if (!evento) notFound();
 
   const fila = await montarFilaDaArea(db, areaId);

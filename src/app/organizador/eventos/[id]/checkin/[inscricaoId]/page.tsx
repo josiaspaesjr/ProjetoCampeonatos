@@ -23,7 +23,7 @@ export default async function PaginaCheckinAtleta({
   const dic = await getDicionario();
   const ca = dic.admin.checkinAtleta;
 
-  const evento = await eventoGerenciavel(db, id, usuario.id);
+  const evento = await eventoGerenciavel(db, id, usuario.id, "checkin");
   if (!evento) notFound();
 
   const inscricao = await db.query.inscricoes.findFirst({

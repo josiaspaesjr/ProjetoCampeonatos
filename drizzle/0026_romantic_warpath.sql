@@ -1,0 +1,1 @@
+ALTER TABLE "evento_colaboradores" ADD COLUMN "permissoes" jsonb;

@@ -15,6 +15,7 @@ import {
 } from "drizzle-orm/pg-core";
 import type { LoteVariacao } from "@/lib/lotes/preco";
 import type { TemposLuta } from "@/lib/cronograma/tempos";
+import type { Secao } from "@/lib/eventos/permissoes";
 
 // ---------------------------------------------------------------------------
 // Enums
@@ -235,6 +236,9 @@ export const eventoColaboradores = pgTable("evento_colaboradores", {
   // token secreto do link de convite
   token: text("token").notNull().unique(),
   status: colaboradorStatusEnum("status").notNull().default("pendente"),
+  // seções do console liberadas para esta pessoa (ver lib/eventos/permissoes).
+  // nulo = acesso total (convites anteriores às permissões)
+  permissoes: jsonb("permissoes").$type<Secao[]>(),
   convidadoPor: uuid("convidado_por")
     .notNull()
     .references(() => usuarios.id),

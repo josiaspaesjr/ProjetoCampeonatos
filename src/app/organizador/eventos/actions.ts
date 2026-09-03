@@ -19,6 +19,7 @@ import {
 } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
 import { ehDonoDoEvento, eventoGerenciavel } from "@/lib/eventos/acesso";
+import type { Secao } from "@/lib/eventos/permissoes";
 import { getDicionario } from "@/lib/i18n/server";
 import {
   gerarChaveParaCategoria,
@@ -64,10 +65,14 @@ function erroLote(eventoId: string, mensagem: string): never {
   );
 }
 
-async function eventoDoOrganizador(eventoId: string) {
+/**
+ * Contexto das actions do console. `secao` é a permissão que a ação exige —
+ * um colaborador só chega aqui se o dono liberou aquela parte do console.
+ */
+async function eventoDoOrganizador(eventoId: string, secao: Secao) {
   const db = await getDb();
   const usuario = await getUsuarioAtual();
-  const evento = await eventoGerenciavel(db, eventoId, usuario.id);
+  const evento = await eventoGerenciavel(db, eventoId, usuario.id, secao);
   if (!evento) throw new Error("Evento não encontrado ou sem permissão");
   return { db, usuario, evento };
 }
@@ -174,7 +179,7 @@ export async function criarEvento(formData: FormData) {
  * (encerre as inscrições em vez disso); a exclusão fica na auditoria.
  */
 export async function excluirEvento(eventoId: string) {
-  const { db, usuario, evento } = await eventoDoOrganizador(eventoId);
+  const { db, usuario, evento } = await eventoDoOrganizador(eventoId, "evento");
   // só o dono exclui o evento — colaboradores não
   if (!ehDonoDoEvento(evento, usuario.id)) {
     throw new Error("Apenas o dono do evento pode excluí-lo");
@@ -235,7 +240,7 @@ export async function excluirEvento(eventoId: string) {
  * regenera o slug da página pública, como no fluxo de criação.
  */
 export async function editarEvento(eventoId: string, formData: FormData) {
-  const { db, evento } = await eventoDoOrganizador(eventoId);
+  const { db, evento } = await eventoDoOrganizador(eventoId, "evento");
   const erros = (await getDicionario()).admin.erros;
 
   const nome = String(formData.get("nome") ?? "").trim();
@@ -303,7 +308,7 @@ export async function editarEvento(eventoId: string, formData: FormData) {
 }
 
 export async function gerarCategoriasCbjj(eventoId: string, formData: FormData) {
-  const { db, evento } = await eventoDoOrganizador(eventoId);
+  const { db, evento } = await eventoDoOrganizador(eventoId, "categorias");
   const erros = (await getDicionario()).admin.erros;
 
   // A modalidade do evento manda na tabela de peso: Gi → com kimono, No-Gi →
@@ -355,7 +360,7 @@ export async function gerarCategoriasCbjj(eventoId: string, formData: FormData) 
 }
 
 export async function excluirCategoria(eventoId: string, categoriaId: string) {
-  const { db } = await eventoDoOrganizador(eventoId);
+  const { db } = await eventoDoOrganizador(eventoId, "categorias");
   const erros = (await getDicionario()).admin.erros;
 
   const inscritos = await db.query.inscricoes.findMany({
@@ -376,7 +381,7 @@ export async function excluirCategoria(eventoId: string, categoriaId: string) {
  * sexo). O grupo casa com o `nome` de uma variação do lote; string vazia limpa.
  */
 export async function definirGrupoPreco(eventoId: string, formData: FormData) {
-  const { db } = await eventoDoOrganizador(eventoId);
+  const { db } = await eventoDoOrganizador(eventoId, "categorias");
   const erros = (await getDicionario()).admin.erros;
 
   const classeIdade = String(formData.get("classeIdade") ?? "");
@@ -403,7 +408,7 @@ export async function definirGrupoPreco(eventoId: string, formData: FormData) {
 }
 
 export async function criarLote(eventoId: string, formData: FormData) {
-  const { db } = await eventoDoOrganizador(eventoId);
+  const { db } = await eventoDoOrganizador(eventoId, "lotes");
   const erros = (await getDicionario()).admin.erros;
 
   const nome = String(formData.get("nome") ?? "").trim();
@@ -481,7 +486,7 @@ export async function criarLote(eventoId: string, formData: FormData) {
 }
 
 export async function excluirLote(eventoId: string, loteId: string) {
-  const { db } = await eventoDoOrganizador(eventoId);
+  const { db } = await eventoDoOrganizador(eventoId, "lotes");
   await db
     .delete(lotes)
     .where(and(eq(lotes.id, loteId), eq(lotes.eventoId, eventoId)));
@@ -489,7 +494,7 @@ export async function excluirLote(eventoId: string, loteId: string) {
 }
 
 export async function encerrarInscricoes(eventoId: string) {
-  const { db, evento } = await eventoDoOrganizador(eventoId);
+  const { db, evento } = await eventoDoOrganizador(eventoId, "evento");
   if (evento.status !== "publicado") {
     erroVisivel(
       eventoId,
@@ -509,7 +514,7 @@ export async function gerarChave(
   formato: FormatoSelecionavel = "auto",
   numJurados?: number,
 ) {
-  const { db, usuario } = await eventoDoOrganizador(eventoId);
+  const { db, usuario } = await eventoDoOrganizador(eventoId, "chaves");
   let chave;
   try {
     chave = await gerarChaveParaCategoria(db, categoriaId, formato, { numJurados });
@@ -550,7 +555,7 @@ export async function gerarChaveAuto(eventoId: string, categoriaId: string) {
  * trocar o sorteio ou o formato.
  */
 export async function gerarChavesEmLote(eventoId: string, formData?: FormData) {
-  const { db, usuario } = await eventoDoOrganizador(eventoId);
+  const { db, usuario } = await eventoDoOrganizador(eventoId, "chaves");
   const dic = await getDicionario();
 
   // formato aplicado a todas as chaves do lote (padrão: eliminação simples)
@@ -635,7 +640,7 @@ export async function gerarChavesEmLote(eventoId: string, formData?: FormData) {
 }
 
 export async function publicarChaves(eventoId: string) {
-  const { db, usuario } = await eventoDoOrganizador(eventoId);
+  const { db, usuario } = await eventoDoOrganizador(eventoId, "chaves");
 
   const cats = await db.query.categorias.findMany({
     where: eq(categorias.eventoId, eventoId),
@@ -674,7 +679,7 @@ export async function lancarResultado(
   chaveId: string,
   formData: FormData,
 ) {
-  const { db, usuario } = await eventoDoOrganizador(eventoId);
+  const { db, usuario } = await eventoDoOrganizador(eventoId, "chaves");
 
   const lutaId = String(formData.get("lutaId") ?? "");
   const vencedorId = String(formData.get("vencedorId") ?? "");
@@ -715,7 +720,7 @@ export async function marcarMedalhasEntregues(
   chaveId: string,
   entregues: boolean,
 ) {
-  const { db, usuario } = await eventoDoOrganizador(eventoId);
+  const { db, usuario } = await eventoDoOrganizador(eventoId, "chaves");
   const chave = await db.query.chaves.findFirst({ where: eq(chaves.id, chaveId) });
   if (!chave || chave.status !== "concluida") return;
 
@@ -741,7 +746,7 @@ export async function salvarNotas(
   chaveId: string,
   formData: FormData,
 ) {
-  const { db, usuario } = await eventoDoOrganizador(eventoId);
+  const { db, usuario } = await eventoDoOrganizador(eventoId, "chaves");
   const lutaId = String(formData.get("lutaId") ?? "");
   const notas = formData
     .getAll("nota")
@@ -762,7 +767,7 @@ export async function salvarNotas(
 }
 
 export async function publicarEvento(eventoId: string) {
-  const { db } = await eventoDoOrganizador(eventoId);
+  const { db } = await eventoDoOrganizador(eventoId, "evento");
   // publica com o mínimo (categoria + lote); atletas/lutas/chaves/áreas ficam
   // para depois — a regra de requisitos vive em publicarEventoCore (testada).
   try {

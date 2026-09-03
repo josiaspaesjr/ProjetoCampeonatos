@@ -26,7 +26,7 @@ export default async function PaginaChaves({
   const dic = await getDicionario();
   const ch = dic.admin.chaves;
 
-  const evento = await eventoGerenciavel(db, id, usuario.id);
+  const evento = await eventoGerenciavel(db, id, usuario.id, "chaves");
   if (!evento) notFound();
 
   const [cats, confirmadas] = await Promise.all([

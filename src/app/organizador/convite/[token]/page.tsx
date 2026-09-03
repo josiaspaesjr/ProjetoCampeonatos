@@ -4,6 +4,7 @@ import { getDb } from "@/db";
 import { eventoColaboradores, eventos } from "@/db/schema";
 import { BotaoAcao } from "@/components/ui/botao-acao";
 import { getUsuarioSessao } from "@/lib/auth";
+import { normalizarPermissoes } from "@/lib/eventos/permissoes";
 import { getDicionario } from "@/lib/i18n/server";
 import { aceitarConvite } from "./actions";
 
@@ -22,7 +23,8 @@ export default async function PaginaConvite({
 }) {
   const { token } = await params;
   const db = await getDb();
-  const dc = (await getDicionario()).admin.convite;
+  const admin = (await getDicionario()).admin;
+  const dc = admin.convite;
 
   const convite = await db.query.eventoColaboradores.findFirst({
     where: eq(eventoColaboradores.token, token),
@@ -61,6 +63,20 @@ export default async function PaginaConvite({
         {dc.descPre}{" "}
         <span className="font-semibold text-foreground">{evento.nome}</span>.
       </p>
+
+      {/* o que o convite libera — o dono escolhe seção por seção */}
+      <div className="mt-5 border-t border-white/8 pt-4 text-left">
+        <p className="font-cond text-[12px] font-semibold uppercase tracking-[0.08em] text-muted-2">
+          {admin.equipe.podeAcessar}
+        </p>
+        <ul className="mt-1.5 space-y-0.5">
+          {normalizarPermissoes(convite.permissoes).map((s) => (
+            <li key={s} className="text-sm text-muted-foreground">
+              {admin.equipe.secoes[s]}
+            </li>
+          ))}
+        </ul>
+      </div>
 
       <div className="mt-7">
         {!usuario ? (

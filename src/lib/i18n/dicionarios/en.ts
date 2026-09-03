@@ -625,7 +625,7 @@ export const en: Dicionario = {
     equipe: {
       titulo: "Event organizing team",
       descricao:
-        "Invite people to help organize this event. Collaborators get full access to the event — except managing the team and deleting the event.",
+        "Invite people to help organize this event and choose what each one can access. Managing the team and deleting the event stay with you.",
       dono: "Owner",
       voce: "you",
       colaboradores: "Collaborators",
@@ -640,8 +640,32 @@ export const en: Dicionario = {
       copiar: "Copy",
       copiado: "Copied!",
       remover: "Remove",
-      soDonoGerencia:
-        "Only the event owner can invite or remove team members.",
+      papel: "Role",
+      papeis: {
+        total: "Full access",
+        mesario: "Table official",
+        recepcao: "Front desk",
+      },
+      papeisDesc: {
+        total: "Everything but the team and deleting the event",
+        mesario: "Brackets and mats — whoever runs the table",
+        recepcao: "Check-in, weigh-in and registrations",
+      },
+      personalizado: "Custom",
+      podeAcessar: "Can access",
+      secoes: {
+        evento: "Overview and event details",
+        inscricoes: "Registrations",
+        lotes: "Price tiers",
+        categorias: "Divisions",
+        chaves: "Brackets and results",
+        areas: "Mats, schedule and scoreboard",
+        checkin: "Check-in and weigh-in",
+      },
+      editarAcesso: "Edit access",
+      salvarAcesso: "Save access",
+      cancelar: "Cancel",
+      escolhaUmaSecao: "Pick at least one section.",
     },
     convite: {
       eyebrow: "Invite",

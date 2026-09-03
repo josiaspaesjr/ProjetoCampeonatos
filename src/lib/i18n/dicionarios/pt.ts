@@ -630,7 +630,7 @@ export const pt = {
     equipe: {
       titulo: "Equipe organizadora do evento",
       descricao:
-        "Convide pessoas para ajudar a organizar este evento. Colaboradores têm acesso total ao evento — menos gerenciar a equipe e excluir o evento.",
+        "Convide pessoas para ajudar a organizar este evento e escolha o que cada uma pode acessar. Gerenciar a equipe e excluir o evento continuam só com você.",
       dono: "Dono",
       voce: "você",
       colaboradores: "Colaboradores",
@@ -645,8 +645,32 @@ export const pt = {
       copiar: "Copiar",
       copiado: "Copiado!",
       remover: "Remover",
-      soDonoGerencia:
-        "Só o dono do evento pode convidar ou remover pessoas da equipe.",
+      papel: "Papel",
+      papeis: {
+        total: "Acesso total",
+        mesario: "Mesário",
+        recepcao: "Recepção",
+      },
+      papeisDesc: {
+        total: "Tudo no evento, menos equipe e excluir",
+        mesario: "Chaves e áreas — quem opera a mesa",
+        recepcao: "Check-in, pesagem e inscrições",
+      },
+      personalizado: "Personalizado",
+      podeAcessar: "Pode acessar",
+      secoes: {
+        evento: "Visão geral e dados do evento",
+        inscricoes: "Inscrições",
+        lotes: "Lotes e preços",
+        categorias: "Categorias",
+        chaves: "Chaves e resultados",
+        areas: "Áreas, cronograma e placar",
+        checkin: "Check-in e pesagem",
+      },
+      editarAcesso: "Editar acesso",
+      salvarAcesso: "Salvar acesso",
+      cancelar: "Cancelar",
+      escolhaUmaSecao: "Escolha ao menos uma seção.",
     },
     convite: {
       eyebrow: "Convite",

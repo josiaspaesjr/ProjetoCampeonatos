@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { and, desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, chaves, inscricoes, lotes, pagamentos } from "@/db/schema";
 import { BotaoAcao } from "@/components/ui/botao-acao";
 import { ExcluirEvento } from "@/components/organizador/excluir-evento";
 import { getUsuarioAtual } from "@/lib/auth";
-import { eventoGerenciavel } from "@/lib/eventos/acesso";
+import { acessoAoEvento } from "@/lib/eventos/acesso";
+import { ROTA_SECAO, primeiraSecao, temAcesso } from "@/lib/eventos/permissoes";
 import { getDicionario } from "@/lib/i18n/server";
 import { dataCurta, diaMes } from "@/lib/datas";
 import { cn } from "@/lib/utils";
@@ -33,8 +34,15 @@ export default async function VisaoGeralEvento({
   const dic = await getDicionario();
   const da = dic.admin.overview;
 
-  const evento = await eventoGerenciavel(db, id, usuario.id);
-  if (!evento) notFound();
+  const acesso = await acessoAoEvento(db, id, usuario.id);
+  if (!acesso) notFound();
+  // colaborador sem a visão geral (ex.: mesário) cai na 1ª seção que ele tem
+  if (!temAcesso(acesso.permissoes, "evento")) {
+    const destino = primeiraSecao(acesso.permissoes);
+    if (!destino) notFound();
+    redirect(`/organizador/eventos/${id}${ROTA_SECAO[destino]}`);
+  }
+  const evento = acesso.evento;
 
   const [cats, lts, inscritos, pgs] = await Promise.all([
     db.query.categorias.findMany({ where: eq(categorias.eventoId, id) }),

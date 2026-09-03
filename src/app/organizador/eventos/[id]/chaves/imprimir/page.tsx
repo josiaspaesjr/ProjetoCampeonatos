@@ -27,7 +27,7 @@ export default async function PaginaImprimirChaves({
   const usuario = await getUsuarioAtual();
   const dic = await getDicionario();
 
-  const evento = await eventoGerenciavel(db, id, usuario.id);
+  const evento = await eventoGerenciavel(db, id, usuario.id, "chaves");
   if (!evento) notFound();
 
   const cats = await db.query.categorias.findMany({

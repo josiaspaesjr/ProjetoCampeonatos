@@ -1,24 +1,40 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
 import type { Db } from "@/db";
 import { eventoColaboradores, eventos } from "@/db/schema";
+import {
+  SECOES,
+  normalizarPermissoes,
+  temAcesso,
+  type Secao,
+} from "@/lib/eventos/permissoes";
 
 type Evento = typeof eventos.$inferSelect;
 
+export interface AcessoEvento {
+  evento: Evento;
+  /** dono do evento — tem tudo, inclusive equipe e exclusão */
+  ehDono: boolean;
+  /** seções liberadas (todas, para o dono) */
+  permissoes: Secao[];
+}
+
 /**
- * Retorna o evento se o usuário pode gerenciá-lo — é o dono
- * (`eventos.organizadorId`) OU um colaborador ativo. Caso contrário, undefined.
- * Substitui o antigo `where organizadorId = usuario.id` nas telas do console.
+ * Acesso do usuário ao evento: dono, colaborador ativo, ou nada.
+ * Base de `eventoGerenciavel` — use direto quando a tela precisa saber
+ * *quais* seções a pessoa tem (ex.: montar a navegação).
  */
-export async function eventoGerenciavel(
+export async function acessoAoEvento(
   db: Db,
   eventoId: string,
   usuarioId: string,
-): Promise<Evento | undefined> {
+): Promise<AcessoEvento | undefined> {
   const evento = await db.query.eventos.findFirst({
     where: eq(eventos.id, eventoId),
   });
   if (!evento) return undefined;
-  if (evento.organizadorId === usuarioId) return evento;
+  if (evento.organizadorId === usuarioId) {
+    return { evento, ehDono: true, permissoes: [...SECOES] };
+  }
   const colaborador = await db.query.eventoColaboradores.findFirst({
     where: and(
       eq(eventoColaboradores.eventoId, eventoId),
@@ -26,7 +42,34 @@ export async function eventoGerenciavel(
       eq(eventoColaboradores.status, "ativo"),
     ),
   });
-  return colaborador ? evento : undefined;
+  if (!colaborador) return undefined;
+  return {
+    evento,
+    ehDono: false,
+    permissoes: normalizarPermissoes(colaborador.permissoes),
+  };
+}
+
+/**
+ * Retorna o evento se o usuário pode gerenciá-lo — é o dono
+ * (`eventos.organizadorId`) OU um colaborador ativo. Caso contrário, undefined.
+ * Substitui o antigo `where organizadorId = usuario.id` nas telas do console.
+ *
+ * Passe `secao` para exigir também a permissão daquela parte do console: um
+ * colaborador de mesa (só chaves e áreas) não abre inscrições nem lotes. Toda
+ * página e server action do console passa por aqui, então é o único ponto onde
+ * a permissão precisa ser checada.
+ */
+export async function eventoGerenciavel(
+  db: Db,
+  eventoId: string,
+  usuarioId: string,
+  secao?: Secao,
+): Promise<Evento | undefined> {
+  const acesso = await acessoAoEvento(db, eventoId, usuarioId);
+  if (!acesso) return undefined;
+  if (secao && !temAcesso(acesso.permissoes, secao)) return undefined;
+  return acesso.evento;
 }
 
 /** true se o usuário é o dono do evento (ações exclusivas do dono). */

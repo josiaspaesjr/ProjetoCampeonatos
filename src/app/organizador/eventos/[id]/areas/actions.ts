@@ -75,7 +75,7 @@ function mensagemNaoCabe(cap: ResultadoCapacidade, ta: AvisoAreas): string {
 async function contexto(eventoId: string) {
   const db = await getDb();
   const usuario = await getUsuarioAtual();
-  const evento = await eventoGerenciavel(db, eventoId, usuario.id);
+  const evento = await eventoGerenciavel(db, eventoId, usuario.id, "areas");
   if (!evento) throw new Error("Evento não encontrado ou sem permissão");
   return { db, usuario, evento };
 }

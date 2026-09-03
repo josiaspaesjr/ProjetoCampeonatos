@@ -59,7 +59,7 @@ export default async function CategoriasEvento({
     feminino: dic.inscricao.feminino,
   };
 
-  const evento = await eventoGerenciavel(db, id, usuario.id);
+  const evento = await eventoGerenciavel(db, id, usuario.id, "categorias");
   if (!evento) notFound();
 
   const cats = await db.query.categorias.findMany({

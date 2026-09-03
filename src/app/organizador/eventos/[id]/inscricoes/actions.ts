@@ -18,7 +18,7 @@ import type { Faixa } from "@/lib/categorias/cbjj";
 async function contexto(eventoId: string) {
   const db = await getDb();
   const usuario = await getUsuarioAtual();
-  const evento = await eventoGerenciavel(db, eventoId, usuario.id);
+  const evento = await eventoGerenciavel(db, eventoId, usuario.id, "inscricoes");
   if (!evento) throw new Error("Evento não encontrado ou sem permissão");
   return { db, usuario, evento };
 }

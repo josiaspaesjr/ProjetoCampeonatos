@@ -70,7 +70,7 @@ export default async function LotesEvento({
     encerrado: tl.statusEncerrado,
   };
 
-  const evento = await eventoGerenciavel(db, id, usuario.id);
+  const evento = await eventoGerenciavel(db, id, usuario.id, "lotes");
   if (!evento) notFound();
 
   const lts = await db.query.lotes.findMany({

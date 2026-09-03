@@ -5,10 +5,20 @@ import { eventoColaboradores, usuarios } from "@/db/schema";
 import { AcaoTexto, BotaoAcao } from "@/components/ui/botao-acao";
 import { Input } from "@/components/ui/input";
 import { ConviteLink } from "@/components/organizador/convite-link";
+import {
+  AcessoColaborador,
+  ResumoAcesso,
+} from "@/components/organizador/acesso-colaborador";
+import { SeletorPermissoes } from "@/components/organizador/seletor-permissoes";
 import { getUsuarioAtual } from "@/lib/auth";
 import { ehDonoDoEvento, eventoGerenciavel } from "@/lib/eventos/acesso";
+import { normalizarPermissoes } from "@/lib/eventos/permissoes";
 import { getDicionario } from "@/lib/i18n/server";
-import { convidarColaborador, revogarColaborador } from "./actions";
+import {
+  atualizarPermissoes,
+  convidarColaborador,
+  revogarColaborador,
+} from "./actions";
 
 export default async function PaginaEquipe({
   params,
@@ -21,8 +31,8 @@ export default async function PaginaEquipe({
   const t = (await getDicionario()).admin.equipe;
 
   const evento = await eventoGerenciavel(db, id, usuario.id);
-  if (!evento) notFound();
-  const ehDono = ehDonoDoEvento(evento, usuario.id);
+  // gerenciar a equipe é do dono; colaborador nem enxerga a tela
+  if (!evento || !ehDonoDoEvento(evento, usuario.id)) notFound();
 
   const dono = await db.query.usuarios.findFirst({
     where: eq(usuarios.id, evento.organizadorId),
@@ -63,11 +73,9 @@ export default async function PaginaEquipe({
             <div className="min-w-0">
               <p className="truncate text-sm font-medium">
                 {dono?.nome}
-                {evento.organizadorId === usuario.id && (
-                  <span className="ml-2 text-xs font-normal text-brand">
-                    ({t.voce})
-                  </span>
-                )}
+                <span className="ml-2 text-xs font-normal text-brand">
+                  ({t.voce})
+                </span>
               </p>
               <p className="truncate text-xs text-muted-foreground">
                 {dono?.email}
@@ -81,91 +89,85 @@ export default async function PaginaEquipe({
           {ativos.map((c) => {
             const p = c.usuarioId ? perfilPorId.get(c.usuarioId) : undefined;
             return (
-              <li
-                key={c.id}
-                className="flex items-center justify-between gap-4 px-5 py-3.5"
-              >
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">
-                    {p?.nome ?? c.email ?? "—"}
-                    {c.usuarioId === usuario.id && (
-                      <span className="ml-2 text-xs font-normal text-brand">
-                        ({t.voce})
-                      </span>
-                    )}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {p?.email ?? c.email}
-                  </p>
-                </div>
-                {ehDono && (
+              <li key={c.id} className="px-5 py-3.5">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {p?.nome ?? c.email ?? "—"}
+                    </p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {p?.email ?? c.email}
+                    </p>
+                  </div>
                   <form action={revogarColaborador.bind(null, id, c.id)}>
                     <AcaoTexto className="text-xs text-destructive hover:underline">
                       {t.remover}
                     </AcaoTexto>
                   </form>
-                )}
+                </div>
+                <AcessoColaborador
+                  permissoes={normalizarPermissoes(c.permissoes)}
+                  salvar={atualizarPermissoes.bind(null, id, c.id)}
+                />
               </li>
             );
           })}
         </ul>
       </section>
 
-      {/* CONVIDAR + PENDENTES (só o dono) */}
-      {ehDono ? (
-        <>
-          <section>
-            <h2 className="text-lg font-bold">{t.convidar}</h2>
-            <p className="mt-1 text-xs text-muted-foreground">{t.convidarDesc}</p>
-            <form
-              action={convidarColaborador.bind(null, id)}
-              className="mt-4 flex flex-col gap-3 sm:flex-row"
-            >
-              <Input
-                name="email"
-                type="email"
-                placeholder={t.emailOpcional}
-                className="sm:flex-1"
-              />
-              <BotaoAcao>{t.gerarConvite}</BotaoAcao>
-            </form>
-          </section>
+      {/* CONVIDAR */}
+      <section>
+        <h2 className="text-lg font-bold">{t.convidar}</h2>
+        <p className="mt-1 text-xs text-muted-foreground">{t.convidarDesc}</p>
+        <form
+          action={convidarColaborador.bind(null, id)}
+          className="mt-4 space-y-5"
+        >
+          <SeletorPermissoes />
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Input
+              name="email"
+              type="email"
+              placeholder={t.emailOpcional}
+              className="sm:flex-1"
+            />
+            <BotaoAcao>{t.gerarConvite}</BotaoAcao>
+          </div>
+        </form>
+      </section>
 
-          {pendentes.length > 0 && (
-            <section>
-              <h2 className="mb-3 font-cond text-sm font-semibold uppercase tracking-[0.08em] text-muted-2">
-                {t.convitesPendentes}
-              </h2>
-              <ul className="space-y-3">
-                {pendentes.map((c) => (
-                  <li
-                    key={c.id}
-                    className="rounded-xl border bg-card p-4"
-                  >
-                    <div className="mb-2 flex items-center justify-between gap-4">
-                      <span className="truncate text-sm font-medium">
-                        {c.email ?? t.semEmail}
-                        <span className="ml-2 text-xs font-normal text-warning-foreground">
-                          {t.pendente}
-                        </span>
+      {/* CONVITES PENDENTES */}
+      {pendentes.length > 0 && (
+        <section>
+          <h2 className="mb-3 font-cond text-sm font-semibold uppercase tracking-[0.08em] text-muted-2">
+            {t.convitesPendentes}
+          </h2>
+          <ul className="space-y-3">
+            {pendentes.map((c) => (
+              <li key={c.id} className="rounded-xl border bg-card p-4">
+                <div className="mb-2 flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <span className="truncate text-sm font-medium">
+                      {c.email ?? t.semEmail}
+                      <span className="ml-2 text-xs font-normal text-warning-foreground">
+                        {t.pendente}
                       </span>
-                      <form action={revogarColaborador.bind(null, id, c.id)}>
-                        <AcaoTexto className="shrink-0 text-xs text-destructive hover:underline">
-                          {t.remover}
-                        </AcaoTexto>
-                      </form>
+                    </span>
+                    <div className="mt-0.5">
+                      <ResumoAcesso permissoes={normalizarPermissoes(c.permissoes)} />
                     </div>
-                    <ConviteLink path={`/organizador/convite/${c.token}`} />
-                  </li>
-                ))}
-              </ul>
-            </section>
-          )}
-        </>
-      ) : (
-        <p className="rounded-xl border border-dashed border-white/12 px-5 py-4 text-sm text-muted-foreground">
-          {t.soDonoGerencia}
-        </p>
+                  </div>
+                  <form action={revogarColaborador.bind(null, id, c.id)}>
+                    <AcaoTexto className="shrink-0 text-xs text-destructive hover:underline">
+                      {t.remover}
+                    </AcaoTexto>
+                  </form>
+                </div>
+                <ConviteLink path={`/organizador/convite/${c.token}`} />
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </div>
   );

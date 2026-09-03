@@ -625,7 +625,7 @@ export const es: Dicionario = {
     equipe: {
       titulo: "Equipo organizador del evento",
       descricao:
-        "Invita a personas para ayudar a organizar este evento. Los colaboradores tienen acceso total al evento — menos gestionar el equipo y eliminar el evento.",
+        "Invita a personas para ayudar a organizar este evento y elige a qué puede acceder cada una. Gestionar el equipo y eliminar el evento siguen siendo solo tuyos.",
       dono: "Dueño",
       voce: "tú",
       colaboradores: "Colaboradores",
@@ -640,8 +640,32 @@ export const es: Dicionario = {
       copiar: "Copiar",
       copiado: "¡Copiado!",
       remover: "Quitar",
-      soDonoGerencia:
-        "Solo el dueño del evento puede invitar o quitar miembros del equipo.",
+      papel: "Rol",
+      papeis: {
+        total: "Acceso total",
+        mesario: "Mesa",
+        recepcao: "Recepción",
+      },
+      papeisDesc: {
+        total: "Todo el evento, menos equipo y eliminar",
+        mesario: "Llaves y áreas — quien opera la mesa",
+        recepcao: "Check-in, pesaje e inscripciones",
+      },
+      personalizado: "Personalizado",
+      podeAcessar: "Puede acceder",
+      secoes: {
+        evento: "Visión general y datos del evento",
+        inscricoes: "Inscripciones",
+        lotes: "Lotes y precios",
+        categorias: "Categorías",
+        chaves: "Llaves y resultados",
+        areas: "Áreas, cronograma y marcador",
+        checkin: "Check-in y pesaje",
+      },
+      editarAcesso: "Editar acceso",
+      salvarAcesso: "Guardar acceso",
+      cancelar: "Cancelar",
+      escolhaUmaSecao: "Elige al menos una sección.",
     },
     convite: {
       eyebrow: "Invitación",

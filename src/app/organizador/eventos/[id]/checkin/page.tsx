@@ -26,7 +26,7 @@ export default async function PaginaCheckin({
   const dic = await getDicionario();
   const ck = dic.admin.checkin;
 
-  const evento = await eventoGerenciavel(db, id, usuario.id);
+  const evento = await eventoGerenciavel(db, id, usuario.id, "checkin");
   if (!evento) notFound();
 
   const [confirmadas, cats] = await Promise.all([
