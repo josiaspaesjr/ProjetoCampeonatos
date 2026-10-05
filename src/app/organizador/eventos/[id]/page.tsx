@@ -246,6 +246,7 @@ export default async function VisaoGeralEvento({
               <ExcluirEvento
                 excluir={excluirEvento.bind(null, evento.id)}
                 nome={evento.nome}
+                confirmadas={confirmadas.length}
               />
             )}
           </div>

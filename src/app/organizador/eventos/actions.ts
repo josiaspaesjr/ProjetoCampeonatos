@@ -172,8 +172,8 @@ export async function criarEvento(formData: FormData) {
 /**
  * Exclusão do evento (soft delete): marca `excluido_em` e o evento some da
  * plataforma — página pública, catálogo, console e área do atleta —, mas os
- * dados continuam no banco. Só o dono exclui. Evento com atletas confirmados
- * (pagos) só sai depois de finalizado: antes disso, cancele/reembolse.
+ * dados continuam no banco (reversível zerando a coluna). Só o dono exclui,
+ * em qualquer status — o modal avisa quantos atletas confirmados há.
  * Cobranças ainda abertas expiram para ninguém pagar um evento excluído.
  */
 export async function excluirEvento(eventoId: string) {
@@ -182,19 +182,6 @@ export async function excluirEvento(eventoId: string) {
   if (!ehDonoDoEvento(evento, usuario.id)) {
     throw new Error("Apenas o dono do evento pode excluí-lo");
   }
-  const erros = (await getDicionario()).admin.erros;
-
-  if (evento.status !== "finalizado") {
-    const confirmada = await db.query.inscricoes.findFirst({
-      where: and(
-        eq(inscricoes.eventoId, eventoId),
-        eq(inscricoes.status, "confirmada"),
-      ),
-      columns: { id: true },
-    });
-    if (confirmada) erroVisivel(eventoId, erros.eventoComInscricoes);
-  }
-
   await db
     .update(eventos)
     .set({ excluidoEm: new Date() })

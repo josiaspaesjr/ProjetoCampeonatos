@@ -733,6 +733,10 @@ export const en: Dicionario = {
         "This event will be removed from the platform: it disappears from the public page, the catalog and the console.",
       confirmar: "Delete event",
       rotulo: "Delete event",
+      avisoConfirmada:
+        "Warning: 1 athlete with a confirmed registration loses access to the event.",
+      avisoConfirmadas:
+        "Warning: {n} athletes with confirmed registrations lose access to the event.",
     },
     inscricoes: {
     inscricaoLabel: "The entry",
@@ -1203,8 +1207,6 @@ export const en: Dicionario = {
       },
     },
     erros: {
-      eventoComInscricoes:
-        "This event has athletes with confirmed registrations — cancel or refund them (or finish the event) before deleting it.",
       nomeDataObrigatorios: "Event name and date are required.",
       inscricoesFecham: "Registration must close on or before the event date.",
       numAreasInvalido: "Enter a number of mats between 1 and 40.",

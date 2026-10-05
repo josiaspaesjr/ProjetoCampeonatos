@@ -733,6 +733,10 @@ export const es: Dicionario = {
         "Este evento será retirado de la plataforma: desaparece de la página pública, del catálogo y de la consola.",
       confirmar: "Eliminar evento",
       rotulo: "Eliminar evento",
+      avisoConfirmada:
+        "Atención: 1 atleta con inscripción confirmada pierde el acceso al evento.",
+      avisoConfirmadas:
+        "Atención: {n} atletas con inscripción confirmada pierden el acceso al evento.",
     },
     inscricoes: {
     inscricaoLabel: "La inscripción",
@@ -1204,8 +1208,6 @@ export const es: Dicionario = {
       },
     },
     erros: {
-      eventoComInscricoes:
-        "Este evento tiene atletas con inscripción confirmada — cancela o reembolsa las inscripciones (o finaliza el evento) antes de eliminarlo.",
       nomeDataObrigatorios: "El nombre y la fecha del evento son obligatorios.",
       inscricoesFecham: "Las inscripciones deben cerrar hasta la fecha del evento.",
       numAreasInvalido: "Indica un número de áreas entre 1 y 40.",

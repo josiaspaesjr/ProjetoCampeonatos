@@ -738,6 +738,10 @@ export const pt = {
         "Este evento será removido da plataforma: some da página pública, do catálogo e do console.",
       confirmar: "Excluir evento",
       rotulo: "Excluir evento",
+      avisoConfirmada:
+        "Atenção: 1 atleta com inscrição confirmada perde o acesso ao evento.",
+      avisoConfirmadas:
+        "Atenção: {n} atletas com inscrição confirmada perdem o acesso ao evento.",
     },
     inscricoes: {
     inscricaoLabel: "A inscrição",
@@ -1209,8 +1213,6 @@ export const pt = {
       },
     },
     erros: {
-      eventoComInscricoes:
-        "Este evento tem atletas com inscrição confirmada — cancele ou reembolse as inscrições (ou finalize o evento) antes de excluí-lo.",
       nomeDataObrigatorios: "Nome e data do evento são obrigatórios.",
       inscricoesFecham: "As inscrições devem fechar até a data do evento.",
       numAreasInvalido: "Informe um número de áreas entre 1 e 40.",

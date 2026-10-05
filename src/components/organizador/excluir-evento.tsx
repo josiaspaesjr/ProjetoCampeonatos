@@ -4,14 +4,17 @@ import { ConfirmarExclusao } from "@/components/ui/confirmar-exclusao";
 import { useDic } from "@/lib/i18n/client";
 
 /**
- * Exclusão de evento em rascunho, com modal de confirmação.
+ * Exclusão do evento (soft delete), com modal de confirmação. Com atletas
+ * confirmados, o modal avisa quantos perdem o acesso ao evento.
  */
 export function ExcluirEvento({
   excluir,
   nome,
+  confirmadas = 0,
 }: {
   excluir: () => Promise<void>;
   nome?: string;
+  confirmadas?: number;
 }) {
   const ex = useDic().admin.excluirEvento;
   return (
@@ -19,14 +22,23 @@ export function ExcluirEvento({
       acao={excluir}
       titulo={ex.titulo}
       descricao={
-        nome ? (
-          <>
-            {ex.descNomePre} <b className="text-foreground">{nome}</b>{" "}
-            {ex.descNomePos}
-          </>
-        ) : (
-          ex.descSemNome
-        )
+        <>
+          {nome ? (
+            <>
+              {ex.descNomePre} <b className="text-foreground">{nome}</b>{" "}
+              {ex.descNomePos}
+            </>
+          ) : (
+            ex.descSemNome
+          )}
+          {confirmadas > 0 && (
+            <span className="mt-3 block font-semibold text-brand">
+              {confirmadas === 1
+                ? ex.avisoConfirmada
+                : ex.avisoConfirmadas.replace("{n}", String(confirmadas))}
+            </span>
+          )}
+        </>
       }
       confirmarRotulo={ex.confirmar}
       rotulo={ex.rotulo}
