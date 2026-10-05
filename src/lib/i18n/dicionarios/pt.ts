@@ -731,12 +731,12 @@ export const pt = {
     },
     excluirEvento: {
       titulo: "Excluir evento?",
-      descNomePre: "O rascunho",
+      descNomePre: "O evento",
       descNomePos:
-        "será apagado para sempre. Esta ação não pode ser desfeita.",
+        "será removido da plataforma: some da página pública, do catálogo e do console. Inscrições pendentes deixam de poder ser pagas.",
       descSemNome:
-        "Este rascunho será apagado para sempre. Esta ação não pode ser desfeita.",
-      confirmar: "Excluir definitivamente",
+        "Este evento será removido da plataforma: some da página pública, do catálogo e do console.",
+      confirmar: "Excluir evento",
       rotulo: "Excluir evento",
     },
     inscricoes: {
@@ -1209,10 +1209,8 @@ export const pt = {
       },
     },
     erros: {
-      soRascunhoExcluir:
-        "Só eventos em rascunho podem ser excluídos — este já foi publicado.",
       eventoComInscricoes:
-        "Este evento já tem inscrições ou pagamentos registrados e não pode ser excluído.",
+        "Este evento tem atletas com inscrição confirmada — cancele ou reembolse as inscrições (ou finalize o evento) antes de excluí-lo.",
       nomeDataObrigatorios: "Nome e data do evento são obrigatórios.",
       inscricoesFecham: "As inscrições devem fechar até a data do evento.",
       numAreasInvalido: "Informe um número de áreas entre 1 e 40.",

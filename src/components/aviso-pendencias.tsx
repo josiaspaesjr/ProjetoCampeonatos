@@ -9,6 +9,7 @@ import {
 } from "@/lib/pagamentos/prazo";
 import { getAtletaAtual } from "@/lib/sessao";
 import { getDicionario } from "@/lib/i18n/server";
+import { naoExcluido } from "@/lib/eventos/excluido";
 
 /**
  * Faixa global de pendências de pagamento.
@@ -32,7 +33,9 @@ export async function AvisoPendencias() {
 
   const eventoIds = [...new Set(pendentes.map((i) => i.eventoId))];
   const [evs, lts] = await Promise.all([
-    db.query.eventos.findMany({ where: inArray(eventos.id, eventoIds) }),
+    db.query.eventos.findMany({
+      where: and(inArray(eventos.id, eventoIds), naoExcluido),
+    }),
     db.query.lotes.findMany({ where: inArray(lotes.eventoId, eventoIds) }),
   ]);
   const eventoPorId = new Map(evs.map((e) => [e.id, e]));

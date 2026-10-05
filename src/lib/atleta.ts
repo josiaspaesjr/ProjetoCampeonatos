@@ -1,7 +1,8 @@
-import { desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import type { Db } from "@/db";
 import { categorias, chaves, eventos, inscricoes, lutas } from "@/db/schema";
 import { calcularPodioDaChave } from "@/lib/chaves/persistencia";
+import { naoExcluido } from "@/lib/eventos/excluido";
 
 /**
  * Histórico competitivo de um atleta: cada inscrição confirmada vira uma
@@ -59,7 +60,14 @@ export async function historicoDoAtleta(
   usuarioId: string,
 ): Promise<HistoricoAtleta> {
   const minhas = await db.query.inscricoes.findMany({
-    where: eq(inscricoes.usuarioId, usuarioId),
+    where: and(
+      eq(inscricoes.usuarioId, usuarioId),
+      // inscrições de eventos excluídos (soft delete) somem do atleta
+      inArray(
+        inscricoes.eventoId,
+        db.select({ id: eventos.id }).from(eventos).where(naoExcluido),
+      ),
+    ),
     orderBy: desc(inscricoes.criadoEm),
   });
   if (!minhas.length) return { participacoes: [], resumo: RESUMO_VAZIO };

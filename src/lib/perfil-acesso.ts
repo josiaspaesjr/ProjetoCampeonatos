@@ -1,7 +1,8 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { eventos, inscricoes, usuarios } from "@/db/schema";
 import { getUsuarioSessao } from "@/lib/auth";
+import { naoExcluido } from "@/lib/eventos/excluido";
 
 type Usuario = typeof usuarios.$inferSelect;
 
@@ -25,7 +26,7 @@ export async function perfilDeAcesso(): Promise<PerfilAcesso | null> {
   const db = await getDb();
   const [meusEventos, minhasInscricoes] = await Promise.all([
     db.query.eventos.findFirst({
-      where: eq(eventos.organizadorId, usuario.id),
+      where: and(eq(eventos.organizadorId, usuario.id), naoExcluido),
       columns: { id: true },
     }),
     db.query.inscricoes.findFirst({

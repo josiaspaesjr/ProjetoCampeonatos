@@ -1,6 +1,7 @@
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, chaves, eventos, inscricoes, lutas } from "@/db/schema";
+import { naoExcluido } from "@/lib/eventos/excluido";
 
 export interface LadoBracket {
   nome: string;
@@ -51,8 +52,9 @@ export async function buscarBracketVivo(): Promise<BracketVivo> {
   if (!cat || linhas.length === 0) return BRACKET_DEMO;
 
   const evento = await db.query.eventos.findFirst({
-    where: eq(eventos.id, cat.eventoId),
+    where: and(eq(eventos.id, cat.eventoId), naoExcluido),
   });
+  if (!evento) return BRACKET_DEMO;
 
   // duas lutas mais recentes com os dois atletas definidos
   const candidatas = linhas

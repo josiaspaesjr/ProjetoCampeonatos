@@ -10,6 +10,7 @@ import { getDicionario } from "@/lib/i18n/server";
 import { ordenarCategoriasExibicao } from "@/lib/categorias/distribuicao-areas";
 import { cpfJaTemConta, criarInscricao } from "./actions";
 import { FormInscricao } from "./form-inscricao";
+import { naoExcluido } from "@/lib/eventos/excluido";
 
 export default async function PaginaInscricao({
   params,
@@ -21,7 +22,11 @@ export default async function PaginaInscricao({
   const di = (await getDicionario()).inscricao;
 
   const evento = await db.query.eventos.findFirst({
-    where: and(eq(eventos.slug, slug), eq(eventos.status, "publicado")),
+    where: and(
+      eq(eventos.slug, slug),
+      eq(eventos.status, "publicado"),
+      naoExcluido,
+    ),
   });
   if (!evento) notFound();
 

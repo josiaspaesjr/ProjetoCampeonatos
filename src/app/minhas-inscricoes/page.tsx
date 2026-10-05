@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, eventos, inscricoes, lotes } from "@/db/schema";
 import { PublicShell } from "@/components/public-shell";
@@ -14,6 +14,7 @@ import {
 import { getAtletaAtual } from "@/lib/sessao";
 import { getDicionario } from "@/lib/i18n/server";
 import { gerarCobrancaEvento } from "./actions";
+import { naoExcluido } from "@/lib/eventos/excluido";
 
 export default async function MinhasInscricoes() {
   const atleta = await getAtletaAtual();
@@ -42,7 +43,14 @@ export default async function MinhasInscricoes() {
 
   const db = await getDb();
   const minhas = await db.query.inscricoes.findMany({
-    where: eq(inscricoes.usuarioId, atleta.id),
+    where: and(
+      eq(inscricoes.usuarioId, atleta.id),
+      // inscrições de eventos excluídos (soft delete) somem do atleta
+      inArray(
+        inscricoes.eventoId,
+        db.select({ id: eventos.id }).from(eventos).where(naoExcluido),
+      ),
+    ),
     orderBy: desc(inscricoes.criadoEm),
   });
 

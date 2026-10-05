@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import { eventos, inscricoes, lotes } from "@/db/schema";
 import { Logo, SkewTexto } from "@/components/marca";
@@ -10,6 +10,7 @@ import { getDicionario } from "@/lib/i18n/server";
 import { SeletorIdioma } from "@/lib/i18n/client";
 import { CatalogoClient, type CardEvento } from "./catalogo-client";
 import { MarcaViva } from "./marca-viva";
+import { naoExcluido } from "@/lib/eventos/excluido";
 
 // o catálogo vem do banco — nunca servir versão estática
 export const dynamic = "force-dynamic";
@@ -22,12 +23,15 @@ export default async function Home() {
   const modalidades = dic.evento.modalidades as Record<string, string>;
 
   const publicos = await db.query.eventos.findMany({
-    where: inArray(eventos.status, [
-      "publicado",
-      "inscricoes_encerradas",
-      "em_andamento",
-      "finalizado",
-    ]),
+    where: and(
+      inArray(eventos.status, [
+        "publicado",
+        "inscricoes_encerradas",
+        "em_andamento",
+        "finalizado",
+      ]),
+      naoExcluido,
+    ),
     orderBy: asc(eventos.dataInicio),
   });
 

@@ -199,6 +199,10 @@ export const eventos = pgTable("eventos", {
   // sequência em que devem correr. Nulo = regra padrão (ondas: extremos → meio)
   ordemClasses: jsonb("ordem_classes").$type<string[]>(),
   criadoEm: timestamp("criado_em", { withTimezone: true }).notNull().defaultNow(),
+  // soft delete: preenchido quando o dono exclui o evento. Evento excluído
+  // some de todas as telas (público, console, catálogo), mas os dados ficam
+  // no banco — filtre com `naoExcluido` (src/lib/eventos/excluido.ts)
+  excluidoEm: timestamp("excluido_em", { withTimezone: true }),
 });
 
 // dias do evento: cada linha é uma **janela** de horário (início/fim em minutos

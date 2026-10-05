@@ -15,6 +15,7 @@ import { getAtletaAtual } from "@/lib/sessao";
 import { cobrancaQueCobre } from "@/lib/pagamentos/agrupar";
 import { criarCobrancaPixParaInscricoes } from "@/lib/pagamentos/cobranca";
 import { dentroDoPrazoDePagamento } from "@/lib/pagamentos/prazo";
+import { naoExcluido } from "@/lib/eventos/excluido";
 
 /**
  * Gera (ou retoma) uma única cobrança Pix com TODAS as inscrições pendentes do
@@ -43,7 +44,9 @@ export async function gerarCobrancaEvento(eventoId: string) {
   if (pendentes.length === 0) redirect("/minhas-inscricoes");
 
   const [evento, lotesEvento] = await Promise.all([
-    db.query.eventos.findFirst({ where: eq(eventos.id, eventoId) }),
+    db.query.eventos.findFirst({
+      where: and(eq(eventos.id, eventoId), naoExcluido),
+    }),
     db.query.lotes.findMany({ where: eq(lotes.eventoId, eventoId) }),
   ]);
   if (!evento) notFound();

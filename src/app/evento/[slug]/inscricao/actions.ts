@@ -25,6 +25,7 @@ import { montarPedido } from "@/lib/inscricoes/pedido";
 import { getUsuarioSessao } from "@/lib/auth";
 import { definirCadastroPendente, definirSessaoAtleta } from "@/lib/sessao";
 import { supabaseConfigurado } from "@/lib/supabase/server";
+import { naoExcluido } from "@/lib/eventos/excluido";
 
 /**
  * O CPF já tem conta na plataforma?
@@ -56,7 +57,7 @@ export async function criarInscricao(eventoSlug: string, formData: FormData) {
   const agora = new Date();
 
   const evento = await db.query.eventos.findFirst({
-    where: eq(eventos.slug, eventoSlug),
+    where: and(eq(eventos.slug, eventoSlug), naoExcluido),
   });
   if (!evento || evento.status !== "publicado") {
     throw new Error("Evento não está com inscrições abertas");

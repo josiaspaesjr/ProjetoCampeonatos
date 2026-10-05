@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { eventoColaboradores, eventos } from "@/db/schema";
 import { BotaoAcao } from "@/components/ui/botao-acao";
@@ -7,6 +7,7 @@ import { getUsuarioSessao } from "@/lib/auth";
 import { normalizarPermissoes } from "@/lib/eventos/permissoes";
 import { getDicionario } from "@/lib/i18n/server";
 import { aceitarConvite } from "./actions";
+import { naoExcluido } from "@/lib/eventos/excluido";
 
 function Casca({ children }: { children: React.ReactNode }) {
   return (
@@ -31,7 +32,7 @@ export default async function PaginaConvite({
   });
   const evento = convite
     ? await db.query.eventos.findFirst({
-        where: eq(eventos.id, convite.eventoId),
+        where: and(eq(eventos.id, convite.eventoId), naoExcluido),
         columns: { id: true, nome: true, organizadorId: true },
       })
     : null;

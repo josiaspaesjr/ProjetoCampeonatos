@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { eq, ne } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { getDb } from "@/db";
 import { eventos, inscricoes } from "@/db/schema";
 import { buscarBracketVivo } from "@/lib/bracket-vivo";
@@ -9,6 +9,7 @@ import { perfilDeAcesso } from "@/lib/perfil-acesso";
 import { supabaseConfigurado } from "@/lib/supabase/server";
 import { AvisoPendencias } from "@/components/aviso-pendencias";
 import { LandingClient } from "./landing-client";
+import { naoExcluido } from "@/lib/eventos/excluido";
 
 export const metadata: Metadata = { title: "A plataforma" };
 
@@ -19,7 +20,7 @@ export default async function Plataforma() {
   const db = await getDb();
 
   const [todosEventos, confirmadas, ranking, bracket, perfil] = await Promise.all([
-    db.query.eventos.findMany({ where: ne(eventos.status, "rascunho") }),
+    db.query.eventos.findMany({ where: and(ne(eventos.status, "rascunho"), naoExcluido) }),
     db.query.inscricoes.findMany({
       where: eq(inscricoes.status, "confirmada"),
     }),

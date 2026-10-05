@@ -2,6 +2,7 @@ import { cache } from "react";
 import { and, asc, eq, inArray, ne } from "drizzle-orm";
 import { getDb } from "@/db";
 import { categorias, chaves, eventos, inscricoes, lotes } from "@/db/schema";
+import { naoExcluido } from "@/lib/eventos/excluido";
 
 /**
  * Carregador compartilhado entre o layout público do evento (`(abas)/layout`)
@@ -18,7 +19,11 @@ export const getEventoPublico = cache(async (slug: string) => {
   const db = await getDb();
 
   const evento = await db.query.eventos.findFirst({
-    where: and(eq(eventos.slug, slug), ne(eventos.status, "rascunho")),
+    where: and(
+      eq(eventos.slug, slug),
+      ne(eventos.status, "rascunho"),
+      naoExcluido,
+    ),
   });
   if (!evento) return null;
 

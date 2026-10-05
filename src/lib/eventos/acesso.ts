@@ -7,6 +7,7 @@ import {
   temAcesso,
   type Secao,
 } from "@/lib/eventos/permissoes";
+import { naoExcluido } from "@/lib/eventos/excluido";
 
 type Evento = typeof eventos.$inferSelect;
 
@@ -29,7 +30,7 @@ export async function acessoAoEvento(
   usuarioId: string,
 ): Promise<AcessoEvento | undefined> {
   const evento = await db.query.eventos.findFirst({
-    where: eq(eventos.id, eventoId),
+    where: and(eq(eventos.id, eventoId), naoExcluido),
   });
   if (!evento) return undefined;
   if (evento.organizadorId === usuarioId) {
@@ -87,7 +88,7 @@ export async function eventosGerenciaveis(
 ): Promise<Evento[]> {
   const [proprios, colaboracoes] = await Promise.all([
     db.query.eventos.findMany({
-      where: eq(eventos.organizadorId, usuarioId),
+      where: and(eq(eventos.organizadorId, usuarioId), naoExcluido),
       orderBy: desc(eventos.criadoEm),
     }),
     db.query.eventoColaboradores.findMany({
@@ -103,7 +104,7 @@ export async function eventosGerenciaveis(
     .filter((id) => !idsProprios.has(id));
   const doColab = idsColab.length
     ? await db.query.eventos.findMany({
-        where: inArray(eventos.id, idsColab),
+        where: and(inArray(eventos.id, idsColab), naoExcluido),
         orderBy: desc(eventos.criadoEm),
       })
     : [];

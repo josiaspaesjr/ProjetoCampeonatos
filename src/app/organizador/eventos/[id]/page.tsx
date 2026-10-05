@@ -229,17 +229,11 @@ export default async function VisaoGeralEvento({
               </Link>
             </span>
             {evento.status === "rascunho" && (
-              <>
-                <form action={publicarEvento.bind(null, evento.id)}>
-                  <BotaoAcao variant="success" size="sm">
-                    {da.publicarEvento}
-                  </BotaoAcao>
-                </form>
-                <ExcluirEvento
-                  excluir={excluirEvento.bind(null, evento.id)}
-                  nome={evento.nome}
-                />
-              </>
+              <form action={publicarEvento.bind(null, evento.id)}>
+                <BotaoAcao variant="success" size="sm">
+                  {da.publicarEvento}
+                </BotaoAcao>
+              </form>
             )}
             {evento.status === "publicado" && (
               <form action={encerrarInscricoes.bind(null, evento.id)}>
@@ -247,6 +241,12 @@ export default async function VisaoGeralEvento({
                   {da.encerrarInscricoes}
                 </BotaoAcao>
               </form>
+            )}
+            {acesso.ehDono && (
+              <ExcluirEvento
+                excluir={excluirEvento.bind(null, evento.id)}
+                nome={evento.nome}
+              />
             )}
           </div>
         </div>

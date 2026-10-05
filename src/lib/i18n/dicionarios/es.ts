@@ -726,11 +726,12 @@ export const es: Dicionario = {
     },
     excluirEvento: {
       titulo: "¿Eliminar evento?",
-      descNomePre: "El borrador",
-      descNomePos: "se eliminará para siempre. Esta acción no se puede deshacer.",
+      descNomePre: "El evento",
+      descNomePos:
+        "será retirado de la plataforma: desaparece de la página pública, del catálogo y de la consola. Las inscripciones pendientes ya no podrán pagarse.",
       descSemNome:
-        "Este borrador se eliminará para siempre. Esta acción no se puede deshacer.",
-      confirmar: "Eliminar definitivamente",
+        "Este evento será retirado de la plataforma: desaparece de la página pública, del catálogo y de la consola.",
+      confirmar: "Eliminar evento",
       rotulo: "Eliminar evento",
     },
     inscricoes: {
@@ -1203,10 +1204,8 @@ export const es: Dicionario = {
       },
     },
     erros: {
-      soRascunhoExcluir:
-        "Solo los eventos en borrador se pueden eliminar — este ya fue publicado.",
       eventoComInscricoes:
-        "Este evento ya tiene inscripciones o pagos registrados y no se puede eliminar.",
+        "Este evento tiene atletas con inscripción confirmada — cancela o reembolsa las inscripciones (o finaliza el evento) antes de eliminarlo.",
       nomeDataObrigatorios: "El nombre y la fecha del evento son obligatorios.",
       inscricoesFecham: "Las inscripciones deben cerrar hasta la fecha del evento.",
       numAreasInvalido: "Indica un número de áreas entre 1 y 40.",

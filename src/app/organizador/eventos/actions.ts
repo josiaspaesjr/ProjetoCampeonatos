@@ -5,16 +5,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb } from "@/db";
 import {
-  areas,
   auditoria,
   categorias,
   chaves,
-  cupons,
-  eventoDias,
   eventos,
   inscricoes,
   lotes,
-  lutas,
   pagamentos,
 } from "@/db/schema";
 import { getUsuarioAtual } from "@/lib/auth";
@@ -174,9 +170,11 @@ export async function criarEvento(formData: FormData) {
 }
 
 /**
- * Exclusão definitiva de um evento — só rascunhos, e só se ninguém se
- * inscreveu nem pagou nada. Eventos publicados não podem ser apagados
- * (encerre as inscrições em vez disso); a exclusão fica na auditoria.
+ * Exclusão do evento (soft delete): marca `excluido_em` e o evento some da
+ * plataforma — página pública, catálogo, console e área do atleta —, mas os
+ * dados continuam no banco. Só o dono exclui. Evento com atletas confirmados
+ * (pagos) só sai depois de finalizado: antes disso, cancele/reembolse.
+ * Cobranças ainda abertas expiram para ninguém pagar um evento excluído.
  */
 export async function excluirEvento(eventoId: string) {
   const { db, usuario, evento } = await eventoDoOrganizador(eventoId, "evento");
@@ -186,52 +184,42 @@ export async function excluirEvento(eventoId: string) {
   }
   const erros = (await getDicionario()).admin.erros;
 
-  if (evento.status !== "rascunho") {
-    erroVisivel(eventoId, erros.soRascunhoExcluir);
-  }
-
-  const [inscritos, pagos] = await Promise.all([
-    db.query.inscricoes.findMany({ where: eq(inscricoes.eventoId, eventoId) }),
-    db.query.pagamentos.findMany({ where: eq(pagamentos.eventoId, eventoId) }),
-  ]);
-  if (inscritos.length || pagos.length) {
-    erroVisivel(eventoId, erros.eventoComInscricoes);
-  }
-
-  // filhos primeiro (sem cascade no schema): chaves/lutas de categorias,
-  // depois categorias, lotes, cupons e áreas
-  const cats = await db.query.categorias.findMany({
-    where: eq(categorias.eventoId, eventoId),
-  });
-  if (cats.length) {
-    const chavesDoEvento = await db.query.chaves.findMany({
-      where: inArray(chaves.categoriaId, cats.map((c) => c.id)),
+  if (evento.status !== "finalizado") {
+    const confirmada = await db.query.inscricoes.findFirst({
+      where: and(
+        eq(inscricoes.eventoId, eventoId),
+        eq(inscricoes.status, "confirmada"),
+      ),
+      columns: { id: true },
     });
-    if (chavesDoEvento.length) {
-      await db.delete(lutas).where(
-        inArray(lutas.chaveId, chavesDoEvento.map((c) => c.id)),
-      );
-      await db.delete(chaves).where(
-        inArray(chaves.id, chavesDoEvento.map((c) => c.id)),
-      );
-    }
-    await db.delete(categorias).where(eq(categorias.eventoId, eventoId));
+    if (confirmada) erroVisivel(eventoId, erros.eventoComInscricoes);
   }
-  await db.delete(lotes).where(eq(lotes.eventoId, eventoId));
-  await db.delete(cupons).where(eq(cupons.eventoId, eventoId));
-  await db.delete(areas).where(eq(areas.eventoId, eventoId));
-  await db.delete(eventoDias).where(eq(eventoDias.eventoId, eventoId));
-  await db.delete(eventos).where(eq(eventos.id, eventoId));
+
+  await db
+    .update(eventos)
+    .set({ excluidoEm: new Date() })
+    .where(eq(eventos.id, eventoId));
+  await db
+    .update(pagamentos)
+    .set({ status: "expirado" })
+    .where(
+      and(eq(pagamentos.eventoId, eventoId), eq(pagamentos.status, "criado")),
+    );
 
   await db.insert(auditoria).values({
     usuarioId: usuario.id,
     entidade: "evento",
     entidadeId: eventoId,
     acao: "evento_excluido",
-    dadosAnteriores: { nome: evento.nome, slug: evento.slug },
+    dadosAnteriores: {
+      nome: evento.nome,
+      slug: evento.slug,
+      status: evento.status,
+    },
   });
 
   revalidatePath("/organizador");
+  revalidatePath("/");
   redirect("/organizador");
 }
 

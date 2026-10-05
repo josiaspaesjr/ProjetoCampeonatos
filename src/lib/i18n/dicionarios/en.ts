@@ -726,10 +726,12 @@ export const en: Dicionario = {
     },
     excluirEvento: {
       titulo: "Delete event?",
-      descNomePre: "The draft",
-      descNomePos: "will be deleted forever. This can't be undone.",
-      descSemNome: "This draft will be deleted forever. This can't be undone.",
-      confirmar: "Delete permanently",
+      descNomePre: "The event",
+      descNomePos:
+        "will be removed from the platform: it disappears from the public page, the catalog and the console. Pending registrations can no longer be paid.",
+      descSemNome:
+        "This event will be removed from the platform: it disappears from the public page, the catalog and the console.",
+      confirmar: "Delete event",
       rotulo: "Delete event",
     },
     inscricoes: {
@@ -1201,10 +1203,8 @@ export const en: Dicionario = {
       },
     },
     erros: {
-      soRascunhoExcluir:
-        "Only draft events can be deleted — this one is already published.",
       eventoComInscricoes:
-        "This event already has registrations or payments recorded and can't be deleted.",
+        "This event has athletes with confirmed registrations — cancel or refund them (or finish the event) before deleting it.",
       nomeDataObrigatorios: "Event name and date are required.",
       inscricoesFecham: "Registration must close on or before the event date.",
       numAreasInvalido: "Enter a number of mats between 1 and 40.",

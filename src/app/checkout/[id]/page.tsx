@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getDb } from "@/db";
 import {
   categorias,
@@ -24,6 +24,7 @@ import { gerarCobrancaEvento } from "@/app/minhas-inscricoes/actions";
 import { simularPagamentoAprovado } from "./actions";
 import { ContagemRegressiva } from "./contagem-regressiva";
 import { CopiarPix } from "./copiar-pix";
+import { naoExcluido } from "@/lib/eventos/excluido";
 
 const capitalizar = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -70,7 +71,9 @@ export default async function PaginaCheckout({
   if (!pagamento) notFound();
 
   const [evento, itens, usuario] = await Promise.all([
-    db.query.eventos.findFirst({ where: eq(eventos.id, pagamento.eventoId) }),
+    db.query.eventos.findFirst({
+      where: and(eq(eventos.id, pagamento.eventoId), naoExcluido),
+    }),
     db.query.pagamentoInscricoes.findMany({
       where: eq(pagamentoInscricoes.pagamentoId, pagamento.id),
     }),
