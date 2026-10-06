@@ -204,6 +204,13 @@
       "when": 1791213062715,
       "tag": "0028_far_speed",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1791304238147,
+      "tag": "0029_banners_storage",
+      "breakpoints": true
     }
   ]
 }

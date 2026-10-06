@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
+import { CampoBanner } from "@/components/organizador/campo-banner";
 import { CamposDataEvento } from "@/components/organizador/campos-data-evento";
 import type { DiaEvento } from "@/components/organizador/campos-dias-evento";
 import { RegulamentoCampos } from "@/components/organizador/regulamento-campos";
@@ -226,14 +227,11 @@ export function TopbarEvento({
                   <label className={labelCls}>{campos.endereco}</label>
                   <Input name="endereco" defaultValue={evento.endereco} />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <label className={labelCls}>{campos.imagemCapa}</label>
-                  <Input
-                    name="bannerUrl"
-                    type="url"
-                    defaultValue={evento.bannerUrl}
-                  />
-                </div>
+                <CampoBanner
+                  id="editar-banner"
+                  labelCls={labelCls}
+                  urlAtual={evento.bannerUrl}
+                />
 
                 <div className="mt-2 border-t border-white/8 pt-4 font-cond text-[13px] font-semibold uppercase tracking-[0.1em] text-brand">
                   {campos.detalhesCompeticao}

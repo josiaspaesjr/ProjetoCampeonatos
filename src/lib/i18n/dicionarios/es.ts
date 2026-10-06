@@ -537,8 +537,11 @@ export const es: Dicionario = {
       voltar: "Volver",
     },
     campos: {
-      imagemCapa: "Imagen de portada (URL)",
-      bannerPlaceholder: "https://… (banner del evento)",
+      imagemCapa: "Imagen de portada",
+      bannerEnviar: "Subir imagen",
+      bannerTrocar: "Cambiar imagen",
+      bannerRemover: "Quitar",
+      bannerDica: "JPG, PNG o WebP — redimensionada automáticamente.",
       nomeEvento: "Nombre del evento",
       nomePlaceholder: "Copa Ciudad de Artes Marciales 2026",
       inscricoesFechamEm: "Las inscripciones cierran el",
@@ -1208,6 +1211,7 @@ export const es: Dicionario = {
       },
     },
     erros: {
+      bannerUpload: "No se pudo subir la imagen de portada (usa JPG, PNG o WebP de hasta 5 MB).",
       nomeDataObrigatorios: "El nombre y la fecha del evento son obligatorios.",
       inscricoesFecham: "Las inscripciones deben cerrar hasta la fecha del evento.",
       numAreasInvalido: "Indica un número de áreas entre 1 y 40.",

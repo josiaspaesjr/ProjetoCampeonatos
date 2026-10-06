@@ -36,6 +36,7 @@ import {
   persistirDiasEvento,
   validarDias,
 } from "@/lib/eventos/dias-form";
+import { resolverBannerDoForm } from "@/lib/eventos/banner";
 import { lerRegulamentoDoForm } from "@/lib/regulamento";
 import { GRUPOS_PRECO_PRESETS, type LoteVariacao } from "@/lib/lotes/preco";
 import { diaLocalYmd, loteConflitante, ymdParaBR } from "@/lib/lotes/vigencia";
@@ -120,6 +121,9 @@ export async function criarEvento(formData: FormData) {
   if (!inscricoesFechamValidas(inscricoesFecham, dataFim)) {
     throw new Error(erros.inscricoesFecham);
   }
+  const bannerUrl = await resolverBannerDoForm(formData).catch(() => {
+    throw new Error(erros.bannerUpload);
+  });
 
   const [evento] = await db
     .insert(eventos)
@@ -133,7 +137,7 @@ export async function criarEvento(formData: FormData) {
       uf: String(formData.get("uf") ?? "").toUpperCase() || null,
       endereco: String(formData.get("endereco") ?? "") || null,
       descricao: String(formData.get("descricao") ?? "") || null,
-      bannerUrl: String(formData.get("bannerUrl") ?? "") || null,
+      bannerUrl,
       circuito: String(formData.get("circuito") ?? "") || null,
       modalidade: (["gi_nogi", "gi", "nogi"].includes(modalidade)
         ? modalidade
@@ -247,6 +251,12 @@ export async function editarEvento(eventoId: string, formData: FormData) {
   if (!inscricoesFechamValidas(inscricoesFecham, dataFim)) {
     erroVisivel(eventoId, erros.inscricoesFecham);
   }
+  let bannerUrl: string | null;
+  try {
+    bannerUrl = await resolverBannerDoForm(formData);
+  } catch {
+    erroVisivel(eventoId, erros.bannerUpload);
+  }
 
   await db
     .update(eventos)
@@ -259,7 +269,7 @@ export async function editarEvento(eventoId: string, formData: FormData) {
       uf: String(formData.get("uf") ?? "").toUpperCase() || null,
       endereco: String(formData.get("endereco") ?? "") || null,
       descricao: String(formData.get("descricao") ?? "") || null,
-      bannerUrl: String(formData.get("bannerUrl") ?? "") || null,
+      bannerUrl,
       circuito: String(formData.get("circuito") ?? "") || null,
       modalidade: (["gi_nogi", "gi", "nogi"].includes(modalidade)
         ? modalidade

@@ -539,8 +539,11 @@ export const pt = {
       voltar: "Voltar",
     },
     campos: {
-      imagemCapa: "Imagem de capa (URL)",
-      bannerPlaceholder: "https://… (banner do evento)",
+      imagemCapa: "Imagem de capa",
+      bannerEnviar: "Enviar imagem",
+      bannerTrocar: "Trocar imagem",
+      bannerRemover: "Remover",
+      bannerDica: "JPG, PNG ou WebP — redimensionada automaticamente.",
       nomeEvento: "Nome do evento",
       nomePlaceholder: "Copa Cidade de Artes Marciais 2026",
       inscricoesFechamEm: "Inscrições fecham em",
@@ -1213,6 +1216,7 @@ export const pt = {
       },
     },
     erros: {
+      bannerUpload: "Não foi possível enviar a imagem de capa (use JPG, PNG ou WebP de até 5 MB).",
       nomeDataObrigatorios: "Nome e data do evento são obrigatórios.",
       inscricoesFecham: "As inscrições devem fechar até a data do evento.",
       numAreasInvalido: "Informe um número de áreas entre 1 e 40.",

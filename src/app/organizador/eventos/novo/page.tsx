@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SkewTexto } from "@/components/marca";
+import { CampoBanner } from "@/components/organizador/campo-banner";
 import { CamposDataEvento } from "@/components/organizador/campos-data-evento";
 import { RegulamentoCampos } from "@/components/organizador/regulamento-campos";
 import { BotaoAcaoBruto } from "@/components/ui/botao-acao";
@@ -45,18 +46,7 @@ export default async function NovoEvento() {
       </div>
 
       <form action={criarEvento} className="flex flex-col gap-[26px]">
-        <div className="flex flex-col gap-[9px]">
-          <label className={labelCls} htmlFor="ev-banner">
-            {dc.imagemCapa}
-          </label>
-          <Input
-            id="ev-banner"
-            name="bannerUrl"
-            type="url"
-            placeholder={dc.bannerPlaceholder}
-            className="h-12"
-          />
-        </div>
+        <CampoBanner id="ev-banner" labelCls={labelCls} />
 
         <div className="flex flex-col gap-[9px]">
           <label className={labelCls} htmlFor="ev-nome">

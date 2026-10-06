@@ -537,8 +537,11 @@ export const en: Dicionario = {
       voltar: "Back",
     },
     campos: {
-      imagemCapa: "Cover image (URL)",
-      bannerPlaceholder: "https://… (event banner)",
+      imagemCapa: "Cover image",
+      bannerEnviar: "Upload image",
+      bannerTrocar: "Change image",
+      bannerRemover: "Remove",
+      bannerDica: "JPG, PNG or WebP — resized automatically.",
       nomeEvento: "Event name",
       nomePlaceholder: "City Martial Arts Cup 2026",
       inscricoesFechamEm: "Registration closes on",
@@ -1207,6 +1210,7 @@ export const en: Dicionario = {
       },
     },
     erros: {
+      bannerUpload: "Could not upload the cover image (use JPG, PNG or WebP up to 5 MB).",
       nomeDataObrigatorios: "Event name and date are required.",
       inscricoesFecham: "Registration must close on or before the event date.",
       numAreasInvalido: "Enter a number of mats between 1 and 40.",
