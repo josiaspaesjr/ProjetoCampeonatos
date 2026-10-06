@@ -83,12 +83,6 @@ export default async function VisaoGeralEvento({
 
   const checklist = [
     {
-      rotulo: da.eventoPublicado,
-      feito: evento.status !== "rascunho",
-      dica: evento.status === "rascunho" ? da.pendente : da.aoVivo,
-      href: base,
-    },
-    {
       rotulo: da.lotesPreco,
       feito: lts.length > 0,
       dica: `${lts.length} ${lts.length === 1 ? da.lote : da.lotes}`,
@@ -99,6 +93,12 @@ export default async function VisaoGeralEvento({
       feito: cats.length > 0,
       dica: String(cats.length),
       href: `${base}/categorias`,
+    },
+    {
+      rotulo: da.eventoPublicado,
+      feito: evento.status !== "rascunho",
+      dica: evento.status === "rascunho" ? da.pendente : da.aoVivo,
+      href: base,
     },
     {
       rotulo: da.areasDefinidas,
