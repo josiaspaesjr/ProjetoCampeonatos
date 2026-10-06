@@ -4,24 +4,16 @@ import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { areas, categorias, inscricoes } from "@/db/schema";
+import { FAIXAS } from "@/lib/categorias/cbjj";
 import { fundoDaFaixa } from "@/lib/categorias/faixa-cores";
 import { dataHora, diaMes } from "@/lib/datas";
 import { secoesPreenchidas } from "@/lib/regulamento";
 import { getEventoPublico, statusDoEvento } from "@/lib/evento-publico";
 import { getDicionario } from "@/lib/i18n/server";
 
-// ordem CBJJ das faixas, para exibir os swatches de cor "utilizados" no evento
-const ORDEM_FAIXAS = [
-  "branca",
-  "cinza",
-  "amarela",
-  "laranja",
-  "verde",
-  "azul",
-  "roxa",
-  "marrom",
-  "preta",
-];
+// ordem CBJJ das faixas (inclui coral e vermelha), para exibir os swatches
+// de cor "utilizados" no evento
+const ORDEM_FAIXAS: string[] = FAIXAS;
 
 /** Faixas presentes no evento (cores usadas), em ordem CBJJ. */
 function faixasPresentes(
